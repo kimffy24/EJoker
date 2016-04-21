@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.eventing;
 
+import com.jiefzz.ejoker.infrastructure.IMessage;
+
 public interface ISequenceMessage extends IMessage {
 
 	public void setAggregateRootStringId(String aggregateRootStringId);

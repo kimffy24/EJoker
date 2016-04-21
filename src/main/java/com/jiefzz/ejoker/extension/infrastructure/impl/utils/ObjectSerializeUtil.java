@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure.impl.utils;
+package com.jiefzz.ejoker.extension.infrastructure.impl.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

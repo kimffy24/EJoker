@@ -1,10 +1,10 @@
-package com.jiefzz.ejoker.infrastructure.impl;
+package com.jiefzz.ejoker.extension.infrastructure.impl;
 
 import javax.annotation.Resource;
 
 import org.springframework.stereotype.Service;
 
-import com.jiefzz.ejoker.infrastructure.ICache;
+import com.jiefzz.ejoker.extension.infrastructure.ICache;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;

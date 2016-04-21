@@ -1,6 +1,8 @@
 package com.jiefzz.ejoker.eventing;
 
-public class AbstractDomainEvent<TAggregateRootId> implements IDomainEvent<TAggregateRootId> {
+import com.jiefzz.ejoker.infrastructure.AbstractMessage;
+
+public class AbstractDomainEvent<TAggregateRootId> extends AbstractMessage implements IDomainEvent<TAggregateRootId> {
 
 	@Override
 	public void setAggregateRootStringId(String aggregateRootStringId) {
@@ -36,54 +38,6 @@ public class AbstractDomainEvent<TAggregateRootId> implements IDomainEvent<TAggr
 	public long getVersion() {
 		// TODO Auto-generated method stub
 		return 0;
-	}
-
-	@Override
-	public String GetRoutingKey() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String GetTypeName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String setId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void getId() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public long getTimestamp() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void setTimestamp() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public long getSequence() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void setSequence() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

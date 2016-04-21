@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure;
+package com.jiefzz.ejoker.extension.infrastructure;
 
 public interface IJSONConverter {
 

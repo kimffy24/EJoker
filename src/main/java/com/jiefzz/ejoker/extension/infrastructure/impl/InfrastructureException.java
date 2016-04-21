@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure.impl;
+package com.jiefzz.ejoker.extension.infrastructure.impl;
 
 public class InfrastructureException extends RuntimeException {
     

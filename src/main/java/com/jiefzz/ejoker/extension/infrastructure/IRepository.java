@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure;
+package com.jiefzz.ejoker.extension.infrastructure;
 
 import com.jiefzz.ejoker.domain.AbstractAggregateRoot;
 
