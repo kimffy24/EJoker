@@ -18,8 +18,7 @@ public abstract class AbstractMessage implements  IMessage {
 	
 	@Override
 	public String GetRoutingKey() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new MessageException("Unimplemented!!!");
 	}
 
 	@Override

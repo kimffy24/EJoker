@@ -4,10 +4,13 @@ import com.jiefzz.ejoker.infrastructure.AbstractMessage;
 
 public class AbstractDomainEvent<TAggregateRootId> extends AbstractMessage implements IDomainEvent<TAggregateRootId> {
 
+	private static final long serialVersionUID = -6335166705732199329L;
+	
+	private String aggregateRootStringId;
+
 	@Override
 	public void setAggregateRootStringId(String aggregateRootStringId) {
-		// TODO Auto-generated method stub
-		
+		this.aggregateRootStringId = aggregateRootStringId;
 	}
 
 	@Override
