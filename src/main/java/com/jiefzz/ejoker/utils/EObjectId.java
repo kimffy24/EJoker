@@ -69,8 +69,6 @@ public class EObjectId {
 		String mToken = trimString(HEX_MI, 6);
 		String pToken = trimString(HEX_PI, 4);
 		String sToken = trimString(rdArray,4);
-		System.out.println(new String(rdArray));
-		System.out.println(sToken);
 		return timePrefix+mToken+pToken+sToken;
 	}
 
