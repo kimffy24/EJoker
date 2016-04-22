@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.extension.infrastructure.impl;
 
 import org.springframework.stereotype.Service;
 
+import com.jiefzz.ejoker.extension.infrastructure.ExtensionInfrastructureRuntimeException;
 import com.jiefzz.ejoker.extension.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.extension.infrastructure.impl.utils.RelationshipTreeUtil;
 import com.jiefzz.ejoker.extension.infrastructure.impl.utils.RelationshipTreeUtilCallbackInterface;
@@ -17,21 +18,25 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new BuilderToolSet());
 	
 	@Override
-	public <T> String convert(T object) throws Exception {
-		JSONObject result = relationshipTreeUtil.getTreeStructureMap(object);
+	public <T> String convert(T object) {
+		JSONObject result;
+		try {
+			result = relationshipTreeUtil.getTreeStructureMap(object);
+		} catch (Exception e) {
+			throw new ExtensionInfrastructureRuntimeException("", e);
+		}
 		return JSONValue.toJSONString(result, JSONStyle.NO_COMPRESS);
 	}
 
 	@Override
-	public <T> T revert(String jsonString, Class<T> clazz) throws Exception {
+	public <T> T revert(String jsonString, Class<T> clazz) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public <T> void contain(String jsonString, T container) throws Exception {
-		// TODO Auto-generated method stub
-		
+	public <T> void contain(String jsonString, T container) {
+		throw new ExtensionInfrastructureRuntimeException("Umimplemented!!!");
 	}
 
 	/**

@@ -1,6 +1,4 @@
-package com.jiefzz.ejoker.eventing;
-
-import com.jiefzz.ejoker.infrastructure.IMessage;
+package com.jiefzz.ejoker.infrastructure;
 
 public interface ISequenceMessage extends IMessage {
 

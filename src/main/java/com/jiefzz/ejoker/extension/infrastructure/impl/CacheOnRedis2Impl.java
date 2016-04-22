@@ -45,17 +45,34 @@ public class CacheOnRedis2Impl implements ICache {
 	@Override
 	public void disposableSet(String key, String value) {
 		Jedis redis = getRedisResource();
-		redis.hset(defaultCacheKey, key, value);
+		redis.hset(defaultDisposableKey, key, value);
 		closeJedisResouce();
 	}
 
 	@Override
-	public void disposableGet(String key) {
+	public String disposableGet(String key) {
 		Jedis redis = getRedisResource();
-		redis.hdel(defaultCacheKey, key);
+		String value = redis.hget(defaultDisposableKey, key);
+		redis.hdel(defaultDisposableKey, key);
+		closeJedisResouce();
+		return value;
+	}
+
+	@Override
+	public void fastSet(String key, String value) {
+		Jedis redis = getRedisResource();
+		redis.hset(defaultFastTableName, key, value);
 		closeJedisResouce();
 	}
 
+	@Override
+	public String fastGet(String key) {
+		Jedis redis = getRedisResource();
+		String value = redis.hget(defaultFastTableName, key);
+		closeJedisResouce();
+		return value;
+	}
+	
 	private Jedis getRedisResource(){
 		Jedis jedis = threadLocal.get();
 		if(jedis==null){
@@ -72,4 +89,5 @@ public class CacheOnRedis2Impl implements ICache {
 		if(jedis!=null)
 			jedis.close();
 	}
+
 }

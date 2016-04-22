@@ -2,11 +2,21 @@ package com.jiefzz.ejoker.eventing.impl;
 
 import java.util.LinkedHashSet;
 
+import javax.annotation.Resource;
+
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventStore;
+import com.jiefzz.ejoker.extension.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.extension.infrastructure.IStorage;
 
-public class EventStoreUseFileSystemAsBackendImpl implements IEventStore {
+public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 
+	@Resource
+	IStorage storage;
+	
+	@Resource
+	IJSONConverter jsonConverter;
+	
 	@Override
 	public LinkedHashSet<IDomainEvent> QueryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
 			long minVersion, long maxVersion) {
@@ -21,7 +31,12 @@ public class EventStoreUseFileSystemAsBackendImpl implements IEventStore {
 	}
 
 	@Override
-	public void AppendAsync(LinkedHashSet<IDomainEvent> eventStream) {
+	public void AppendAsync(IDomainEvent event) {
+		storage.storage(event.getId(), jsonConverter.convert(event));
+	}
+
+	@Override
+	public void Appendsync(IDomainEvent event) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -7,9 +7,13 @@ public interface ICache {
 	public String get(String key);
 	
 	public void disposableSet(String key, String value);
-	public void disposableGet(String key);
+	public String disposableGet(String key);
+	
+	public void fastSet(String key, String value);
+	public String fastGet(String key);
 	
 	final int DAY = 86400;
 	final int WEEK = 604800;
-	final String defaultCacheKey="JCacheDisposable";
+	final String defaultDisposableKey="JCacheDisposable";
+	final String defaultFastTableName="JCacheFastTable";
 }

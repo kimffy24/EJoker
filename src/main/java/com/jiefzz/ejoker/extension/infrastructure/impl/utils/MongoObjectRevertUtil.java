@@ -16,7 +16,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.bson.types.BasicBSONList;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentTop;
-import com.jiefzz.ejoker.extension.infrastructure.impl.InfrastructureException;
+import com.jiefzz.ejoker.extension.infrastructure.ExtensionInfrastructureRuntimeException;
 import com.mongodb.DBObject;
 
 public class MongoObjectRevertUtil {
@@ -119,7 +119,7 @@ public class MongoObjectRevertUtil {
 					} else if ( Collection.class.isAssignableFrom(field.getType()) && obj instanceof Collection ) {
 
 					} else 
-						throw new InfrastructureException(
+						throw new ExtensionInfrastructureRuntimeException(
 								"Unmatch type between "+clazz.getName()+"->" + field.getName() + "<"+field.getType().getName()+">"
 										+ " and target " + obj
 								);

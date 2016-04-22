@@ -17,7 +17,17 @@ public interface IEventStore {
     
 	public void BatchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams);
 	
-	public void AppendAsync(LinkedHashSet<IDomainEvent> eventStream);
+	/**
+	 * 异步保存事件
+	 * @param event
+	 */
+	public void AppendAsync(IDomainEvent event);
+	
+	/**
+	 * 同步保存事件
+	 * @param event
+	 */
+	public void Appendsync(IDomainEvent event);
 	
 	public void FindAsync(String aggregateRootId, int version);
 	

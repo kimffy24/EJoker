@@ -12,10 +12,10 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 public class AggregateRepositoryProvider implements IAggregateRepositoryProvider {
 
 	@SuppressWarnings("rawtypes")
-	private Map<Class<IAggregateRoot>, IAggregateRepositoryProxy> repositoryDict = 
-			new HashMap<Class<IAggregateRoot>, IAggregateRepositoryProxy>();
+	private Map<Class<? extends IAggregateRoot>, IAggregateRepositoryProxy> repositoryDict = 
+			new HashMap<Class<? extends IAggregateRoot>, IAggregateRepositoryProxy>();
 
-	public IAggregateRepositoryProxy GetRepository(@SuppressWarnings("rawtypes") Class<IAggregateRoot> aggregateRootClazz) {
+	public IAggregateRepositoryProxy GetRepository(@SuppressWarnings("rawtypes") Class<? extends IAggregateRoot> aggregateRootClazz) {
 
 		if( repositoryDict.containsKey(aggregateRootClazz) || tryCreateAggregateRepositoryProxy(aggregateRootClazz) )
 			return repositoryDict.get(aggregateRootClazz);
@@ -24,7 +24,7 @@ public class AggregateRepositoryProvider implements IAggregateRepositoryProvider
 	}
 
 	@SuppressWarnings("rawtypes")
-	private boolean tryCreateAggregateRepositoryProxy(Class<IAggregateRoot> aggregateRootClazz) {
+	private boolean tryCreateAggregateRepositoryProxy(Class<? extends IAggregateRoot> aggregateRootClazz) {
 		try {
 			repositoryDict.put(aggregateRootClazz, new AggregateRepositoryProxy(new IAggregateRepository<IAggregateRoot>(){
 
@@ -38,9 +38,7 @@ public class AggregateRepositoryProvider implements IAggregateRepositoryProvider
 				@Override
 				public IAggregateRoot<?> get(Class<IAggregateRoot> clazz, String aggregateRootId) {
 					// TODO Auto-generated method stub
-					System.out.println("call with clazz=" + clazz.getName());
-					System.out.println("call with aggregateRootId=" + aggregateRootId);
-					return null;
+					throw new RuntimeException("Unimplemented!!!");
 				}
 
 			}));
