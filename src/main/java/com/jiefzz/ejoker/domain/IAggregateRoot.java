@@ -10,9 +10,9 @@ public interface IAggregateRoot<TAggregateRootId> extends Serializable  {
     void AcceptChanges(int newVersion);
     void ReplayEvents(LinkedHashMap<Integer, String> eventStreams);
 
-    public IAggregateRoot<TAggregateRootId> setId(TAggregateRootId _id);
+    public void setId(TAggregateRootId _id);
 	public TAggregateRootId getId();
 	
 	public long getVersion();
-	
+	public String getUniqueId();
 }

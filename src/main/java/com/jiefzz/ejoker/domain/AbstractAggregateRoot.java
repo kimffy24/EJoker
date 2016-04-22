@@ -8,14 +8,11 @@ import com.jiefzz.ejoker.infrastructure.ArgumentNullException;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 
-	/**
-	 * 
-	 */
 	@PersistentIgnore
 	private static final long serialVersionUID = -1803833835739801207L;
 	
-	long _version=0;
-	TAggregateRootId _id=null;
+	private long _version=0;
+	protected TAggregateRootId _id=null;
 
 	protected AbstractAggregateRoot(TAggregateRootId id) {
 		if (id == null)
@@ -36,9 +33,8 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	@Override
-	public AbstractAggregateRoot<TAggregateRootId> setId(TAggregateRootId _id) {
+	public void setId(TAggregateRootId _id) {
 		this._id = _id;
-		return this;
 	}
 
 	@Override
@@ -46,23 +42,24 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		return _version;
 	}
 
-	protected void ApplyEvent(IDomainEvent domainEvent) throws Exception {
+	protected void ApplyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
 
 		if ( _id == null )
 			throw new IllegalAggregateRootIdException("Domain Aggregate Id is null!!!");
-		domainEvent.setAggregateRootId( _id.toString() );
+		domainEvent.setAggregateRootId( _id );
 		domainEvent.setVersion(_version+1);
+		// 接收事件
 		HandleEvent(domainEvent);
+		// 提交事件到队列
 		AppendUncommittedEvent(domainEvent);
-		
 	}
-	protected void ApplyEvents(IDomainEvent[] domainEvents) throws Exception {
-		for (IDomainEvent domainEvent : domainEvents)
+	protected void ApplyEvents(IDomainEvent<TAggregateRootId>[] domainEvents) {
+		for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
 			ApplyEvent(domainEvent);
 	}
 	
-	private void HandleEvent(IDomainEvent domainEvent){}
-	private void AppendUncommittedEvent(IDomainEvent domainEvent){}
+	private void HandleEvent(IDomainEvent<TAggregateRootId> domainEvent){}
+	private void AppendUncommittedEvent(IDomainEvent<TAggregateRootId> domainEvent){}
 
 	@Override
 	public LinkedHashMap<Integer, String> GetChanges() { return null; }
@@ -73,4 +70,10 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@Override
 	public void ReplayEvents(LinkedHashMap<Integer, String> eventStreams) {}
 
+	@Override
+	public String getUniqueId() {
+		return getId().toString();
+	}
+
+	private void verifyEvent(){}
 }
