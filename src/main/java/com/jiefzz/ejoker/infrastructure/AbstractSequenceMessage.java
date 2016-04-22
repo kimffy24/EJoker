@@ -1,7 +1,10 @@
 package com.jiefzz.ejoker.infrastructure;
 
+import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+
 public class AbstractSequenceMessage<TAggregateRootId> extends AbstractMessage implements ISequenceMessage {
-	
+
+	@PersistentIgnore
 	private static final long serialVersionUID = -677162607422924283L;
 	private TAggregateRootId _aggregateRootId;
 	private String aggregateRootStringId;

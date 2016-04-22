@@ -1,9 +1,11 @@
 package com.jiefzz.ejoker.infrastructure;
 
+import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.utils.EObjectId;
 
 public abstract class AbstractMessage implements  IMessage {
 
+	@PersistentIgnore
 	private static final long serialVersionUID = -1277921187720757665L;
 	
 	private String id;
