@@ -4,11 +4,14 @@ import java.util.LinkedHashSet;
 
 import javax.annotation.Resource;
 
+import org.springframework.stereotype.Service;
+
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.extension.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.extension.infrastructure.IStorage;
 
+@Service
 public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 
 	@Resource
