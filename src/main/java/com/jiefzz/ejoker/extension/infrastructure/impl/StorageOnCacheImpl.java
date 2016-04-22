@@ -20,7 +20,7 @@ public class StorageOnCacheImpl implements IStorage {
 
 	@Override
 	public void storage(String key, String serializaString) {
-		cache.set(key, serializaString);
+		cache.fastSet(key, serializaString);
 	}
 
 }
