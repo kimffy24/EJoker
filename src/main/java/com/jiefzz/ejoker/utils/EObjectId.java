@@ -68,7 +68,9 @@ public class EObjectId {
 		String timePrefix = trimString(tsArray);
 		String mToken = trimString(HEX_MI, 6);
 		String pToken = trimString(HEX_PI, 4);
-		String sToken = trimString(tsArray,4);
+		String sToken = trimString(rdArray,4);
+		System.out.println(new String(rdArray));
+		System.out.println(sToken);
 		return timePrefix+mToken+pToken+sToken;
 	}
 
@@ -88,7 +90,7 @@ public class EObjectId {
 	}
 	
 	synchronized private static long disposableSeed() {
-		return seed++;
+		return ++seed;
 	}
 
 	private static long createMachineIdentifier() {
@@ -185,9 +187,4 @@ public class EObjectId {
 			seed = (new SecureRandom().nextLong());
 	}
 
-	public static void main(String[] args) {
-		System.out.println(MACHINE_IDENTIFIER);
-		System.out.println(PROCESS_IDENTIFIER);
-		System.out.println((new EObjectId()).toHexString());
-	}
 }
