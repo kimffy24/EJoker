@@ -1,15 +1,24 @@
 package com.jiefzz.ejoker.domain;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.infrastructure.ArgumentNullException;
 
-public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
+public class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 
 	@PersistentIgnore
 	private static final long serialVersionUID = -1803833835739801207L;
+
+	@PersistentIgnore
+    private static final LinkedHashSet<IDomainEvent> emptyEvents = new LinkedHashSet<IDomainEvent>();
+
+	// TODO Please use your IoC to inject this Implement Object!!!
+	@PersistentIgnore
+	IAggregateRootInternalHandlerProvider eventHandlerProvider;
 	
 	private long _version=0;
 	protected TAggregateRootId _id=null;
@@ -26,7 +35,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 			throw new ArgumentNullException("version");
 		_version = version;
 	}
-	
+
 	@Override
 	public TAggregateRootId getId(){
 		return _id;
@@ -40,6 +49,20 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@Override
 	public long getVersion() {
 		return _version;
+	}
+
+	@Override
+	public LinkedHashMap<Integer, String> GetChanges() { return null; }
+
+	@Override
+	public void AcceptChanges(int newVersion) {}
+
+	@Override
+	public void ReplayEvents(LinkedHashMap<Integer, String> eventStreams) {}
+
+	@Override
+	public String getUniqueId() {
+		return getId().toString();
 	}
 
 	protected void ApplyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
@@ -57,23 +80,40 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
 			ApplyEvent(domainEvent);
 	}
-	
-	private void HandleEvent(IDomainEvent<TAggregateRootId> domainEvent){}
+
+	private void HandleEvent(IDomainEvent<TAggregateRootId> domainEvent){
+		if (eventHandlerProvider == null)
+			throw new InvalidOperationException("IAggregateRootInternalHandlerProvider was never inject before!!!");
+		DelegateAction<IAggregateRoot, IDomainEvent> handler = eventHandlerProvider.GetInternalEventHandler(this.getClass(), domainEvent.getClass());
+		if (handler == null) throw new InvalidOperationException("Could not found event handler for " 
+					+ domainEvent.getClass().getName() + " of " + this.getClass().getName() );
+		
+		// TODO 第一次使用
+		// { do something!! }
+		
+		
+	}
 	private void AppendUncommittedEvent(IDomainEvent<TAggregateRootId> domainEvent){}
 
-	@Override
-	public LinkedHashMap<Integer, String> GetChanges() { return null; }
-
-	@Override
-	public void AcceptChanges(int newVersion) {}
-
-	@Override
-	public void ReplayEvents(LinkedHashMap<Integer, String> eventStreams) {}
-
-	@Override
-	public String getUniqueId() {
-		return getId().toString();
+	private void verifyEvent(DomainEventStream eventStream){
+		IAggregateRoot<TAggregateRootId> current = (IAggregateRoot<TAggregateRootId>)this;
+		if (eventStream.getVersion() > 1 && eventStream.getAggregateRootId() != current.getUniqueId()) {
+			throw new InvalidOperationException("Invalid domain event stream, aggregateRootId:"
+					+eventStream.getAggregateRootId()
+					+", expected aggregateRootId:"
+					+current.getUniqueId()
+					+", type:"
+					+current.getClass().getName());
+		}
+		if (eventStream.getVersion() != current.getVersion() + 1) {
+			throw new InvalidOperationException("Invalid domain event stream, version:"
+					+eventStream.getVersion()
+					+", expected version:"
+					+current.getVersion()
+					+", current aggregateRoot type:"
+					+this.getClass().getName()
+					+", id:"
+					+current.getUniqueId());
+		}
 	}
-
-	private void verifyEvent(){}
 }
