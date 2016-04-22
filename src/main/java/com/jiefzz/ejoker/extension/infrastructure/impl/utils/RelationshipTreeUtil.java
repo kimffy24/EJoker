@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.extension.infrastructure.impl.utils;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import com.jiefzz.ejoker.annotation.persistent.PersistentTop;
 
 
 public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {
-	
+
 	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
 	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval) {
 		this.eval = eval;
@@ -32,22 +33,25 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {
 		for ( ; clazz != Object.class; clazz = clazz.getSuperclass() ) {
 			Field[] fieldArray = clazz.getDeclaredFields();
 			ContainerKVP childrenObj = eval.createNode();
-			
+
 			for ( int i = 0; i<fieldArray.length;i++ ) {
 				Field field = fieldArray[i];
+				String fieldName = field.getName();
 				// 确认不是被要求忽略的属性
 				if (field.isAnnotationPresent(PersistentIgnore.class)) continue;
+				// 过滤掉Serializable接口的serialVersionUID属性！！
+				if (bean instanceof Serializable && fieldName=="serialVersionUID") continue;
+				// 匿名构建对象时，跳过父类引用
+				if (fieldName.length()>=5 && "this$".equals(fieldName.substring(0, 5))) continue;
+				if (eval.isHas(childrenObj, fieldName)) continue;
+
 				field.setAccessible(true);
-
-				if ( eval.isHas(childrenObj, field.getName()) ) continue;
-
-				String fieldName = field.getName();
 				Object obj = field.get(bean);
 				if( obj == null ) continue;
 				// 先取出field对应的value值， 
 				// @important@ 从类中取出类型，和从值中取出类型的结果差别比较大
 				// @important@ 因为有泛型的存在，尽量从值中取类型来做判断
-				
+
 				if ( field.getType().isPrimitive() || ParameterizedTypeUtil.isDirectSerializableType(obj) )
 					eval.addToKeyValueSet(childrenObj, obj, fieldName);
 				else if ( ParameterizedTypeUtil.hasSublevel(obj) ) {
@@ -66,7 +70,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {
 
 		return rObj;
 	}
-	
+
 	/**
 	 * 装配键值集合的方法
 	 * @param eval
@@ -99,7 +103,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {
 		}
 		return keyValueSet;
 	}
-	
+
 	/**
 	 * 装配值集合的方法
 	 * @param eval
@@ -126,7 +130,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {
 		}
 		return valueSet;
 	}
-	
+
 	public static Map<String, Object> getTreeStructureMapRowMap(Object bean) throws Exception{
 		if (bean == null)
 			throw new NullPointerException();
