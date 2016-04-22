@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.eventing;
 
 import com.jiefzz.ejoker.infrastructure.AbstractMessage;
 
-public class AbstractDomainEvent<TAggregateRootId> extends AbstractMessage implements IDomainEvent<TAggregateRootId> {
+public class AbstractDomainEvent extends AbstractMessage implements IDomainEvent {
 
 	private static final long serialVersionUID = -6335166705732199329L;
 	
@@ -44,13 +44,13 @@ public class AbstractDomainEvent<TAggregateRootId> extends AbstractMessage imple
 	}
 
 	@Override
-	public void setAggregateRootId(TAggregateRootId aggregateRootId) {
+	public void setAggregateRootId(String aggregateRootId) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public TAggregateRootId getAggregateRootId() {
+	public String getAggregateRootId() {
 		// TODO Auto-generated method stub
 		return null;
 	}

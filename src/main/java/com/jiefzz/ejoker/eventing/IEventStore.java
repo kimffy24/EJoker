@@ -13,11 +13,11 @@ public interface IEventStore {
 	 * @param maxVersion
 	 * @return
 	 */
-	public LinkedHashSet<IDomainEvent<?>> QueryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
+	public LinkedHashSet<IDomainEvent> QueryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
     
-	public void BatchAppendAsync(LinkedHashSet<IDomainEvent<?>> eventStreams);
+	public void BatchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams);
 	
-	public void AppendAsync(LinkedHashSet<IDomainEvent<?>> eventStream);
+	public void AppendAsync(LinkedHashSet<IDomainEvent> eventStream);
 	
 	public void FindAsync(String aggregateRootId, int version);
 	

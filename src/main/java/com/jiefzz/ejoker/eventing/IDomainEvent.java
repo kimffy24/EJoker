@@ -5,9 +5,9 @@ package com.jiefzz.ejoker.eventing;
 //	// empty
 //}
 
-public interface IDomainEvent<TAggregateRootId> extends ISequenceMessage {
+public interface IDomainEvent extends ISequenceMessage {
 	
-	public void setAggregateRootId(TAggregateRootId aggregateRootId);
-	public TAggregateRootId getAggregateRootId();
+	public void setAggregateRootId(String aggregateRootId);
+	public String getAggregateRootId();
 	
 }

@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.domain;
 
-public class IllegalAggregateRootIdException extends Exception {
+public class IllegalAggregateRootIdException extends RuntimeException {
 
 	public IllegalAggregateRootIdException(String string) {
 		super(string);

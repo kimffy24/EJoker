@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
+import com.jiefzz.ejoker.infrastructure.ArgumentNullException;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 
@@ -16,16 +17,16 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	long _version=0;
 	TAggregateRootId _id=null;
 
-	protected AbstractAggregateRoot(TAggregateRootId id) throws Exception {
+	protected AbstractAggregateRoot(TAggregateRootId id) {
 		if (id == null)
-			throw new Exception();
+			throw new ArgumentNullException("id");
 		_id = id;
 	}
 
-	protected AbstractAggregateRoot(TAggregateRootId id, long version) throws Exception {
+	protected AbstractAggregateRoot(TAggregateRootId id, long version) {
 		this(id);
 		if (version < 0)
-			throw new Exception(/*"Version cannot small than zero, aggregateRootId: {0}, version: {1}", id, version*/);
+			throw new ArgumentNullException("version");
 		_version = version;
 	}
 	
@@ -45,23 +46,23 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		return _version;
 	}
 
-	protected void ApplyEvent(IDomainEvent<TAggregateRootId> domainEvent) throws Exception {
+	protected void ApplyEvent(IDomainEvent domainEvent) throws Exception {
 
-		if (_id == null)
-			throw new Exception();
-		domainEvent.setAggregateRootId(_id);
+		if ( _id == null )
+			throw new IllegalAggregateRootIdException("Domain Aggregate Id is null!!!");
+		domainEvent.setAggregateRootId( _id.toString() );
 		domainEvent.setVersion(_version+1);
 		HandleEvent(domainEvent);
 		AppendUncommittedEvent(domainEvent);
 		
 	}
-	protected void ApplyEvents(IDomainEvent<TAggregateRootId>[] domainEvents) throws Exception {
-		for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
+	protected void ApplyEvents(IDomainEvent[] domainEvents) throws Exception {
+		for (IDomainEvent domainEvent : domainEvents)
 			ApplyEvent(domainEvent);
 	}
 	
-	private void HandleEvent(IDomainEvent<TAggregateRootId> domainEvent){}
-	private void AppendUncommittedEvent(IDomainEvent<TAggregateRootId> domainEvent){}
+	private void HandleEvent(IDomainEvent domainEvent){}
+	private void AppendUncommittedEvent(IDomainEvent domainEvent){}
 
 	@Override
 	public LinkedHashMap<Integer, String> GetChanges() { return null; }
