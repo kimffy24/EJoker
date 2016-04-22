@@ -5,7 +5,12 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
+import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+
 public class DomainEventStream implements Serializable {
+	
+	@PersistentIgnore
+	private static final long serialVersionUID = 964017131404839021L;
 	
 	private String commandId;
 	private String aggregateRootTypeName;
