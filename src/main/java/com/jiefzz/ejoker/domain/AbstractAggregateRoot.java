@@ -8,7 +8,7 @@ import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.infrastructure.ArgumentNullException;
 
-public class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
+public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 
 	@PersistentIgnore
 	private static final long serialVersionUID = -1803833835739801207L;
@@ -20,7 +20,7 @@ public class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<T
 	@PersistentIgnore
 	IAggregateRootInternalHandlerProvider eventHandlerProvider;
 	
-	private long _version=0;
+	private long version=0;
 	protected TAggregateRootId _id=null;
 
 	protected AbstractAggregateRoot(TAggregateRootId id) {
@@ -33,7 +33,7 @@ public class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<T
 		this(id);
 		if (version < 0)
 			throw new ArgumentNullException("version");
-		_version = version;
+		this.version = version;
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<T
 
 	@Override
 	public long getVersion() {
-		return _version;
+		return version;
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<T
 		if ( _id == null )
 			throw new IllegalAggregateRootIdException("Domain Aggregate Id is null!!!");
 		domainEvent.setAggregateRootId( _id );
-		domainEvent.setVersion(_version+1);
+		domainEvent.setVersion(version+1);
 		// 接收事件
 		HandleEvent(domainEvent);
 		// 提交事件到队列
