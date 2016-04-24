@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.extension.infrastructure.impl.utils;
+package com.jiefzz.ejoker.utils;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.annotation.persistent.PersistentTop;
+import com.jiefzz.test.ParameterizedTypeUtil;
 
 
 public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {

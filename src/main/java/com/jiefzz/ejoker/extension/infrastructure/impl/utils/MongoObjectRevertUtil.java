@@ -17,6 +17,7 @@ import org.bson.types.BasicBSONList;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentTop;
 import com.jiefzz.ejoker.extension.infrastructure.ExtensionInfrastructureRuntimeException;
+import com.jiefzz.test.ParameterizedTypeUtil;
 import com.mongodb.DBObject;
 
 public class MongoObjectRevertUtil {

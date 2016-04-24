@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.extension.infrastructure.impl.utils;
+package com.jiefzz.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 import com.jiefzz.ejoker.utils.Base64Utils;
 
-public class ObjectSerializeUtil {
+public class JavaObjectSerializeUtil {
 
 	public final static String serialize(Serializable object){
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();

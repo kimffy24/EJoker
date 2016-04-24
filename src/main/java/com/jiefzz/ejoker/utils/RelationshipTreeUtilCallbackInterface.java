@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.extension.infrastructure.impl.utils;
+package com.jiefzz.ejoker.utils;
 
 public interface RelationshipTreeUtilCallbackInterface<KVP, VP> {
 	
