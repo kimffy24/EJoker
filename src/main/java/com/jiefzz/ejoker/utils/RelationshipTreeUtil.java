@@ -10,7 +10,6 @@ import java.util.Set;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.annotation.persistent.PersistentTop;
-import com.jiefzz.test.ParameterizedTypeUtil;
 
 
 public class RelationshipTreeUtil<ContainerKVP, ContainerVP> {

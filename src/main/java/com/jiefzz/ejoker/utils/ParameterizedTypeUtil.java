@@ -1,4 +1,4 @@
-package com.jiefzz.test;
+package com.jiefzz.ejoker.utils;
 
 import java.util.Arrays;
 import java.util.Collection;

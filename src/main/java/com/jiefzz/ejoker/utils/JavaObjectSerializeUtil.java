@@ -1,4 +1,4 @@
-package com.jiefzz.test;
+package com.jiefzz.ejoker.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
-import com.jiefzz.ejoker.utils.Base64Utils;
 
 public class JavaObjectSerializeUtil {
 
