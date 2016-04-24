@@ -10,6 +10,10 @@ public interface IContextWorker extends IContext, IContextAssembly{
 	public boolean hasInstance(Class<?> classType);
 	public boolean hasInstance(String classTypeName);
 	
+	public void markWatingInject(String implClazz, Object instance, String fieldName);
+	public void resolveWatingInject(String implClazz, Object instance);
+	public void resolveWatingInject(Class<?> implClassType, Object instance);
+	
 	/**
 	 * 通过接口名，解析出其实现类
 	 * @param interfaceName

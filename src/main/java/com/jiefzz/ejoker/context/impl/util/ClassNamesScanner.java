@@ -17,7 +17,7 @@ import java.util.jar.JarFile;
  * @author JiefzzLon
  *
  */
-public class ClassesScanner {
+public class ClassNamesScanner {
 	
 	public static List<Class<?>> scanClass(String packageName) throws ClassNotFoundException {
 		List<String> classNames = scan(packageName);

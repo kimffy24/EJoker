@@ -13,7 +13,7 @@ import com.jiefzz.ejoker.annotation.context.EService;
 import com.jiefzz.ejoker.annotation.context.Initialize;
 import com.jiefzz.ejoker.context.ContextRuntimeException;
 import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
-import com.jiefzz.ejoker.context.impl.util.ClassesScanner;
+import com.jiefzz.ejoker.context.impl.util.ClassNamesScanner;
 
 public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 
@@ -40,7 +40,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	private void annotationScan(String specificPackage) {
 		List<Class<?>> clazzInSpecificPackage;
 		try {
-			clazzInSpecificPackage = ClassesScanner.scanClass(specificPackage);
+			clazzInSpecificPackage = ClassNamesScanner.scanClass(specificPackage);
 		} catch (Exception e) {
 			throw new ContextRuntimeException("Exception occur whild scanning package ["+specificPackage+"]!!!", e);
 		}

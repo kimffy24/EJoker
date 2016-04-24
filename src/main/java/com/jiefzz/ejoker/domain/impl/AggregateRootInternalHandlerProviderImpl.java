@@ -18,9 +18,7 @@ public class AggregateRootInternalHandlerProviderImpl implements IAggregateRootI
 			new HashMap<Class<? extends IAggregateRoot>, Map<Class<? extends IDomainEvent>, DelegateAction<IAggregateRoot, IDomainEvent>>>();
 
 
-	public AggregateRootInternalHandlerProviderImpl() {
-		// TODO Auto-generated constructor stub
-	}
+	public AggregateRootInternalHandlerProviderImpl() { }
 
 	@Override
 	public DelegateAction<IAggregateRoot, IDomainEvent> GetInternalEventHandler(Class<? extends IAggregateRoot> aggregateRootType, Class<? extends IDomainEvent> eventType) {

@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.context.impl;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,6 +36,21 @@ public class InstanceBuilderImpl implements IInstanceBuilder {
 	}
 	
 	private Object doInjectDependence(Object instance){
+		context.resolveWatingInject(clazz, instance);
+		Set<String> ownWatingInjectFieldNames = dependenceInfo.keySet();
+		for ( String fieldName : ownWatingInjectFieldNames ) {
+			String typeName = dependenceInfo.get(fieldName);
+			if ( context.hasInstance(typeName) ) {
+				try {
+					Field field = clazz.getField(fieldName);
+					field.setAccessible(true);
+					field.set(instance, context.getInstance(typeName));
+				} catch (Exception e) {
+					throw new ContextRuntimeException("Could not create instance of ["+clazz.getName()+"]", e);
+				}
+			} else
+				context.markWatingInject(typeName, instance, fieldName);
+		}
 		return instance;
 	}
 	

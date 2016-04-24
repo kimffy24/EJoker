@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.context.impl;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,6 +9,7 @@ import com.jiefzz.ejoker.context.AbstractContext;
 import com.jiefzz.ejoker.context.ContextRuntimeException;
 import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
 import com.jiefzz.ejoker.context.IInstanceBuilder;
+import com.jiefzz.ejoker.context.LazyInjectTuple;
 
 public class SimpleContext extends AbstractContext {
 
@@ -31,6 +33,21 @@ public class SimpleContext extends AbstractContext {
 	public synchronized <TInstance> TInstance get(Class<TInstance> clazz){
 		Object instance = getInstance(clazz);
 		if (instance != null) return (TInstance ) instance;
+		instance = innerGet(clazz);
+		loadAllWating();
+		return (TInstance ) instance;
+	}
+	
+
+	@Override
+	public String resolve(String interfaceName){
+		if (eServiceInterfaceMapper.containsKey(interfaceName))
+			return eServiceInterfaceMapper.get(interfaceName);
+		return null;
+	}
+
+	private <TInstance> TInstance innerGet(Class<TInstance> clazz){
+
 		Class<?> clazzImpl = clazz;
 		if (clazz.isInterface()) {
 			String clazzImplName = resolve(clazz.getName());
@@ -48,13 +65,19 @@ public class SimpleContext extends AbstractContext {
 				assemblyInfo.getDependenceMapper().get(clazzName),
 				assemblyInfo.getInitializeMapper().get(clazzName));
 		return (TInstance) instanceBuilder.doCreate();
+		
 	}
-
-	@Override
-	public String resolve(String interfaceName){
-		if (eServiceInterfaceMapper.containsKey(interfaceName))
-			return eServiceInterfaceMapper.get(interfaceName);
-		return null;
+	
+	private void loadAllWating(){
+		Map<String, List<LazyInjectTuple>> multiDependenceInstance = getMultiDependenceInstanceMapper();
+		if(multiDependenceInstance.size()==0) return;
+		Set<String> watingObjectInstances = multiDependenceInstance.keySet();
+		for (String watingObjectInstance : watingObjectInstances )
+			try {
+				innerGet(Class.forName(watingObjectInstance));
+			} catch (Exception e) {
+				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
+			}
 	}
 
 	private IAssemblyAnalyzer getAssemblyInfo(String classFullName){
