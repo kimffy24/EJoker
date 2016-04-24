@@ -7,4 +7,6 @@ public interface IContext {
 	public Object getInstance(String classTypeName, boolean strict);
 	public Object getInstance(String classTypeName);
 	
+	public boolean hasInstance(Class<?> classType);
+	public boolean hasInstance(String classTypeName);
 }

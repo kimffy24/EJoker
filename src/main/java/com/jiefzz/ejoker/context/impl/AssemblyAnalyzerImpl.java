@@ -21,7 +21,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	}
 	
 	@Override
-	public Map<String, Set<String>> getDependenceMapper() {
+	public Map<String, Map<String, String>> getDependenceMapper() {
 		return contextDependenceAnnotationMapping;
 	}
 
@@ -47,28 +47,31 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	}
 	
 	private void analyzeContextAnnotation(Class<?> clazz) {
-		Set<String> annotationFieldName = new HashSet<String>();
+		String className = clazz.getName();
+		Map<String, String> annotationFieldName = new HashMap<String, String>();
 		Set<String> annotationMethodName = new HashSet<String>();
 		for ( ; clazz != Object.class; clazz = clazz.getSuperclass() ) {
 			Field[] fieldArray = clazz.getDeclaredFields();
 			for ( Field field : fieldArray ) {
-				if ( annotationFieldName.contains(field.getName()) ) continue;
+				if ( annotationFieldName.containsKey(field.getName()) ) continue;
 				if ( field.isAnnotationPresent(Dependence.class) )
-					annotationFieldName.add(field.getName());
+					annotationFieldName.put(field.getName(), field.getType().getName());
 			}
 			Method[] methods = clazz.getMethods();
 			for ( Method method : methods ) {
 				if ( annotationMethodName.contains(method.getName()) ) continue;
 				if ( method.isAnnotationPresent(Initialize.class) )
-					annotationFieldName.add(method.getName());
+					annotationMethodName.add(method.getName());
 			}
 		}
-		contextDependenceAnnotationMapping.put(clazz.getName(), annotationFieldName);
-		contextInitializeAnnotationMapping.put(clazz.getName(), annotationMethodName);
+		if ( annotationFieldName.size()>0 )
+			contextDependenceAnnotationMapping.put(className, annotationFieldName);
+		if ( annotationMethodName.size()>0 )
+			contextInitializeAnnotationMapping.put(className, annotationMethodName);
 		
 	}
 
-	private final Map<String, Set<String>> contextDependenceAnnotationMapping = new HashMap<String, Set<String>>();
+	private final Map<String, Map<String, String>> contextDependenceAnnotationMapping = new HashMap<String, Map<String, String>>();
 	private final Map<String, Set<String>> contextInitializeAnnotationMapping = new HashMap<String, Set<String>>();
 	
 }

@@ -8,13 +8,14 @@ import java.util.Map;
  * @author JiefzzLon
  *
  */
-public abstract class AbstractContext implements IContext,IContextBuilder {
+public abstract class AbstractContext implements IContextBuilder {
 
 	private final Map<String, Object> typeInstanceMap = new HashMap<String, Object>();
 
 	protected AbstractContext() {
 		selfInject();
 	}
+	
 	@Override
 	public Object getInstance(Class<?> classType, boolean strict) {
 		return getInstance(classType.getName(), strict);
@@ -49,8 +50,21 @@ public abstract class AbstractContext implements IContext,IContextBuilder {
 		typeInstanceMap.put(classTypeName, object);
 	}
 
+	@Override
+	public boolean hasInstance(Class<?> classType){
+		return hasInstance(classType.getName());
+	}
+	
+	@Override
+	public boolean hasInstance(String classTypeName){
+		return typeInstanceMap.containsKey(classTypeName);
+	}
+	
+	/**
+	 * 仅供构造函数调用
+	 */
 	private void selfInject(){
 		adoptInstance(IContext.class, this);
-		adoptInstance(IContextBuilder.class, this);
+		adoptInstance(IContextAssembly.class, this);
 	}
 }

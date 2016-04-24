@@ -1,8 +1,5 @@
 package com.jiefzz.ejoker.context;
 
-public interface IContextBuilder {
+public interface IContextBuilder extends IContext, IContextAssembly{
 
-	public void adoptInstance(Class<?> classType, Object object);
-	public void adoptInstance(String classTypeName, Object object);
-	
 }

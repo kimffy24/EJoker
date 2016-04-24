@@ -19,8 +19,16 @@ import java.util.jar.JarFile;
  */
 public class ClassesScanner {
 	
+	public static List<Class<?>> scanClass(String packageName) throws ClassNotFoundException {
+		List<String> classNames = scan(packageName);
+		List<Class<?>> result = new ArrayList<Class<?>>();
+		for ( String item : classNames )
+			result.add(Class.forName(item));
+		return result;
+	}
+	
 	/**
-	 * 扫描出指定包下的所有类
+	 * 扫描出指定包下的所有类的名字
 	 * 不包含匿名类、内部类
 	 * @param packageName
 	 * @return List<String> // a list contains class with full package path.
