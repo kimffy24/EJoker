@@ -35,6 +35,7 @@ public class SimpleContext extends AbstractContext {
 		if (instance != null) return (TInstance ) instance;
 		instance = innerGet(clazz);
 		loadAllWating();
+		if ( getMultiDependenceInstanceMapper().size()!=0 ) throw new ContextRuntimeException("There some worng dependence could not resolve!!!");
 		return (TInstance ) instance;
 	}
 	
