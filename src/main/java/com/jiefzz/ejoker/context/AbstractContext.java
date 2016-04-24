@@ -65,6 +65,7 @@ public abstract class AbstractContext implements IContextWorker {
 
 	@Override
 	public void markWatingInject(String implClazz, Object instance, String fieldName) {
+		implClazz = resolve(implClazz);
 		LazyInjectTuple lazyInjectTuple = new LazyInjectTuple();
 		lazyInjectTuple.instance = instance;
 		lazyInjectTuple.fildName = fieldName;
@@ -83,7 +84,7 @@ public abstract class AbstractContext implements IContextWorker {
 		List<LazyInjectTuple> tupleList = multiDependenceInstance.get(implClazz);
 		for ( LazyInjectTuple tuple : tupleList ) {
 			try {
-				Field field = tuple.instance.getClass().getField(tuple.fildName);
+				Field field = tuple.instance.getClass().getDeclaredField(tuple.fildName);
 				field.setAccessible(true);
 				field.set(tuple.instance, instance);
 			} catch (Exception e) {

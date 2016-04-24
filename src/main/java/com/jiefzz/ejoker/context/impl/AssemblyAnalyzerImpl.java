@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
+
 import com.jiefzz.ejoker.annotation.context.Dependence;
 import com.jiefzz.ejoker.annotation.context.EService;
 import com.jiefzz.ejoker.annotation.context.Initialize;
@@ -64,7 +66,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 			Field[] fieldArray = clazz.getDeclaredFields();
 			for ( Field field : fieldArray ) {
 				if ( annotationFieldName.containsKey(field.getName()) ) continue;
-				if ( field.isAnnotationPresent(Dependence.class) )
+				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) )
 					annotationFieldName.put(field.getName(), field.getType().getName());
 			}
 			Method[] methods = clazz.getMethods();

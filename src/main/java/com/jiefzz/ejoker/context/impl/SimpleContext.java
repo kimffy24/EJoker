@@ -43,7 +43,7 @@ public class SimpleContext extends AbstractContext {
 	public String resolve(String interfaceName){
 		if (eServiceInterfaceMapper.containsKey(interfaceName))
 			return eServiceInterfaceMapper.get(interfaceName);
-		return null;
+		return interfaceName;
 	}
 
 	private <TInstance> TInstance innerGet(Class<TInstance> clazz){
@@ -54,6 +54,7 @@ public class SimpleContext extends AbstractContext {
 			try {
 				clazzImpl = Class.forName(clazzImplName);
 			} catch (Exception e) {
+				System.err.println("fetch "+clazzImplName);
 				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
 			}
 		}
