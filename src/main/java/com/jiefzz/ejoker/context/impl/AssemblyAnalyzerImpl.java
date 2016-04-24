@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.jiefzz.ejoker.annotation.context.Dependence;
+import com.jiefzz.ejoker.annotation.context.EService;
 import com.jiefzz.ejoker.annotation.context.Initialize;
 import com.jiefzz.ejoker.context.ContextRuntimeException;
 import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
@@ -48,6 +49,10 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	
 	private void analyzeContextAnnotation(Class<?> clazz) {
 		String className = clazz.getName();
+		
+		if(clazz.isAnnotationPresent(EService.class))
+			contextEServiceAnnotationMapping.add(className);
+		
 		Map<String, String> annotationFieldName = new HashMap<String, String>();
 		Set<String> annotationMethodName = new HashSet<String>();
 		for ( ; clazz != Object.class; clazz = clazz.getSuperclass() ) {
@@ -73,5 +78,5 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 
 	private final Map<String, Map<String, String>> contextDependenceAnnotationMapping = new HashMap<String, Map<String, String>>();
 	private final Map<String, Set<String>> contextInitializeAnnotationMapping = new HashMap<String, Set<String>>();
-	
+	private final Set<String> contextEServiceAnnotationMapping = new HashSet<String>();
 }
