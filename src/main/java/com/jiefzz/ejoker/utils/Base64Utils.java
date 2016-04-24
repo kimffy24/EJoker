@@ -8,6 +8,7 @@ public class Base64Utils {
 	 * @param bstr 
 	 * @return String 
 	 */  
+	@SuppressWarnings("restriction")
 	public static String encode(byte[] bstr){  
 		return new sun.misc.BASE64Encoder().encode(bstr);  
 	}  
@@ -17,6 +18,7 @@ public class Base64Utils {
 	 * @param str 
 	 * @return string 
 	 */  
+	@SuppressWarnings("restriction")
 	public static byte[] decode(String str){  
 		byte[] bt = null;  
 		try {  

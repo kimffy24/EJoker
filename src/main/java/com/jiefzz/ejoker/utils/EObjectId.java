@@ -8,6 +8,7 @@ import java.util.Enumeration;
 
 public class EObjectId {
 
+	@SuppressWarnings("unused")
 	private static enum BinarySystem {
 		Hexadecimal,
 		Duotricemary,
@@ -46,9 +47,9 @@ public class EObjectId {
 	
 	private long timestamp;
 	private long randomDivision;
-	private String holderStringHex;
-	private String holderStringBS32;
-	private String holderStringBS64;
+//	private String holderStringHex;
+//	private String holderStringBS32;
+//	private String holderStringBS64;
 	
 	private EObjectId() {
 		timestamp = System.currentTimeMillis();

@@ -1,8 +1,8 @@
-package com.jiefzz.ejoker.extension.infrastructure.impl;
+package com.jiefzz.ejoker.infrastructure.impl;
 
 import com.jiefzz.ejoker.annotation.context.EService;
-import com.jiefzz.ejoker.extension.infrastructure.ExtensionInfrastructureRuntimeException;
-import com.jiefzz.ejoker.extension.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.utils.RelationshipTreeUtil;
 import com.jiefzz.ejoker.utils.RelationshipTreeUtilCallbackInterface;
 
@@ -22,7 +22,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 		try {
 			result = relationshipTreeUtil.getTreeStructureMap(object);
 		} catch (Exception e) {
-			throw new ExtensionInfrastructureRuntimeException("", e);
+			throw new InfrastructureRuntimeException("", e);
 		}
 		return JSONValue.toJSONString(result, JSONStyle.NO_COMPRESS);
 	}
@@ -35,7 +35,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 
 	@Override
 	public <T> void contain(String jsonString, T container) {
-		throw new ExtensionInfrastructureRuntimeException("Umimplemented!!!");
+		throw new InfrastructureRuntimeException("Umimplemented!!!");
 	}
 
 	/**

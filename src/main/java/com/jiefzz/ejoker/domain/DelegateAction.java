@@ -1,9 +1,9 @@
 package com.jiefzz.ejoker.domain;
 
 import com.jiefzz.ejoker.eventing.IDomainEvent;
-import com.jiefzz.ejoker.extension.infrastructure.impl.JSONConverterUseJsonSmartImpl;
 import com.jiefzz.ejoker.infrastructure.DelegateIllegalException;
 import com.jiefzz.ejoker.infrastructure.IDelegateAction;
+import com.jiefzz.ejoker.infrastructure.impl.JSONConverterUseJsonSmartImpl;
 
 public class DelegateAction<TAggregateRoot extends IAggregateRoot, TDomainEvent extends IDomainEvent> implements IDelegateAction {
 
