@@ -1,7 +1,6 @@
 package com.jiefzz.ejoker.extension.infrastructure.impl;
 
-import org.springframework.stereotype.Service;
-
+import com.jiefzz.ejoker.annotation.context.EService;
 import com.jiefzz.ejoker.extension.infrastructure.ExtensionInfrastructureRuntimeException;
 import com.jiefzz.ejoker.extension.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.extension.infrastructure.impl.utils.RelationshipTreeUtil;
@@ -12,7 +11,7 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.JSONStyle;
 import net.minidev.json.JSONValue;
 
-@Service
+@EService
 public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 
 	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new BuilderToolSet());

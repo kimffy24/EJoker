@@ -30,6 +30,11 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	public Map<String, Set<String>> getInitializeMapper() {
 		return contextInitializeAnnotationMapping;
 	}
+	
+	@Override
+	public Set<String> getEServiceMapper() {
+		return contextEServiceAnnotationMapping;
+	}
 
 
 	private void annotationScan(String specificPackage) {

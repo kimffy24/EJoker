@@ -8,7 +8,7 @@ import java.util.Map;
  * @author JiefzzLon
  *
  */
-public abstract class AbstractContext implements IContextBuilder {
+public abstract class AbstractContext implements IContextWorker {
 
 	private final Map<String, Object> typeInstanceMap = new HashMap<String, Object>();
 

@@ -7,5 +7,6 @@ public interface IAssemblyAnalyzer {
 
 	public Map<String, Map<String, String>> getDependenceMapper();
 	public Map<String, Set<String>> getInitializeMapper();
+	public Set<String> getEServiceMapper();
 	
 }

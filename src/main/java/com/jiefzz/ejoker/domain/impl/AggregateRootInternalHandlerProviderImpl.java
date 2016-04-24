@@ -3,11 +3,14 @@ package com.jiefzz.ejoker.domain.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
+
 import com.jiefzz.ejoker.domain.DelegateAction;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateRootInternalHandlerProvider;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 
+@Service
 public class AggregateRootInternalHandlerProviderImpl implements IAggregateRootInternalHandlerProvider {
 
 	private final Class<?>[] parameterTypes = new Class<?>[]{IAggregateRoot.class, IDomainEvent.class};

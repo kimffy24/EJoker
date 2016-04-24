@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.domain;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
+import com.jiefzz.ejoker.annotation.context.Dependence;
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
@@ -17,6 +18,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
     private static final LinkedHashSet<IDomainEvent> emptyEvents = new LinkedHashSet<IDomainEvent>();
 
 	// TODO Please use your IoC to inject this Implement Object!!!
+	@Dependence
 	@PersistentIgnore
 	IAggregateRootInternalHandlerProvider eventHandlerProvider;
 	

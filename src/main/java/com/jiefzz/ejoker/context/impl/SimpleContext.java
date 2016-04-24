@@ -8,29 +8,8 @@ import com.jiefzz.ejoker.context.AbstractContext;
 import com.jiefzz.ejoker.context.ContextRuntimeException;
 import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
 import com.jiefzz.ejoker.context.IInstanceBuilder;
-import com.jiefzz.ejoker.extension.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.extension.infrastructure.impl.JSONConverterUseJsonSmartImpl;
 
 public class SimpleContext extends AbstractContext {
-
-	public static void main(String[] args) {
-		//		String packageName = "com.jiefzz.ejoker.";
-		//		System.out.println(packageName.lastIndexOf('.'));
-		//		System.out.println(packageName.length());
-		//		System.out.println(packageName.startsWith("com.jiefzz.ejoker.13412341234"));
-
-		IJSONConverter jsonConverter = new JSONConverterUseJsonSmartImpl();
-
-		SimpleContext simpleContext = new SimpleContext();
-		simpleContext.annotationScan("com.jiefzz.ejoker");
-
-		Set<String> keySet = simpleContext.assemblyMapper.keySet();
-		for ( String key : keySet ){
-			IAssemblyAnalyzer aa = simpleContext.assemblyMapper.get(key);
-			System.out.println(jsonConverter.convert(aa));
-		}
-
-	}
 
 	public SimpleContext(){ super(); }
 
@@ -45,12 +24,36 @@ public class SimpleContext extends AbstractContext {
 			if(key.startsWith(specificPackage)) assemblyMapper.remove(key);
 		}
 		IAssemblyAnalyzer aa = new AssemblyAnalyzerImpl(specificPackage);
+		combineEServiceInterfaceMapper(aa.getEServiceMapper());
 		assemblyMapper.put(specificPackage, aa);
 	}
-	
-	private <T> T get(Class<T> clazz){
-		IAssemblyAnalyzer assemblyInfo = getAssemblyInfo(clazz.getName());
-		IInstanceBuilder instanceBuilder = new InstanceBuilderImpl(this);
+
+	public synchronized <TInstance> TInstance get(Class<TInstance> clazz){
+		Object instance = getInstance(clazz);
+		if (instance != null) return (TInstance ) instance;
+		Class<?> clazzImpl = clazz;
+		if (clazz.isInterface()) {
+			String clazzImplName = resolve(clazz.getName());
+			try {
+				clazzImpl = Class.forName(clazzImplName);
+			} catch (Exception e) {
+				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
+			}
+		}
+		String clazzName = clazzImpl.getName();
+		IAssemblyAnalyzer assemblyInfo = getAssemblyInfo(clazzName);
+		IInstanceBuilder instanceBuilder = new InstanceBuilderImpl(
+				this,
+				clazzImpl,
+				assemblyInfo.getDependenceMapper().get(clazzName),
+				assemblyInfo.getInitializeMapper().get(clazzName));
+		return (TInstance) instanceBuilder.doCreate();
+	}
+
+	@Override
+	public String resolve(String interfaceName){
+		if (eServiceInterfaceMapper.containsKey(interfaceName))
+			return eServiceInterfaceMapper.get(interfaceName);
 		return null;
 	}
 
@@ -62,5 +65,26 @@ public class SimpleContext extends AbstractContext {
 		throw new ContextRuntimeException("AssemblyInfo for ["+classFullName+"] is not found!!!Did you forget make it into to scan?");
 	}
 
+	private void combineEServiceInterfaceMapper(Set<String> eServiceClasses){
+		for (String clazzName : eServiceClasses) {
+			Class<?> clazz;
+			try {
+				clazz = Class.forName(clazzName);
+			} catch (Exception e) {
+				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
+			}
+			Class<?>[] implementInterfaces = clazz.getInterfaces();
+			for (Class<?> intf : implementInterfaces) {
+				String interfaceName = intf.getName();
+				if ( eServiceInterfaceMapper.containsKey(interfaceName) )
+					throw new ContextRuntimeException("The interface ["+interfaceName+"] has regist an implemented class!!!");
+				//Map<String, Class<?>[]> item = new HashMap<String, Class<?>[]>();
+				//item.put(clazzName, implementInterfaces);
+				eServiceInterfaceMapper.put(interfaceName, clazzName);
+			}
+		}
+	}
+
 	private final Map<String, IAssemblyAnalyzer> assemblyMapper = new HashMap<String, IAssemblyAnalyzer>();
+	private final Map<String, String> eServiceInterfaceMapper = new HashMap<String, String>();
 }
