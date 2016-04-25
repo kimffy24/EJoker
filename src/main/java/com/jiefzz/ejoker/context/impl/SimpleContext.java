@@ -103,8 +103,6 @@ public class SimpleContext extends AbstractContext {
 				String interfaceName = intf.getName();
 				if ( eServiceInterfaceMapper.containsKey(interfaceName) )
 					throw new ContextRuntimeException("The interface ["+interfaceName+"] has regist an implemented class!!!");
-				//Map<String, Class<?>[]> item = new HashMap<String, Class<?>[]>();
-				//item.put(clazzName, implementInterfaces);
 				eServiceInterfaceMapper.put(interfaceName, clazzName);
 			}
 		}

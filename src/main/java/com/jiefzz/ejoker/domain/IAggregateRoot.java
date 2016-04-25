@@ -15,4 +15,5 @@ public interface IAggregateRoot<TAggregateRootId> extends Serializable  {
 	
 	public long getVersion();
 	public String getUniqueId();
+	
 }

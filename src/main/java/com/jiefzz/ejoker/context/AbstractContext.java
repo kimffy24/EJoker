@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 存入和取出对象
@@ -64,11 +63,11 @@ public abstract class AbstractContext implements IContextWorker {
 	}
 
 	@Override
-	public void markWatingInject(String implClazz, Object instance, String fieldName) {
+	public void markWatingInject(String implClazz, Object instance, Field field) {
 		implClazz = resolve(implClazz);
 		LazyInjectTuple lazyInjectTuple = new LazyInjectTuple();
 		lazyInjectTuple.instance = instance;
-		lazyInjectTuple.fildName = fieldName;
+		lazyInjectTuple.field = field;
 		if ( multiDependenceInstance.containsKey(implClazz) )
 			multiDependenceInstance.get(implClazz).add(lazyInjectTuple);
 		else {
@@ -84,7 +83,7 @@ public abstract class AbstractContext implements IContextWorker {
 		List<LazyInjectTuple> tupleList = multiDependenceInstance.get(implClazz);
 		for ( LazyInjectTuple tuple : tupleList ) {
 			try {
-				Field field = tuple.instance.getClass().getDeclaredField(tuple.fildName);
+				Field field = tuple.field;
 				field.setAccessible(true);
 				field.set(tuple.instance, instance);
 			} catch (Exception e) {

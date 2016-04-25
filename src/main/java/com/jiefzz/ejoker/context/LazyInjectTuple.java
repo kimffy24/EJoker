@@ -1,8 +1,10 @@
 package com.jiefzz.ejoker.context;
 
+import java.lang.reflect.Field;
+
 public class LazyInjectTuple {
 
 	public Object instance;
-	public String fildName;
+	public Field field;
 	
 }

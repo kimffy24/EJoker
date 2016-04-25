@@ -1,34 +1,40 @@
 package com.jiefzz.ejoker.domain;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.infrastructure.DelegateIllegalException;
 import com.jiefzz.ejoker.infrastructure.IDelegateAction;
 import com.jiefzz.ejoker.infrastructure.impl.JSONConverterUseJsonSmartImpl;
 
-public class DelegateAction<TAggregateRoot extends IAggregateRoot, TDomainEvent extends IDomainEvent> implements IDelegateAction {
+public class DelegateAction<TAggregateRoot extends IAggregateRoot, TDomainEvent extends IDomainEvent> implements IDelegateAction<TAggregateRoot, TDomainEvent> {
 
-	//private ThreadLocal<TAggregateRoot> delegatorThreadorHolder;
-	
 	/**
 	 * 执行委托
 	 * TODO 未完成的委托功能！！！
 	 */
 	@Override
-	public void delegate(Object delegator, Object parameter) {
-		TAggregateRoot client = convert(delegator);
-		System.out.println((new JSONConverterUseJsonSmartImpl()).convert(parameter));
-		throw new DelegateIllegalException("Unimplemented!!!");
-	}
-
-	@SuppressWarnings("unchecked")
-	private TAggregateRoot convert(Object delegator) {
-		TAggregateRoot client;
+	public void delegate(TAggregateRoot delegator, TDomainEvent parameter) {
+		String eventTypeName = parameter.getClass().getName();
+		Method handler;
 		try {
-			client = (TAggregateRoot ) delegator;
-		} catch ( ClassCastException cce ) {
-			throw new DelegateIllegalException("This delefator is not create by " + delegator.getClass().getName(), cce);
+			if (eventHandlers.containsKey(eventTypeName))
+				handler = eventHandlers.get(eventTypeName);
+			else {
+				handler = delegator.getClass().getDeclaredMethod("handler", parameter.getClass());
+				eventHandlers.put(eventTypeName, handler);
+			}
+			handler.setAccessible(true);
+			handler.invoke(delegator, parameter);
+		} catch (Exception e) {
+			throw new DelegateIllegalException("class ["+delegator.getClass().getName()+"] haven't declare method [handler] to handler ["+parameter.getClass().getName()+"] !!!", e);
 		}
-		return client;
 	}
+	
+	private final Map<String, Method> eventHandlers = new HashMap<String, Method>();
 
 }

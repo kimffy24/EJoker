@@ -30,7 +30,7 @@ public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 
 	@Override
 	public void AppendAsync(IDomainEvent event) {
-		System.err.println(
+		System.out.println(
 				jsonConverter.convert(
 						event
 						)

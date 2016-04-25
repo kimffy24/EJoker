@@ -12,15 +12,15 @@ import com.jiefzz.ejoker.context.IInstanceBuilder;
 
 public class InstanceBuilderImpl implements IInstanceBuilder {
 
-	private static final Map<String, String> emptyDependenceInfo = new HashMap<String, String>();
+	private static final Map<String, Field> emptyDependenceInfo = new HashMap<String, Field>();
 	private static final Set<String> emptyInitializeInfo = new HashSet<String>();
 	
 	private final AbstractContext context;
-	private final Map<String, String> dependenceInfo;
+	private final Map<String, Field> dependenceInfo;
 	private final Set<String> initializeInfo;
 	private final Class<?> clazz;
 	
-	public InstanceBuilderImpl(AbstractContext context, Class<?> clazz, Map<String, String> dependenceInfo, Set<String> initializeInfo){
+	public InstanceBuilderImpl(AbstractContext context, Class<?> clazz, Map<String, Field> dependenceInfo, Set<String> initializeInfo){
 		this.context = context;
 		this.clazz = clazz;
 		this.dependenceInfo = dependenceInfo!=null?dependenceInfo:emptyDependenceInfo;
@@ -44,17 +44,16 @@ public class InstanceBuilderImpl implements IInstanceBuilder {
 		context.resolveWatingInject(clazz, instance);
 		Set<String> ownWatingInjectFieldNames = dependenceInfo.keySet();
 		for ( String fieldName : ownWatingInjectFieldNames ) {
-			String typeName = dependenceInfo.get(fieldName);
-			if ( context.hasInstance(typeName) ) {
+			Field field = dependenceInfo.get(fieldName);
+			if ( context.hasInstance(field.getType()) ) {
 				try {
-					Field field = clazz.getDeclaredField(fieldName);
 					field.setAccessible(true);
-					field.set(instance, context.getInstance(typeName));
+					field.set(instance, context.getInstance(field.getType()));
 				} catch (Exception e) {
 					throw new ContextRuntimeException("Could not create instance of ["+clazz.getName()+"]", e);
 				}
 			} else
-				context.markWatingInject(typeName, instance, fieldName);
+				context.markWatingInject(field.getType().getName(), instance, field);
 		}
 		return instance;
 	}

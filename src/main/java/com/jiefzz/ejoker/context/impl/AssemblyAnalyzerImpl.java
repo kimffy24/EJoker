@@ -24,7 +24,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	}
 	
 	@Override
-	public Map<String, Map<String, String>> getDependenceMapper() {
+	public Map<String, Map<String, Field>> getDependenceMapper() {
 		return contextDependenceAnnotationMapping;
 	}
 
@@ -57,23 +57,28 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	private void analyzeContextAnnotation(Class<?> clazz) {
 		String className = clazz.getName();
 		
+		// collect the class which is set annotation @EService .
 		if(clazz.isAnnotationPresent(EService.class))
 			contextEServiceAnnotationMapping.add(className);
 		
-		Map<String, String> annotationFieldName = new HashMap<String, String>();
+		// collect the method which annotate by @Initialize .
+		// just care the final class, not the super one.
 		Set<String> annotationMethodName = new HashSet<String>();
+		Method[] methods = clazz.getDeclaredMethods();
+		for ( Method method : methods ) {
+			if ( annotationMethodName.contains(method.getName()) ) continue;
+			if ( method.isAnnotationPresent(Initialize.class) )
+				annotationMethodName.add(method.getName());
+		}
+
+		// collect the properties which annotate by @Dependence
+		Map<String, Field> annotationFieldName = new HashMap<String, Field>();
 		for ( ; clazz != Object.class; clazz = clazz.getSuperclass() ) {
 			Field[] fieldArray = clazz.getDeclaredFields();
 			for ( Field field : fieldArray ) {
 				if ( annotationFieldName.containsKey(field.getName()) ) continue;
 				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) )
-					annotationFieldName.put(field.getName(), field.getType().getName());
-			}
-			Method[] methods = clazz.getMethods();
-			for ( Method method : methods ) {
-				if ( annotationMethodName.contains(method.getName()) ) continue;
-				if ( method.isAnnotationPresent(Initialize.class) )
-					annotationMethodName.add(method.getName());
+					annotationFieldName.put(field.getName(), field);
 			}
 		}
 		if ( annotationFieldName.size()>0 )
@@ -83,7 +88,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 		
 	}
 
-	private final Map<String, Map<String, String>> contextDependenceAnnotationMapping = new HashMap<String, Map<String, String>>();
+	private final Map<String, Map<String, Field>> contextDependenceAnnotationMapping = new HashMap<String, Map<String, Field>>();
 	private final Map<String, Set<String>> contextInitializeAnnotationMapping = new HashMap<String, Set<String>>();
 	private final Set<String> contextEServiceAnnotationMapping = new HashSet<String>();
 }

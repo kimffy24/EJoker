@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.context;
 
+import java.lang.reflect.Field;
+
 public interface IContextWorker extends IContext, IContextAssembly{
 
 	public Object getInstance(Class<?> classType, boolean strict);
@@ -10,7 +12,7 @@ public interface IContextWorker extends IContext, IContextAssembly{
 	public boolean hasInstance(Class<?> classType);
 	public boolean hasInstance(String classTypeName);
 	
-	public void markWatingInject(String implClazz, Object instance, String fieldName);
+	public void markWatingInject(String implClazz, Object instance, Field field);
 	public void resolveWatingInject(String implClazz, Object instance);
 	public void resolveWatingInject(Class<?> implClassType, Object instance);
 	

@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.domain;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
@@ -21,6 +23,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@Dependence
 	@PersistentIgnore
 	IAggregateRootInternalHandlerProvider eventHandlerProvider;
+	
 	
 	private long version=0;
 	protected TAggregateRootId _id=null;
@@ -52,19 +55,11 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	public long getVersion() {
 		return version;
 	}
-
-	@Override
-	public LinkedHashMap<Integer, String> GetChanges() { return null; }
-
-	@Override
-	public void AcceptChanges(int newVersion) {}
-
-	@Override
-	public void ReplayEvents(LinkedHashMap<Integer, String> eventStreams) {}
-
-	@Override
-	public String getUniqueId() {
-		return getId().toString();
+	
+	public <TRole> TRole actAs(Class<TRole> clazz) {
+		if ( !clazz.isInterface() ) throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
+		if ( !clazz.isAssignableFrom(this.getClass())) throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
+		return (TRole) this;
 	}
 
 	protected void ApplyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
@@ -86,14 +81,30 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	private void HandleEvent(IDomainEvent<TAggregateRootId> domainEvent){
 		if (eventHandlerProvider == null)
 			throw new InvalidOperationException("IAggregateRootInternalHandlerProvider was never inject before!!!");
-		DelegateAction<IAggregateRoot, IDomainEvent> handler = eventHandlerProvider.GetInternalEventHandler(this.getClass(), domainEvent.getClass());
+		DelegateAction<IAggregateRoot, IDomainEvent> handler = (DelegateAction<IAggregateRoot, IDomainEvent>) eventHandlerProvider.getInnerEventHandler(this.getClass(), domainEvent.getClass());
 		if (handler == null) throw new InvalidOperationException("Could not found event handler for " 
 					+ domainEvent.getClass().getName() + " of " + this.getClass().getName() );
 		
 		// TODO 第一次使用
-		// { do something!! }
+		if ( this._id == null && domainEvent.getVersion() == 1 )
+			this._id = domainEvent.getAggregateRootId();
 		
+		handler.delegate(this, domainEvent);;
 		
+	}
+
+	@Override
+	public LinkedHashMap<Integer, String> GetChanges() { return null; }
+
+	@Override
+	public void AcceptChanges(int newVersion) {}
+
+	@Override
+	public void ReplayEvents(LinkedHashMap<Integer, String> eventStreams) {}
+
+	@Override
+	public String getUniqueId() {
+		return getId().toString();
 	}
 	private void AppendUncommittedEvent(IDomainEvent<TAggregateRootId> domainEvent){}
 

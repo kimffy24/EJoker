@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.infrastructure;
 
-public interface IDelegateAction {
+public interface IDelegateAction<TDelegator, TParameter> {
 
-	public void delegate(Object delegator, Object parameter);
+	public void delegate(TDelegator delegator, TParameter parameter);
 	
 }
