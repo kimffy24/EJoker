@@ -26,14 +26,6 @@ public interface RelationshipTreeUtilCallbackInterface<KVP, VP> {
 	public boolean isHas(KVP targetNode, String key) throws Exception;
 	
 	/**
-	 * 合并两个键值集容器的方法，仅仅对键值集有效
-	 * @param targetNode
-	 * @param tempNode
-	 * @throws Exception
-	 */
-	public void merge(KVP targetNode, KVP tempNode) throws Exception;
-	
-	/**
 	 * 添加元素到值集的方法
 	 * @param valueSet
 	 * @param child
@@ -49,4 +41,20 @@ public interface RelationshipTreeUtilCallbackInterface<KVP, VP> {
 	 * @throws Exception
 	 */
 	public void addToKeyValueSet(KVP keyValueSet, Object child, String key) throws Exception;
+	
+	/**
+	 * 合并两个键值集容器的方法，仅仅对键值集有效
+	 * @param targetNode
+	 * @param tempNode
+	 * @throws Exception
+	 */
+	public void merge(KVP targetNode, KVP tempNode) throws Exception;
+	
+	/**
+	 * 获取某个键值对中的值，仅仅对键值集有效
+	 * @param key
+	 * @return
+	 * @throws Exception
+	 */
+	public Object getOne(KVP targetNode, String key) throws Exception;
 }

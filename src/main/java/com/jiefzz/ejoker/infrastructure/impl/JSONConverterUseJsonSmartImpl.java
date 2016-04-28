@@ -60,11 +60,6 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 		}
 
 		@Override
-		public void merge(JSONObject targetNode, JSONObject tempNode) throws Exception {
-			targetNode.putAll(tempNode);
-		}
-
-		@Override
 		public void addToValueSet(JSONArray valueSet, Object child) throws Exception {
 			valueSet.add(child);
 		}
@@ -72,6 +67,16 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 		@Override
 		public void addToKeyValueSet(JSONObject keyValueSet, Object child, String key) throws Exception {
 			keyValueSet.put(key, child);
+		}
+		
+		@Override
+		public void merge(JSONObject targetNode, JSONObject tempNode) throws Exception {
+			targetNode.putAll(tempNode);
+		}
+
+		@Override
+		public Object getOne(JSONObject targetNode, String key) throws Exception {
+			return targetNode.get(key);
 		}
 	}
 
