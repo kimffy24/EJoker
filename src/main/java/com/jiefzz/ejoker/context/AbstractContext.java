@@ -102,6 +102,10 @@ public abstract class AbstractContext implements IContextWorker {
 		return multiDependenceInstance;
 	}
 	
+	protected Map<String, Object> getTypeInstanceMap() {
+		return typeInstanceMap;
+	}
+	
 	/**
 	 * 仅供构造函数调用
 	 */

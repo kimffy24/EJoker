@@ -8,5 +8,7 @@ public interface IContext {
 	 * @return
 	 */
 	public <TInstance> TInstance get(Class<TInstance> clazz);
+	public <TInstance> void set(Class<TInstance> clazz, TInstance instance);
+	public <TInstance> void set(String instanceType, TInstance instance);
 	
 }

@@ -32,13 +32,6 @@
 
 	<dependencies>
 
-		<!-- spring核心包 -->
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-
 		<!-- 最快的json包 -->
 		<dependency>
 			<groupId>net.minidev</groupId>

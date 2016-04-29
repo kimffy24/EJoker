@@ -39,6 +39,14 @@ public class SimpleContext extends AbstractContext {
 		return (TInstance ) instance;
 	}
 	
+	public synchronized <TInstance> void set(Class<TInstance> clazz, TInstance instance) {
+		set(clazz.getName(), instance);
+	}
+	
+	public synchronized <TInstance> void set(String instanceType, TInstance instance) {
+		adoptInstance(instanceType, instance);
+	}
+	
 
 	@Override
 	public String resolve(String interfaceName){

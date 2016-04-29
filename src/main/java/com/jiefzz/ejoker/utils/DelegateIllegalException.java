@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure;
+package com.jiefzz.ejoker.utils;
 
 public class DelegateIllegalException extends RuntimeException {
 

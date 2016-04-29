@@ -28,5 +28,6 @@ public class Base64Utils {
 			e.printStackTrace();  
 		}  
 		return bt;  
-	}  
+	}
+	
 }

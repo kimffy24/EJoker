@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.jiefzz.ejoker.eventing.IDomainEvent;
-import com.jiefzz.ejoker.infrastructure.DelegateIllegalException;
-import com.jiefzz.ejoker.infrastructure.IDelegateAction;
 import com.jiefzz.ejoker.infrastructure.impl.JSONConverterUseJsonSmartImpl;
+import com.jiefzz.ejoker.utils.DelegateIllegalException;
+import com.jiefzz.ejoker.utils.IDelegateAction;
 
 public class DelegateAction<TAggregateRoot extends IAggregateRoot, TDomainEvent extends IDomainEvent> implements IDelegateAction<TAggregateRoot, TDomainEvent> {
 
