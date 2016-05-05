@@ -1,7 +1,5 @@
 package com.jiefzz.ejoker.domain;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
@@ -9,7 +7,7 @@ import com.jiefzz.ejoker.annotation.context.Dependence;
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
-import com.jiefzz.ejoker.infrastructure.ArgumentNullException;
+import com.jiefzz.ejoker.infrastructure.common.ArgumentNullException;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 
