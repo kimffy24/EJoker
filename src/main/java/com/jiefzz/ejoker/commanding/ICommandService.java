@@ -6,8 +6,9 @@ public interface ICommandService {
 	public void send(ICommand command);
 	
 	public void execute(ICommand command, int timeoutMillis);
-	//public void execute(ICommand command, CommandReturnType commandReturnType, int timeoutMillis);
+	public void execute(ICommand command, CommandReturnType commandReturnType, int timeoutMillis);
 	
 	public void executeAsync(ICommand command);
-	//public void executeAsync(ICommand command, CommandReturnType commandReturnType);
+	public void executeAsync(ICommand command, CommandReturnType commandReturnType);
+	
 }
