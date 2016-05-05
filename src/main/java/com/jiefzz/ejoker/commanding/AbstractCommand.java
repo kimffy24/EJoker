@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.commanding;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.infrastructure.AbstractMessage;
-import com.jiefzz.ejoker.infrastructure.ArgumentNullException;
+import com.jiefzz.ejoker.infrastructure.common.ArgumentNullException;
 
 public class AbstractCommand extends AbstractMessage implements ICommand {
 	
