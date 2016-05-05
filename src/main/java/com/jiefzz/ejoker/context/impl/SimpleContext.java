@@ -79,7 +79,7 @@ public class SimpleContext extends AbstractContext {
 	}
 	
 	private void loadAllWating(){
-		Map<String, List<LazyInjectTuple>> multiDependenceInstance = getMultiDependenceInstanceMapper();
+		Map<String, List<LazyInjectTuple>> multiDependenceInstance = (HashMap )getMultiDependenceInstanceMapper().clone();
 		if(multiDependenceInstance.size()==0) return;
 		Set<String> watingObjectInstances = multiDependenceInstance.keySet();
 		for (String watingObjectInstance : watingObjectInstances )

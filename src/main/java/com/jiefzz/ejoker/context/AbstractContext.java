@@ -14,7 +14,7 @@ import java.util.Map;
 public abstract class AbstractContext implements IContextWorker {
 
 	private final Map<String, Object> typeInstanceMap = new HashMap<String, Object>();
-	private final Map<String, List<LazyInjectTuple>> multiDependenceInstance = new HashMap<String, List<LazyInjectTuple>>();
+	private final HashMap<String, List<LazyInjectTuple>> multiDependenceInstance = new HashMap<String, List<LazyInjectTuple>>();
 
 	protected AbstractContext() { selfInject(); }
 	
@@ -98,7 +98,7 @@ public abstract class AbstractContext implements IContextWorker {
 		resolveWatingInject(implClassType.getName(), instance);
 	}
 	
-	protected Map<String, List<LazyInjectTuple>> getMultiDependenceInstanceMapper(){
+	protected HashMap<String, List<LazyInjectTuple>> getMultiDependenceInstanceMapper(){
 		return multiDependenceInstance;
 	}
 	
