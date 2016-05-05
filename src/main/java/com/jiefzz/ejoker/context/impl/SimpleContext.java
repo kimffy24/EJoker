@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.context.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +35,8 @@ public class SimpleContext extends AbstractContext {
 		Object instance = getInstance(clazz);
 		if (instance != null) return (TInstance ) instance;
 		instance = innerGet(clazz);
-		loadAllWating();
-		if ( getMultiDependenceInstanceMapper().size()!=0 ) throw new ContextRuntimeException("There some worng dependence could not resolve!!!");
+		if ( getMultiDependenceInstanceMapper().size()!=0 )
+			throw new ContextRuntimeException("There some worng dependence could not resolve!!!");
 		return (TInstance ) instance;
 	}
 	
@@ -74,20 +75,31 @@ public class SimpleContext extends AbstractContext {
 				clazzImpl,
 				assemblyInfo.getDependenceMapper().get(clazzName),
 				assemblyInfo.getInitializeMapper().get(clazzName));
-		return (TInstance) instanceBuilder.doCreate();
-		
+		TInstance instance = (TInstance) instanceBuilder.doCreate();
+		loadAllWating();
+		return instance;
 	}
 	
 	private void loadAllWating(){
-		Map<String, List<LazyInjectTuple>> multiDependenceInstance = (HashMap )getMultiDependenceInstanceMapper().clone();
-		if(multiDependenceInstance.size()==0) return;
-		Set<String> watingObjectInstances = multiDependenceInstance.keySet();
-		for (String watingObjectInstance : watingObjectInstances )
+		Map<String, List<LazyInjectTuple>> multiDependenceInstance = getMultiDependenceInstanceMapper();
+		while (multiDependenceInstance.size()!=0) {
+			Set<String> waitingObjectInstances = multiDependenceInstance.keySet();
+			String nextResolvObjectType = waitingObjectInstances.iterator().next();
 			try {
-				innerGet(Class.forName(watingObjectInstance));
+				innerGet(Class.forName(nextResolvObjectType));
 			} catch (Exception e) {
 				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
 			}
+		}
+//		Set<String> waitingObjectInstances = multiDependenceInstance.keySet();
+//		List<String> waitintList = new ArrayList<String>();
+//		waitintList.addAll(waitingObjectInstances);
+//		for (String watingObjectInstance : waitingObjectInstances )
+//			try {
+//				innerGet(Class.forName(watingObjectInstance));
+//			} catch (Exception e) {
+//				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
+//			}
 	}
 
 	private IAssemblyAnalyzer getAssemblyInfo(String classFullName){
