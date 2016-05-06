@@ -24,7 +24,6 @@ import com.jiefzz.ejoker.queue.SendQueueMessageService;
 public class CommandService implements ICommandService {
 
 	private SendQueueMessageService sendQueueMessageService = new SendQueueMessageService();
-	private AsyncPool commandAsyncPool = new AsyncPool();
 	
 	@Resource
 	IJSONConverter jsonConverter;
@@ -35,14 +34,12 @@ public class CommandService implements ICommandService {
 	
 	@Override
 	public Future<BaseAsyncTaskResult> sendAsync(ICommand command) {
-		CommandAsyncTask commandAsyncTask = new CommandAsyncTask(producer, buildCommandMessage(command), getRoutingKey(command));
-		Future<BaseAsyncTaskResult> execute = commandAsyncPool.execute(commandAsyncTask);
-		return execute;
+		return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), getRoutingKey(command));
 	}
 
 	@Override
 	public void send(ICommand command) {
-		
+		sendQueueMessageService.sendMessage(producer, buildCommandMessage(command), getRoutingKey(command));
 	}
 
 	@Override

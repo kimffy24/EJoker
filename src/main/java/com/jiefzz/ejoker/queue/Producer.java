@@ -1,6 +1,5 @@
-package com.jiefzz.ejoker.queue.adapter.redis;
+package com.jiefzz.ejoker.queue;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import javax.annotation.Resource;
@@ -54,7 +53,7 @@ public class Producer implements IProducer {
 		@Override
 		public SendResult call() throws Exception {
 			try {
-				//System.out.println("Dispatch with route key: \""+routingKey+"\"");
+				System.out.println("Dispatch with route key: \""+routingKey+"\"");
 				Producer.this.messageQueue.produce(message.topic, message.body);
 				return new SendResult(SendStatus.Success, null, null);
 			} catch ( Exception e ) {
