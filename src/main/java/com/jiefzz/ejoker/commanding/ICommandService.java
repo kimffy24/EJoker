@@ -1,8 +1,12 @@
 package com.jiefzz.ejoker.commanding;
 
+import java.util.concurrent.Future;
+
+import com.jiefzz.ejoker.infrastructure.common.io.BaseAsyncTaskResult;
+
 public interface ICommandService {
 
-	public void sendAsync(ICommand command);
+	public Future<BaseAsyncTaskResult> sendAsync(ICommand command);
 	public void send(ICommand command);
 	
 	public void execute(ICommand command, int timeoutMillis);

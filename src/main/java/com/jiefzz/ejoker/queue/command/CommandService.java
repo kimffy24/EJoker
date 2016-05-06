@@ -1,18 +1,22 @@
 package com.jiefzz.ejoker.queue.command;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.Future;
 
 import javax.annotation.Resource;
 
 import com.jiefzz.ejoker.annotation.context.EService;
+import com.jiefzz.ejoker.commanding.CommandAsyncTask;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandService;
 import com.jiefzz.ejoker.commanding.ICommandTopicProvider;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.infrastructure.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.infrastructure.common.task.AsyncPool;
 import com.jiefzz.ejoker.infrastructure.common.utilities.Ensure;
+import com.jiefzz.ejoker.infrastructure.queue.clients.producers.IProducer;
 import com.jiefzz.ejoker.infrastructure.queue.protocols.Message;
-import com.jiefzz.ejoker.queue.IProducer;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
 
@@ -20,6 +24,7 @@ import com.jiefzz.ejoker.queue.SendQueueMessageService;
 public class CommandService implements ICommandService {
 
 	private SendQueueMessageService sendQueueMessageService = new SendQueueMessageService();
+	private AsyncPool commandAsyncPool = new AsyncPool();
 	
 	@Resource
 	IJSONConverter jsonConverter;
@@ -29,14 +34,15 @@ public class CommandService implements ICommandService {
 	ICommandTopicProvider commandTopicProvider;
 	
 	@Override
-	public void sendAsync(ICommand command) {
-		// TODO Auto-generated method stub
-
+	public Future<BaseAsyncTaskResult> sendAsync(ICommand command) {
+		CommandAsyncTask commandAsyncTask = new CommandAsyncTask(producer, buildCommandMessage(command), getRoutingKey(command));
+		Future<BaseAsyncTaskResult> execute = commandAsyncPool.execute(commandAsyncTask);
+		return execute;
 	}
 
 	@Override
 	public void send(ICommand command) {
-		sendQueueMessageService.sendMessage(producer, buildCommandMessage(command), getRoutingKey(command));
+		
 	}
 
 	@Override

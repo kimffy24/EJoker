@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.queue;
 
 import com.jiefzz.ejoker.infrastructure.UnimplementException;
+import com.jiefzz.ejoker.infrastructure.queue.clients.producers.IProducer;
 import com.jiefzz.ejoker.infrastructure.queue.protocols.Message;
 
 public class SendQueueMessageService {
