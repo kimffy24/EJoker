@@ -11,15 +11,13 @@ public class ProcessingCommand {
 	private ICommandExecuteContext commandExecuteContext; // { get; private set; }
     private Map<String, String> items; // { get; private set; }
 
-    public ProcessingCommand(ICommand command, ICommandExecuteContext commandExecuteContext, Map<String, String> items)
-    {
+    public ProcessingCommand(ICommand command, ICommandExecuteContext commandExecuteContext, Map<String, String> items) {
     	setMessage(command);
     	setCommandExecuteContext(commandExecuteContext);
     	setItems(items!=null ? items : new HashMap<String, String>());
     }
 
-    public void complete(CommandResult commandResult)
-    {
+    public void complete(CommandResult commandResult) {
     	commandExecuteContext.onCommandExecuted(commandResult);
     }
     
