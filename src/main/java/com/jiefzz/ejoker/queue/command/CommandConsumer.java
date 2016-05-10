@@ -48,7 +48,6 @@ public class CommandConsumer implements IMessageHandler {
 	private IRepository repository;
 	@Resource
 	private IAggregateStorage aggregateRootStorage;
-	//
 
 	public CommandConsumer(String groupName, ConsumerSetting setting) {
 		//consumer = new Consumer(groupName ?? DefaultCommandConsumerGroup, setting ?? new ConsumerSetting
