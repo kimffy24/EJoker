@@ -14,7 +14,7 @@ public class ParameterizedTypeUtil {
 	 * @return boolean
 	 */
 	public static boolean isDirectSerializableType(Class<?> clazz) {
-		return acceptTypeSet.contains(clazz)?true:false;
+		return (clazz.isPrimitive()||acceptTypeSet.contains(clazz))?true:false;
 	}
 	/**
 	 * 判断是否是可直接序列化类型
