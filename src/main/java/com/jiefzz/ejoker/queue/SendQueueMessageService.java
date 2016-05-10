@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.annotation.context.EService;
-import com.jiefzz.ejoker.infrastructure.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.infrastructure.common.io.BaseAsyncTaskResult;
-import com.jiefzz.ejoker.infrastructure.common.task.AsyncPool;
-import com.jiefzz.ejoker.infrastructure.common.task.IAsyncTask;
-import com.jiefzz.ejoker.infrastructure.queue.clients.producers.IProducer;
-import com.jiefzz.ejoker.infrastructure.queue.clients.producers.SendResult;
-import com.jiefzz.ejoker.infrastructure.queue.protocols.Message;
+import com.jiefzz.ejoker.infrastructure.z.common.io.AsyncTaskStatus;
+import com.jiefzz.ejoker.infrastructure.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.infrastructure.z.common.task.AsyncPool;
+import com.jiefzz.ejoker.infrastructure.z.common.task.IAsyncTask;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.producers.IProducer;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.producers.SendResult;
+import com.jiefzz.ejoker.infrastructure.z.queue.protocols.Message;
 
 @EService
 public class SendQueueMessageService {

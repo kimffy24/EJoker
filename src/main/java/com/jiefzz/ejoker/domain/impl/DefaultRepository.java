@@ -4,8 +4,8 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.domain.IRepository;
-import com.jiefzz.ejoker.infrastructure.common.ArgumentNullException;
-import com.jiefzz.ejoker.infrastructure.common.UnimplementException;
+import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
+import com.jiefzz.ejoker.infrastructure.z.common.UnimplementException;
 
 public class DefaultRepository implements IRepository {
 

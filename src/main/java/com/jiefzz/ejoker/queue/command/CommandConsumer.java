@@ -21,13 +21,13 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.infrastructure.common.ArgumentNullException;
-import com.jiefzz.ejoker.infrastructure.common.UnimplementException;
-import com.jiefzz.ejoker.infrastructure.queue.clients.consumers.Consumer;
-import com.jiefzz.ejoker.infrastructure.queue.clients.consumers.ConsumerSetting;
-import com.jiefzz.ejoker.infrastructure.queue.clients.consumers.IMessageContext;
-import com.jiefzz.ejoker.infrastructure.queue.clients.consumers.IMessageHandler;
-import com.jiefzz.ejoker.infrastructure.queue.protocols.QueueMessage;
+import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
+import com.jiefzz.ejoker.infrastructure.z.common.UnimplementException;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.Consumer;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.ConsumerSetting;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IMessageContext;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IMessageHandler;
+import com.jiefzz.ejoker.infrastructure.z.queue.protocols.QueueMessage;
 import com.jiefzz.ejoker.queue.SendReplyService;
 
 public class CommandConsumer implements IMessageHandler {

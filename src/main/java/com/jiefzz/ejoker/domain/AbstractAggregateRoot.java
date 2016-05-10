@@ -7,7 +7,7 @@ import com.jiefzz.ejoker.annotation.context.Dependence;
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
-import com.jiefzz.ejoker.infrastructure.common.ArgumentNullException;
+import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 
