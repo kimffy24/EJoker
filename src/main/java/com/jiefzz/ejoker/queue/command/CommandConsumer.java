@@ -32,7 +32,7 @@ import com.jiefzz.ejoker.queue.SendReplyService;
 
 public class CommandConsumer implements IMessageHandler {
 
-	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
+	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	private final static String defaultCommandConsumerGroup = "CommandConsumerGroup";
 
@@ -71,7 +71,6 @@ public class CommandConsumer implements IMessageHandler {
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<String, String>();
-		// TODO unfinished. jsonSerializer.revert() can get type from giving message????
 		String bodyString = new String(queueMessage.body, Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(bodyString, CommandMessage.class);
 		Class commandType;
@@ -124,6 +123,7 @@ public class CommandConsumer implements IMessageHandler {
 			if (aggregateRoot == null)
 				throw new ArgumentNullException("aggregateRoot");
 			String uniqueId = aggregateRoot.getUniqueId();
+			// TODO: Please update this region with high-performance method.
 			if(trackingAggregateRootDict.containsKey(uniqueId))
 				throw new AggregateRootAlreadyExistException(uniqueId, aggregateRoot.getClass());
 			trackingAggregateRootDict.put(uniqueId, aggregateRoot);
@@ -134,7 +134,40 @@ public class CommandConsumer implements IMessageHandler {
 		}
 
 		@Override
+		public <T extends IAggregateRoot<?>> T get(Object id, Class<T> clazz, boolean firstFromCache) {
+			if (id == null) throw new ArgumentNullException("id");
+
+			String aggregateRootId = id.toString();
+			IAggregateRoot aggregateRoot = null;
+			
+			// TODO: Perhaps it will has a high-performance method.
+			// C# use ConcurrentDictionary.TryGetValue() here
+			if (trackingAggregateRootDict.containsKey(aggregateRootId))
+				return (T) trackingAggregateRootDict.get(aggregateRootId);
+
+			if (firstFromCache)
+				aggregateRoot = repository.get((Class<IAggregateRoot>) clazz, id);
+			else
+				aggregateRoot = aggregateRootStorage.get((Class<IAggregateRoot>) clazz, aggregateRootId);
+
+			if (aggregateRoot != null) {
+				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
+				return (T) aggregateRoot;
+			}
+
+			return null;
+		}
+
+		@Override
+		public <T extends IAggregateRoot<?>> T get(Object id, Class<T> clazz) {
+			return get(id, clazz, true);
+		}
+		
+		@Override
 		public <T extends IAggregateRoot<?>> T get(Object id, boolean firstFromCache) {
+			
+			CommandConsumer.logger.warn("com.jiefzz.ejoker.queue.command.CommandConsumer.CommandExecuteContext.get(Object, boolean) maybe work down with unexcpected error!!!");
+			
 			if (id == null)
 				throw new ArgumentNullException("id");
 
@@ -143,9 +176,8 @@ public class CommandConsumer implements IMessageHandler {
 			
 			// TODO: Perhaps it will has a high-performance method.
 			// C# use ConcurrentDictionary.TryGetValue() here
-			if (trackingAggregateRootDict.containsKey(aggregateRootId)) {
+			if (trackingAggregateRootDict.containsKey(aggregateRootId))
 				return (T) trackingAggregateRootDict.get(aggregateRootId);
-			}
 
 			if (firstFromCache) {
 				// TODO: This method will throw an UnimplementException now!!!
@@ -155,8 +187,7 @@ public class CommandConsumer implements IMessageHandler {
 				aggregateRoot = aggregateRootStorage.get(IAggregateRoot.class, aggregateRootId);
 			}
 
-			if (aggregateRoot != null)
-			{
+			if (aggregateRoot != null) {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
 				return (T) aggregateRoot;
 			}
