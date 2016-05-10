@@ -4,6 +4,6 @@ import com.jiefzz.ejoker.infrastructure.queue.protocols.QueueMessage;
 
 public interface IMessageContext {
 	
-	public void OnMessageHandled(QueueMessage queueMessage);
+	public void onMessageHandled(QueueMessage queueMessage);
 	
 }
