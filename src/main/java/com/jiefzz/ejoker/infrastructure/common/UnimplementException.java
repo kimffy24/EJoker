@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure;
+package com.jiefzz.ejoker.infrastructure.common;
 
 public class UnimplementException extends RuntimeException {
 
