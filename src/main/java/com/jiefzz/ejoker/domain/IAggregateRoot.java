@@ -5,10 +5,10 @@ import java.util.LinkedHashMap;
 
 public interface IAggregateRoot<TAggregateRootId> extends Serializable  {
 	
-    LinkedHashMap<Integer, String> GetChanges();
+    LinkedHashMap<Integer, String> getChanges();
     
-    void AcceptChanges(int newVersion);
-    void ReplayEvents(LinkedHashMap<Integer, String> eventStreams);
+    void acceptChanges(int newVersion);
+    void replayEvents(LinkedHashMap<Integer, String> eventStreams);
 
     public void setId(TAggregateRootId _id);
 	public TAggregateRootId getId();

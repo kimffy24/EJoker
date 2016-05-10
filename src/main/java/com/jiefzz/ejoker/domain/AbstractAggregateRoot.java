@@ -92,13 +92,13 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	@Override
-	public LinkedHashMap<Integer, String> GetChanges() { return null; }
+	public LinkedHashMap<Integer, String> getChanges() { return null; }
 
 	@Override
-	public void AcceptChanges(int newVersion) {}
+	public void acceptChanges(int newVersion) {}
 
 	@Override
-	public void ReplayEvents(LinkedHashMap<Integer, String> eventStreams) {}
+	public void replayEvents(LinkedHashMap<Integer, String> eventStreams) {}
 
 	@Override
 	public String getUniqueId() {
