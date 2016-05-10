@@ -1,12 +1,12 @@
 package com.jiefzz.ejoker.commanding;
 
-import java.util.Set;
+import java.util.Collection;
 
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 
 public interface ITrackingContext {
 
-	public Set<IAggregateRoot> getTrackedAggregateRoots();
+	public Collection<IAggregateRoot> getTrackedAggregateRoots();
     void clear();
     
 }
