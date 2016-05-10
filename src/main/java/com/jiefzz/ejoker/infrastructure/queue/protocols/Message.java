@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.infrastructure.queue.protocols;
 import java.io.Serializable;
 
 import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
-import com.jiefzz.ejoker.infrastructure.common.utilities.Ensure;
+import com.jiefzz.ejoker.infrastructure.z.common.utilities.Ensure;
 
 public class Message implements Serializable {
 

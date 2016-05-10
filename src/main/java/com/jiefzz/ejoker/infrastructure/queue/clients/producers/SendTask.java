@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.queue.clients.producers;
 
-import com.jiefzz.ejoker.infrastructure.common.task.IAsyncTask;
 import com.jiefzz.ejoker.infrastructure.queue.protocols.Message;
+import com.jiefzz.ejoker.infrastructure.z.common.task.IAsyncTask;
 
 public class SendTask implements IAsyncTask<SendResult> {
 
