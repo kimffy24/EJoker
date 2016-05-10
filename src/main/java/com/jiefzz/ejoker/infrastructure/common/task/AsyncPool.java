@@ -4,19 +4,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.jiefzz.ejoker.annotation.context.EService;
+
+@EService
 public class AsyncPool {
 
-	private static final int threadPoolSize = 100;
+	private static final int threadPoolSize =180;
 	
-	private final ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(threadPoolSize);
+	private final ExecutorService newThreadPool;
+	
+	public AsyncPool() {
+		this(threadPoolSize);
+	}
+	public AsyncPool(int threadPoolSize) {
+		newThreadPool= Executors.newFixedThreadPool(threadPoolSize);
+	}
 	
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IAsyncTask<TAsyncTaskResult> asyncTaskThread) {
-		Future<TAsyncTaskResult> submit = newFixedThreadPool.submit(asyncTaskThread);
+		Future<TAsyncTaskResult> submit = newThreadPool.submit(asyncTaskThread);
 		return submit;
 	}
 	
 	public void shutdown() {
-		newFixedThreadPool.shutdown();
+		newThreadPool.shutdown();
 	}
 	
 }

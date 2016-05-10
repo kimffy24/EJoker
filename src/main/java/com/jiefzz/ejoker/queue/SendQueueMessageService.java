@@ -1,14 +1,18 @@
 package com.jiefzz.ejoker.queue;
 
+import java.io.IOException;
 import java.util.concurrent.Future;
 
+import com.jiefzz.ejoker.annotation.context.EService;
 import com.jiefzz.ejoker.infrastructure.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.infrastructure.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.infrastructure.common.task.AsyncPool;
 import com.jiefzz.ejoker.infrastructure.common.task.IAsyncTask;
 import com.jiefzz.ejoker.infrastructure.queue.clients.producers.IProducer;
+import com.jiefzz.ejoker.infrastructure.queue.clients.producers.SendResult;
 import com.jiefzz.ejoker.infrastructure.queue.protocols.Message;
 
+@EService
 public class SendQueueMessageService {
 	
 	private AsyncPool asyncPool = new AsyncPool();
@@ -38,7 +42,10 @@ public class SendQueueMessageService {
 		@Override
 		public BaseAsyncTaskResult call() throws Exception {
 			try {
-				producer.sendMessageAsync(message, routingKey);
+				Future<SendResult> future = producer.sendMessageAsync(message, routingKey);
+				SendResult sendResult = future.get();
+				if(sendResult.errorMessage!=null && IOException.class.getName().equals(sendResult.errorMessage))
+					return new BaseAsyncTaskResult(AsyncTaskStatus.IOException);
 				return BaseAsyncTaskResult.Success;
 			} catch ( Exception e ) {
 				return new BaseAsyncTaskResult(AsyncTaskStatus.Failed, e.getMessage());

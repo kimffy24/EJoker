@@ -6,25 +6,30 @@ import java.util.concurrent.Future;
 import javax.annotation.Resource;
 
 import com.jiefzz.ejoker.annotation.context.EService;
-import com.jiefzz.ejoker.commanding.CommandAsyncTask;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandService;
 import com.jiefzz.ejoker.commanding.ICommandTopicProvider;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.common.io.BaseAsyncTaskResult;
-import com.jiefzz.ejoker.infrastructure.common.task.AsyncPool;
 import com.jiefzz.ejoker.infrastructure.common.utilities.Ensure;
 import com.jiefzz.ejoker.infrastructure.queue.clients.producers.IProducer;
 import com.jiefzz.ejoker.infrastructure.queue.protocols.Message;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
 
+/**
+ * @author JiefzzLon
+ *
+ */
 @EService
 public class CommandService implements ICommandService {
 
-	private SendQueueMessageService sendQueueMessageService = new SendQueueMessageService();
-	
+	/**
+	 * all command will send by this object.
+	 */
+	@Resource
+	private SendQueueMessageService sendQueueMessageService;
 	@Resource
 	IJSONConverter jsonConverter;
 	@Resource
@@ -84,6 +89,6 @@ public class CommandService implements ICommandService {
 	}
 	
 	private String getRoutingKey(ICommand command) {
-		return command.getAggregateRootId();
+		return "cmd."+command.getAggregateRootId();
 	}
 }

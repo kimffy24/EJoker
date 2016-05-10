@@ -4,9 +4,9 @@ import com.jiefzz.ejoker.infrastructure.queue.protocols.MessageStoreResult;
 
 public class SendResult {
 
-    private SendStatus sendStatus;
-    private MessageStoreResult messageStoreResult;
-    private String errorMessage;
+    public SendStatus sendStatus;
+    public MessageStoreResult messageStoreResult;
+    public String errorMessage;
     
     public SendResult(SendStatus sendStatus, MessageStoreResult messageStoreResult, String errorMessage)
     {
