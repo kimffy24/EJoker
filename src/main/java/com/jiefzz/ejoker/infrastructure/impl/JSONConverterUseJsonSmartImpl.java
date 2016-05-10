@@ -29,6 +29,9 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 
 	private final static Logger logger = LoggerFactory.getLogger(JSONConverterUseJsonSmartImpl.class);
 
+	private final static Map<String, Field> defaultEmptyInfo = new HashMap<String, Field>();
+	private final Map<Class, Map<String, Field>> clazzRefectionInfo = new ConcurrentHashMap<Class, Map<String, Field>>();
+	
 	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new BuilderToolSet());
 
 	@Override
@@ -93,9 +96,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	public <T> void contain(String jsonString, T container) {
 		throw new InfrastructureRuntimeException("Umimplemented!!!");
 	}
-
-	private final static Map<String, Field> defaultEmptyInfo = new HashMap<String, Field>();
-	private final Map<Class, Map<String, Field>> clazzRefectionInfo = new ConcurrentHashMap<Class, Map<String, Field>>();
+	
 	private <T> Map<String, Field> analyzeClazzInfo(final Class<T> clazz){
 
 		if(ParameterizedTypeUtil.hasSublevel(clazz) || ParameterizedTypeUtil.isDirectSerializableType(clazz))
