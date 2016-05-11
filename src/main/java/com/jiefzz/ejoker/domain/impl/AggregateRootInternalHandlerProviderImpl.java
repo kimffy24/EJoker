@@ -7,7 +7,7 @@ import com.jiefzz.ejoker.domain.DelegateAction;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateRootInternalHandlerProvider;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
-import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 @EService
 public class AggregateRootInternalHandlerProviderImpl implements IAggregateRootInternalHandlerProvider {

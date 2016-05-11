@@ -21,14 +21,14 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
-import com.jiefzz.ejoker.infrastructure.z.common.UnimplementException;
-import com.jiefzz.ejoker.infrastructure.z.queue.IConsumer;
-import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.ConsumerSetting;
-import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IMessageContext;
-import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IMessageHandler;
-import com.jiefzz.ejoker.infrastructure.z.queue.protocols.QueueMessage;
 import com.jiefzz.ejoker.queue.SendReplyService;
+import com.jiefzz.ejoker.z.common.ArgumentNullException;
+import com.jiefzz.ejoker.z.common.UnimplementException;
+import com.jiefzz.ejoker.z.queue.IConsumer;
+import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
+import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
+import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
+import com.jiefzz.ejoker.z.queue.protocols.QueueMessage;
 
 public class CommandConsumer implements IMessageHandler {
 

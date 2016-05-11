@@ -4,7 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 
 import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
-import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
 public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 

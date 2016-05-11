@@ -10,13 +10,13 @@ import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandService;
 import com.jiefzz.ejoker.commanding.ICommandTopicProvider;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.infrastructure.z.common.io.BaseAsyncTaskResult;
-import com.jiefzz.ejoker.infrastructure.z.common.utilities.Ensure;
-import com.jiefzz.ejoker.infrastructure.z.queue.clients.producers.IProducer;
-import com.jiefzz.ejoker.infrastructure.z.queue.protocols.Message;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.queue.clients.producers.IProducer;
+import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 /**
  * @author JiefzzLon

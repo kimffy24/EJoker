@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.utils.EObjectId;
+import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractMessage implements  IMessage {
 

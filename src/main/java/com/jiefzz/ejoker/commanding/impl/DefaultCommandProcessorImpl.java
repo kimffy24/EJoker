@@ -12,8 +12,8 @@ import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.IProcessingCommandScheduler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
-import com.jiefzz.ejoker.infrastructure.z.common.ArgumentException;
-import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.ArgumentException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 @EService
 public class DefaultCommandProcessorImpl implements ICommandProcessor {
