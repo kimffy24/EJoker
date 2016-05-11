@@ -3,10 +3,10 @@ package com.jiefzz.ejoker.z.common.context;
 import com.jiefzz.ejoker.z.common.UnimplementException;
 
 public class EServiceInfoTuple {
-	public final String id;
-	public final Class<?> eServiceClassType;
-	public final boolean force;
-	private EServiceInfoTuple next = null;
+	public final String id;							//供用户指明id引用
+	public final Class<?> eServiceClassType;		//实现类
+	public final boolean force;						//强制位，让其排在链表的首位
+	private EServiceInfoTuple next = null;			//链表的下一个指针
 
 	public EServiceInfoTuple(Class<?>eServiceClassType, String id, boolean force){
 		this.eServiceClassType = eServiceClassType;
