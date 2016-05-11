@@ -49,11 +49,11 @@ public class DefaultContext extends AbstractContext {
 		return (TInstance ) instance;
 	}
 
-	public synchronized <TInstance> void set(Class<TInstance> clazz, TInstance instance) {
+	public <TInstance> void set(Class<TInstance> clazz, TInstance instance) {
 		set(clazz.getName(), instance);
 	}
 
-	public synchronized <TInstance> void set(String instanceType, TInstance instance) {
+	public <TInstance> void set(String instanceType, TInstance instance) {
 		adoptInstance(instanceType, instance);
 	}
 
