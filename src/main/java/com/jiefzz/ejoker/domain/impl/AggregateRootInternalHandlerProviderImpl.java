@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.domain.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jiefzz.ejoker.annotation.context.EService;
+import com.jiefzz.ejoker.context.annotation.context.EService;
 import com.jiefzz.ejoker.domain.DelegateAction;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateRootInternalHandlerProvider;

@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.domain;
 
 import java.io.Serializable;
 
-import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractValueObject implements Serializable {
 

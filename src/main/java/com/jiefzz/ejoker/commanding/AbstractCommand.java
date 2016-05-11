@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.commanding;
 
-import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.infrastructure.AbstractMessage;
 import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
 

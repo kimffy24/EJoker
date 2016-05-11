@@ -7,12 +7,12 @@ import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.annotation.context.EService;
 import com.jiefzz.ejoker.commanding.ICommandProcessor;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.IProcessingCommandScheduler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
+import com.jiefzz.ejoker.context.annotation.context.EService;
 import com.jiefzz.ejoker.infrastructure.z.common.ArgumentException;
 
 @EService

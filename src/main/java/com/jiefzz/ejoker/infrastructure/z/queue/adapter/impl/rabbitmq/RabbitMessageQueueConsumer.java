@@ -7,7 +7,7 @@ import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.annotation.context.EService;
+import com.jiefzz.ejoker.context.annotation.context.EService;
 import com.jiefzz.ejoker.infrastructure.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.AbstractConsumer;
 import com.rabbitmq.client.AMQP;

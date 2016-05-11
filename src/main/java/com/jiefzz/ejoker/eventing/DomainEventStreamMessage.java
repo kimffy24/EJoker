@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.eventing;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
 
 public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {

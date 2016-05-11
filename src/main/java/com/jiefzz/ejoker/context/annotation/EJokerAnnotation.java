@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.annotation;
+package com.jiefzz.ejoker.context.annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

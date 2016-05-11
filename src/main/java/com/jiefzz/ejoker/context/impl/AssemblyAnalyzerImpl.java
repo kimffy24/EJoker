@@ -10,11 +10,11 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
-import com.jiefzz.ejoker.annotation.context.Dependence;
-import com.jiefzz.ejoker.annotation.context.EService;
-import com.jiefzz.ejoker.annotation.context.Initialize;
 import com.jiefzz.ejoker.context.ContextRuntimeException;
 import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
+import com.jiefzz.ejoker.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.context.annotation.context.EService;
+import com.jiefzz.ejoker.context.annotation.context.Initialize;
 import com.jiefzz.ejoker.context.impl.util.ClassNamesScanner;
 
 public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {

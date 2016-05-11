@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import com.jiefzz.ejoker.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 
 public class AbstractSequenceMessage<TAggregateRootId> extends AbstractMessage implements ISequenceMessage {
 
