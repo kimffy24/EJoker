@@ -51,8 +51,8 @@ public abstract class AbstractContext implements IContextWorker {
 
 	@Override
 	public void adoptInstance(String classTypeName, Object object) {
-		if (null!=typeInstanceMap.putIfAbsent(classTypeName, object))
-			throw new ContextRuntimeException("Instance of [" + classTypeName + "] has been exist in this context!!!");
+		if (null==typeInstanceMap.putIfAbsent(classTypeName, object)) return;
+		throw new ContextRuntimeException("Instance of [" + classTypeName + "] has been exist in this context!!!");
 	}
 
 	@Override
