@@ -1,11 +1,11 @@
-package com.jiefzz.ejoker.context.annotation.context;
+package com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.jiefzz.ejoker.context.annotation.EJokerAnnotation;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.EJokerAnnotation;
 
 /**
  * Tell the configureObject or contextObject to scan its handler method!!!

@@ -3,11 +3,11 @@ package com.jiefzz.ejoker.domain;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
-import com.jiefzz.ejoker.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot<TAggregateRootId> {
 

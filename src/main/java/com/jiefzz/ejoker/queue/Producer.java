@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
-import com.jiefzz.ejoker.context.annotation.context.EService;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.infrastructure.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.infrastructure.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.infrastructure.z.queue.adapter.IMessageQueue;

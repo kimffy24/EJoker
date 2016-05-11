@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
 
 public class DomainEventStream implements Serializable {
 	

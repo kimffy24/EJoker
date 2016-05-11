@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.context.impl;
+package com.jiefzz.ejoker.infrastructure.z.common.context.impl;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,11 +8,11 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.jiefzz.ejoker.context.AbstractContext;
-import com.jiefzz.ejoker.context.ContextRuntimeException;
-import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
-import com.jiefzz.ejoker.context.IInstanceBuilder;
-import com.jiefzz.ejoker.context.LazyInjectTuple;
+import com.jiefzz.ejoker.infrastructure.z.common.context.AbstractContext;
+import com.jiefzz.ejoker.infrastructure.z.common.context.ContextRuntimeException;
+import com.jiefzz.ejoker.infrastructure.z.common.context.IAssemblyAnalyzer;
+import com.jiefzz.ejoker.infrastructure.z.common.context.IInstanceBuilder;
+import com.jiefzz.ejoker.infrastructure.z.common.context.LazyInjectTuple;
 
 public class SimpleContext extends AbstractContext {
 

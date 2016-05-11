@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.context.impl;
+package com.jiefzz.ejoker.infrastructure.z.common.context.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,12 +10,12 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
-import com.jiefzz.ejoker.context.ContextRuntimeException;
-import com.jiefzz.ejoker.context.IAssemblyAnalyzer;
-import com.jiefzz.ejoker.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.context.annotation.context.EService;
-import com.jiefzz.ejoker.context.annotation.context.Initialize;
-import com.jiefzz.ejoker.context.impl.util.ClassNamesScanner;
+import com.jiefzz.ejoker.infrastructure.z.common.context.ContextRuntimeException;
+import com.jiefzz.ejoker.infrastructure.z.common.context.IAssemblyAnalyzer;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.Initialize;
+import com.jiefzz.ejoker.infrastructure.z.common.context.impl.util.ClassNamesScanner;
 
 public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 

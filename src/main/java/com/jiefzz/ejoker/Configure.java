@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker;
 
-import com.jiefzz.ejoker.context.IContext;
-import com.jiefzz.ejoker.context.impl.SimpleContext;
+import com.jiefzz.ejoker.infrastructure.z.common.context.IContext;
+import com.jiefzz.ejoker.infrastructure.z.common.context.impl.SimpleContext;
 
 public class Configure {
 	

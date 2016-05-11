@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.queue;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
-import com.jiefzz.ejoker.context.annotation.context.EService;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.infrastructure.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.infrastructure.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.infrastructure.z.common.task.AsyncPool;

@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.infrastructure.z.queue.protocols;
 
 import java.io.Serializable;
 
-import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.infrastructure.z.common.utilities.Ensure;
 
 public class Message implements Serializable {

@@ -5,7 +5,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
 
-import com.jiefzz.ejoker.context.annotation.context.EService;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.infrastructure.z.queue.adapter.IMessageQueue;
 import com.rabbitmq.client.Channel;
 

@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.z.queue.protocols;
 
-import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.infrastructure.z.common.UnimplementException;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
 
 public class QueueMessage extends Message {
 

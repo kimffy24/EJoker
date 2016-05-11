@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.eventing;
 
-import com.jiefzz.ejoker.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
+import com.jiefzz.ejoker.infrastructure.z.common.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractDomainEvent<TAggregateRootId> extends AbstractSequenceMessage<TAggregateRootId> implements IDomainEvent<TAggregateRootId> {
 	@PersistentIgnore

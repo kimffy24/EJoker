@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.context;
+package com.jiefzz.ejoker.infrastructure.z.common.context;
 
 public class ContextRuntimeException extends RuntimeException {
 
