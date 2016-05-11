@@ -23,8 +23,8 @@ import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.infrastructure.z.common.UnimplementException;
-import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.Consumer;
 import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.ConsumerSetting;
+import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IConsumer;
 import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.infrastructure.z.queue.clients.consumers.IMessageHandler;
 import com.jiefzz.ejoker.infrastructure.z.queue.protocols.QueueMessage;
@@ -39,7 +39,7 @@ public class CommandConsumer implements IMessageHandler {
 	private final SendReplyService sendReplyService = new SendReplyService();
 
 	@Resource
-	private Consumer consumer;
+	private IConsumer consumer;
 	@Resource
 	private IJSONConverter jsonSerializer;
 	@Resource
@@ -49,12 +49,7 @@ public class CommandConsumer implements IMessageHandler {
 	@Resource
 	private IAggregateStorage aggregateRootStorage;
 
-	public CommandConsumer(String groupName, ConsumerSetting setting) {
-		//consumer = new Consumer(groupName ?? DefaultCommandConsumerGroup, setting ?? new ConsumerSetting
-		//{
-		//    ConsumeFromWhere = ConsumeFromWhere.FirstOffset
-		//});
-	}
+	public CommandConsumer(String groupName, ConsumerSetting setting) {}
 
 	public CommandConsumer(String groupName) {
 		this(groupName, null);
@@ -64,7 +59,7 @@ public class CommandConsumer implements IMessageHandler {
 		this(defaultCommandConsumerGroup);
 	}
 
-	public Consumer getConsumer() { return consumer; }
+	public IConsumer getConsumer() { return consumer; }
 
 	@Override
 	public void Handle(QueueMessage queueMessage, IMessageContext context) {
