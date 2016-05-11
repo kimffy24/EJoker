@@ -49,6 +49,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 		
 		for (Class<?> clazz:clazzInSpecificPackage) {
 			if(Exception.class.isAssignableFrom(clazz)) continue;
+			if(Throwable.class.isAssignableFrom(clazz)) continue;
 			if(clazz.isInterface()) continue;
 			analyzeContextAnnotation(clazz);
 		}
