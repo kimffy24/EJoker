@@ -14,11 +14,11 @@ import com.jiefzz.ejoker.z.common.context.IAssemblyAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IInstanceBuilder;
 import com.jiefzz.ejoker.z.common.context.LazyInjectTuple;
 
-public class SimpleContext extends AbstractContext {
+public class DefaultContext extends AbstractContext {
 
 	private Lock lock = new ReentrantLock();
 
-	public SimpleContext(){ super(); }
+	public DefaultContext(){ super(); }
 
 	public void annotationScan(String specificPackage) {
 		if ( specificPackage.lastIndexOf('.') == (specificPackage.length()-1) ) 
