@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker;
 
 import com.jiefzz.ejoker.z.common.context.IContext;
-import com.jiefzz.ejoker.z.common.context.impl.SimpleContext;
+import com.jiefzz.ejoker.z.common.context.impl.DefaultContext;
 
 public class Configure {
 	
@@ -21,12 +21,12 @@ public class Configure {
 		return context;
 	}
 	
-	private SimpleContext initializeEJoker(){
-		context = new SimpleContext();
+	private DefaultContext initializeEJoker(){
+		context = new DefaultContext();
 		context.annotationScan("com.jiefzz.ejoker");
 		return context;
 	}
 
-	private SimpleContext context;
+	private DefaultContext context;
 	
 }

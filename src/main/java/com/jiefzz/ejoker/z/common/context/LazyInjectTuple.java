@@ -12,5 +12,9 @@ public class LazyInjectTuple {
 
 	public Object instance;
 	public Field field;
-	
+
+	public LazyInjectTuple() { }
+	public LazyInjectTuple(Object instance, Field field) {
+		this.instance = instance; this.field = field;
+	}
 }

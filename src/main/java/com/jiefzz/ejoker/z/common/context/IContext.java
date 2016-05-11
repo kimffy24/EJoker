@@ -8,7 +8,12 @@ public interface IContext {
 	 * @return
 	 */
 	public <TInstance> TInstance get(Class<TInstance> clazz);
-	public <TInstance> void set(Class<TInstance> clazz, TInstance instance);
-	public <TInstance> void set(String instanceType, TInstance instance);
+	
+	/**
+	 * 指明特定类型的接口提供给定的实例。
+	 * @param clazz
+	 * @param instance
+	 */
+	public void set(Class<?> clazz, Object instance);
 	
 }

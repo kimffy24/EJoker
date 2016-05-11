@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ProcessingCommandMailbox {
+public class ProcessingCommandMailbox implements Runnable {
 
 
 	private final Object lock1 = new Object();
@@ -86,7 +86,8 @@ public class ProcessingCommandMailbox {
 		}
 	}
 
-    public void Run()
+	@Override
+    public void run()
     {
         if (stopHandling.get()) {
             return;
@@ -182,4 +183,5 @@ public class ProcessingCommandMailbox {
 	private void registerForExecution() {
 		scheduler.scheduleMailbox(this);
 	}
+
 }

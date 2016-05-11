@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.z.common.context.impl;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,30 +13,35 @@ import java.util.Set;
 import javax.annotation.Resource;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
-import com.jiefzz.ejoker.z.common.context.IAssemblyAnalyzer;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Initialize;
-import com.jiefzz.ejoker.z.common.context.impl.util.ClassNamesScanner;
+import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
 
-public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
+/**
+ * 存储注解信息的对象
+ * @author JiefzzLon
+ *
+ */
+public class AssemblyAnalyzer {
 
-	public AssemblyAnalyzerImpl(String packageName) {
+	private final Map<Class<?>, Map<String, Field>> contextDependenceAnnotationMapping = new HashMap<Class<?>, Map<String, Field>>();
+	private final Map<Class<?>, Set<Method>> contextInitializeAnnotationMapping = new HashMap<Class<?>, Set<Method>>();
+	private final List<Class<?>> contextEServiceAnnotationMapping = new ArrayList<Class<?>>();
+	
+	public AssemblyAnalyzer(String packageName) {
 		annotationScan(packageName);
 	}
 
-	@Override
-	public Map<String, Map<String, Field>> getDependenceMapper() {
+	public Map<Class<?>, Map<String, Field>> getDependenceMapper() {
 		return contextDependenceAnnotationMapping;
 	}
 
-	@Override
-	public Map<String, Set<Method>> getInitializeMapper() {
+	public Map<Class<?>, Set<Method>> getInitializeMapper() {
 		return contextInitializeAnnotationMapping;
 	}
 
-	@Override
-	public Set<Class<?>> getEServiceMapper() {
+	public List<Class<?>> getEServiceMapper() {
 		return contextEServiceAnnotationMapping;
 	}
 
@@ -59,7 +65,6 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 
 	private void analyzeContextAnnotation(final Class<?> claxx) {
 		Class<?> clazz = claxx;
-		String className = clazz.getName();
 
 		// collect the class which is set annotation @EService .
 		if(clazz.isAnnotationPresent(EService.class))
@@ -82,12 +87,8 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 					annotationFieldName.putIfAbsent(field.getName(), field);
 			}
 		}
-		if ( annotationFieldName.size()>0 ) contextDependenceAnnotationMapping.put(className, annotationFieldName);
-		if ( annotationMethodName.size()>0 ) contextInitializeAnnotationMapping.put(className, annotationMethodName);
+		if ( annotationFieldName.size()>0 ) contextDependenceAnnotationMapping.put(claxx, annotationFieldName);
+		if ( annotationMethodName.size()>0 ) contextInitializeAnnotationMapping.put(claxx, annotationMethodName);
 
 	}
-
-	private final Map<String, Map<String, Field>> contextDependenceAnnotationMapping = new HashMap<String, Map<String, Field>>();
-	private final Map<String, Set<Method>> contextInitializeAnnotationMapping = new HashMap<String, Set<Method>>();
-	private final Set<Class<?>> contextEServiceAnnotationMapping = new HashSet<Class<?>>();
 }

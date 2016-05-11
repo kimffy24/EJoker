@@ -24,12 +24,14 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.queue.IConsumer;
 import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
 import com.jiefzz.ejoker.z.queue.protocols.QueueMessage;
 
+@EService
 public class CommandConsumer implements IMessageHandler {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
@@ -51,13 +53,9 @@ public class CommandConsumer implements IMessageHandler {
 
 	public CommandConsumer(String groupName, ConsumerSetting setting) {}
 
-	public CommandConsumer(String groupName) {
-		this(groupName, null);
-	}
+	public CommandConsumer(String groupName) { this(groupName, null); }
 
-	public CommandConsumer() {
-		this(defaultCommandConsumerGroup);
-	}
+	public CommandConsumer() { this(defaultCommandConsumerGroup); }
 
 	public IConsumer getConsumer() { return consumer; }
 

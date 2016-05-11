@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.z.queue.adapter.impl.rabbitmq;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Resource;
 
@@ -23,16 +24,15 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 	@Resource
 	RabbitMQChannelProvider rabbitmqChannelProvider;
 
-	private Channel channel=null;
-
 	@Override
 	public IQueueWokerService start() {
-		channel = rabbitmqChannelProvider.getNewChannel();
+		// we do nothing here.
+		//channel = rabbitmqChannelProvider.getNewChannel();
 		return this;
 	}
 	@Override
 	public IQueueWokerService subscribe(String topic) {
-
+		Channel channel = rabbitmqChannelProvider.getNewChannel();
 		DefaultConsumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
@@ -48,17 +48,14 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		} catch (IOException e) {
 			logger.error("Consumer work faild.");
 			e.printStackTrace();
+		} finally {
+			logger.debug("Consumer try to close the rabbitmq queue.");
+			try { channel.close(); } catch (Exception e) { e.printStackTrace(); }
 		}
 		return this;
 	}
 	@Override
 	public IQueueWokerService shutdown() {
-		try {
-			logger.info("Stop consumer");
-			channel.close();
-		} catch (Exception e) {
-			logger.error("Consumer work faild.");
-			e.printStackTrace();
-		}
+		// we do nothing here.
 		return this;
 	}}

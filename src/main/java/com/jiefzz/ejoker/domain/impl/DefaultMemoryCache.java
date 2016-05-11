@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,17 +15,22 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
+@EService
 public class DefaultMemoryCache implements IMemoryCache {
 
 	private final static  Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
+	
 	// TODO C# use ConcurrentDictionary here;
 	private final Map<String, AggregateCacheInfo> aggregateRootInfoDict = new ConcurrentHashMap<String, AggregateCacheInfo>();
-	private final IAggregateStorage aggregateStorage;
+	
+	@Resource
+	IAggregateStorage aggregateStorage;
 
-	public DefaultMemoryCache(IAggregateStorage aggregateStorage) {
-		this.aggregateStorage = aggregateStorage;
-	}
+//	public DefaultMemoryCache(IAggregateStorage aggregateStorage) {
+//		this.aggregateStorage = aggregateStorage;
+//	}
 
 	@Override
 	public Collection<AggregateCacheInfo> getAll() {
