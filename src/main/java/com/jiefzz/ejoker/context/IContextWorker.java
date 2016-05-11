@@ -21,5 +21,11 @@ public interface IContextWorker extends IContext, IContextAssembly{
 	 * @param interfaceName
 	 * @return
 	 */
-	public String resolve(String interfaceName);
+	public Class<?> resolve(String interfaceName);
+	/**
+	 * 通过接口名，解析出其实现类
+	 * @param interface
+	 * @return
+	 */
+	public Class<?> resolve(Class<?> interfaceType);
 }
