@@ -34,7 +34,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 	}
 
 	@Override
-	public Set<String> getEServiceMapper() {
+	public Set<Class<?>> getEServiceMapper() {
 		return contextEServiceAnnotationMapping;
 	}
 
@@ -61,7 +61,7 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 
 		// collect the class which is set annotation @EService .
 		if(clazz.isAnnotationPresent(EService.class))
-			contextEServiceAnnotationMapping.add(className);
+			contextEServiceAnnotationMapping.add(claxx);
 
 		// collect the method which annotate by @Initialize .
 		Set<Method> annotationMethodName = new HashSet<Method>();
@@ -87,5 +87,5 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 
 	private final Map<String, Map<String, Field>> contextDependenceAnnotationMapping = new HashMap<String, Map<String, Field>>();
 	private final Map<String, Set<Method>> contextInitializeAnnotationMapping = new HashMap<String, Set<Method>>();
-	private final Set<String> contextEServiceAnnotationMapping = new HashSet<String>();
+	private final Set<Class<?>> contextEServiceAnnotationMapping = new HashSet<Class<?>>();
 }
