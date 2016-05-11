@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 存入和取出对象
@@ -13,9 +14,11 @@ import java.util.Map;
  */
 public abstract class AbstractContext implements IContextWorker {
 
-	private final Map<String, Object> typeInstanceMap = new HashMap<String, Object>();
-	private final HashMap<String, List<LazyInjectTuple>> multiDependenceInstance = new HashMap<String, List<LazyInjectTuple>>();
+	private final Map<String, Object> typeInstanceMap = new ConcurrentHashMap<String, Object>();
+	private final Map<Class<?>, List<LazyInjectTuple>> multiDependenceInstance = new HashMap<Class<?>, List<LazyInjectTuple>>();
 
+	private final Object defaultObject = new Object();
+	
 	protected AbstractContext() { selfInject(); }
 	
 	@Override
@@ -31,13 +34,14 @@ public abstract class AbstractContext implements IContextWorker {
 	@Override
 	public Object getInstance(String classTypeName, boolean strict) {
 		Object instance = getInstance(classTypeName);
-		if (instance == null) throw new ContextRuntimeException("Instance of [" + classTypeName + "] not found in this context!!!");
+		if (instance == null && strict) throw new ContextRuntimeException("Instance of [" + classTypeName + "] not found in this context!!!");
 		return instance;
 	}
 
 	@Override
 	public Object getInstance(String classTypeName) {
-		return typeInstanceMap.containsKey(classTypeName)?typeInstanceMap.get(classTypeName):null;
+		Object instance = typeInstanceMap.getOrDefault(classTypeName, defaultObject);
+		return instance==defaultObject?null:instance;
 	}
 
 	@Override
@@ -47,9 +51,8 @@ public abstract class AbstractContext implements IContextWorker {
 
 	@Override
 	public void adoptInstance(String classTypeName, Object object) {
-		if (typeInstanceMap.containsKey(classTypeName))
+		if (null!=typeInstanceMap.putIfAbsent(classTypeName, object))
 			throw new ContextRuntimeException("Instance of [" + classTypeName + "] has been exist in this context!!!");
-		typeInstanceMap.put(classTypeName, object);
 	}
 
 	@Override
@@ -63,8 +66,8 @@ public abstract class AbstractContext implements IContextWorker {
 	}
 
 	@Override
-	public void markWatingInject(String implClazz, Object instance, Field field) {
-		implClazz = resolve(implClazz);
+	public void markWatingInject(String implName, Object instance, Field field) {
+		Class<?> implClazz = resolve(implName);
 		LazyInjectTuple lazyInjectTuple = new LazyInjectTuple();
 		lazyInjectTuple.instance = instance;
 		lazyInjectTuple.field = field;
@@ -98,7 +101,7 @@ public abstract class AbstractContext implements IContextWorker {
 		resolveWatingInject(implClassType.getName(), instance);
 	}
 	
-	protected HashMap<String, List<LazyInjectTuple>> getMultiDependenceInstanceMapper(){
+	protected Map<Class<?>, List<LazyInjectTuple>> getMultiDependenceInstanceMapper(){
 		return multiDependenceInstance;
 	}
 	
@@ -112,6 +115,7 @@ public abstract class AbstractContext implements IContextWorker {
 	private void selfInject(){
 		adoptInstance(IContext.class, this);
 		adoptInstance(IContextAssembly.class, this);
+		adoptInstance(IContextWorker.class, this);
 	}
 	
 }

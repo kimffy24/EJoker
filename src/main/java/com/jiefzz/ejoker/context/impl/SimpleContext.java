@@ -1,10 +1,12 @@
 package com.jiefzz.ejoker.context.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.jiefzz.ejoker.context.AbstractContext;
 import com.jiefzz.ejoker.context.ContextRuntimeException;
@@ -13,6 +15,8 @@ import com.jiefzz.ejoker.context.IInstanceBuilder;
 import com.jiefzz.ejoker.context.LazyInjectTuple;
 
 public class SimpleContext extends AbstractContext {
+
+	private Lock lock = new ReentrantLock();
 
 	public SimpleContext(){ super(); }
 
@@ -31,103 +35,99 @@ public class SimpleContext extends AbstractContext {
 		assemblyMapper.put(specificPackage, aa);
 	}
 
-	public synchronized <TInstance> TInstance get(Class<TInstance> clazz){
+	/**
+	 * use Concurrent.lock rather than the synchronized keyword 
+	 */
+	public <TInstance> TInstance get(Class<TInstance> clazz){
+		lock.lock();
 		Object instance = getInstance(clazz);
 		if (instance != null) return (TInstance ) instance;
 		instance = innerGet(clazz);
+		lock.unlock();
 		if ( getMultiDependenceInstanceMapper().size()!=0 )
 			throw new ContextRuntimeException("There some worng dependence could not resolve!!!");
 		return (TInstance ) instance;
 	}
-	
+
 	public synchronized <TInstance> void set(Class<TInstance> clazz, TInstance instance) {
 		set(clazz.getName(), instance);
 	}
-	
+
 	public synchronized <TInstance> void set(String instanceType, TInstance instance) {
 		adoptInstance(instanceType, instance);
 	}
-	
 
 	@Override
-	public String resolve(String interfaceName){
-		if (eServiceInterfaceMapper.containsKey(interfaceName))
-			return eServiceInterfaceMapper.get(interfaceName);
-		return interfaceName;
+	public Class<?> resolve(String interfaceName){
+		try {
+			return resolve(Class.forName(interfaceName));
+		} catch (ClassNotFoundException e) {
+			throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
+		}
+	}
+
+	@Override
+	public Class<?> resolve(Class<?> interfaceType){
+		if (eServiceInterfaceMapper.containsKey(interfaceType))
+			return eServiceInterfaceMapper.get(interfaceType);
+		return interfaceType;
 	}
 
 	private <TInstance> TInstance innerGet(Class<TInstance> clazz){
-
-		Class<?> clazzImpl = clazz;
-		if (clazz.isInterface()) {
-			String clazzImplName = resolve(clazz.getName());
-			try {
-				clazzImpl = Class.forName(clazzImplName);
-			} catch (Exception e) {
-				System.err.println("fetch "+clazzImplName);
-				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
-			}
-		}
+		Class<?> clazzImpl = resolve(clazz);
+		if(clazzImpl.isInterface())
+			throw new ContextRuntimeException(String.format("Could not found ImplementClass for [%s]", clazz.getName()));
 		String clazzName = clazzImpl.getName();
 		IAssemblyAnalyzer assemblyInfo = getAssemblyInfo(clazzName);
 		IInstanceBuilder instanceBuilder = new InstanceBuilderImpl(
 				this,
 				clazzImpl,
-				assemblyInfo.getDependenceMapper().get(clazzName),
-				assemblyInfo.getInitializeMapper().get(clazzName));
+				assemblyInfo.getDependenceMapper().get(clazzName));
 		TInstance instance = (TInstance) instanceBuilder.doCreate();
 		loadAllWating();
 		return instance;
 	}
-	
+
 	private void loadAllWating(){
-		Map<String, List<LazyInjectTuple>> multiDependenceInstance = getMultiDependenceInstanceMapper();
+		Map<Class<?>, List<LazyInjectTuple>> multiDependenceInstance = getMultiDependenceInstanceMapper();
 		while (multiDependenceInstance.size()!=0) {
-			Set<String> waitingObjectInstances = multiDependenceInstance.keySet();
-			String nextResolvObjectType = waitingObjectInstances.iterator().next();
+			Set<Class<?>> waitingObjectInstances = multiDependenceInstance.keySet();
+			Class<?> nextResolvObjectType = waitingObjectInstances.iterator().next();
 			try {
-				innerGet(Class.forName(nextResolvObjectType));
+				innerGet(nextResolvObjectType);
 			} catch (Exception e) {
 				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
 			}
 		}
-//		Set<String> waitingObjectInstances = multiDependenceInstance.keySet();
-//		List<String> waitintList = new ArrayList<String>();
-//		waitintList.addAll(waitingObjectInstances);
-//		for (String watingObjectInstance : waitingObjectInstances )
-//			try {
-//				innerGet(Class.forName(watingObjectInstance));
-//			} catch (Exception e) {
-//				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
-//			}
 	}
 
+	/**
+	 * get e-joker context scan information.
+	 * @param classFullName
+	 * @return
+	 */
 	private IAssemblyAnalyzer getAssemblyInfo(String classFullName){
-		Set<String> keySet = assemblyMapper.keySet();
-		for ( String key : keySet ){
-			if ( classFullName.startsWith(key)) return assemblyMapper.get(key);
-		}
-		throw new ContextRuntimeException("AssemblyInfo for ["+classFullName+"] is not found!!!Did you forget make it into to scan?");
+		IAssemblyAnalyzer assemblyAnalyzer = null;
+		Set<Entry<String, IAssemblyAnalyzer>> entrySet = assemblyMapper.entrySet();
+		for(Entry<String, IAssemblyAnalyzer> entry : entrySet)
+			if(classFullName.startsWith(entry.getKey()))
+				return assemblyAnalyzer = entry.getValue();
+		if(assemblyAnalyzer==null)
+			throw new ContextRuntimeException("AssemblyInfo for ["+classFullName+"] is not found!!!Did you forget make it into to scan?");
+		return assemblyAnalyzer;
 	}
 
-	private void combineEServiceInterfaceMapper(Set<String> eServiceClasses){
-		for (String clazzName : eServiceClasses) {
-			Class<?> clazz;
-			try {
-				clazz = Class.forName(clazzName);
-			} catch (Exception e) {
-				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
-			}
+	private void combineEServiceInterfaceMapper(Set<Class<?>> eServiceClasses){
+		for (Class<?> clazz : eServiceClasses) {
 			Class<?>[] implementInterfaces = clazz.getInterfaces();
 			for (Class<?> intf : implementInterfaces) {
-				String interfaceName = intf.getName();
-				if ( eServiceInterfaceMapper.containsKey(interfaceName) )
-					throw new ContextRuntimeException("The interface ["+interfaceName+"] has regist an implemented class!!!");
-				eServiceInterfaceMapper.put(interfaceName, clazzName);
+				if ( eServiceInterfaceMapper.containsKey(intf) )
+					throw new ContextRuntimeException("The interface ["+intf.getName()+"] has regist an implemented class!!!");
+				eServiceInterfaceMapper.put(intf, clazz);
 			}
 		}
 	}
 
 	private final Map<String, IAssemblyAnalyzer> assemblyMapper = new HashMap<String, IAssemblyAnalyzer>();
-	private final Map<String, String> eServiceInterfaceMapper = new HashMap<String, String>();
+	private final Map<Class<?>, Class<?>> eServiceInterfaceMapper = new HashMap<Class<?>, Class<?>>();
 }
