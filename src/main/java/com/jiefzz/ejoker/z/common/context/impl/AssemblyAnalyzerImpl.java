@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.z.common.context.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,8 +49,9 @@ public class AssemblyAnalyzerImpl implements IAssemblyAnalyzer {
 		}
 
 		for (Class<?> clazz:clazzInSpecificPackage) {
-			if(Exception.class.isAssignableFrom(clazz)) continue;
+			// skip Throwable \ Abstract \ Interface class
 			if(Throwable.class.isAssignableFrom(clazz)) continue;
+			if(Modifier.isAbstract(clazz.getModifiers())) continue;
 			if(clazz.isInterface()) continue;
 			analyzeContextAnnotation(clazz);
 		}
