@@ -96,7 +96,7 @@ public class SimpleContext extends AbstractContext {
 			try {
 				innerGet(nextResolvObjectType);
 			} catch (Exception e) {
-				throw new ContextRuntimeException("This Exception will never occur, please send a report to constructor!!!", e);
+				throw new ContextRuntimeException("Could not resolved dependence!!!", e);
 			}
 		}
 	}
