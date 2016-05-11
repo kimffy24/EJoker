@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.context.impl;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,18 +12,15 @@ import com.jiefzz.ejoker.context.IInstanceBuilder;
 public class InstanceBuilderImpl implements IInstanceBuilder {
 
 	private static final Map<String, Field> emptyDependenceInfo = new HashMap<String, Field>();
-	private static final Set<String> emptyInitializeInfo = new HashSet<String>();
 	
 	private final AbstractContext context;
 	private final Map<String, Field> dependenceInfo;
-	private final Set<String> initializeInfo;
 	private final Class<?> clazz;
 	
-	public InstanceBuilderImpl(AbstractContext context, Class<?> clazz, Map<String, Field> dependenceInfo, Set<String> initializeInfo){
+	public InstanceBuilderImpl(AbstractContext context, Class<?> clazz, Map<String, Field> dependenceInfo){
 		this.context = context;
 		this.clazz = clazz;
 		this.dependenceInfo = dependenceInfo!=null?dependenceInfo:emptyDependenceInfo;
-		this.initializeInfo = initializeInfo!=null?initializeInfo:emptyInitializeInfo;
 	};
 	
 	
