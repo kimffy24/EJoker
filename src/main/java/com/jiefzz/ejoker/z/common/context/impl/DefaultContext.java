@@ -8,8 +8,10 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.AbstractContext;
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
+import com.jiefzz.ejoker.z.common.context.EServiceInfoTuple;
 import com.jiefzz.ejoker.z.common.context.IAssemblyAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IInstanceBuilder;
 import com.jiefzz.ejoker.z.common.context.LazyInjectTuple;
@@ -68,8 +70,9 @@ public class DefaultContext extends AbstractContext {
 
 	@Override
 	public Class<?> resolve(Class<?> interfaceType){
-		if (eServiceInterfaceMapper.containsKey(interfaceType))
-			return eServiceInterfaceMapper.get(interfaceType);
+		if (eServiceInterfaceMapper.containsKey(interfaceType)) {
+			return eServiceInterfaceMapper.get(interfaceType).eServiceClassType;
+		}
 		return interfaceType;
 	}
 
@@ -121,13 +124,18 @@ public class DefaultContext extends AbstractContext {
 		for (Class<?> clazz : eServiceClasses) {
 			Class<?>[] implementInterfaces = clazz.getInterfaces();
 			for (Class<?> intf : implementInterfaces) {
-				if ( eServiceInterfaceMapper.containsKey(intf) )
-					throw new ContextRuntimeException("The interface ["+intf.getName()+"] has regist an implemented class!!!");
-				eServiceInterfaceMapper.put(intf, clazz);
+				EServiceInfoTuple eServiceTupleInfo = eServiceInterfaceMapper.get(intf);
+				if(eServiceTupleInfo==null)
+					eServiceTupleInfo = new EServiceInfoTuple(clazz);
+				else
+					eServiceTupleInfo = eServiceTupleInfo.add(new EServiceInfoTuple(clazz));
+				eServiceInterfaceMapper.put(intf, eServiceTupleInfo);
 			}
 		}
 	}
 
 	private final Map<String, IAssemblyAnalyzer> assemblyMapper = new HashMap<String, IAssemblyAnalyzer>();
-	private final Map<Class<?>, Class<?>> eServiceInterfaceMapper = new HashMap<Class<?>, Class<?>>();
+	private final Map<Class<?>, EServiceInfoTuple> eServiceInterfaceMapper = new HashMap<Class<?>, EServiceInfoTuple>();
+	
+	
 }
