@@ -121,7 +121,8 @@ public class InstanceContainer implements IContextWorker {
 	}
 	
 	private <TInstance> TInstance internalGet(Class<TInstance> clazz) {
-		InstanceBuilder instanceBuilder = new InstanceBuilder(clazz);
+		Class<?> resolveType = resolve(clazz);
+		InstanceBuilder instanceBuilder = new InstanceBuilder(resolveType);
 		Object instance = instanceBuilder.doCreate();
 		while (waitingResolveDependenceInstance.size()!=0)
 			internalGet(waitingResolveDependenceInstance.keySet().iterator().next());
