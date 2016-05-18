@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.utils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +69,15 @@ public class ParameterizedTypeUtil {
 		return isAcceptArray(object.getClass());
 	}
 
+	/**
+	 * 获取基础数据的对象类型
+	 * @param clazz
+	 * @return
+	 */
+	public static Class<?> getPrimitiveObjectType(Class<?> clazz){
+		return clazz.isPrimitive()?primitiveTypeMap.get(clazz):clazz;
+	}
+	
 	private static final Set<Class<?>> acceptTypeSet = new HashSet<Class<?>>(Arrays.asList(new Class<?>[]{
 		Boolean.class, Byte.class, Character.class, Short.class, Integer.class, Long.class, Float.class, Double.class, String.class
 	}));
@@ -75,4 +85,17 @@ public class ParameterizedTypeUtil {
 		Collection.class, Map.class
 	}));
 	
+	private static final Map<Class<?>,Class<?>> primitiveTypeMap = new HashMap<Class<?>,Class<?>>();
+	
+	static {
+		primitiveTypeMap.put(int.class, Integer.class);
+		primitiveTypeMap.put(long.class, Long.class);
+		primitiveTypeMap.put(short.class, Short.class);
+		primitiveTypeMap.put(double.class, Double.class);
+		primitiveTypeMap.put(float.class, Float.class);
+		primitiveTypeMap.put(byte.class, Byte.class);
+		primitiveTypeMap.put(char.class, Character.class);
+		primitiveTypeMap.put(boolean.class, Boolean.class);
+		primitiveTypeMap.put(void.class, Void.class);
+	}
 }
