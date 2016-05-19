@@ -68,6 +68,76 @@ public class ParameterizedTypeUtil {
 	public static boolean isAcceptArray(Object object){
 		return isAcceptArray(object.getClass());
 	}
+	
+	public static Object[] arrayTypeAsObject(Object object) {
+		if(!object.getClass().isArray()) return null;
+		Class<?> clazz = object.getClass().getComponentType();
+		//long
+		if(long.class==clazz){
+			int arraySyze = ((long[] )object).length;
+			Long[] cArray = new Long[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((long[] )object)[i];
+			return cArray;
+		}
+		//int
+		if(int.class==clazz){
+			int arraySyze = ((int[] )object).length;
+			Integer[] cArray = new Integer[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((int[] )object)[i];
+			return cArray;
+		}
+		//short
+		if(short.class==clazz){
+			int arraySyze = ((short[] )object).length;
+			Short[] cArray = new Short[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((short[] )object)[i];
+			return cArray;
+		}
+		//double
+		if(double.class==clazz){
+			int arraySyze = ((double[] )object).length;
+			Double[] cArray = new Double[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((double[] )object)[i];
+			return cArray;
+		}
+		//float
+		if(float.class==clazz){
+			int arraySyze = ((float[] )object).length;
+			Float[] cArray = new Float[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((float[] )object)[i];
+			return cArray;
+		}
+		//char
+		if(long.class==clazz){
+			int arraySyze = ((char[] )object).length;
+			Character[] cArray = new Character[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((char[] )object)[i];
+			return cArray;
+		}
+		//byte
+		if(byte.class==clazz){
+			int arraySyze = ((byte[] )object).length;
+			Byte[] cArray = new Byte[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((byte[] )object)[i];
+			return cArray;
+		}
+		//boolean
+		if(boolean.class==clazz){
+			int arraySyze = ((boolean[] )object).length;
+			Boolean[] cArray = new Boolean[arraySyze];
+			for(int i=0; i<arraySyze; i++)
+				cArray[i] = ((boolean[] )object)[i];
+			return cArray;
+		}
+		return (Object[] )object;
+	}
 
 	/**
 	 * 获取基础数据的对象类型

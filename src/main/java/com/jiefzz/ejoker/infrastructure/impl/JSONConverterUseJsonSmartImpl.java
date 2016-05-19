@@ -1,7 +1,6 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,7 +29,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	private final static Logger logger = LoggerFactory.getLogger(JSONConverterUseJsonSmartImpl.class);
 
 	private final static Map<String, Field> defaultEmptyInfo = new HashMap<String, Field>();
-	private final Map<Class, Map<String, Field>> clazzRefectionInfo = new ConcurrentHashMap<Class, Map<String, Field>>();
+	private final Map<Class<?>, Map<String, Field>> clazzRefectionInfo = new ConcurrentHashMap<Class<?>, Map<String, Field>>();
 	
 	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new BuilderToolSet());
 
@@ -123,37 +122,37 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	 */
 	public class BuilderToolSet implements RelationshipTreeUtilCallbackInterface<JSONObject, JSONArray>{
 		@Override
-		public JSONObject createNode() throws Exception {
+		public JSONObject createNode() {
 			return new JSONObject();
 		}
 
 		@Override
-		public JSONArray createValueSet() throws Exception {
+		public JSONArray createValueSet() {
 			return new JSONArray();
 		}
 
 		@Override
-		public boolean isHas(JSONObject targetNode, String key) throws Exception {
+		public boolean isHas(JSONObject targetNode, String key) {
 			return targetNode.containsKey(key);
 		}
 
 		@Override
-		public void addToValueSet(JSONArray valueSet, Object child) throws Exception {
+		public void addToValueSet(JSONArray valueSet, Object child) {
 			valueSet.add(child);
 		}
 
 		@Override
-		public void addToKeyValueSet(JSONObject keyValueSet, Object child, String key) throws Exception {
+		public void addToKeyValueSet(JSONObject keyValueSet, Object child, String key) {
 			keyValueSet.put(key, child);
 		}
 
 		@Override
-		public void merge(JSONObject targetNode, JSONObject tempNode) throws Exception {
+		public void merge(JSONObject targetNode, JSONObject tempNode) {
 			targetNode.putAll(tempNode);
 		}
 
 		@Override
-		public Object getOne(JSONObject targetNode, String key) throws Exception {
+		public Object getOne(JSONObject targetNode, String key) {
 			return targetNode.get(key);
 		}
 	}
