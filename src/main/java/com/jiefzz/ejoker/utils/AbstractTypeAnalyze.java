@@ -23,7 +23,7 @@ public abstract class AbstractTypeAnalyze {
 	
 	protected <T> Map<String, Field> analyzeClazzInfo(final Class<T> clazz){
 
-		if(ParameterizedTypeUtil.hasSublevel(clazz) || ParameterizedTypeUtil.isDirectSerializableType(clazz) || clazz.isArray())
+		if(ParameterizedTypeUtil.hasSublevel(clazz) || ParameterizedTypeUtil.isDirectSerializableType(clazz) || clazz.isArray() || clazz.isEnum())
 			return null;
 		
 		Map<String, Field> analyzeResult = clazzRefectionInfo.getOrDefault(clazz, defaultEmptyInfo);

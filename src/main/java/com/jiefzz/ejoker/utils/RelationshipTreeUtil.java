@@ -93,6 +93,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 		Set<Entry<String, Object>> entrySet = objMap.entrySet();
 		for(Entry<String, Object> entry : entrySet) {
 			Object value = entry.getValue();
+			if(value==null) continue;
 			String key = entry.getKey();
 			// 基础类型
 			if ( ParameterizedTypeUtil.isDirectSerializableType(value) )
