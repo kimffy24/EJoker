@@ -1,16 +1,17 @@
 package com.jiefzz.ejoker.z.queue.adapter.impl.rabbitmq;
 
 import java.io.IOException;
-import com.jiefzz.ejoker.z.queue.adapter.IMessageQueue;
+
+import com.jiefzz.ejoker.z.queue.clients.producers.IMessageProducer;
 import com.rabbitmq.client.Channel;
 
-public class RabbitMessageQueuePublisherImpl implements IMessageQueue {
+public class RabbitMessageQueueProducer implements IMessageProducer {
 
 
 	private static final ThreadLocal<Channel> threadLocal = new ThreadLocal<Channel>();
 	RabbitMQChannelProvider rabbitmqChannelProvider;
 	
-	public RabbitMessageQueuePublisherImpl(){
+	public RabbitMessageQueueProducer(){
 		rabbitmqChannelProvider = new RabbitMQChannelProvider();
 	}
 

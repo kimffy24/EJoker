@@ -15,7 +15,7 @@ import com.jiefzz.ejoker.queue.SendQueueMessageService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
-import com.jiefzz.ejoker.z.queue.clients.producers.IProducer;
+import com.jiefzz.ejoker.z.queue.IProducer;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 /**

@@ -9,7 +9,7 @@ import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
-import com.jiefzz.ejoker.z.queue.clients.producers.IProducer;
+import com.jiefzz.ejoker.z.queue.IProducer;
 import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 

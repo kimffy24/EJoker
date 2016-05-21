@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.queue;
+package com.jiefzz.ejoker.z.queue.clients.producers;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -10,19 +10,16 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
-import com.jiefzz.ejoker.z.queue.adapter.IMessageQueue;
-import com.jiefzz.ejoker.z.queue.clients.producers.IProducer;
-import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
-import com.jiefzz.ejoker.z.queue.clients.producers.SendStatus;
+import com.jiefzz.ejoker.z.queue.IProducer;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
-public class Producer implements IProducer {
+public abstract class AbstractProducer implements IProducer {
 
-	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(Producer.class);
+	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(AbstractProducer.class);
 
 	@Resource
-	IMessageQueue messageQueue;
+	IMessageProducer messageQueue;
 
 	@Override
 	public SendResult sendMessage(Message message, String routingKey) {
@@ -58,8 +55,8 @@ public class Producer implements IProducer {
 			// TODO logger!
 			//System.out.println("Dispatch with route key: \""+routingKey+"\"");
 			try {
-				Producer.this.messageQueue.produce(routingKey, message.body);
-				Producer.this.messageQueue.onProducerThreadClose();
+				AbstractProducer.this.messageQueue.produce(routingKey, message.body);
+				AbstractProducer.this.messageQueue.onProducerThreadClose();
 			} catch (IOException e) {
 				e.printStackTrace();
 				return new SendResult(SendStatus.Failed, null, IOException.class.getName() + ": " +e.getMessage());
