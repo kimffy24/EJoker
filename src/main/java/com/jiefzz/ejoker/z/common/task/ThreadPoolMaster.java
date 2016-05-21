@@ -3,6 +3,9 @@ package com.jiefzz.ejoker.z.common.task;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
+
 import java.util.Set;
 
 public class ThreadPoolMaster {
@@ -27,4 +30,12 @@ public class ThreadPoolMaster {
 		}
 	}
 	
+	static {
+		Scavenger.addFianllyJob(new Runnable() {
+			@Override
+			public void run() {
+				ThreadPoolMaster.closeAll();
+			}
+		});
+	}
 }

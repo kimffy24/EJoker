@@ -43,7 +43,7 @@ public abstract class AbstractTypeAnalyze {
 						||ignoreFiledName.contains(fieldName)				// has mark ignore in this function
 						) {
 					ignoreFiledName.add(fieldName);
-					logger.debug("{}.analyzeClazzInfo() ignore field [{}], while handle [{}]", AbstractTypeAnalyze.class.getName(), fieldName, clazz.getName());
+					//logger.debug("{}.analyzeClazzInfo() ignore field [{}], while handle [{}]", AbstractTypeAnalyze.class.getName(), fieldName, clazz.getName());
 					continue;
 				}
 				analyzeResult.putIfAbsent(field.getName(), field);

@@ -8,7 +8,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
-
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -29,6 +29,16 @@ public class RabbitMQChannelProvider {
 		} catch ( Exception e ) {
 			throw new InfrastructureRuntimeException("Could not connect to rabbitmq server!!!", e);
 		}
+		Scavenger.addFianllyJob(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					RabbitMQChannelProvider.this.connection.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public Channel getNewChannel() {

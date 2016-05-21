@@ -3,6 +3,7 @@ package com.jiefzz.ejoker;
 import com.jiefzz.ejoker.z.common.context.IContext;
 import com.jiefzz.ejoker.z.common.context.IContextWorker;
 import com.jiefzz.ejoker.z.common.context.impl.InstanceContainer;
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 
 public class Configure {
 	
