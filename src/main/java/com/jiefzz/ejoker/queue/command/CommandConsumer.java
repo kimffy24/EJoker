@@ -26,13 +26,14 @@ import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.queue.IConsumer;
+import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
 import com.jiefzz.ejoker.z.queue.protocols.QueueMessage;
 
 @EService
-public class CommandConsumer implements IMessageHandler {
+public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
@@ -213,5 +214,23 @@ public class CommandConsumer implements IMessageHandler {
 		public String getResult() {
 			return result;
 		}
+	}
+
+	@Override
+	public IQueueWokerService start() {
+		consumer.start();
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService subscribe(String topic) {
+		consumer.subscribe(topic);
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService shutdown() {
+		consumer.shutdown();
+		return this;
 	}
 }
