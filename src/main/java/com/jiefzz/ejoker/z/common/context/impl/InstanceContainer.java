@@ -11,6 +11,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IContext;
 import com.jiefzz.ejoker.z.common.context.IContextWorker;
@@ -19,6 +22,8 @@ import com.jiefzz.ejoker.z.common.context.LazyInjectTuple;
 
 public class InstanceContainer implements IContextWorker {
 
+	final static Logger logger = LoggerFactory.getLogger(InstanceContainer.class);
+	
 	private final RootAssemblyAnalyzer rootAssemblyAnalyzer = new RootAssemblyAnalyzer();
 
 	/**
@@ -137,8 +142,10 @@ public class InstanceContainer implements IContextWorker {
 
 		public InstanceBuilder(Class<?> clazz){
 			// if Throwable \ Abstract \ Interface class, interrupt.
-			if(Throwable.class.isAssignableFrom(clazz) || Modifier.isAbstract(clazz.getModifiers()) || clazz.isInterface())
-				throw new ContextRuntimeException(String.format("[%s] is not a normal class!!!", clazz.getName()));
+			if(Throwable.class.isAssignableFrom(clazz) || Modifier.isAbstract(clazz.getModifiers()) || clazz.isInterface()) {
+				logger.error("{} is not a normal class!!!", clazz.getName());
+				throw new ContextRuntimeException(String.format("[%s] could not find an @EService instance!!!", clazz.getName()));
+			}
 			this.clazz = clazz;
 		};
 
