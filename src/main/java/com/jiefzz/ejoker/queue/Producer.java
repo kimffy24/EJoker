@@ -9,6 +9,7 @@ import javax.annotation.Resource;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
+import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.queue.adapter.IMessageQueue;
 import com.jiefzz.ejoker.z.queue.clients.producers.IProducer;
 import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
@@ -18,7 +19,7 @@ import com.jiefzz.ejoker.z.queue.protocols.Message;
 @EService
 public class Producer implements IProducer {
 
-	AsyncPool asyncPool = new AsyncPool();
+	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(Producer.class);
 
 	@Resource
 	IMessageQueue messageQueue;

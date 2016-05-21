@@ -8,6 +8,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
+import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.queue.clients.producers.IProducer;
 import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
@@ -15,7 +16,7 @@ import com.jiefzz.ejoker.z.queue.protocols.Message;
 @EService
 public class SendQueueMessageService {
 	
-	private AsyncPool asyncPool = new AsyncPool();
+	private AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(SendQueueMessageService.class);
 	
 	public void sendMessage(IProducer producer, Message message, String routingKey) {
 		producer.sendMessage(message, routingKey);

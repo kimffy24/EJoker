@@ -8,14 +8,9 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 @EService
 public class AsyncPool {
+	
+	private ExecutorService newThreadPool;
 
-	private static final int threadPoolSize =180;
-	
-	private final ExecutorService newThreadPool;
-	
-	public AsyncPool() {
-		this(threadPoolSize);
-	}
 	public AsyncPool(int threadPoolSize) {
 		newThreadPool= Executors.newFixedThreadPool(threadPoolSize);
 	}
