@@ -14,11 +14,10 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
 public class RabbitMessageQueueConsumer extends AbstractConsumer {
-	
+
 	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueConsumer.class);
-	
+
 	RabbitMQChannelProvider rabbitmqChannelProvider;
-	
 	private Channel channel;
 	private String topic;
 	private String queue;
@@ -26,7 +25,7 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 	public RabbitMessageQueueConsumer() {
 		rabbitmqChannelProvider = new RabbitMQChannelProvider();
 	}
-	
+
 	@Override
 	public IQueueWokerService start() {
 		if(channel!=null) throw new QueueRuntimeException("RabbitMessageQueueConsumer has been start!!!");
@@ -50,17 +49,20 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		}
 		return this;
 	}
-	
+
 	@Override
 	public IQueueWokerService subscribe(String topic) {
 		this.topic = topic;
 		this.queue = RabbitMQChannelProvider.getTopicQueue(topic);
 		return this;
 	}
-	
+
 	@Override
 	public IQueueWokerService shutdown() {
-		logger.debug("Consumer try to close the rabbitmq queue.");
-		try { channel.close(); } catch (Exception e) { e.printStackTrace(); }
+		try { channel.close(); }
+		catch (Exception e) {
+			logger.error("Consumer try to close the rabbitmq queue faild!!!");
+			e.printStackTrace();
+		}
 		return this;
 	}}
