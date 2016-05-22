@@ -16,6 +16,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.jiefzz.ejoker.z.queue.IProducer;
+import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 /**
@@ -23,7 +24,7 @@ import com.jiefzz.ejoker.z.queue.protocols.Message;
  *
  */
 @EService
-public class CommandService implements ICommandService {
+public class CommandService implements ICommandService, IQueueWokerService {
 
 	/**
 	 * all command will send by this object.
@@ -36,6 +37,24 @@ public class CommandService implements ICommandService {
 	IProducer producer;
 	@Resource
 	ICommandTopicProvider commandTopicProvider;
+
+
+	@Override
+	public IQueueWokerService start() {
+		producer.start();
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService subscribe(String topic) {
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService shutdown() {
+		producer.shutdown();
+		return this;
+	}
 	
 	@Override
 	public Future<BaseAsyncTaskResult> sendAsync(ICommand command) {

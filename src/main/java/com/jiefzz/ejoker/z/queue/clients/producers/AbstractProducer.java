@@ -4,23 +4,24 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.queue.IProducer;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
-@EService
 public abstract class AbstractProducer implements IProducer {
-
+	
+	final static Logger logger = LoggerFactory.getLogger(AbstractProducer.class);
+	
 	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(AbstractProducer.class);
 
-	@Resource
-	IMessageProducer messageQueue;
-
+	protected abstract void produce(String routingKey, String body) throws IOException;
+	protected abstract void produce(String routingKey, byte[] body) throws IOException;
+	
 	@Override
 	public SendResult sendMessage(Message message, String routingKey) {
 		Future<SendResult> sendMessageAsync = sendMessageAsync(message, routingKey);
@@ -52,17 +53,14 @@ public abstract class AbstractProducer implements IProducer {
 
 		@Override
 		public SendResult call() {
-			// TODO logger!
-			//System.out.println("Dispatch with route key: \""+routingKey+"\"");
 			try {
-				AbstractProducer.this.messageQueue.produce(routingKey, message.body);
-				AbstractProducer.this.messageQueue.onProducerThreadClose();
+				AbstractProducer.this.produce(routingKey, message.body);
 			} catch (IOException e) {
+				AbstractProducer.this.logger.error("Send message faile!!!, message context: \"{}\"", message.body);
 				e.printStackTrace();
 				return new SendResult(SendStatus.Failed, null, IOException.class.getName() + ": " +e.getMessage());
 			}
 			return new SendResult(SendStatus.Success, null, null);
-
 		}
 
 	}

@@ -2,14 +2,20 @@ package com.jiefzz.ejoker.z.queue.adapter.impl.rabbitmq;
 
 import java.io.IOException;
 
-import com.jiefzz.ejoker.z.queue.clients.producers.IMessageProducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.jiefzz.ejoker.z.queue.IQueueWokerService;
+import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
+import com.jiefzz.ejoker.z.queue.clients.producers.AbstractProducer;
 import com.rabbitmq.client.Channel;
 
-public class RabbitMessageQueueProducer implements IMessageProducer {
+public class RabbitMessageQueueProducer extends AbstractProducer {
 
-
-	private static final ThreadLocal<Channel> threadLocal = new ThreadLocal<Channel>();
+	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueProducer.class);
+	
 	RabbitMQChannelProvider rabbitmqChannelProvider;
+	private Channel channel = null;
 	
 	public RabbitMessageQueueProducer(){
 		rabbitmqChannelProvider = new RabbitMQChannelProvider();
@@ -22,20 +28,31 @@ public class RabbitMessageQueueProducer implements IMessageProducer {
 
 	@Override
 	public void produce(String key, byte[] msg) throws IOException {
-		Channel channel = rabbitmqChannelProvider.getNewChannel();
-		threadLocal.set(channel);
 		channel.basicPublish(RabbitMQChannelProvider.EXCHANGE_NAME, key, null, msg);
 	}
 
 	@Override
-	public void onProducerThreadClose() {
+	public IQueueWokerService start() {
+		if(channel!=null) throw new QueueRuntimeException("RabbitMessageQueueConsumer has been start!!!");
+		channel = rabbitmqChannelProvider.getNewChannel();
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService subscribe(String topic) {
+		// unuse
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService shutdown() {
 		try {
-			Channel channel = threadLocal.get();
-			if(channel!=null)
-				channel.close();
+			channel.close();
 		} catch (Exception e) {
+			logger.error("Close rabbitmq channel faild!!!");
 			e.printStackTrace();
 		}
+		return this;
 	}
 
 }
