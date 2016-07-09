@@ -31,7 +31,8 @@
 	</properties>
 
 	<dependencies>
-	
+
+		<!-- 日志组件 -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -45,23 +46,21 @@
 			<version>2.2.1</version>
 		</dependency>
 
+		<!-- redis缓存驱动 -->
 		<dependency>
 			<groupId>redis.clients</groupId>
 			<artifactId>jedis</artifactId>
 			<version>2.6.3</version>
 		</dependency>
 
+		<!-- mongo缓存驱动 -->
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
 			<version>3.2.1</version>
 		</dependency>
-
-		<dependency>
-			<groupId>commons-beanutils</groupId>
-			<artifactId>commons-beanutils</artifactId>
-			<version>1.7.0</version>
-		</dependency>
+		
+		<!-- 消息队列驱动 -->
 		<dependency>
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
