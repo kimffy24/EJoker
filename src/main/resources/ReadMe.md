@@ -1,0 +1,1 @@
+if with folder 'src/main/resources' eclipse will resolved build path error! 
