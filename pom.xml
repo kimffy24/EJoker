@@ -25,11 +25,6 @@
 		</repository>
 	</repositories>
 
-	<properties>
-		<!-- spring版本号 -->
-		<spring.version>4.2.4.RELEASE</spring.version>
-	</properties>
-
 	<dependencies>
 
 		<!-- 日志组件 -->
