@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Properties;
 import java.util.Set;
 
@@ -14,6 +18,8 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 public class RabbitMQChannelProvider {
+	
+	private final static  Logger logger = LoggerFactory.getLogger(RabbitMQChannelProvider.class);
 
 	private final static String configFileName = "rabbitmq.properties";
 	private final static Properties props = new Properties();
@@ -50,31 +56,38 @@ public class RabbitMQChannelProvider {
 	}
 
 	static{
+		boolean configureError = false;
 		// While the ClassLoader load this class,
 		// build rabbitmq connection factory Object.
 		try {
 			props.load(RabbitMQChannelProvider.class.getClassLoader().getResourceAsStream(configFileName));
-		}catch (IOException e) {
-			throw new InfrastructureRuntimeException("Can not load "+configFileName, e);
+		}catch (Exception e) {
+			logger.error("Can not load {}", configFileName);
+			configureError = true;
+			//throw new InfrastructureRuntimeException("Can not load "+configFileName, e);
 		}
 		factory = new ConnectionFactory();
-		factory.setHost(props.getProperty("rabbitmq.host", "localhost"));
-		factory.setPort(Integer.parseInt(props.getProperty("rabbitmq.port", "localhost")));
-		factory.setUsername(props.getProperty("rabbitmq.username", "guest"));
-		factory.setPassword(props.getProperty("rabbitmq.password", "guest"));
-		
-		// 获取ejoker-rabbitmq使用的交换机
-		EXCHANGE_NAME = props.getProperty("ejoker.rabbitmq.defaultExchange", "ejoker");
-
-		// 提取写在配置文件中的主题队列配对
-		Set<Entry<Object, Object>> entrySet = props.entrySet();
-		for(Entry<Object, Object> entry : entrySet){
-			String key = (String ) entry.getKey();
-			if(key.startsWith("ejoker.rabbitmq.topic.queue")){
-				String queue = key.substring(1+"ejoker.rabbitmq.topic.queue".length());
-				String topic = (String ) entry.getValue();
-				topicQueueMapper.put(topic, queue);
+		if(!configureError) {
+			factory.setHost(props.getProperty("rabbitmq.host", "localhost"));
+			factory.setPort(Integer.parseInt(props.getProperty("rabbitmq.port", "localhost")));
+			factory.setUsername(props.getProperty("rabbitmq.username", "guest"));
+			factory.setPassword(props.getProperty("rabbitmq.password", "guest"));
+			
+			// 获取ejoker-rabbitmq使用的交换机
+			EXCHANGE_NAME = props.getProperty("ejoker.rabbitmq.defaultExchange", "ejoker");
+	
+			// 提取写在配置文件中的主题队列配对
+			Set<Entry<Object, Object>> entrySet = props.entrySet();
+			for(Entry<Object, Object> entry : entrySet){
+				String key = (String ) entry.getKey();
+				if(key.startsWith("ejoker.rabbitmq.topic.queue")){
+					String queue = key.substring(1+"ejoker.rabbitmq.topic.queue".length());
+					String topic = (String ) entry.getValue();
+					topicQueueMapper.put(topic, queue);
+				}
 			}
+		} else {
+			EXCHANGE_NAME = "ejoker";
 		}
 	}
 	
