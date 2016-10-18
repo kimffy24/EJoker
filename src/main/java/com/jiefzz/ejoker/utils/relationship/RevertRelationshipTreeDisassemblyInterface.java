@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.utils;
+package com.jiefzz.ejoker.utils.relationship;
 
 import java.util.List;
 import java.util.Map;

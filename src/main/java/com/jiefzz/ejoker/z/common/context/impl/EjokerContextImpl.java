@@ -162,6 +162,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 			String generalSignature = GeneralTypeUtil.getGeneralSignature(field);
 			if(GeneralTypeUtil.NO_GENERAL_SIGNATURE.equals(generalSignature)) {
 				int generalTypeAmount = GeneralTypeUtil.getGeneralTypeAmount(clazz);
+				if(generalTypeAmount>GeneralTypeUtil.patametersAmountLimit) throw new ContextRuntimeException("Unsupport Parameters amount over than " +generalTypeAmount +"!!! TargetClass: " +clazz.getName());
 				return get(clazz, GeneralTypeUtil.emptyParametersBook.get(generalTypeAmount));
 			} else 
 				return get(clazz, generalSignature);

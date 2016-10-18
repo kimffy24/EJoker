@@ -1,5 +1,10 @@
 package com.jiefzz.ejoker.utils;
 
+/**
+ * 代理异常
+ * @author jiefzz
+ *
+ */
 public class DelegateException extends RuntimeException {
 
 	private static final long serialVersionUID = 6314244536113261647L;

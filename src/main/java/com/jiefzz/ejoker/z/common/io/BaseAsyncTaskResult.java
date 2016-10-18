@@ -1,5 +1,10 @@
 package com.jiefzz.ejoker.z.common.io;
 
+/**
+ * 异步任务结构基类
+ * @author jiefzz
+ *
+ */
 public class BaseAsyncTaskResult {
 
 	public final static BaseAsyncTaskResult Success = new BaseAsyncTaskResult(AsyncTaskStatus.Success);
@@ -15,17 +20,18 @@ public class BaseAsyncTaskResult {
 		setErrorMessage(errorMessage);
 	}
 
-	/* ================= */
+	/* ========Getter and Setter========= */
+	
 	public AsyncTaskStatus getStatus() {
 		return status;
 	}
 
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
 	protected void setStatus(AsyncTaskStatus status) {
 		this.status = status;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 
 	protected void setErrorMessage(String errorMessage) {

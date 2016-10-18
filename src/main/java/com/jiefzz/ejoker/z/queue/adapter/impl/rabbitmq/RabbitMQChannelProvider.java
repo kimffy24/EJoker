@@ -69,7 +69,7 @@ public class RabbitMQChannelProvider {
 		factory = new ConnectionFactory();
 		if(!configureError) {
 			factory.setHost(props.getProperty("rabbitmq.host", "localhost"));
-			factory.setPort(Integer.parseInt(props.getProperty("rabbitmq.port", "localhost")));
+			factory.setPort(Integer.parseInt(props.getProperty("rabbitmq.port", "5672")));
 			factory.setUsername(props.getProperty("rabbitmq.username", "guest"));
 			factory.setPassword(props.getProperty("rabbitmq.password", "guest"));
 			

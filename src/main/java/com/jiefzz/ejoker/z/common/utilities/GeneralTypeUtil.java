@@ -16,6 +16,10 @@ import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
  */
 public class GeneralTypeUtil {
 
+	/**
+	 * 没有声明泛型签名时的jvm对泛型类型表现出的泛型签名<br>
+	 * 多用于判断
+	 */
 	public final static String NO_GENERAL_SIGNATURE="";
 	public final static String SEPARATOR="|";
 	
@@ -61,20 +65,20 @@ public class GeneralTypeUtil {
 	public static int getGeneralTypeAmount(Class<?> clazz) {
 		TypeVariable<?>[] typeParameters = clazz.getTypeParameters();
 		if(null==typeParameters) return 0;
-		if(typeParameters.length>patametersAmountLimit) throw new ContextRuntimeException("Unsupport Parameters amount over than "+patametersAmountLimit+"!!!");
 		return typeParameters.length;
 	}
 
 	/**
 	 * 参考的空的泛型(未指定类型时)的泛型签名表
 	 */
-	public final static Map<Integer, String> emptyParametersBook;
+	public final static Map<Integer, String> emptyParametersBook = new HashMap<Integer, String>();
 
-	public final static int patametersAmountLimit;
+	/**
+	 * 允许接受的最大长度泛型签名数量
+	 */
+	public final static int patametersAmountLimit = 15;
 	
 	static {
-		patametersAmountLimit = 15;
-		emptyParametersBook = new HashMap<Integer, String>();
 		String unsetType = Object.class.getName();
 		StringBuilder sb = new StringBuilder(unsetType);
 		emptyParametersBook.put(1, unsetType);

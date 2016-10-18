@@ -2,6 +2,11 @@ package com.jiefzz.ejoker.utils;
 
 import java.io.IOException;
 
+/**
+ * Base64编码工具类
+ * @author jiefzz
+ *
+ */
 public class Base64Utils {
 	/** 
 	 * 编码 

@@ -7,6 +7,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+/**
+ * JVM提供的序列化工具类
+ * @author jiefzz
+ *
+ */
 public class JavaObjectSerializeUtil {
 
 	/**

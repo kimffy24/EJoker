@@ -20,7 +20,7 @@ public final class AsyncTaskResult<T> extends BaseAsyncTaskResult {
 	}
 
 
-	/* ================= */
+	/* ========Getter and Setter========= */
 
 	public T getData() {
 		return data;

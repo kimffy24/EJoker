@@ -53,4 +53,5 @@ public abstract class AbstractTypeAnalyze {
 		clazzRefectionInfo.putIfAbsent(clazz, analyzeResult);
 		return analyzeResult;
 	}
+
 }

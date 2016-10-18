@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.utils;
+package com.jiefzz.ejoker.utils.relationship;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -9,6 +9,9 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.jiefzz.ejoker.utils.AbstractTypeAnalyze;
+import com.jiefzz.ejoker.utils.ParameterizedTypeUtil;
 
 
 public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends AbstractTypeAnalyze {

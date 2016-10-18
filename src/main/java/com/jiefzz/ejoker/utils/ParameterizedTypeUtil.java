@@ -7,6 +7,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 泛型检测工具类
+ * @author jiefzz
+ *
+ */
 public class ParameterizedTypeUtil {
 
 	/**

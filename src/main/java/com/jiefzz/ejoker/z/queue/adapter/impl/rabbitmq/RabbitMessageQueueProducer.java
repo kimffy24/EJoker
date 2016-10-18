@@ -5,11 +5,13 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.producers.AbstractProducer;
 import com.rabbitmq.client.Channel;
 
+@EService
 public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueProducer.class);
@@ -40,7 +42,7 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	@Override
 	public IQueueWokerService subscribe(String topic) {
-		// unuse
+		logger.warn("[{}] is unimplemented!", RabbitMessageQueueProducer.class.getName() +".subscribe()" );
 		return this;
 	}
 
