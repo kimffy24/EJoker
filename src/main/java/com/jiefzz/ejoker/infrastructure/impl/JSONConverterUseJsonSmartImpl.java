@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
-import com.jiefzz.ejoker.utils.ParameterizedTypeUtil;
+import com.jiefzz.ejoker.utils.relationship.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.utils.relationship.RelationshipTreeUtil;
 import com.jiefzz.ejoker.utils.relationship.RelationshipTreeUtilCallbackInterface;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
