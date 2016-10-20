@@ -3,6 +3,9 @@ package com.jiefzz.ejoker.queue;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
@@ -11,17 +14,31 @@ import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.queue.IProducer;
 import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
+import com.jiefzz.ejoker.z.queue.clients.producers.SendStatus;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
 public class SendQueueMessageService {
 	
+	final static Logger logger = LoggerFactory.getLogger(SendQueueMessageService.class);
+	
 	private AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(SendQueueMessageService.class);
 	
 	public void sendMessage(IProducer producer, Message message, String routingKey) {
-		producer.sendMessage(message, routingKey);
+		try {
+			SendResult sendResult = producer.sendMessage(message, routingKey);
+			if(SendStatus.Success != sendResult.sendStatus) {
+				logger.error("Queue message sync send failed! [sendResult={}, routingKey={}]", sendResult, routingKey);
+				throw new IOException(sendResult.errorMessage);
+			}
+			logger.debug("Queue message sync send succeed. [sendResult={}, routingKey={}]", sendResult, routingKey);
+		} catch (Exception e) {
+			logger.error(String.format("Queue message synch send has exception! [message=%s, routingKey=%s]", message.toString(), routingKey), e);
+			throw new RuntimeException(e);
+		}
+
 	}
-	
+		
 	public Future<BaseAsyncTaskResult> sendMessageAsync(IProducer producer, Message message, String routingKey) {
 		AsyncTask task = new AsyncTask(producer, message, routingKey);
 		Future<BaseAsyncTaskResult> execute = asyncPool.execute(task);

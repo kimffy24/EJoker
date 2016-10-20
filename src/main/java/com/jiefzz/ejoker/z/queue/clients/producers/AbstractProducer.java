@@ -28,7 +28,7 @@ public abstract class AbstractProducer implements IProducer {
 		try {
 			return sendMessageAsync.get(12000, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			return new SendResult(SendStatus.Failed, null, e.getMessage());
 		}
 	}

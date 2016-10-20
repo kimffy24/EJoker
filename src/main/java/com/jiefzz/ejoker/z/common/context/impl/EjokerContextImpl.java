@@ -85,7 +85,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 
 	@Override
 	public <T> T createInstance(Class<T> clazz) {
-		IInstanceBuilder builder = new EJokerInstanceBuilderImpl(clazz);
+		IInstanceBuilder builder = new EJokerInstanceBuilderImpl(resolve(clazz));
 		Object instance = builder.doCreate();
 		regist(instance, clazz);
 		assembling(instance);
@@ -94,7 +94,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 
 	@Override
 	public <T> T createInstance(Class<T> clazz, String pSign) {
-		IInstanceBuilder builder = new EJokerInstanceBuilderImpl(clazz);
+		IInstanceBuilder builder = new EJokerInstanceBuilderImpl(resolve(clazz));
 		Object instance = builder.doCreate();
 		regist(instance, clazz, pSign);
 		assembling(instance);

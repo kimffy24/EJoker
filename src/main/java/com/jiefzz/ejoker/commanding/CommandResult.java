@@ -2,11 +2,11 @@ package com.jiefzz.ejoker.commanding;
 
 public class CommandResult {
 
-	public CommandStatus status;
-	public String commandId;
-	public String aggregateRootId;
-	public String result;
-	public String resultType;
+	private String commandId;
+	private CommandStatus status;
+	private String aggregateRootId;
+	private String result;
+	private String resultType;
 	
 	public CommandResult() { }
 	public CommandResult(CommandStatus status, String commandId, String aggregateRootId, String result, String resultType) {
@@ -23,10 +23,29 @@ public class CommandResult {
 		this(status, commandId, aggregateRootId, null);
 	}
 	
-	public enum CommandStatus {
-        None,
-        Success,
-        NothingChanged,
-        Failed
-    }
+	@Override
+	public String toString() {
+		return String.format(
+				"[commandId={}, status={}, aggregateRootId={}, result={}, resultType={}]",
+				commandId, status.toString(), aggregateRootId, result, resultType
+		);
+	}
+	
+	/* *****************Getter and Setter**************** */
+	
+	public CommandStatus getStatus() {
+		return status;
+	}
+	public String getCommandId() {
+		return commandId;
+	}
+	public String getAggregateRootId() {
+		return aggregateRootId;
+	}
+	public String getResult() {
+		return result;
+	}
+	public String getResultType() {
+		return resultType;
+	}
 }
