@@ -1,9 +1,7 @@
 package com.jiefzz.ejoker.z.queue;
 
-public interface IQueueWokerService {
+public interface IQueueWokerService extends IWokerService {
 	
-	public IQueueWokerService start();
 	public IQueueWokerService subscribe(String topic);
-    public IQueueWokerService shutdown();
     
 }

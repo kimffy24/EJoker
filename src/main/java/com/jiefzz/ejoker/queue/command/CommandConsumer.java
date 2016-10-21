@@ -61,7 +61,10 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 	public IConsumer getConsumer() { return consumer; }
 
 	@Override
-	public void Handle(QueueMessage queueMessage, IMessageContext context) {
+	public void handle(String queueMessageString, IMessageContext context) {
+		
+		QueueMessage queueMessage = jsonSerializer.revert(queueMessageString, QueueMessage.class);
+		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<String, String>();

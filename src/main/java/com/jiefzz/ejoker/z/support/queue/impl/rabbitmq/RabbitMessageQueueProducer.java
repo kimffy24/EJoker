@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue.adapter.impl.rabbitmq;
+package com.jiefzz.ejoker.z.support.queue.impl.rabbitmq;
 
 import java.io.IOException;
 
@@ -16,12 +16,7 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueProducer.class);
 	
-	RabbitMQChannelProvider rabbitmqChannelProvider;
 	private Channel channel = null;
-	
-	public RabbitMessageQueueProducer(){
-		rabbitmqChannelProvider = new RabbitMQChannelProvider();
-	}
 
 	@Override
 	public void produce(String key, String msg) throws IOException {
@@ -35,8 +30,8 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	@Override
 	public IQueueWokerService start() {
-		if(channel!=null) throw new QueueRuntimeException("RabbitMessageQueueConsumer has been start!!!");
-		channel = rabbitmqChannelProvider.getNewChannel();
+		if(channel!=null) throw new QueueRuntimeException(RabbitMessageQueueProducer.class.getName() +" has been start!!!");
+		channel = RabbitMQChannelProvider.getInstance().getNewChannel();
 		return this;
 	}
 

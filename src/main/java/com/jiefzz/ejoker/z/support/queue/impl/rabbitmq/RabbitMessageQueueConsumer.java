@@ -1,10 +1,12 @@
-package com.jiefzz.ejoker.z.queue.adapter.impl.rabbitmq;
+package com.jiefzz.ejoker.z.support.queue.impl.rabbitmq;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.consumers.AbstractConsumer;
@@ -17,24 +19,26 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 
 	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueConsumer.class);
 
-	RabbitMQChannelProvider rabbitmqChannelProvider;
 	private Channel channel;
 	private String topic;
 	private String queue;
 
-	public RabbitMessageQueueConsumer() {
-		rabbitmqChannelProvider = new RabbitMQChannelProvider();
-	}
-
 	@Override
 	public IQueueWokerService start() {
-		if(channel!=null) throw new QueueRuntimeException("RabbitMessageQueueConsumer has been start!!!");
-		channel = rabbitmqChannelProvider.getNewChannel();
+
+		Ensure.notNull(commandConsumer, "commandConsumer");
+		
+		if(channel!=null) throw new QueueRuntimeException(RabbitMessageQueueConsumer.class.getName() +" has been start!!!");
+		channel = RabbitMQChannelProvider.getInstance().getNewChannel();
 		DefaultConsumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-				String message = new String(body, "UTF-8");
-				System.out.println(message);
+				String message = new String(body, Charset.forName("UTF-8"));
+				
+				logger.debug("[{}] receive message: {}", RabbitMessageQueueConsumer.class.getName(), message);
+				
+				commandConsumer.handle(message, null);
+				
 				channel.basicAck(envelope.getDeliveryTag(), false);
 			}
 		};

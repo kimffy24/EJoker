@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class ThreadPoolMaster {
 
-	private static final int threadPoolSize =128;
+	private static final int threadPoolSize = 512;
 	
 	private static Map<String, AsyncPool> poolHolder = new HashMap<String, AsyncPool>();
 	

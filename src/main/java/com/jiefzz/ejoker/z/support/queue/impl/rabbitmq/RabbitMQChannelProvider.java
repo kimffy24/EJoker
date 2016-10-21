@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue.adapter.impl.rabbitmq;
+package com.jiefzz.ejoker.z.support.queue.impl.rabbitmq;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,27 +25,11 @@ public class RabbitMQChannelProvider {
 	private final static Properties props = new Properties();
 	private final static Map<String, String> topicQueueMapper = new HashMap<String, String>();
 	private final static ConnectionFactory factory;
-	private final Connection connection;
+	private final static Connection connection;
 	
 	public final static String EXCHANGE_NAME;
 
-	public RabbitMQChannelProvider() {
-		try {
-			connection = factory.newConnection();
-		} catch ( Exception e ) {
-			throw new InfrastructureRuntimeException("Could not connect to rabbitmq server!!!", e);
-		}
-		Scavenger.addFianllyJob(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					RabbitMQChannelProvider.this.connection.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+	private RabbitMQChannelProvider() { }
 
 	public Channel getNewChannel() {
 		try {
@@ -89,6 +73,34 @@ public class RabbitMQChannelProvider {
 		} else {
 			EXCHANGE_NAME = "ejoker";
 		}
+
+		try {
+			connection = factory.newConnection();
+		} catch ( Exception e ) {
+			throw new InfrastructureRuntimeException("Could not connect to rabbitmq server!!!", e);
+		}
+		Scavenger.addFianllyJob(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					RabbitMQChannelProvider.this.connection.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+	}
+	
+	private static RabbitMQChannelProvider instance=null;
+	
+	/**
+	 * 获取消息服务客户端实例
+	 * 
+	 * @return RabbitMQChannelProvider
+	 */
+	static public RabbitMQChannelProvider getInstance(){
+		return (null!=instance)?instance:(instance = new RabbitMQChannelProvider());
 	}
 	
 	static public String getTopicQueue(String topic) {
