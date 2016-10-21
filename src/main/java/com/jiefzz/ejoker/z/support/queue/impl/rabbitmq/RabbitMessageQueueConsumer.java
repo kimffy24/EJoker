@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
@@ -57,14 +58,13 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 	@Override
 	public IQueueWokerService subscribe(String topic) {
 		this.topic = topic;
-		this.queue = RabbitMQChannelProvider.getTopicQueue(topic);
+		this.queue = EJokerEnvironment.getTopicQueue(topic);
 		return this;
 	}
 
 	@Override
 	public IQueueWokerService shutdown() {
-		try { channel.close(); }
-		catch (Exception e) {
+		try { channel.close(); } catch (Exception e) {
 			logger.error("Consumer try to close the rabbitmq queue faild!!!");
 			e.printStackTrace();
 		}

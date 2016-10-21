@@ -39,8 +39,8 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 
 	private final static String defaultCommandConsumerGroup = "CommandConsumerGroup";
 
-	private final SendReplyService sendReplyService = new SendReplyService();
-
+	@Resource
+	private SendReplyService sendReplyService;
 	@Resource
 	private IConsumer consumer;
 	@Resource

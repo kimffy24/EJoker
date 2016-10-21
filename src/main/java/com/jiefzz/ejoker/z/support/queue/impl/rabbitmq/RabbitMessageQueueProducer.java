@@ -11,7 +11,6 @@ import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.producers.AbstractProducer;
 import com.rabbitmq.client.Channel;
 
-@EService
 public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueProducer.class);
@@ -43,9 +42,7 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	@Override
 	public IQueueWokerService shutdown() {
-		try {
-			channel.close();
-		} catch (Exception e) {
+		try { channel.close(); } catch (Exception e) {
 			logger.error("Close rabbitmq channel faild!!!");
 			e.printStackTrace();
 		}
