@@ -29,6 +29,7 @@ import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.queue.IConsumer;
 import com.jiefzz.ejoker.z.queue.IProducer;
 import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
@@ -51,18 +52,20 @@ public class CommandService implements ICommandService, IQueueWokerService {
 	 * all command will send by this object.
 	 */
 	@Resource
-	SendQueueMessageService sendQueueMessageService;
+	private SendQueueMessageService sendQueueMessageService;
 	@Resource
-	IJSONConverter jsonConverter;
+	private IJSONConverter jsonConverter;
 	@Resource
-	IProducer producer;
+	private ICommandTopicProvider commandTopicProvider;
 	@Resource
-	ICommandTopicProvider commandTopicProvider;
+	private ICommandRoutingKeyProvider commandRouteKeyProvider;
 	@Resource
-	ICommandRoutingKeyProvider commandRouteKeyProvider;
-	@Resource
-	CommandResultProcessor commandResultProcessor;
+	private CommandResultProcessor commandResultProcessor;
 
+	private IProducer producer;
+
+	public IProducer getProducer() { return producer; }
+	public CommandService useProducer(IProducer producer) { this.producer = producer; return this;}
 
 	@Override
 	public IQueueWokerService start() {
@@ -72,6 +75,7 @@ public class CommandService implements ICommandService, IQueueWokerService {
 
 	@Override
 	public IQueueWokerService subscribe(String topic) {
+		logger.warn("The method: {}.subscribe(String topic) should not be use! Please fix it.", this.getClass().getName());
 		return this;
 	}
 
@@ -125,7 +129,36 @@ public class CommandService implements ICommandService, IQueueWokerService {
 	 */
 	@Override
 	public Future<AsyncTaskResult<CommandResult>> executeAsync(ICommand command, CommandReturnType commandReturnType) {
-		return asyncPool.execute(new AsyncTask(command, commandReturnType));
+		return asyncPool.execute(
+				new IAsyncTask<AsyncTaskResult<CommandResult>>() {
+					private ICommand command;
+					private CommandReturnType commandReturnType;
+
+					public IAsyncTask<AsyncTaskResult<CommandResult>> init(ICommand command, CommandReturnType commandReturnType){
+						this.command = command;
+						this.commandReturnType = commandReturnType;
+						return this;
+					}
+					
+					@Override
+					public AsyncTaskResult<CommandResult> call() throws Exception {
+						try {
+							Ensure.notNull(commandResultProcessor, "commandResultProcessor");
+							FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource = new FutureTaskCompletionSource<AsyncTaskResult<CommandResult>>();
+							commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, taskCompletionSource);
+							
+							BaseAsyncTaskResult result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
+							if(AsyncTaskStatus.Success == result.getStatus())
+								return taskCompletionSource.task.get();
+							commandResultProcessor.processFailedSendingCommand(command);
+							return new AsyncTaskResult<CommandResult>(result.getStatus(), result.getErrorMessage());
+						} catch ( Exception e ) {
+							return new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Failed, e.getMessage());
+						}
+					}
+					
+				}.init(command, commandReturnType)
+		);
 	}
 
 	private Message buildCommandMessage(ICommand command){
@@ -145,35 +178,4 @@ public class CommandService implements ICommandService, IQueueWokerService {
             command.getClass().getName());
 	}
 
-	/**
-	 * 仅供 executeAsync(ICommand command, CommandReturnType commandReturnType) 方法调用！
-	 * TODO 辅助实现 async/await 调用
-	 */
-	private class AsyncTask implements IAsyncTask<AsyncTaskResult<CommandResult>> {
-		private final ICommand command;
-		private final CommandReturnType commandReturnType;
-
-		public AsyncTask(ICommand command, CommandReturnType commandReturnType){
-			this.command = command;
-			this.commandReturnType = commandReturnType;
-		}
-		
-		@Override
-		public AsyncTaskResult<CommandResult> call() throws Exception {
-			try {
-				Ensure.notNull(commandResultProcessor, "commandResultProcessor");
-				FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource = new FutureTaskCompletionSource<AsyncTaskResult<CommandResult>>();
-				commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, taskCompletionSource);
-				
-				BaseAsyncTaskResult result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
-				if(AsyncTaskStatus.Success == result.getStatus())
-					return taskCompletionSource.task.get();
-				commandResultProcessor.processFailedSendingCommand(command);
-				return new AsyncTaskResult<CommandResult>(result.getStatus(), result.getErrorMessage());
-			} catch ( Exception e ) {
-				return new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Failed, e.getMessage());
-			}
-		}
-		
-	}
 }

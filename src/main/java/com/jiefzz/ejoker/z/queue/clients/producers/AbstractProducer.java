@@ -19,8 +19,9 @@ public abstract class AbstractProducer implements IProducer {
 	
 	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(AbstractProducer.class);
 
-	protected abstract void produce(String routingKey, String body) throws IOException;
-	protected abstract void produce(String routingKey, byte[] body) throws IOException;
+	//protected abstract void produce(String routingKey, String body) throws IOException;
+	//protected abstract void produce(String routingKey, byte[] body) throws IOException;
+	protected abstract void produce(String routingKey, Message message) throws IOException;
 	
 	@Override
 	public SendResult sendMessage(Message message, String routingKey) {
@@ -35,34 +36,31 @@ public abstract class AbstractProducer implements IProducer {
 
 	@Override
 	public Future<SendResult> sendMessageAsync(Message message, String routingKey) {
+		return asyncPool.execute(
+				new IAsyncTask<SendResult>() {
 
-		AsyncTask asyncTask = new AsyncTask(message, routingKey);
-		return asyncPool.execute(asyncTask);
+					Message message;
+					String routingKey;
 
+					public IAsyncTask<SendResult> bind(Message message, String routingKey) {
+						this.message = message;
+						this.routingKey = routingKey;
+						return this;
+					}
+
+					@Override
+					public SendResult call() {
+						try {
+							AbstractProducer.this.produce(routingKey, message);
+						} catch (IOException e) {
+							AbstractProducer.this.logger.error("Send message faile!!!, message context: \"{}\"", message.body);
+							e.printStackTrace();
+							return new SendResult(SendStatus.Failed, null, IOException.class.getName() + ": " +e.getMessage());
+						}
+						return new SendResult(SendStatus.Success, null, null);
+					}
+
+				}.bind(message, routingKey)
+		);
 	}
-
-	public class AsyncTask implements IAsyncTask<SendResult> {
-
-		Message message;
-		String routingKey;
-
-		public AsyncTask(Message message, String routingKey) {
-			this.message = message;
-			this.routingKey = routingKey;
-		}
-
-		@Override
-		public SendResult call() {
-			try {
-				AbstractProducer.this.produce(routingKey, message.body);
-			} catch (IOException e) {
-				AbstractProducer.this.logger.error("Send message faile!!!, message context: \"{}\"", message.body);
-				e.printStackTrace();
-				return new SendResult(SendStatus.Failed, null, IOException.class.getName() + ": " +e.getMessage());
-			}
-			return new SendResult(SendStatus.Success, null, null);
-		}
-
-	}
-
 }

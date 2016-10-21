@@ -45,8 +45,8 @@ public class EJokerEnvironment {
 		for(Entry<Object, Object> entry : entrySet){
 			String key = (String ) entry.getKey();
 			if(key.startsWith("ejoker.topic.queue")){
-				String queue = key.substring(1+"ejoker.topic.queue".length());
-				String topic = (String ) entry.getValue();
+				String topic = key.substring(1+"ejoker.topic.queue".length());
+				String queue = (String ) entry.getValue();
 				topicQueueMapper.put(topic, queue);
 			}
 		}

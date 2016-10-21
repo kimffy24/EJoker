@@ -273,8 +273,10 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	public byte[] revertIntoArrayByte(ContainerVP vpNode){
 		int size = disassemblyWorker.getVPSize(vpNode);
 		byte[] rArray = (byte[] )Array.newInstance(byte.class, size);
-		for(int i=0; i<size; i++)
-			rArray[i] = (Byte )disassemblyWorker.getValue(vpNode, i);
+		for(int i=0; i<size; i++) {
+			Number value = (Number )disassemblyWorker.getValue(vpNode, i);
+			rArray[i] = value.byteValue();
+		}
 		return rArray;
 	}
 	

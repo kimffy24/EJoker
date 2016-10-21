@@ -58,7 +58,7 @@ public class RabbitMQChannelProvider {
 			factory.setPassword(props.getProperty("rabbitmq.password", "guest"));
 			
 			// 获取ejoker-rabbitmq使用的交换机
-			EXCHANGE_NAME = props.getProperty("ejoker.rabbitmq.defaultExchange", "ejoker");
+			EXCHANGE_NAME = props.getProperty("rabbitmq.ejoker.defaultExchange", "ejoker");
 		} else {
 			EXCHANGE_NAME = "ejoker";
 		}

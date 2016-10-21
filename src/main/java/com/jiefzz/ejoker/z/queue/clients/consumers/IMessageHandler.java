@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.z.queue.clients.consumers;
 
+import com.jiefzz.ejoker.z.queue.protocols.Message;
+
 public interface IMessageHandler {
 	
 	/**
@@ -8,6 +10,6 @@ public interface IMessageHandler {
 	 * @param context
 	 */
 	//void handle(QueueMessage message, IMessageContext context);
-	void handle(String message, IMessageContext context);
+	void handle(Message message, IMessageContext context);
 	
 }

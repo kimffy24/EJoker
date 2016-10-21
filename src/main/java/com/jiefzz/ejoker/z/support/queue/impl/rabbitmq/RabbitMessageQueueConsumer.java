@@ -7,10 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.z.common.context.IEjokerStandardContext;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
-import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.consumers.AbstractConsumer;
+import com.jiefzz.ejoker.z.queue.protocols.Message;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -23,9 +25,20 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 	private Channel channel;
 	private String topic;
 	private String queue;
+	
+	private boolean start = false;
+	
+	private IJSONConverter jsonSerializer;
+	
+	public RabbitMessageQueueConsumer(IEjokerStandardContext eJokerContext) {
+		jsonSerializer = eJokerContext.get(IJSONConverter.class);
+	}
 
 	@Override
-	public IQueueWokerService start() {
+	public RabbitMessageQueueConsumer start() {
+		
+		if(start) throw new QueueRuntimeException(this.getClass().getName() +" has been start!!! it could not start again!!!");
+		start = true;
 
 		Ensure.notNull(commandConsumer, "commandConsumer");
 		
@@ -34,11 +47,26 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		DefaultConsumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-				String message = new String(body, Charset.forName("UTF-8"));
+				String mqMessage = new String(body, Charset.forName("UTF-8"));
 				
-				logger.debug("[{}] receive message: {}", RabbitMessageQueueConsumer.class.getName(), message);
+				logger.debug("[{}] receive message: {}", RabbitMessageQueueConsumer.class.getName(), mqMessage);
 				
-				commandConsumer.handle(message, null);
+				Message ejokerMessage = jsonSerializer.revert(mqMessage, Message.class);
+				
+				// TODO 暂时不传递上下文！
+				commandConsumer.handle(ejokerMessage, null);
+				
+				/** 测试代码
+				 * String commandMessage = new String(ejokerMessage.body, Charset.forName("UTF-8"));
+				System.out.println(commandMessage);
+
+				CommandMessage commandMessageObject = jsonSerializer.revert(commandMessage, CommandMessage.class);
+				System.out.println(commandMessageObject.getCommandData());
+				try {
+					System.out.println(jsonSerializer.revert(CommandData, Class.forName(ejokerMessage.tag)));
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}*/
 				
 				channel.basicAck(envelope.getDeliveryTag(), false);
 			}
@@ -56,14 +84,15 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 	}
 
 	@Override
-	public IQueueWokerService subscribe(String topic) {
+	public RabbitMessageQueueConsumer subscribe(String topic) {
 		this.topic = topic;
 		this.queue = EJokerEnvironment.getTopicQueue(topic);
 		return this;
 	}
 
 	@Override
-	public IQueueWokerService shutdown() {
+	public RabbitMessageQueueConsumer shutdown() {
+		start = false;
 		try { channel.close(); } catch (Exception e) {
 			logger.error("Consumer try to close the rabbitmq queue faild!!!");
 			e.printStackTrace();

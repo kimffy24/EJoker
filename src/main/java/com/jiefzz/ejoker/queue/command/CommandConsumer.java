@@ -30,6 +30,7 @@ import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
+import com.jiefzz.ejoker.z.queue.protocols.Message;
 import com.jiefzz.ejoker.z.queue.protocols.QueueMessage;
 
 @EService
@@ -42,8 +43,6 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 	@Resource
 	private SendReplyService sendReplyService;
 	@Resource
-	private IConsumer consumer;
-	@Resource
 	private IJSONConverter jsonSerializer;
 	@Resource
 	private ICommandProcessor processor;
@@ -52,6 +51,8 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 	@Resource
 	private IAggregateStorage aggregateRootStorage;
 
+	private IConsumer consumer;
+	
 	public CommandConsumer(String groupName, ConsumerSetting setting) {}
 
 	public CommandConsumer(String groupName) { this(groupName, null); }
@@ -59,27 +60,26 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 	public CommandConsumer() { this(defaultCommandConsumerGroup); }
 
 	public IConsumer getConsumer() { return consumer; }
+	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
 
 	@Override
-	public void handle(String queueMessageString, IMessageContext context) {
-		
-		QueueMessage queueMessage = jsonSerializer.revert(queueMessageString, QueueMessage.class);
+	public void handle(Message message, IMessageContext context) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<String, String>();
-		String bodyString = new String(queueMessage.body, Charset.forName("UTF-8"));
+		String bodyString = new String(message.body, Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(bodyString, CommandMessage.class);
 		Class commandType;
 		try {
-			commandType = Class.forName(queueMessage.tag);
+			commandType = Class.forName(message.tag);
 		} catch (ClassNotFoundException e) {
-			String format = String.format("Defination of [%s] is not found!!!", queueMessage.tag);
+			String format = String.format("Defination of [%s] is not found!!!", message.tag);
 			logger.error(format);
 			throw new CommandRuntimeException(format);
 		}
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
-		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(repository, aggregateRootStorage, queueMessage, context, commandMessage, sendReplyService);
+		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(repository, aggregateRootStorage, message, context, commandMessage, sendReplyService);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
@@ -90,22 +90,23 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		private final IRepository repository;
 		private final IAggregateStorage aggregateRootStorage;
 		private final SendReplyService sendReplyService;
-		private final QueueMessage queueMessage;
+		//private final QueueMessage queueMessage;
+		private final Message message;
 		private final IMessageContext messageContext;
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, QueueMessage queueMessage, IMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
+		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, Message message, IMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
 			this.repository = repository;
 			this.aggregateRootStorage = aggregateRootStorage;
 			this.sendReplyService = sendReplyService;
-			this.queueMessage = queueMessage;
+			this.message = message;
 			this.commandMessage = commandMessage;
 			this.messageContext = messageContext;
 		}
 
 		@Override
 		public void onCommandExecuted(CommandResult commandResult) {
-			messageContext.onMessageHandled(queueMessage);
+			messageContext.onMessageHandled(message);
 
 			if (commandMessage.replyAddress == null || "".equals(commandMessage.replyAddress))
 				return;
@@ -221,7 +222,7 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 
 	@Override
 	public IQueueWokerService start() {
-		consumer.start();
+		consumer.setMessageHandler(this).start();
 		return this;
 	}
 
