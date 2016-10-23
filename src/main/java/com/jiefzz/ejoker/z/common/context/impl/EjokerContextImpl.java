@@ -56,8 +56,8 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 
 	@Override
 	public Class<?> resolve(Class<?> interfaceType) {
-		// 被标记为泛型签名不严格对称者，直接视为无法解析。
-		if(rootAssemblyAnalyzer.ambiguousSignatureGeneralType.contains(interfaceType))
+		// 被标记为 冲突类型 或者 泛型签名不严格对称的类型，直接视为无法解析。
+		if(rootAssemblyAnalyzer.conflictResolvType.contains(interfaceType) || rootAssemblyAnalyzer.ambiguousSignatureGeneralType.contains(interfaceType))
 				throw new ContextRuntimeException(String.format("Could not resolved type [%s] to a implementation type!!!", interfaceType.getName()));
 		return rootAssemblyAnalyzer.eServiceImplementationMapper.getOrDefault(interfaceType, interfaceType);
 	}
