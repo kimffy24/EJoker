@@ -20,6 +20,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Initialize;
 import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
+import com.jiefzz.ejoker.z.common.utilities.GeneralTypeUtil;
 
 public class RootAssemblyAnalyzer {
 
@@ -69,6 +70,11 @@ public class RootAssemblyAnalyzer {
 	 * 存入冲突的类型。
 	 */
 	public final Set<Class<?>> conflictResolvType = new HashSet<Class<?>>();
+	
+	/**
+	 * 声明者与实现者泛型签名不严格对称的接口类或抽象类
+	 */
+	public final Set<Class<?>> ambiguousSignatureGeneralType = new HashSet<Class<?>>();
 
 	public void annotationScan(String specificPackage) {
 		if ( specificPackage.lastIndexOf('.') == (specificPackage.length()-1) )
@@ -155,23 +161,36 @@ public class RootAssemblyAnalyzer {
 		eDependenceMapper.put(claxx, annotationFields);
 		eInitializeMapper.put(claxx, annotationMethods);
 		eServiceHierarchyType.put(claxx, resolvedHierarchyType);
-
+		
 		for(Class<?> hierarchyType : resolvedHierarchyType) {
+
+			// 严格检查泛型签名抽象类/接口与实现类对称
+			if(!GeneralTypeUtil.getClassDefinationGeneralSignature(claxx).equals(GeneralTypeUtil.getClassDefinationGeneralSignature(hierarchyType))) {
+				if(!ambiguousSignatureGeneralType.contains(hierarchyType)) ambiguousSignatureGeneralType.add(hierarchyType);
+				logger.warn("Unmatch GeneralSignature: \n\t{}\t\t{}\n\t{}\t\t{}",
+						hierarchyType.getName(), GeneralTypeUtil.getClassDefinationGeneralSignature(hierarchyType),
+						claxx.getName(), GeneralTypeUtil.getClassDefinationGeneralSignature(claxx)
+				);
+			}
+			
 			if(conflictResolvType.contains(hierarchyType)) {
-				logger.warn("[{}] has more than one @EService implementation!", hierarchyType.getName());
-				logger.warn("[{}] can not be resolve to [{}]", hierarchyType.getName(), claxx.getName());
+				// 如果冲突集合中有该抽象类或接口的记录，则给出警告，并跳过。
+				warnningLogger(hierarchyType, claxx);
 				continue;
 			}
 			Class<?> previousResolvedType=eServiceImplementationMapper.putIfAbsent(hierarchyType, claxx);
 			if(null!=previousResolvedType) {
+				// 清理EService映射，并记录conflict
 				conflictResolvType.add(hierarchyType);
 				eServiceImplementationMapper.remove(hierarchyType);
-				logger.warn("[{}] has more than one @EService implementation!", hierarchyType.getName());
-				logger.warn("[{}] can not be resolve to [{}]", hierarchyType.getName(), previousResolvedType.getName());
-				logger.warn("[{}] has more than one @EService implementation!", hierarchyType.getName());
-				logger.warn("[{}] can not be resolve to [{}]", hierarchyType.getName(), claxx.getName());
+				warnningLogger(hierarchyType, previousResolvedType);
+				warnningLogger(hierarchyType, claxx);
 			}
 		}
 	}
-
+	
+	private void warnningLogger(Class<?> superTypeName, Class<?> implementationTypeName) {
+		logger.warn("[{}] has more than one @EService implementation!", superTypeName.getName());
+		logger.warn("[{}] can not be resolve to [{}]", superTypeName.getName(), implementationTypeName.getName());
+	}
 }

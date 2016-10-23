@@ -5,7 +5,7 @@ import com.jiefzz.ejoker.commanding.ICommandHandlerPrivider;
 
 /**
  * 
- * TODO In eNode use assembly info to find targe Service!;
+ * TODO In eNode use assembly info to find target Handler!;
  * @author jiefzz
  *
  */

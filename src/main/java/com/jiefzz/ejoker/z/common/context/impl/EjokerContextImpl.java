@@ -56,6 +56,9 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 
 	@Override
 	public Class<?> resolve(Class<?> interfaceType) {
+		// 被标记为泛型签名不严格对称者，直接视为无法解析。
+		if(rootAssemblyAnalyzer.ambiguousSignatureGeneralType.contains(interfaceType))
+				throw new ContextRuntimeException(String.format("Could not resolved type [%s] to a implementation type!!!", interfaceType.getName()));
 		return rootAssemblyAnalyzer.eServiceImplementationMapper.getOrDefault(interfaceType, interfaceType);
 	}
 
@@ -71,13 +74,13 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getInstance(Class<T> clazz, String pSign) {
-		Map<String, Object> generalInstalMapper=instanceGeneralTypeMap.getOrDefault(clazz, emptyGeneralInstalMapper);
-		if(emptyGeneralInstalMapper.equals(generalInstalMapper)) {
-			generalInstalMapper = new HashMap<String, Object>();
-			instanceGeneralTypeMap.put(clazz, generalInstalMapper);
+		Map<String, Object> generalInstanceMapper=instanceGeneralTypeMap.getOrDefault(clazz, emptyGeneralInstalMapper);
+		if(emptyGeneralInstalMapper.equals(generalInstanceMapper)) {
+			generalInstanceMapper = new HashMap<String, Object>();
+			instanceGeneralTypeMap.put(clazz, generalInstanceMapper);
 			return createInstance(clazz, pSign);
 		} else {
-			Object instance = generalInstalMapper.getOrDefault(pSign, nullInstance);
+			Object instance = generalInstanceMapper.getOrDefault(pSign, nullInstance);
 			if(nullInstance.equals(instance)) {
 				return createInstance(clazz, pSign);
 			}
@@ -183,7 +186,8 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 	}
 	
 	/**
-	 * @TODO 没完成！！！
+	 * @TODO 目前没能解决泛型定义多层传递的问题，因此拒绝接受在多层泛型类型传递<br>
+	 * 因此目前拒绝不明确泛型的注解。也就是代码中 if(1>0) 的代码段。
 	 * @param instance
 	 */
 	@SuppressWarnings("unused")

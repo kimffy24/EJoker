@@ -22,7 +22,16 @@ public class GeneralTypeUtil {
 	public final static String SEPARATOR="|";
 	
 	/**
-	 * 获取对象属性的泛型签名
+	 * 获取对象属性的泛型签名<br>
+	 * TODO 当泛型不是直接声明时会出错<br>
+	 * 例如<br>
+	 * class A&lt;PType&gt; {<br>
+	 * public void doSomething(PType param) { ...; }<br>
+	 * }<br>
+	 * class B&lt;PType2&gt; {<br>
+	 * public A&lt;PType2&gt; a;<br>
+	 * }<br>
+	 * 此时在B类的field反射对象上获取a的泛型类型会出错<br>
 	 * @param field
 	 * @return
 	 */
@@ -38,6 +47,7 @@ public class GeneralTypeUtil {
 			if (types != null && types.length > 0) {
 				for (int i = 0; i < types.length; i++) {
 					sb.append(SEPARATOR);
+					// TODO 若此属性的泛型信息是通过引用类的泛型定义传入的话，此处转换将会出错！！！
 					sb.append(((Class<?>) types[i]).getName());
 				}
 				return sb.toString().substring(1);
@@ -56,6 +66,15 @@ public class GeneralTypeUtil {
 	}
 	
 	/**
+	 * 确定Type包装的类型是否是泛型类型
+	 * @param type
+	 * @return
+	 */
+	public static boolean ensureIsGeneralType(Type type) {
+		return type.getTypeName().indexOf('<')>0;
+	}
+	
+	/**
 	 * 获取对象类型的泛型使用数量。
 	 * @param clazz
 	 * @return
@@ -64,6 +83,30 @@ public class GeneralTypeUtil {
 		TypeVariable<?>[] typeParameters = clazz.getTypeParameters();
 		if(null==typeParameters) return 0;
 		return typeParameters.length;
+	}
+	
+	public static String getClassDefinationGeneralSignature(Class<?> clazz) {
+
+		TypeVariable[] typeParameters = clazz.getTypeParameters();
+		StringBuffer sb = new StringBuffer();
+		if(typeParameters.length>0) {
+			sb.append('<');
+			sb.append(typeParameters[0].getTypeName());
+			for(int i=1; i<typeParameters.length; i++) {
+				TypeVariable tv = typeParameters[i];
+				sb.append(", ");
+				sb.append(tv.getTypeName());
+			}
+			sb.append('>');
+			return sb.toString();
+		}
+		return "";
+	}
+
+	public static String getClassDefinationGeneralSignature(Type type) {
+		if(!ensureIsGeneralType(type)) return "";
+		String typeName = type.getTypeName();
+		return typeName.substring(typeName.indexOf('<'));
 	}
 
 	/**
