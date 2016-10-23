@@ -3,23 +3,34 @@ package com.jiefzz.ejoker.commanding;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProcessingCommandMailbox implements Runnable {
-
-
-	private final Object lock1 = new Object();
-	private final Object lock2 = new Object();
+	
+	final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
+	
+	private final Lock lock4enqueueMessage = new ReentrantLock();
+	private final Lock lock4completeMessage = new ReentrantLock();
+	
 	private final String aggregateRootId;
-	private final Map<Long, ProcessingCommand> messageDict = new HashMap<Long, ProcessingCommand>();
+	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<Long, ProcessingCommand>();
 	private final Map<Long, CommandResult> requestToCompleteOffsetDict = new HashMap<Long, CommandResult>();
 	private final IProcessingCommandScheduler scheduler;
 	private final IProcessingCommandHandler messageHandler;
+	
 	private long maxOffset;
 	private long consumingOffset;
 	private long consumedOffset;
-	private AtomicBoolean isHandlingMessage;
-	private AtomicBoolean stopHandling;
+	
+	private AtomicInteger isHandlingMessage = new AtomicInteger(0);
+	private AtomicBoolean stopHandling = new AtomicBoolean();
 
 	public String getAggregateRootId(){
 		return aggregateRootId;
@@ -35,19 +46,22 @@ public class ProcessingCommandMailbox implements Runnable {
 
 	public void enqueueMessage(ProcessingCommand message)
 	{
-		synchronized (lock1) {
+		lock4enqueueMessage.lock();
+		{
 			message.setSequence(maxOffset);
 			message.setMailbox(this);
 			messageDict.put(message.getSequence(), message);
 			maxOffset++;
 		}
+		lock4enqueueMessage.unlock();
 		registerForExecution();
 	}
 
 	public boolean enterHandlingMessage() {
 		// TODO C# use Interlocked.CompareExchange here!!
 		// return Interlocked.CompareExchange(ref isHandlingMessage, 1, 0) == 0;
-		return isHandlingMessage.getAndSet(true);
+		// we use java juc-cas here
+		return isHandlingMessage.compareAndSet(0, 1);
 	}
 
 	public void stopHandlingMessage() {
@@ -68,9 +82,10 @@ public class ProcessingCommandMailbox implements Runnable {
 		registerForExecution();
 	}
 
-	public void CompleteMessage(ProcessingCommand message, CommandResult commandResult)
+	public void completeMessage(ProcessingCommand message, CommandResult commandResult)
 	{
-		synchronized (lock2) {
+		lock4completeMessage.lock();
+		{
 			if (message.getSequence() == consumedOffset + 1) {
 				messageDict.remove(message.getSequence());
 				consumedOffset = message.getSequence();
@@ -78,29 +93,34 @@ public class ProcessingCommandMailbox implements Runnable {
 				processRequestToCompleteOffsets();
 			} else if (message.getSequence() > consumedOffset + 1) {
 				requestToCompleteOffsetDict.put(message.getSequence(), commandResult);
-				//requestToCompleteOffsetDict[message.Sequence] = commandResult;
 			} else if (message.getSequence() < consumedOffset + 1) {
 				messageDict.remove(message.getSequence());
 				requestToCompleteOffsetDict.remove(message.getSequence());
 			}
 		}
+		lock4completeMessage.unlock();
 	}
 
 	@Override
     public void run()
     {
-        if (stopHandling.get()) {
+		System.out.println("aggregateRootId=" +aggregateRootId);
+		System.out.println("maxOffset=" +maxOffset);
+		System.out.println("consumingOffset=" +consumingOffset);
+		System.out.println("consumedOffset=" +consumedOffset);
+		
+        if (stopHandling.get())
             return;
-        }
+        
         boolean hasException = false;
         ProcessingCommand processingMessage = null;
+        
         try {
             if (hasRemainningMessage()) {
                 processingMessage = getNextMessage();
                 increaseConsumingOffset();
 
-                if (processingMessage != null)
-                {
+                if (processingMessage != null) {
                     messageHandler.handleAsync(processingMessage);
                 }
             }
@@ -147,15 +167,15 @@ public class ProcessingCommandMailbox implements Runnable {
 		}
 		catch (Exception ex) {
 			// TODO log here !!!
-			String.format("Failed to complete command, commandId: {0}, aggregateRootId: {1}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId());
-			//_logger.Error(string.Format("Failed to complete command, commandId: {0}, aggregateRootId: {1}", processingCommand.Message.Id, processingCommand.Message.AggregateRootId), ex);
+			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
+			ex.printStackTrace();
 		}
 	}
 	
 	private void exitHandlingMessage() {
 		// TODO C# use Interlocked.Exchange
 		// Interlocked.Exchange(ref _isHandlingMessage, 0);
-		stopHandling.set(false);
+		isHandlingMessage.getAndSet(0);
 	}
 
     private boolean hasRemainningMessage() {
@@ -163,13 +183,8 @@ public class ProcessingCommandMailbox implements Runnable {
     }
 
     private ProcessingCommand getNextMessage() {
-        //ProcessingCommand processingMessage;
-        //if (messageDict.TryGetValue(_consumingOffset, out processingMessage))
-        //{
-        //    return processingMessage;
-        //}
-        //return null;
-    	return messageDict.containsKey(consumingOffset)?messageDict.get(messageDict):null;
+    	// TODO C# use TryGetValue
+    	return messageDict.getOrDefault(consumingOffset, null);
     }
     
 	private void increaseConsumingOffset() {

@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.z.common.context.IEjokerStandardContext;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.queue.IQueueWokerService;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.producers.AbstractProducer;
 import com.jiefzz.ejoker.z.queue.protocols.Message;

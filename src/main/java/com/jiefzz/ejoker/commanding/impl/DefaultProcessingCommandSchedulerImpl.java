@@ -10,7 +10,7 @@ public class DefaultProcessingCommandSchedulerImpl implements IProcessingCommand
 	@Override
 	public void scheduleMailbox(ProcessingCommandMailbox mailbox) {
 		if (mailbox.enterHandlingMessage()){
-			// TODO: do not control thread anymore??
+			// TODO: do not control the thread anymore??
 			new Thread(mailbox).start();
 		}
 	}

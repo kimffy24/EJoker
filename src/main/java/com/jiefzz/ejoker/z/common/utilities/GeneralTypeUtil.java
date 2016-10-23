@@ -7,8 +7,6 @@ import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
-
 /**
  * 泛型工具类
  * @author jiefzz

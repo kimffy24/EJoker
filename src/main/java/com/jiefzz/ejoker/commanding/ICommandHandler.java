@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.commanding;
 
-public interface ICommandHandler {
+public interface ICommandHandler<TCommand extends ICommand> {
 
-	public abstract <TCommand extends ICommand> void handle(ICommandContext context, TCommand command);
+	public abstract void handle(ICommandContext context, TCommand command);
 	
 }

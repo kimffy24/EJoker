@@ -12,6 +12,7 @@ import com.jiefzz.ejoker.z.common.context.IEjokerStandardContext;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.consumers.AbstractConsumer;
+import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -48,27 +49,11 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
 				String mqMessage = new String(body, Charset.forName("UTF-8"));
-				
-				logger.debug("[{}] receive message: {}", RabbitMessageQueueConsumer.class.getName(), mqMessage);
-				
 				Message ejokerMessage = jsonSerializer.revert(mqMessage, Message.class);
 				
-				// TODO 暂时不传递上下文！
-				commandConsumer.handle(ejokerMessage, null);
+				commandConsumer.handle(ejokerMessage, new RabbitMQConsumerContext());
 				
-				/** 测试代码
-				 * String commandMessage = new String(ejokerMessage.body, Charset.forName("UTF-8"));
-				System.out.println(commandMessage);
-
-				CommandMessage commandMessageObject = jsonSerializer.revert(commandMessage, CommandMessage.class);
-				System.out.println(commandMessageObject.getCommandData());
-				try {
-					System.out.println(jsonSerializer.revert(CommandData, Class.forName(ejokerMessage.tag)));
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}*/
-				
-				channel.basicAck(envelope.getDeliveryTag(), false);
+				//channel.basicAck(envelope.getDeliveryTag(), false);
 			}
 		};
 		logger.info("Starting consumer on focus topic [{}]", topic);
@@ -98,4 +83,14 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 			e.printStackTrace();
 		}
 		return this;
-	}}
+	}
+	
+	class RabbitMQConsumerContext implements IMessageContext {
+		
+		@Override
+		public void onMessageHandled(Message Message) {
+			logger.warn("RabbitMQConsumerContext is uninplemented now!");
+		}
+		
+	}
+}

@@ -1,19 +1,13 @@
 package com.jiefzz.ejoker.z.support.queue.impl.rabbitmq;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Properties;
-import java.util.Set;
-
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
-import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -70,7 +64,7 @@ public class RabbitMQChannelProvider {
 				@Override
 				public void run() {
 					try {
-						RabbitMQChannelProvider.this.connection.close();
+						RabbitMQChannelProvider.connection.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}

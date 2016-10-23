@@ -53,7 +53,7 @@ public abstract class AbstractProducer implements IProducer {
 						try {
 							AbstractProducer.this.produce(routingKey, message);
 						} catch (IOException e) {
-							AbstractProducer.this.logger.error("Send message faile!!!, message context: \"{}\"", message.body);
+							AbstractProducer.logger.error("Send message faile!!!, message context: \"{}\"", message.body);
 							e.printStackTrace();
 							return new SendResult(SendStatus.Failed, null, IOException.class.getName() + ": " +e.getMessage());
 						}

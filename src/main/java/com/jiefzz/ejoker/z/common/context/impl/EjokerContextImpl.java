@@ -59,6 +59,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		return rootAssemblyAnalyzer.eServiceImplementationMapper.getOrDefault(interfaceType, interfaceType);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getInstance(Class<T> clazz) {
 		Object instance=instanceMap.getOrDefault(clazz, nullInstance);
@@ -67,6 +68,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		return (T )instance;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getInstance(Class<T> clazz, String pSign) {
 		Map<String, Object> generalInstalMapper=instanceGeneralTypeMap.getOrDefault(clazz, emptyGeneralInstalMapper);
@@ -83,6 +85,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T createInstance(Class<T> clazz) {
 		IInstanceBuilder builder = new EJokerInstanceBuilderImpl(resolve(clazz));
@@ -92,6 +95,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		return (T )instance;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T createInstance(Class<T> clazz, String pSign) {
 		IInstanceBuilder builder = new EJokerInstanceBuilderImpl(resolve(clazz));
@@ -125,6 +129,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		throw new ContextRuntimeException("Unimplemented!!!");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T get(Class<T> clazz) {
 		Class<?> resolve = resolve(clazz);
@@ -137,6 +142,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T get(Class<T> clazz, String pSign) {
 		Class<?> resolve = resolve(clazz);
@@ -176,6 +182,11 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		rootAssemblyAnalyzer.annotationScan(specificPackage);
 	}
 	
+	/**
+	 * @TODO 没完成！！！
+	 * @param instance
+	 */
+	@SuppressWarnings("unused")
 	private void assembling(Object instance){
 		Class<?> clazz = instance.getClass();
 		Set<Field> dependenceFields = rootAssemblyAnalyzer.eDependenceMapper.get(clazz);
@@ -187,8 +198,7 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 				String generalSignature = GeneralTypeUtil.getGeneralSignature(field);
 				if(GeneralTypeUtil.NO_GENERAL_SIGNATURE.equals(generalSignature)) {
 					if(1>0) throw new ContextRuntimeException("Ambiguous Parameter Type declare in ["+clazz.getName()+"] on field ["+field.getName()+"]!!!");
-					int generalTypeAmount = GeneralTypeUtil.getGeneralTypeAmount(fieldType);
-					fieldInstance = getInstance(fieldType, GeneralTypeUtil.emptyParametersBook.get(generalTypeAmount));
+					fieldInstance = getInstance(fieldType, GeneralTypeUtil.emptyParametersBook.get(GeneralTypeUtil.getGeneralTypeAmount(fieldType)));
 				} else 
 					fieldInstance = getInstance(fieldType, generalSignature);
 			} else 

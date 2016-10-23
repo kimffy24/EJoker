@@ -1,7 +1,6 @@
 package com.jiefzz.ejoker.z.common.system.extension;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
 /**

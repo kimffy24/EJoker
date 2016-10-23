@@ -31,7 +31,6 @@ import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
-import com.jiefzz.ejoker.z.queue.protocols.QueueMessage;
 
 @EService
 public class CommandConsumer implements IQueueWokerService,IMessageHandler {
@@ -70,9 +69,9 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		HashMap<String, String> commandItems = new HashMap<String, String>();
 		String bodyString = new String(message.body, Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(bodyString, CommandMessage.class);
-		Class commandType;
+		Class<? extends ICommand> commandType;
 		try {
-			commandType = Class.forName(message.tag);
+			commandType = (Class<? extends ICommand> )Class.forName(message.tag);
 		} catch (ClassNotFoundException e) {
 			String format = String.format("Defination of [%s] is not found!!!", message.tag);
 			logger.error(format);
@@ -83,6 +82,24 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
+	
+	@Override
+	public IQueueWokerService start() {
+		consumer.setMessageHandler(this).start();
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService subscribe(String topic) {
+		consumer.subscribe(topic);
+		return this;
+	}
+
+	@Override
+	public IQueueWokerService shutdown() {
+		consumer.shutdown();
+		return this;
+	}
 
 	class CommandExecuteContext implements ICommandExecuteContext {
 		private String result;
@@ -90,7 +107,7 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		private final IRepository repository;
 		private final IAggregateStorage aggregateRootStorage;
 		private final SendReplyService sendReplyService;
-		//private final QueueMessage queueMessage;
+		//private final QueueMessage queueMessage; // in eNode Message is the actually type of QueueMessage
 		private final Message message;
 		private final IMessageContext messageContext;
 		private final CommandMessage commandMessage;
@@ -112,7 +129,7 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 				return;
 
 			// TODO: Unfinished SendReplyService !!!
-			throw new UnimplementException(CommandExecuteContext.class.getName()+"onCommandExecuted()");
+			throw new UnimplementException(CommandExecuteContext.class.getName()+"#onCommandExecuted()");
 			//_sendReplyService.SendReply((int)CommandReplyType.CommandExecuted, commandResult, _commandMessage.ReplyAddress);
 		}
 
@@ -220,21 +237,4 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		}
 	}
 
-	@Override
-	public IQueueWokerService start() {
-		consumer.setMessageHandler(this).start();
-		return this;
-	}
-
-	@Override
-	public IQueueWokerService subscribe(String topic) {
-		consumer.subscribe(topic);
-		return this;
-	}
-
-	@Override
-	public IQueueWokerService shutdown() {
-		consumer.shutdown();
-		return this;
-	}
 }
