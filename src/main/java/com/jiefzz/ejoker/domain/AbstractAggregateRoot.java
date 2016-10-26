@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.domain;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
@@ -92,7 +93,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	@Override
-	public LinkedHashMap<Integer, String> getChanges() { return null; }
+	public Collection<IDomainEvent> getChanges() { return null; }
 
 	@Override
 	public void acceptChanges(int newVersion) {}

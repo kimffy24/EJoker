@@ -21,7 +21,7 @@ public class AbstractCommand extends AbstractMessage implements ICommand {
 	}
 	
 	@Override
-	public String GetRoutingKey() {
+	public String getRoutingKey() {
 		return this.aggregateRootId;
 	}
 	

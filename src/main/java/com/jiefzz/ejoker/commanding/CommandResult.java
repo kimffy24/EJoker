@@ -20,14 +20,14 @@ public class CommandResult {
 		this(status, commandId, aggregateRootId, result, null);
 	}
 	public CommandResult(CommandStatus status, String commandId, String aggregateRootId) {
-		this(status, commandId, aggregateRootId, null);
+		this(status, commandId, aggregateRootId, null, null);
 	}
 	
 	@Override
 	public String toString() {
 		return String.format(
-				"[commandId={}, status={}, aggregateRootId={}, result={}, resultType={}]",
-				commandId, status.toString(), aggregateRootId, result, resultType
+				"[commandId=%s, status=%s, aggregateRootId=%s, result={}, resultType={}]",
+				commandId, status.toString(), aggregateRootId, null==result?"null":result.toString(), null==resultType?"null":resultType.toString()
 		);
 	}
 	

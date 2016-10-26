@@ -4,8 +4,8 @@ import java.io.Serializable;
 
 public interface IMessage extends Serializable{
 
-	public String GetRoutingKey();
-    public String GetTypeName();
+	public String getRoutingKey();
+    public String getTypeName();
     
     public void setId(String id);
     public String getId();

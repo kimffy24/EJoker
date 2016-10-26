@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.z.common.context.impl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +60,11 @@ public class EjokerContextImpl implements IEjokerStandardContext, IEjokerFullCon
 		// 被标记为 冲突类型 或者 泛型签名不严格对称的类型，直接视为无法解析。
 		if(rootAssemblyAnalyzer.conflictResolvType.contains(interfaceType) || rootAssemblyAnalyzer.ambiguousSignatureGeneralType.contains(interfaceType))
 				throw new ContextRuntimeException(String.format("Could not resolved type [%s] to a implementation type!!!", interfaceType.getName()));
-		return rootAssemblyAnalyzer.eServiceImplementationMapper.getOrDefault(interfaceType, interfaceType);
+		Class<?> resulvedType = rootAssemblyAnalyzer.eServiceImplementationMapper.getOrDefault(interfaceType, interfaceType);
+		int modifiers = resulvedType.getModifiers();
+		if(Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers))
+			throw new ContextRuntimeException(String.format("Could not resolved type [%s] to a implementation type!!!", interfaceType.getName()));
+		return resulvedType;
 	}
 
 	@SuppressWarnings("unchecked")

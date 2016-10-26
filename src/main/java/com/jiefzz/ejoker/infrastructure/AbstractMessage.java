@@ -19,12 +19,12 @@ public abstract class AbstractMessage implements  IMessage {
 	}
 	
 	@Override
-	public String GetRoutingKey() {
+	public String getRoutingKey() {
 		throw new MessageException("Unimplemented!!!");
 	}
 
 	@Override
-	public String GetTypeName() {
+	public String getTypeName() {
 		return this.getClass().getName();
 	}
 

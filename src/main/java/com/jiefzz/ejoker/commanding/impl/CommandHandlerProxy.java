@@ -5,6 +5,12 @@ import com.jiefzz.ejoker.commanding.ICommandContext;
 import com.jiefzz.ejoker.commanding.ICommandHandler;
 import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 
+/**
+ * @deprecated we do not use this object in enode, this Class is declared for reference!
+ * @author jiefzz
+ *
+ * @param <TCommand>
+ */
 public class CommandHandlerProxy<TCommand extends ICommand> implements ICommandHandlerProxy {
 
 	private final ICommandHandler<TCommand> commandHandler;

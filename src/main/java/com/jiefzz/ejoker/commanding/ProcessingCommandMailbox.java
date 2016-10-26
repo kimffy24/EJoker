@@ -104,11 +104,6 @@ public class ProcessingCommandMailbox implements Runnable {
 	@Override
     public void run()
     {
-		System.out.println("aggregateRootId=" +aggregateRootId);
-		System.out.println("maxOffset=" +maxOffset);
-		System.out.println("consumingOffset=" +consumingOffset);
-		System.out.println("consumedOffset=" +consumedOffset);
-		
         if (stopHandling.get())
             return;
         

@@ -2,6 +2,8 @@ package com.jiefzz.ejoker.commanding;
 
 public class CommandExecuteTimeoutException extends RuntimeException {
 
+	private static final long serialVersionUID = -677184547554529016L;
+
 	public CommandExecuteTimeoutException() {
 	}
 

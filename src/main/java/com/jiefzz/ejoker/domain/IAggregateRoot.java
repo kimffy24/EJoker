@@ -1,11 +1,14 @@
 package com.jiefzz.ejoker.domain;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+
+import com.jiefzz.ejoker.eventing.IDomainEvent;
 
 public interface IAggregateRoot<TAggregateRootId> extends Serializable  {
 	
-    LinkedHashMap<Integer, String> getChanges();
+	Collection<IDomainEvent> getChanges();
     
     void acceptChanges(int newVersion);
     void replayEvents(LinkedHashMap<Integer, String> eventStreams);
