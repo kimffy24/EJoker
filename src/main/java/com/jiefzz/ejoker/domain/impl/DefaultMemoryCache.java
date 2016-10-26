@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.domain.impl;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Resource;
 
@@ -16,6 +17,7 @@ import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.utilities.Ensure;
 
 @EService
 public class DefaultMemoryCache implements IMemoryCache {
@@ -27,7 +29,8 @@ public class DefaultMemoryCache implements IMemoryCache {
 	
 	@Resource
 	IAggregateStorage aggregateStorage;
-
+	
+	// TODO whe use context inject required instance.
 //	public DefaultMemoryCache(IAggregateStorage aggregateStorage) {
 //		this.aggregateStorage = aggregateStorage;
 //	}
@@ -39,12 +42,11 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 	@Override
 	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
-		if (aggregateRootId == null) throw new ArgumentNullException("aggregateRootId");
+		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		AggregateCacheInfo aggregateRootInfo;
-		if (aggregateRootInfoDict.containsKey(aggregateRootId.toString())) {
-			aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString());
+		if (null!=(aggregateRootInfo = aggregateRootInfoDict.getOrDefault(aggregateRootId.toString(), null))) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
-			if (aggregateRoot.getClass() != aggregateRootType)
+			if (aggregateRoot.getClass().equals(aggregateRootType))
 				throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
 			if (aggregateRoot.getChanges().size() > 0) {
 				IAggregateRoot lastestAggregateRoot = aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
@@ -57,8 +59,12 @@ public class DefaultMemoryCache implements IMemoryCache {
 		return null;
 	}
 
+	/**
+	 * @deprecated Java could not know Genereal Type in Runtime!!!
+	 */
 	@Override
 	public <T extends IAggregateRoot> T get(Object aggregateRootId) {
+		logger.error("Unknow the AggregateType which you want!!!Java could not know Genereal Type in Runtime!!!");
 		throw new UnimplementException(DefaultMemoryCache.class.getName() + ".get(Object aggregateRootId)");
 	}
 
@@ -79,7 +85,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		};
 
 		try {
-			IAggregateRoot aggregateRoot = aggregateStorage.get((Class<IAggregateRoot>) aggregateRootType, aggregateRootId);
+			IAggregateRoot aggregateRoot = aggregateStorage.get((Class<IAggregateRoot> )aggregateRootType, aggregateRootId);
 			if (aggregateRoot != null)
 				setInternal(aggregateRoot);
 		} catch (Exception ex) {
@@ -92,20 +98,21 @@ public class DefaultMemoryCache implements IMemoryCache {
 		if (aggregateRootId == null) throw new ArgumentNullException("aggregateRootId");
 		return aggregateRootInfoDict.remove(aggregateRootId.toString()) != null;
 	}
+	
 
 	private void setInternal(IAggregateRoot aggregateRoot) {
-		if (aggregateRoot == null)
-			throw new ArgumentNullException("aggregateRoot");
+		Ensure.notNull(aggregateRoot, "aggregateRoot");
 		// TODO ENode.Domain.Impl.DefaultMemoryCache.SetInternal()
 		// C# use aggregateRootInfoDict.AddOrUpdate() here
-		if (aggregateRootInfoDict.containsKey(aggregateRoot.getUniqueId())) {
-			AggregateCacheInfo existing = aggregateRootInfoDict.get(aggregateRoot.getUniqueId());
+		String uniqueId = aggregateRoot.getUniqueId();
+		AggregateCacheInfo existing;
+		if (null!=(existing = aggregateRootInfoDict.getOrDefault(uniqueId, null))) {
 			existing.aggregateRoot = aggregateRoot;
 			existing.lastUpdateTime = System.currentTimeMillis();
-			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
+			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 		}else{
 			aggregateRootInfoDict.put(aggregateRoot.getUniqueId(), new AggregateCacheInfo(aggregateRoot));
-			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
+			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 		};
 	}
 }
