@@ -1,7 +1,8 @@
 package com.jiefzz.ejoker;
 
-import com.jiefzz.ejoker.z.common.context.IEjokerStandardContext;
-import com.jiefzz.ejoker.z.common.context.impl.EjokerContextImpl;
+import com.jiefzz.ejoker.z.common.context.IEJokerContext;
+import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
+import com.jiefzz.ejoker.z.common.context.impl.DefaultEJokerContext;
 
 public class Configure {
 	
@@ -17,16 +18,16 @@ public class Configure {
 		initializeEJoker();
 	}
 	
-	public IEjokerStandardContext getEJokerContext(){
+	public IEJokerSimpleContext getEJokerContext(){
 		return context;
 	}
 	
-	private IEjokerStandardContext initializeEJoker(){
-		context = new EjokerContextImpl();
-		context.annotationScan("com.jiefzz.ejoker");
+	private IEJokerContext initializeEJoker(){
+		context = new DefaultEJokerContext();
+		context.scanPackageClassMeta("com.jiefzz.ejoker");
 		return context;
 	}
 
-	private IEjokerStandardContext context;
+	private IEJokerContext context;
 	
 }
