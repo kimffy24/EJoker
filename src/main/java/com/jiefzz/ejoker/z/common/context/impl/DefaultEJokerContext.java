@@ -8,8 +8,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
+import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
+import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
+import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaScanner;
 import com.jiefzz.ejoker.z.common.context.IEJokerContext;
 import com.jiefzz.ejoker.z.common.context.IEJokerInstalcePool;
+import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
 
 public class DefaultEJokerContext implements IEJokerContext {
@@ -32,6 +36,21 @@ public class DefaultEJokerContext implements IEJokerContext {
 	 * 放入扫描过的包得路径的字符串
 	 */
 	private final Set<String> hasScanPackage = new HashSet<String>();
+	
+	public DefaultEJokerContext() {
+		// 执行自构建前已存在的对象的注入
+		coveredInstanceMap.put(DefaultEJokerContext.class, this);
+		coveredInstanceMap.put(IEJokerContext.class, this);
+		coveredInstanceMap.put(IEJokerSimpleContext.class, this);
+		coveredInstanceMap.put(IEJokerClassMetaScanner.class, this);
+
+		coveredInstanceMap.put(DefaultEJokerClassMetaProvider.class, eJokerClassMetaProvider);
+		coveredInstanceMap.put(IEJokerClassMetaProvidor.class, eJokerClassMetaProvider);
+		coveredInstanceMap.put(IEJokerClassMetaAnalyzer.class, eJokerClassMetaProvider);
+
+		coveredInstanceMap.put(DefaultEJokerInstalcePool.class, eJokerInstalcePool);
+		coveredInstanceMap.put(IEJokerInstalcePool.class, eJokerClassMetaProvider);
+	}
 
 	@Override
 	public <T> T get(Class<T> clazz) {
