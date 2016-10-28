@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.z.common.context;
 
-public interface IEJokerContext extends IEJokerSimpleContext {
+public interface IEJokerContext extends IEJokerSimpleContext, IEJokerClassMetaScanner  {
 	
 	/**
 	 * 注册实例
