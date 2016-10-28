@@ -24,11 +24,13 @@ public class DefaultEJokerContext implements IEJokerContext {
 
 	/**
 	 * 主动覆盖的对象容器
+	 * @deprecated 未完成
 	 */
 	private final Map<Class<?>, Object> coveredInstanceMap = new HashMap<Class<?>, Object>();
 
 	/**
 	 * 主动覆盖的对象容器(有泛型的)
+	 * @deprecated 未完成
 	 */
 	private final Map<Class<?>, Map<String, Object>> coveredInstanceGenericTypeMap = new HashMap<Class<?>, Map<String, Object>>();
 	
@@ -38,18 +40,19 @@ public class DefaultEJokerContext implements IEJokerContext {
 	private final Set<String> hasScanPackage = new HashSet<String>();
 	
 	public DefaultEJokerContext() {
+		Map<Class<?>, Object> instanceMap = ((DefaultEJokerInstalcePool )eJokerInstalcePool).instanceMap;
 		// 执行自构建前已存在的对象的注入
-		coveredInstanceMap.put(DefaultEJokerContext.class, this);
-		coveredInstanceMap.put(IEJokerContext.class, this);
-		coveredInstanceMap.put(IEJokerSimpleContext.class, this);
-		coveredInstanceMap.put(IEJokerClassMetaScanner.class, this);
+		instanceMap.put(DefaultEJokerContext.class, this);
+		instanceMap.put(IEJokerContext.class, this);
+		instanceMap.put(IEJokerSimpleContext.class, this);
+		instanceMap.put(IEJokerClassMetaScanner.class, this);
 
-		coveredInstanceMap.put(DefaultEJokerClassMetaProvider.class, eJokerClassMetaProvider);
-		coveredInstanceMap.put(IEJokerClassMetaProvidor.class, eJokerClassMetaProvider);
-		coveredInstanceMap.put(IEJokerClassMetaAnalyzer.class, eJokerClassMetaProvider);
+		instanceMap.put(DefaultEJokerClassMetaProvider.class, eJokerClassMetaProvider);
+		instanceMap.put(IEJokerClassMetaProvidor.class, eJokerClassMetaProvider);
+		instanceMap.put(IEJokerClassMetaAnalyzer.class, eJokerClassMetaProvider);
 
-		coveredInstanceMap.put(DefaultEJokerInstalcePool.class, eJokerInstalcePool);
-		coveredInstanceMap.put(IEJokerInstalcePool.class, eJokerClassMetaProvider);
+		instanceMap.put(DefaultEJokerInstalcePool.class, eJokerInstalcePool);
+		instanceMap.put(IEJokerInstalcePool.class, eJokerClassMetaProvider);
 	}
 
 	@Override

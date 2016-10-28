@@ -16,9 +16,10 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 	private final DefaultEJokerClassMetaProvider eJokerClassMetaProvider;
 	
 	/**
-	 * 对象容器
+	 * 对象容器<br>
+	 * ** public是为了让DefaultEJokerContext实现自注入用。
 	 */
-	private final Map<Class<?>, Object> instanceMap = new HashMap<Class<?>, Object>();
+	public final Map<Class<?>, Object> instanceMap = new HashMap<Class<?>, Object>();
 
 	/**
 	 * 对象容器(有泛型的)
