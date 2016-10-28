@@ -88,8 +88,6 @@ public class RootMetaRecord {
 		}
 	}
 
-	/**********private method*********/
-
 	/**
 	 * DONE: 记录是否已经被分析
 	 * DONE: 记录所有@EService
@@ -237,6 +235,8 @@ public class RootMetaRecord {
 			}
 		}
 	}
+
+	/**********private method*********/
 
 	/**
 	 * 输出多定义警告
