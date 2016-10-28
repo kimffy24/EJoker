@@ -6,8 +6,9 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
-import com.jiefzz.ejoker.z.common.context.impl.RootMetaRecord.GenericityMapper;
-import com.jiefzz.ejoker.z.common.context.impl.RootMetaRecord.ImplementationTuple;
+import com.jiefzz.ejoker.z.common.context.RootMetaRecord;
+import com.jiefzz.ejoker.z.common.context.RootMetaRecord.GenericityMapper;
+import com.jiefzz.ejoker.z.common.context.RootMetaRecord.ImplementationTuple;
 import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
 
 public class DefaultEJokerClassMetaProvider implements IEJokerClassMetaProvidor,IEJokerClassMetaAnalyzer {
@@ -56,6 +57,11 @@ public class DefaultEJokerClassMetaProvider implements IEJokerClassMetaProvidor,
 		return implementationTuple.getImplementationsType(0);
 	}
 
+	@Override
+	public RootMetaRecord getRootMetaRecord() {
+		return rootMetaRecord;
+	}
+	
 	@Override
 	public void analyzeClassMeta(Class<?> clazz) {
 		rootMetaRecord.analyzeContextAnnotation(clazz);
