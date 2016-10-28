@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.z.common.context.IEjokerStandardContext;
+import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
 import com.jiefzz.ejoker.z.queue.clients.producers.AbstractProducer;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
@@ -20,7 +20,7 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 	
 	private IJSONConverter jsonSerializer;
 	
-	public RabbitMessageQueueProducer(IEjokerStandardContext eJokerContext) {
+	public RabbitMessageQueueProducer(IEJokerSimpleContext eJokerContext) {
 		jsonSerializer = eJokerContext.get(IJSONConverter.class);
 	}
 	
