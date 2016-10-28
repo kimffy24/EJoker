@@ -50,7 +50,20 @@ public class GenericTypeUtil {
 				sb.append('<');
 				for (int i = 0; i < types.length; i++) {
 					// TODO 若此属性的泛型信息是通过引用类的泛型定义传入的话，此处转换将会出错！！！
-					sb.append(((Class<?> )types[i]).getName());
+					try{
+						sb.append(((Class<?> )types[i]).getName());
+					} catch ( Exception e ) {
+						field.getDeclaringClass().getName();
+						field.getName();
+						throw new RuntimeException(
+								String.format(
+										"EJoker Context need exact generic defination!!!\n\tClass=%s\n\tField=%s",
+										field.getDeclaringClass().getName(),
+										field.getName()
+								),
+								e
+						);
+					}
 					sb.append(SEPARATOR);
 				}
 				return sb.toString().substring(1);
