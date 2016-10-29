@@ -1,7 +1,6 @@
 package com.jiefzz.ejoker.domain.impl;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +10,17 @@ import com.jiefzz.ejoker.domain.IAggregateRootFactory;
 import com.jiefzz.ejoker.domain.IAggregateSnapshotter;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
-import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
+/**
+ * 未完成
+ * @author jiefzz
+ *
+ */
 @EService
 public class EventSourcingAggregateStorage implements IAggregateStorage {
 
