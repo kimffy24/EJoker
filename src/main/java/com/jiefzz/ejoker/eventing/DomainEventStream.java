@@ -18,10 +18,10 @@ public class DomainEventStream implements Serializable {
 	private String aggregateRootId;
 	private long version;
 	private Map<String, String> items;
-	private Collection<IDomainEvent> events;
+	private Collection<IDomainEvent<?>> events;
 	private long timestamp;
 	
-	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent> events, Map<String, String> items) {
+	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent<?>> events, Map<String, String> items) {
         this.setCommandId(commandId);
         this.setAggregateRootId(aggregateRootId);
         this.setVersion(version);
@@ -46,7 +46,7 @@ public class DomainEventStream implements Serializable {
             evnt.setSequence(sequence++);
         }
     }
-	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent> events) {
+	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent<?>> events) {
         this(commandId, aggregateRootId, aggregateRootTypeName, version, timestamp, events, null);
     }
 
@@ -70,7 +70,7 @@ public class DomainEventStream implements Serializable {
 		this.items = items;
 	}
 
-	private void setEvents(Collection<IDomainEvent> events) {
+	private void setEvents(Collection<IDomainEvent<?>> events) {
 		this.events = events;
 	}
 
@@ -98,7 +98,7 @@ public class DomainEventStream implements Serializable {
 		return items;
 	}
 
-	public Collection<IDomainEvent> getEvents() {
+	public Collection<IDomainEvent<?>> getEvents() {
 		return events;
 	}
 

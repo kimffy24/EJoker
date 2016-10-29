@@ -1,27 +1,21 @@
 package com.jiefzz.ejoker.domain.impl;
 
-import javax.annotation.Resource;
-
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 @EService
 public class DefaultRepository implements IRepository {
 
-	@Resource
+	@Dependence
 	IMemoryCache memoryCache;
-	@Resource
+	@Dependence
 	IAggregateStorage aggregateRootStorage;
-
-//	public DefaultRepository(IMemoryCache memoryCache, IAggregateStorage aggregateRootStorage) {
-//		this.memoryCache = memoryCache;
-//		this.aggregateRootStorage = aggregateRootStorage;
-//	}
 
 	@Override
 	public <T extends IAggregateRoot> T get(Object aggregateRootId) {

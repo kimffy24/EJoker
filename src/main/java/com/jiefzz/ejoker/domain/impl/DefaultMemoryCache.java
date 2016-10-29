@@ -3,9 +3,6 @@ package com.jiefzz.ejoker.domain.impl;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +13,7 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 
@@ -24,16 +22,10 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 	private final static  Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
 	
-	// TODO C# use ConcurrentDictionary here;
 	private final Map<String, AggregateCacheInfo> aggregateRootInfoDict = new ConcurrentHashMap<String, AggregateCacheInfo>();
 	
-	@Resource
+	@Dependence
 	IAggregateStorage aggregateStorage;
-	
-	// TODO whe use context inject required instance.
-//	public DefaultMemoryCache(IAggregateStorage aggregateStorage) {
-//		this.aggregateStorage = aggregateStorage;
-//	}
 
 	@Override
 	public Collection<AggregateCacheInfo> getAll() {
@@ -44,7 +36,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		AggregateCacheInfo aggregateRootInfo;
-		if (null!=(aggregateRootInfo = aggregateRootInfoDict.getOrDefault(aggregateRootId.toString(), null))) {
+		if( null!=(aggregateRootInfo = aggregateRootInfoDict.getOrDefault(aggregateRootId.toString(), null)) ) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
 			if (aggregateRoot.getClass().equals(aggregateRootType))
 				throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));

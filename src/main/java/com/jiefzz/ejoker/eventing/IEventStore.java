@@ -1,8 +1,13 @@
 package com.jiefzz.ejoker.eventing;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 
 public interface IEventStore {
+	
+	public boolean getSupportBatchAppendEvent();
+	
+	public void setSupportBatchAppendEvent(boolean supportBatchAppendEvent);
 	
 	/**
 	 * 为保证返回顺序请使用LinkedHashSet
@@ -13,7 +18,7 @@ public interface IEventStore {
 	 * @param maxVersion
 	 * @return
 	 */
-	public LinkedHashSet<IDomainEvent> QueryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
+	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
     
 	public void BatchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams);
 	

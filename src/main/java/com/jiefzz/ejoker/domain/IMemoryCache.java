@@ -13,7 +13,9 @@ public interface IMemoryCache {
         public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType);
         
         /**
-         * Get a strong type aggregate from memory cache.
+         * Get a strong type aggregate from memory cache.<br>
+         * Java Could not get &lt;T&gt; real type in runtime!!!
+         * @deprecated Java Could not get &lt;T&gt; real type in runtime!!!
          * @param aggregateRootId
          * @return
          */

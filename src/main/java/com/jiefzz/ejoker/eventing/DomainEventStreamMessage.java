@@ -26,6 +26,19 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
         this.setEvents(events);
         this.setItems(items);
     }
+	
+	@Override
+	public String toString(){
+		return this.getClass().getName() +"is Unimplementation!";
+		/*return String.format(
+				"[messageId=%s, commandId=%s, aggregateRootId=%s, aggregateRootTypeName=%s]",
+				this.getId(),
+				commandId,
+				getAggregateRootStringId(),
+				
+		);*/
+	}
+	
 
 	public String getCommandId() {
 		return commandId;
