@@ -4,7 +4,7 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 
 public interface ICommandContext {
 
-    public void add(IAggregateRoot<?> aggregateRoot);
+    public void add(IAggregateRoot aggregateRoot);
     
     /**
      * Because Java's generic type is pseudo generic type, not real generic.
@@ -15,7 +15,7 @@ public interface ICommandContext {
      * @param tryFromCache
      * @return
      */
-    public <T extends IAggregateRoot<?>> T get(Object id, Class<T> clazz, boolean tryFromCache);
+    public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache);
     
     /**
      * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
@@ -23,26 +23,26 @@ public interface ICommandContext {
      * @param clazz
      * @return
      */
-    public <T extends IAggregateRoot<?>> T get(Object id, Class<T> clazz);
+    public <T extends IAggregateRoot> T get(Object id, Class<T> clazz);
     
     /**
      * Not like C#, T will lost while program running. Please use get(Object, Class, boolean).
+     * @deprecated
      * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
      * @param id
      * @param tryFromCache
      * @return
      */
-    @Deprecated
-    public <T extends IAggregateRoot<?>> T get(Object id, boolean tryFromCache);
+    public <T extends IAggregateRoot> T get(Object id, boolean tryFromCache);
     
     /**
      * Not like C#, T will lost while program running.. Please use get(Object, Class).
+     * @deprecated
      * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
      * @param id
      * @return
      */
-    @Deprecated
-    public <T extends IAggregateRoot<?>> T get(Object id);
+    public <T extends IAggregateRoot> T get(Object id);
     
     public void setResult(String result);
     public String getResult();

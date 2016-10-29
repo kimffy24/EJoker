@@ -87,11 +87,11 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		Collection<IAggregateRoot> trackedAggregateRoots = context.getTrackedAggregateRoots();
 		int dirtyAggregateRootCount = 0;
 		IAggregateRoot dirtyAggregateRoot = null;
-		Collection<IDomainEvent> changeEvents = null;
+		Collection<IDomainEvent<?>> changeEvents = null;
 
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
-			Collection<IDomainEvent> changes = aggregateRoot.getChanges();	
+			Collection<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
 			if(null!=changes && changes.size()>0) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
@@ -115,7 +115,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 	}
 	
-	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, Collection<IDomainEvent> changeEvents, ProcessingCommand processingCommand) {
+	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, Collection<IDomainEvent<?>> changeEvents, ProcessingCommand processingCommand) {
 		String result = processingCommand.getCommandExecuteContext().getResult();
 		if(null!=result)
 			processingCommand.getItems().put("CommandResult", result);
