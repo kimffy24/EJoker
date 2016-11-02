@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.eventing;
 
-import java.util.LinkedHashSet;
+import java.util.Collection;
 import java.util.Map;
 
 import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
@@ -13,11 +13,11 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 	
 	private String commandId;
 	private Map<String, String> items;
-	private LinkedHashSet<IDomainEvent> events;
+	private Collection<IDomainEvent<?>> events;
 	
 	public DomainEventStreamMessage() {}
 	
-	public DomainEventStreamMessage(String commandId, String aggregateRootId, long version, String aggregateRootTypeName, LinkedHashSet<IDomainEvent> events, Map<String, String> items)
+	public DomainEventStreamMessage(String commandId, String aggregateRootId, long version, String aggregateRootTypeName, Collection<IDomainEvent<?>> events, Map<String, String> items)
     {
         this.setCommandId(commandId);
         this.setAggregateRootId(aggregateRootId);
@@ -56,11 +56,11 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 		this.items = items;
 	}
 
-	public LinkedHashSet<IDomainEvent> getEvents() {
+	public Collection<IDomainEvent<?>> getEvents() {
 		return events;
 	}
 
-	public void setEvents(LinkedHashSet<IDomainEvent> events) {
+	public void setEvents(Collection<IDomainEvent<?>> events) {
 		this.events = events;
 	}
 }
