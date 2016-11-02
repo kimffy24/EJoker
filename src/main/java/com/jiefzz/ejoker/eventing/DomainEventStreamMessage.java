@@ -17,7 +17,7 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 	
 	public DomainEventStreamMessage() {}
 	
-	public DomainEventStreamMessage(String commandId, String aggregateRootId, int version, String aggregateRootTypeName, LinkedHashSet<IDomainEvent> events, Map<String, String> items)
+	public DomainEventStreamMessage(String commandId, String aggregateRootId, long version, String aggregateRootTypeName, LinkedHashSet<IDomainEvent> events, Map<String, String> items)
     {
         this.setCommandId(commandId);
         this.setAggregateRootId(aggregateRootId);
