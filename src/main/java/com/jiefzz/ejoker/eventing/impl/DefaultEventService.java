@@ -1,19 +1,20 @@
 package com.jiefzz.ejoker.eventing.impl;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRootFactory;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
+import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import com.jiefzz.ejoker.eventing.EventCommittingConetxt;
@@ -21,8 +22,8 @@ import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.system.delegate.Action;
 
 @EService
 public class DefaultEventService implements IEventService {
@@ -31,30 +32,25 @@ public class DefaultEventService implements IEventService {
 
 	private final Lock lock4tryCreateEventMailbox = new ReentrantLock();
 	
-	// TODO: C# use ConcurrentDictionary here.
 	private final ConcurrentHashMap<String, EventMailBox> eventMailboxDict = 
 			new ConcurrentHashMap<String, EventMailBox>();
-	
-	@Resource
+
+	@Dependence
 	IProcessingCommandHandler processingCommandHandler;
-	@Resource
+	@Dependence
 	IJSONConverter jsonSerializer;
-	@Resource
+	@Dependence
+	IMemoryCache memoryCache;
+	@Dependence
 	IAggregateRootFactory aggregateRootFactory;
-	@Resource
+	@Dependence
 	IAggregateStorage aggregateStorage;
-	@Resource
+	@Dependence
 	IEventStore eventStore;
-	@Resource
+	@Dependence
 	IMessagePublisher<DomainEventStreamMessage> domainEventPublisher;
 	
 	private final int batchSize=1;
-	
-	
-	@Override
-	public void setProcessingCommandHandler(IProcessingCommandHandler processingCommandHandler) {
-		logger.warn("EJoker use context to get instance of IProcessingCommandHandler implementation.");
-	}
 
 	@Override
 	public void commitDomainEventAsync(EventCommittingConetxt context) {
@@ -67,31 +63,66 @@ public class DefaultEventService implements IEventService {
 					commitDomainEventAsync(context);
 					return;
 				} else {
-					
-					Action<Collection<EventCommittingConetxt>> handleMessageAction = new Action<Collection<EventCommittingConetxt>>() {
-
-						@Override
-						public Collection<EventCommittingConetxt> call() {
-							// TODO Auto-generated method stub
-							return null;
-						}
-						
-					};
-					eventMailboxDict.put(uniqueId, new EventMailBox(uniqueId, batchSize, handleMessageAction));
+					eventMailboxDict.put(
+							uniqueId,
+							new EventMailBox( uniqueId, batchSize, new EventMailBox.EventMailBoxHandler<Collection<EventCommittingConetxt>>() {
+								@Override
+								public void handleMessage(Collection<EventCommittingConetxt> target) {
+								}
+							})
+					);
 				}
 			} finally {
 				lock4tryCreateEventMailbox.unlock();
 			}
 		} else {
-			
+			eventMailbox.enqueueMessage(context);
+			context.processingCommand.getMailbox().tryExecuteNextMessage();
 		}
 
 	}
 
 	@Override
 	public void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStream eventStream) {
-		// TODO Auto-generated method stub
-
+		if( null==eventStream.getItems() || eventStream.getItems().size()==0 )
+			eventStream.setItems(processingCommand.getItems());
+		DomainEventStreamMessage domainEventStreamMessage = new DomainEventStreamMessage( processingCommand.getMessage().getId(), eventStream.getAggregateRootId(), eventStream.getVersion(), eventStream.getAggregateRootTypeName(), eventStream.getEvents(), eventStream.getItems());
+		publishDomainEventAsync(processingCommand, domainEventStreamMessage, 0);
+	}
+	
+	private void tryProcessNextContext(EventCommittingConetxt currentContext) {
+		if( null!=currentContext.next ) {
+			
+		}
+	}
+	
+	/**
+	 * TODO 看不懂这个函数。。。。
+	 * @param processingCommand
+	 * @param eventStream
+	 * @param retryTimes
+	 */
+	private void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStreamMessage eventStream, int retryTimes) {
+		
+	}
+	
+	/**
+	 * TODO 由于写法同ENode不同，需要测试！！！
+	 * @param contextList
+	 */
+	private void concatContext(Collection<EventCommittingConetxt> contextList) {
+		Iterator<EventCommittingConetxt> iterator = contextList.iterator();
+		EventCommittingConetxt previous = null;
+		while(iterator.hasNext()) {
+			EventCommittingConetxt current = iterator.next();
+			if( null!=previous )
+				previous.next = current;
+		}
 	}
 
+	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
+		logger.info("Completed command, aggregateId:{}", processingCommand.getMessage().getAggregateRootId());
+	}
+	
 }

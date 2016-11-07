@@ -1,9 +1,11 @@
 package com.jiefzz.ejoker.eventing.impl;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 
 import javax.annotation.Resource;
 
+import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
@@ -14,9 +16,19 @@ public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 
 	@Resource
 	IJSONConverter jsonConverter;
+
+
+	@Override
+	public boolean getSupportBatchAppendEvent() {
+		return false;
+	}
+
+	@Override
+	public void setSupportBatchAppendEvent(boolean supportBatchAppendEvent) {
+	}
 	
 	@Override
-	public LinkedHashSet<IDomainEvent> QueryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
+	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
 			long minVersion, long maxVersion) {
 		// TODO Auto-generated method stub
 		return null;

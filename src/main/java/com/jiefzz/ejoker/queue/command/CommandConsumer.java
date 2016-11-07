@@ -149,7 +149,7 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		}
 
 		@Override
-		public <T extends IAggregateRoot<?>> T get(Object id, Class<T> clazz, boolean firstFromCache) {
+		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean firstFromCache) {
 			if (id == null) throw new ArgumentNullException("id");
 
 			String aggregateRootId = id.toString();
@@ -174,12 +174,12 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		}
 
 		@Override
-		public <T extends IAggregateRoot<?>> T get(Object id, Class<T> clazz) {
+		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz) {
 			return get(id, clazz, true);
 		}
 		
 		@Override
-		public <T extends IAggregateRoot<?>> T get(Object id, boolean firstFromCache) {
+		public <T extends IAggregateRoot> T get(Object id, boolean firstFromCache) {
 			
 			CommandConsumer.logger.warn("com.jiefzz.ejoker.queue.command.CommandConsumer.CommandExecuteContext.get(Object, boolean) maybe work down with unexcpected error!!!");
 			
@@ -211,7 +211,7 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		}
 
 		@Override
-		public <T extends IAggregateRoot<?>> T get(Object id) {
+		public <T extends IAggregateRoot> T get(Object id) {
 			return get(id, true);
 		}
 
