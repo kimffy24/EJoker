@@ -26,7 +26,8 @@ public interface ICommandContext {
     public <T extends IAggregateRoot> T get(Object id, Class<T> clazz);
     
     /**
-     * Not like C#, T will lost while program running. Please use get(Object, Class, boolean).
+     * Not like C#, T will lost while program running. Please use get(Object, Class, boolean).<br>
+     * C#中使用泛型的动态信息中提取类型，而java无法提供此功能。。。请使用 get(Object, Class, boolean)。
      * @deprecated
      * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
      * @param id
@@ -36,9 +37,10 @@ public interface ICommandContext {
     public <T extends IAggregateRoot> T get(Object id, boolean tryFromCache);
     
     /**
-     * Not like C#, T will lost while program running.. Please use get(Object, Class).
+     * Not like C#, T will lost while program running.. Please use get(Object, Class).<br>
+     * C#中使用泛型的动态信息中提取类型，而java无法提供此功能。。。请使用 get(Object, Class)。
      * @deprecated
-     * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
+     * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class)
      * @param id
      * @return
      */
