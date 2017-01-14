@@ -104,6 +104,8 @@ public class ProcessingCommandMailbox implements Runnable {
 	@Override
     public void run()
     {
+		// TODO 通过调度器发起线程处理新的命令 
+		// TODO 此处为调度器发起新线程的起点
         if (stopHandling.get())
             return;
         
