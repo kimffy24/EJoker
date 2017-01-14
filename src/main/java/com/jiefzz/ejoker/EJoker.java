@@ -4,30 +4,35 @@ import com.jiefzz.ejoker.z.common.context.IEJokerContext;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.context.impl.DefaultEJokerContext;
 
-public class Configure {
+/**
+ * E-Joker instance provider. E-Joker context provider.
+ * @author JiefzzLon
+ *
+ */
+public class EJoker {
 	
-	private static Configure instance;
+	// public:
 	
-	public static Configure getInstance(){
+	public static EJoker getInstance(){
 		if ( instance == null )
-			instance = new Configure();
+			instance = new EJoker();
 		return instance;
-	}
-	
-	private Configure(){ 
-		initializeEJoker();
 	}
 	
 	public IEJokerSimpleContext getEJokerContext(){
 		return context;
 	}
+
+	// private:
 	
-	private IEJokerContext initializeEJoker(){
+	private EJoker() {
 		context = new DefaultEJokerContext();
 		context.scanPackageClassMeta("com.jiefzz.ejoker");
-		return context;
 	}
 
+	// properties:
+	
+	private static EJoker instance;
 	private IEJokerContext context;
 	
 }
