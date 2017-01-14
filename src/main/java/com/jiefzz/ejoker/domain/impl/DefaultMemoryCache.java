@@ -97,10 +97,10 @@ public class DefaultMemoryCache implements IMemoryCache {
 		// TODO ENode.Domain.Impl.DefaultMemoryCache.SetInternal()
 		// C# use aggregateRootInfoDict.AddOrUpdate() here
 		String uniqueId = aggregateRoot.getUniqueId();
-		AggregateCacheInfo existing;
-		if (null!=(existing = aggregateRootInfoDict.getOrDefault(uniqueId, null))) {
-			existing.aggregateRoot = aggregateRoot;
-			existing.lastUpdateTime = System.currentTimeMillis();
+		AggregateCacheInfo previous;
+		if (null!=(previous = aggregateRootInfoDict.getOrDefault(uniqueId, null))) {
+			previous.aggregateRoot = aggregateRoot;
+			previous.lastUpdateTime = System.currentTimeMillis();
 			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 		}else{
 			aggregateRootInfoDict.put(aggregateRoot.getUniqueId(), new AggregateCacheInfo(aggregateRoot));
