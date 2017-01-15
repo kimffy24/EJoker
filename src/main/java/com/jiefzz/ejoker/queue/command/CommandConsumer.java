@@ -101,6 +101,12 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		return this;
 	}
 
+	/**
+	 * commandHandler处理过程中，使用的上下文就是这个上下文。<br>
+	 * 他能新增一个聚合根，取出聚合跟，修改聚合并提交发布，都在次上下文中提供调用
+	 * @author kimffy
+	 *
+	 */
 	class CommandExecuteContext implements ICommandExecuteContext {
 		private String result;
 		private final ConcurrentHashMap<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<String, IAggregateRoot>();;
@@ -155,19 +161,18 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 			String aggregateRootId = id.toString();
 			IAggregateRoot aggregateRoot = null;
 			
-			// TODO: Perhaps it will has a high-performance method.
-			// C# use ConcurrentDictionary.TryGetValue() here
-			if (trackingAggregateRootDict.containsKey(aggregateRootId))
-				return (T) trackingAggregateRootDict.get(aggregateRootId);
+			//try get aggregate root from the last execute context.
+			if (null!=(aggregateRoot = trackingAggregateRootDict.getOrDefault(aggregateRootId, null)))
+				return (T )aggregateRoot;
 
 			if (firstFromCache)
-				aggregateRoot = repository.get((Class<IAggregateRoot>) clazz, id);
+				aggregateRoot = repository.get((Class<IAggregateRoot> )clazz, id);
 			else
-				aggregateRoot = aggregateRootStorage.get((Class<IAggregateRoot>) clazz, aggregateRootId);
+				aggregateRoot = aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
 
 			if (aggregateRoot != null) {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
-				return (T) aggregateRoot;
+				return (T )aggregateRoot;
 			}
 
 			return null;
@@ -178,38 +183,44 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 			return get(id, clazz, true);
 		}
 		
+		/**
+		 * @deprecated
+		 */
 		@Override
 		public <T extends IAggregateRoot> T get(Object id, boolean firstFromCache) {
-			
-			CommandConsumer.logger.warn("com.jiefzz.ejoker.queue.command.CommandConsumer.CommandExecuteContext.get(Object, boolean) maybe work down with unexcpected error!!!");
-			
-			if (id == null)
-				throw new ArgumentNullException("id");
-
-			String aggregateRootId = id.toString();
-			IAggregateRoot aggregateRoot = null;
-			
-			// TODO: Perhaps it will has a high-performance method.
-			// C# use ConcurrentDictionary.TryGetValue() here
-			if (trackingAggregateRootDict.containsKey(aggregateRootId))
-				return (T) trackingAggregateRootDict.get(aggregateRootId);
-
-			if (firstFromCache) {
-				// TODO: This method will throw an UnimplementException now!!!
-				aggregateRoot = repository.get(id);
-			} else {
-				// TODO: This method will get a unexpected result!!!
-				aggregateRoot = aggregateRootStorage.get(IAggregateRoot.class, aggregateRootId);
-			}
-
-			if (aggregateRoot != null) {
-				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
-				return (T) aggregateRoot;
-			}
-
-			return null;
+			throw new CommandRuntimeException("Do not use this method!!! Please use get(Object, Class, boolean) or get(Object, Class)");
+//			CommandConsumer.logger.warn("com.jiefzz.ejoker.queue.command.CommandConsumer.CommandExecuteContext.get(Object, boolean) maybe work down with unexcpected error!!!");
+//			
+//			if (id == null)
+//				throw new ArgumentNullException("id");
+//
+//			String aggregateRootId = id.toString();
+//			IAggregateRoot aggregateRoot = null;
+//			
+//			// TODO: Perhaps it will has a high-performance method.
+//			// C# use ConcurrentDictionary.TryGetValue() here
+//			if (trackingAggregateRootDict.containsKey(aggregateRootId))
+//				return (T) trackingAggregateRootDict.get(aggregateRootId);
+//
+//			if (firstFromCache) {
+//				// TODO: This method will throw an UnimplementException now!!!
+//				aggregateRoot = repository.get(id);
+//			} else {
+//				// TODO: This method will get a unexpected result!!!
+//				aggregateRoot = aggregateRootStorage.get(IAggregateRoot.class, aggregateRootId);
+//			}
+//
+//			if (aggregateRoot != null) {
+//				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
+//				return (T) aggregateRoot;
+//			}
+//
+//			return null;
 		}
 
+		/**
+		 * @deprecated
+		 */
 		@Override
 		public <T extends IAggregateRoot> T get(Object id) {
 			return get(id, true);
