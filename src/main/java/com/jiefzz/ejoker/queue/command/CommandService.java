@@ -19,6 +19,7 @@ import com.jiefzz.ejoker.commanding.ICommandTopicProvider;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
@@ -51,15 +52,15 @@ public class CommandService implements ICommandService, IQueueWokerService {
 	/**
 	 * all command will send by this object.
 	 */
-	@Resource
+	@Dependence
 	private SendQueueMessageService sendQueueMessageService;
-	@Resource
+	@Dependence
 	private IJSONConverter jsonConverter;
-	@Resource
+	@Dependence
 	private ICommandTopicProvider commandTopicProvider;
-	@Resource
+	@Dependence
 	private ICommandRoutingKeyProvider commandRouteKeyProvider;
-	@Resource
+	@Dependence
 	private CommandResultProcessor commandResultProcessor;
 
 	private IProducer producer;
