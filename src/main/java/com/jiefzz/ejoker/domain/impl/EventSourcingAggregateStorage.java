@@ -29,13 +29,13 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	private int minVersion = 1;
 	private int maxVersion = Integer.MAX_VALUE;
 	
-	@Dependence
+	//@Dependence
 	IAggregateRootFactory aggregateRootFactory;
 
-	@Dependence
+	//@Dependence
 	IEventStore eventStore;
 	
-	@Dependence
+	//@Dependence
 	IAggregateSnapshotter aggregateSnapshotter;
 	
 	@Override

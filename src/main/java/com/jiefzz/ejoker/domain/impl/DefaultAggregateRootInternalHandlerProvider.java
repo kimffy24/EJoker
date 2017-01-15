@@ -9,7 +9,12 @@ import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.utils.IDelegateAction;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
-@EService
+/**
+ * @deprecated this class is use in eNode, but not use in eJoker
+ * @author jiefzzLon
+ *
+ */
+//@EService
 public class DefaultAggregateRootInternalHandlerProvider implements IAggregateRootInternalHandlerProvider {
 
 	private final Map<Class<? extends IAggregateRoot>, Map<Class<? extends IDomainEvent<?>>, IDelegateAction<IAggregateRoot, IDomainEvent<?>>>> mappings = 

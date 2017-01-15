@@ -18,7 +18,4 @@ public interface IAggregateRoot extends Serializable  {
     
     void replayEvents(Collection<DomainEventStream> eventStreams);
 
-    /*public void setId(TAggregateRootId _id);
-	public TAggregateRootId getId();*/
-	
 }

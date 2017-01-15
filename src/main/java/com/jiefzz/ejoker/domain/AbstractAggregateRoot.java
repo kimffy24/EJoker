@@ -1,19 +1,16 @@
 package com.jiefzz.ejoker.domain;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
+import com.jiefzz.ejoker.domain.helper.AggregateHandlerJavaHelper;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
-import com.jiefzz.ejoker.utils.IDelegateAction;
 import com.jiefzz.ejoker.z.common.ArgumentException;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.InvalidOperationException;
-import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot {
@@ -21,25 +18,23 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@PersistentIgnore
 	private static final long serialVersionUID = -1803833835739801207L;
 
-	/* EJoker unuse this filed, But eNode use it.
-	@PersistentIgnore
-    private static final Collection<IDomainEvent<TAggregateRootId>> emptyEvents = new ArrayList<IDomainEvent<TAggregateRootId>>();
-    */
-
-	// TODO Please use your IoC to inject this Implement Object!!!
-	@Dependence
-	@PersistentIgnore
-	static IAggregateRootInternalHandlerProvider eventHandlerProvider;
-	
+//	// TODO Please use your IoC to inject this Implement Object!!!
+//	@Dependence
+//	@PersistentIgnore
+//	static IAggregateRootInternalHandlerProvider eventHandlerProvider;
 	
 	private long version=0;
 
 	@PersistentIgnore
-	private List<IDomainEvent<?>> uncommittedEvents = new ArrayList<IDomainEvent<?>>();
+	private Queue<IDomainEvent<?>> uncommittedEvents = new ConcurrentLinkedQueue<IDomainEvent<?>>();
 	
 	protected TAggregateRootId id=null;
+	
+	protected AbstractAggregateRoot(){
+	}
 
 	protected AbstractAggregateRoot(TAggregateRootId id) {
+		this();
 		if (id == null)
 			throw new ArgumentNullException("id");
 		this.id = id;
@@ -72,8 +67,10 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	
 	@SuppressWarnings("unchecked")
 	public <TRole> TRole actAs(Class<TRole> clazz) {
-		if ( !clazz.isInterface() ) throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
-		if ( !clazz.isAssignableFrom(this.getClass())) throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
+		if ( !clazz.isInterface() )
+			throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
+		if ( !clazz.isAssignableFrom(this.getClass()))
+			throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
 		return (TRole )this;
 	}
 
@@ -89,7 +86,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		// 接收事件
 		handleEvent(domainEvent);
 		// 提交事件到队列
-		AppendUncommittedEvent(domainEvent);
+		appendUncommittedEvent(domainEvent);
 	}
 	protected void applyEvents(IDomainEvent<TAggregateRootId>[] domainEvents) {
 		for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
@@ -97,17 +94,18 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	private void handleEvent(IDomainEvent<TAggregateRootId> domainEvent){
-		if (eventHandlerProvider == null)
-			throw new RuntimeException("IAggregateRootInternalHandlerProvider was never inject before!!!");
-		IDelegateAction handler = eventHandlerProvider.getInnerEventHandler(this.getClass(), domainEvent.getClass());
-		if (handler == null)
-			throw new RuntimeException("Could not found event handler for " +domainEvent.getClass().getName() +" of " +this.getClass().getName() );
+//		if (eventHandlerProvider == null)
+//			throw new RuntimeException("IAggregateRootInternalHandlerProvider was never inject before!!!");
+//		IDelegateAction handler = eventHandlerProvider.getInnerEventHandler(this.getClass(), domainEvent.getClass());
+//		if (handler == null)
+//			throw new RuntimeException("Could not found event handler for " +domainEvent.getClass().getName() +" of " +this.getClass().getName() );
 		
 		// TODO 第一次使用
 		if ( this.id == null && domainEvent.getVersion() == 1 )
 			this.id = domainEvent.getAggregateRootId();
 		
-		handler.delegate(this, domainEvent);
+//		handler.delegate(this, domainEvent);
+		AggregateHandlerJavaHelper.invokeInternalHandler(this, domainEvent);
 		
 	}
 
@@ -127,6 +125,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		uncommittedEvents.clear();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void replayEvents(Collection<DomainEventStream> eventStreams) {
 		if( null==eventStreams || eventStreams.size()==0) return;
@@ -139,7 +138,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		}
 	}
 	
-	private void AppendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
+	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
 		if(uncommittedEvents.size()>0)
 			uncommittedEvents.forEach(new Consumer<IDomainEvent<?>>(){
 				@Override
