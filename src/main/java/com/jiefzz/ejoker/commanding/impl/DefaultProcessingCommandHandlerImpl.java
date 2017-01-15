@@ -67,11 +67,14 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			handleSuccess = true;
 		} catch( Exception e ) {
 			// TODO 此处应该进入EJoker的异常发布过程
+			// TODO 此处应该进入EJoker的异常发布过程
+			// TODO 此处应该进入EJoker的异常发布过程
 			return;
 		}
 		
 		if(handleSuccess) {
 			try {
+				// TOTO 这个调用是聚合根更新后生成事件的开端。
 				commitAggregateChanges(processingCommand);
 			} catch( Exception e ) {
 				logger.error("{} raise when {} handling {}. commandId={}, aggregateId={}", e.getMessage(), commandHandler.toString(), message.getId(), message.getAggregateRootId());
@@ -111,6 +114,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
 		
+		// TODO 时间发布从这里开始(可以作为调试点)
 		eventService.commitDomainEventAsync(new EventCommittingConetxt(dirtyAggregateRoot, eventStream, processingCommand));
 		
 	}
