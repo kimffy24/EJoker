@@ -75,7 +75,7 @@ public class CommandService implements ICommandService, IQueueWokerService {
 
 	@Override
 	public IQueueWokerService subscribe(String topic) {
-		logger.warn("The method: {}.subscribe(String topic) should not be use! Please fix it.", this.getClass().getName());
+		logger.error("The method: {}.subscribe(String topic) should not be use! Please fix it.", this.getClass().getName());
 		return this;
 	}
 
