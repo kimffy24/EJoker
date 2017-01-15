@@ -13,8 +13,8 @@ import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandRoutingKeyProvider;
 import com.jiefzz.ejoker.commanding.ICommandService;
-import com.jiefzz.ejoker.commanding.ICommandTopicProvider;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
@@ -54,7 +54,7 @@ public class CommandService implements ICommandService, IQueueWokerService {
 	@Dependence
 	private IJSONConverter jsonConverter;
 	@Dependence
-	private ICommandTopicProvider commandTopicProvider;
+	private ITopicProvider<ICommand> commandTopicProvider;
 	@Dependence
 	private ICommandRoutingKeyProvider commandRouteKeyProvider;
 	@Dependence
