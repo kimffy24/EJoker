@@ -19,7 +19,7 @@ public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 
 
 	@Override
-	public boolean getSupportBatchAppendEvent() {
+	public boolean isSupportBatchAppendEvent() {
 		return false;
 	}
 

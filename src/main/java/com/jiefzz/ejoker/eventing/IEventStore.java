@@ -5,7 +5,7 @@ import java.util.LinkedHashSet;
 
 public interface IEventStore {
 	
-	public boolean getSupportBatchAppendEvent();
+	public boolean isSupportBatchAppendEvent();
 	
 	public void setSupportBatchAppendEvent(boolean supportBatchAppendEvent);
 	

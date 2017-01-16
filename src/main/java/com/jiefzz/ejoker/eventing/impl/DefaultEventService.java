@@ -65,11 +65,22 @@ public class DefaultEventService implements IEventService {
 				} else {
 					eventMailboxDict.put(
 							uniqueId,
-							new EventMailBox( uniqueId, batchSize, new EventMailBox.EventMailBoxHandler<Collection<EventCommittingConetxt>>() {
-								@Override
-								public void handleMessage(Collection<EventCommittingConetxt> target) {
-								}
-							})
+							new EventMailBox(
+									uniqueId,
+									batchSize,
+									new EventMailBox.EventMailBoxHandler<Collection<EventCommittingConetxt>>() {
+										// 由于不能使用lambda表达式。。。。
+										@Override
+										public void handleMessage(Collection<EventCommittingConetxt> committingContexts) {
+											if (committingContexts == null || committingContexts.size() == 0)
+						                        return;
+						                    if (eventStore.isSupportBatchAppendEvent())
+						                    	DefaultEventService.this.batchPersistEventAsync(committingContexts, 0);
+						                    else
+						                    	DefaultEventService.this.persistEventOneByOne(committingContexts);
+										}
+									}
+							)
 					);
 				}
 			} finally {
@@ -90,14 +101,8 @@ public class DefaultEventService implements IEventService {
 		publishDomainEventAsync(processingCommand, domainEventStreamMessage, 0);
 	}
 	
-	private void tryProcessNextContext(EventCommittingConetxt currentContext) {
-		if( null!=currentContext.next ) {
-			
-		}
-	}
-	
 	/**
-	 * TODO 看不懂这个函数。。。。
+	 * 向q端发布领域事件
 	 * @param processingCommand
 	 * @param eventStream
 	 * @param retryTimes
@@ -110,19 +115,29 @@ public class DefaultEventService implements IEventService {
 	 * TODO 由于写法同ENode不同，需要测试！！！
 	 * @param contextList
 	 */
-	private void concatContext(Collection<EventCommittingConetxt> contextList) {
+	private void concatContexts(Collection<EventCommittingConetxt> contextList) {
 		Iterator<EventCommittingConetxt> iterator = contextList.iterator();
 		EventCommittingConetxt previous = null;
+		if(iterator.hasNext())
+			previous = iterator.next();
 		while(iterator.hasNext()) {
 			EventCommittingConetxt current = iterator.next();
-			if( null!=previous )
-				previous.next = current;
+			previous.next = current;
 		}
 	}
 
 	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
-		logger.info("Completed command, aggregateId:{}", processingCommand.getMessage().getAggregateRootId());
 	}
 	
+	private void batchPersistEventAsync(Collection<EventCommittingConetxt> committingContexts, int retryTimes) {
+		// 异步批量持久化
+	}
+    private void persistEventOneByOne(Collection<EventCommittingConetxt> contextList) {
+        // 逐个持久化
+        concatContexts(contextList);
+    }
+    private void persistEventAsync(EventCommittingConetxt context, int retryTimes) {
+    	// 单个事件异步持久化
+    }
 }

@@ -175,5 +175,4 @@ public class CommandService implements ICommandService, IQueueWokerService {
             messageData.getBytes(Charset.forName("UTF-8")),
             command.getClass().getName());
 	}
-
 }
