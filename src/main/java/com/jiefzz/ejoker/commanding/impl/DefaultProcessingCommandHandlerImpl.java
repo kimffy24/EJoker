@@ -74,7 +74,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		if(handleSuccess) {
 			try {
-				// TOTO 这个调用是聚合根更新后生成事件的开端。
+				// TOTO 事件过程的起点
 				commitAggregateChanges(processingCommand);
 			} catch( Exception e ) {
 				logger.error("{} raise when {} handling {}. commandId={}, aggregateId={}", e.getMessage(), commandHandler.toString(), message.getId(), message.getAggregateRootId());
@@ -85,7 +85,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
 	private void commitAggregateChanges(ProcessingCommand processingCommand) {
 
-		ICommand message = processingCommand.getMessage();
+		ICommand command = processingCommand.getMessage();
 		ICommandExecuteContext context = processingCommand.getCommandExecuteContext();
 		Collection<IAggregateRoot> trackedAggregateRoots = context.getTrackedAggregateRoots();
 		int dirtyAggregateRootCount = 0;
@@ -98,7 +98,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			if(null!=changes && changes.size()>0) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
-					String errorInfo = String.format("Detected mort than one aggregate created or modified by command!!! commandType=%s commandId=%s", message.getTypeName(), message.getId());
+					String errorInfo = String.format("Detected mort than one aggregate created or modified by command!!! commandType=%s commandId=%s", command.getTypeName(), command.getId());
 					logger.error(errorInfo);
 					completeMessage(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 				}
@@ -107,6 +107,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 		}
 		
+		// if nothing change
 		if(dirtyAggregateRootCount==0 || changeEvents==null || changeEvents.size()==0) {
 			completeMessage(processingCommand, CommandStatus.Failed, String.class.getName(), context.getResult());
 			return;
@@ -114,7 +115,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
 		
-		// TODO 时间发布从这里开始(可以作为调试点)
+		// TODO event发布从这里开始(可以作为调试点)
 		eventService.commitDomainEventAsync(new EventCommittingConetxt(dirtyAggregateRoot, eventStream, processingCommand));
 		
 	}
