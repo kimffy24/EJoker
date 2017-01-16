@@ -17,6 +17,9 @@ public class Message implements Serializable {
 	public String tag;
 	
 	public Message() { }
+	public Message(String topic, int code, byte[] body) {
+		this(topic, code, body, System.currentTimeMillis(), null);
+	}
 	public Message(String topic, int code, byte[] body, String tag) {
 		this(topic, code, body, System.currentTimeMillis(), tag);
 	}
