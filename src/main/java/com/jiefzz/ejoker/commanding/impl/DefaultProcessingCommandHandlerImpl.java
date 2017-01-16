@@ -37,7 +37,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	IEventService eventService;
 	
 	@Override
-	public void handleAsync(ProcessingCommand processingCommand) {
+	public void handle(ProcessingCommand processingCommand) {
 		
 		ICommand message = processingCommand.getMessage();
 		if(StringHelper.isNullOrEmpty(message.getAggregateRootId())) {

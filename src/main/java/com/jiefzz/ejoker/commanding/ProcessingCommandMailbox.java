@@ -118,7 +118,7 @@ public class ProcessingCommandMailbox implements Runnable {
                 increaseConsumingOffset();
 
                 if (processingMessage != null) {
-                    messageHandler.handleAsync(processingMessage);
+                    messageHandler.handle(processingMessage);
                 }
             }
         } catch (Exception ex) {
