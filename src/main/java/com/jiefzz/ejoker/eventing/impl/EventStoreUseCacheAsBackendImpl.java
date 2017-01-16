@@ -35,13 +35,13 @@ public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 	}
 
 	@Override
-	public void BatchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams) {
+	public void batchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void AppendAsync(IDomainEvent event) {
+	public void appendAsync(IDomainEvent event) {
 		System.out.println(
 				jsonConverter.convert(
 						event
@@ -50,25 +50,25 @@ public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 	}
 
 	@Override
-	public void Appendsync(IDomainEvent event) {
+	public void appendsync(IDomainEvent event) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void FindAsync(String aggregateRootId, int version) {
+	public void findAsync(String aggregateRootId, int version) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void FindAsync(String aggregateRootId, String commandId) {
+	public void findAsync(String aggregateRootId, String commandId) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void QueryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
+	public void queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
 			long maxVersion) {
 		// TODO Auto-generated method stub
 		

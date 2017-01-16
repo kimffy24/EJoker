@@ -20,24 +20,24 @@ public interface IEventStore {
 	 */
 	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
     
-	public void BatchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams);
+	public void batchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams);
 	
 	/**
 	 * 异步保存事件
 	 * @param event
 	 */
-	public void AppendAsync(IDomainEvent event);
+	public void appendAsync(IDomainEvent event);
 	
 	/**
 	 * 同步保存事件
 	 * @param event
 	 */
-	public void Appendsync(IDomainEvent event);
+	public void appendsync(IDomainEvent event);
 	
-	public void FindAsync(String aggregateRootId, int version);
+	public void findAsync(String aggregateRootId, int version);
 	
-	public void FindAsync(String aggregateRootId, String commandId);
+	public void findAsync(String aggregateRootId, String commandId);
 	
-	public void QueryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
+	public void queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
 
 }
