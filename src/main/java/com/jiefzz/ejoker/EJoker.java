@@ -13,6 +13,8 @@ public class EJoker {
 	
 	// public:
 	
+	public static final String SELF_PACNAGE_NAME = "com.jiefzz.ejoker";
+	
 	public static EJoker getInstance(){
 		if ( instance == null )
 			instance = new EJoker();
@@ -27,7 +29,7 @@ public class EJoker {
 	
 	private EJoker() {
 		context = new DefaultEJokerContext();
-		context.scanPackageClassMeta("com.jiefzz.ejoker");
+		context.scanPackageClassMeta(SELF_PACNAGE_NAME);
 	}
 
 	// properties:

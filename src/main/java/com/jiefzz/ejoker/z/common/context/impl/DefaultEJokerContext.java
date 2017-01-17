@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.jiefzz.ejoker.EJoker;
+import com.jiefzz.ejoker.utils.helper.RegistCommandHandlerHelper;
+import com.jiefzz.ejoker.utils.helper.RegistDomainEventHandlerHelper;
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
@@ -85,12 +88,20 @@ public class DefaultEJokerContext implements IEJokerContext {
 		} catch (ClassNotFoundException e) {
 			throw new ContextRuntimeException(e);
 		}
+		boolean inSelfPackage = false;
+		if(EJoker.SELF_PACNAGE_NAME.equals(javaPackage))
+			inSelfPackage = true;
 		for(Class<?> clazz : scanClass) {
 			// skip Throwable \ Abstract \ Interface class
 			if(Throwable.class.isAssignableFrom(clazz)) continue;
 			if(Modifier.isAbstract(clazz.getModifiers())) continue;
 			if(clazz.isInterface()) continue;
 			eJokerClassMetaProvider.analyzeClassMeta(clazz);
+			if(!inSelfPackage) {
+				// 扫描非框架内的包时，注册CommandHandler和DomainEventHandler
+				RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
+				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
+			}
 		}
 	}
 

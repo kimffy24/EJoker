@@ -1,10 +1,15 @@
 package com.jiefzz.ejoker.eventing.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +29,7 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
 
 @EService
 public class DefaultEventService implements IEventService {
@@ -51,6 +57,14 @@ public class DefaultEventService implements IEventService {
 	IMessagePublisher<DomainEventStreamMessage> domainEventPublisher;
 	
 	private final int batchSize=1;
+	
+	/**
+	 * 不活动超时
+	 * TODO 需要配置文件注入变量
+	 * TODO 需要配置文件注入变量
+	 * TODO 需要配置文件注入变量
+	 */
+	private final long timeoutSeconds = 30l;
 
 	@Override
 	public void commitDomainEventAsync(EventCommittingConetxt context) {
@@ -88,11 +102,17 @@ public class DefaultEventService implements IEventService {
 			}
 		} else {
 			eventMailbox.enqueueMessage(context);
-			context.processingCommand.getMailbox().tryExecuteNextMessage();
+			refreshAggregateMemoryCache(context);
 		}
 
 	}
 
+	/**
+	 * 向q端发布领域事件
+	 * @param processingCommand
+	 * @param eventStream
+	 * @param retryTimes
+	 */
 	@Override
 	public void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStream eventStream) {
 		if( null==eventStream.getItems() || eventStream.getItems().size()==0 )
@@ -110,6 +130,18 @@ public class DefaultEventService implements IEventService {
 	private void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStreamMessage eventStream, int retryTimes) {
 		
 	}
+
+    private void refreshAggregateMemoryCache(EventCommittingConetxt context) {
+        try {
+            context.aggregateRoot.acceptChanges(context.eventSteam.getVersion());
+            memoryCache.set(context.aggregateRoot);
+        } catch (Exception ex) {
+            logger.error(String.format(
+            		"Refresh aggregate memory cache failed for event stream:{}",
+            		context.eventSteam
+            	), ex);
+        }
+    }
 	
 	/**
 	 * TODO 由于写法同ENode不同，需要测试！！！
@@ -125,6 +157,24 @@ public class DefaultEventService implements IEventService {
 			previous.next = current;
 		}
 	}
+	
+    private void cleanInactiveMailbox() {
+    	// TODO 这个位置注意性能。。。。
+    	List<KeyValuePair<String, EventMailBox>> inactiveList = new ArrayList<KeyValuePair<String, EventMailBox>>();
+    	
+    	Set<Entry<String,EventMailBox>> entrySet = eventMailboxDict.entrySet();
+        for(KeyValuePair<String, EventMailBox> pair:inactiveList) {
+        	EventMailBox mailbox = pair.getValue();
+			if(mailbox.isInactive(timeoutSeconds) && !mailbox.isRunning())
+				inactiveList.add(new KeyValuePair<String, EventMailBox>(pair.getKey(), mailbox));
+        }
+    	
+        for(KeyValuePair<String, EventMailBox> pair:inactiveList) {
+            if (null!=eventMailboxDict.remove(pair.getKey())) {
+                logger.info("Removed inactive event mailbox, aggregateRootId: {}", pair.getKey());
+            }
+        }
+    }
 
 	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);

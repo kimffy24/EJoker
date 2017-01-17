@@ -106,7 +106,6 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		
 //		handler.delegate(this, domainEvent);
 		AggregateHandlerJavaHelper.invokeInternalHandler(this, domainEvent);
-		
 	}
 
 	@Override
@@ -115,7 +114,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	@Override
-	public void acceptChanges(int newVersion) {
+	public void acceptChanges(long newVersion) {
 		if(version+1 != newVersion)
 			throw new InvalidOperationException(String.format(
 					"Cannot accept invalid version: %d, expect version: %d, current aggregateRoot type: %s, id: %s",
@@ -139,18 +138,19 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 	
 	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
-		if(uncommittedEvents.size()>0)
-			uncommittedEvents.forEach(new Consumer<IDomainEvent<?>>(){
-				@Override
-				public void accept(IDomainEvent<?> t) {
-					if(t.getClass().equals(domainEvent.getClass()))
+		if(null!=uncommittedEvents.peek())
+			for(IDomainEvent<?> prevousDomainEvent:uncommittedEvents)
+//			uncommittedEvents.forEach(new Consumer<IDomainEvent<?>>(){
+//				@Override
+//				public void accept(IDomainEvent<?> prevousDomainEvent) {
+					if(prevousDomainEvent.getClass().equals(domainEvent.getClass()))
 						throw new InvalidOperationException(String.format(
 								"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
 								domainEvent.getClass().getName(), AbstractAggregateRoot.this.getClass().getName(), id
 						));
-				}
-			});
-		uncommittedEvents.add(domainEvent);
+//				}
+//			});
+		uncommittedEvents.offer(domainEvent);
 	}
 
 	private void verifyEvent(DomainEventStream eventStream){

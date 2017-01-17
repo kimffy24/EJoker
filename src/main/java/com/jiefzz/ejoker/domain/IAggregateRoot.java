@@ -14,7 +14,7 @@ public interface IAggregateRoot extends Serializable  {
 	
 	Collection<IDomainEvent<?>> getChanges();
     
-    void acceptChanges(int newVersion);
+    void acceptChanges(long newVersion);
     
     void replayEvents(Collection<DomainEventStream> eventStreams);
 

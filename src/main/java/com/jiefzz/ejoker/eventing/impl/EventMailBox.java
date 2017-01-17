@@ -44,7 +44,7 @@ public class EventMailBox implements Runnable {
 			throw new RuntimeException("MailBox for " +aggregateRootId +" overloaded!!!");
 		}
 		lastActiveTime = System.currentTimeMillis();
-		
+		tryRun();
 	}
 
     public void tryRun() {

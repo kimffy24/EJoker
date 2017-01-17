@@ -98,7 +98,11 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			if(null!=changes && changes.size()>0) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
-					String errorInfo = String.format("Detected mort than one aggregate created or modified by command!!! commandType=%s commandId=%s", command.getTypeName(), command.getId());
+					String errorInfo = String.format(
+							"Detected more than one aggregate created or modified by command!!! commandType=%s commandId=%s",
+							command.getTypeName(),
+							command.getId()
+					);
 					logger.error(errorInfo);
 					completeMessage(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 				}
