@@ -2,8 +2,8 @@ package com.jiefzz.ejoker.z.common.system.util.extension;
 
 public final class KeyValuePair<TKey, TValue> {
 
-	private TKey key;
-	private TValue value;
+	private TKey key = null;
+	private TValue value = null;
 	
 	public TKey getKey() {
 		return key;
@@ -18,6 +18,7 @@ public final class KeyValuePair<TKey, TValue> {
 		this.value = value;
 	}
 	
+	public KeyValuePair(){}
 	public KeyValuePair(TKey key, TValue value) {
 		this.key = key;
 		this.value = value;

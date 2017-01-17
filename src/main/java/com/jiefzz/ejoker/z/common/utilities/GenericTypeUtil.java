@@ -4,7 +4,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,37 +41,40 @@ public class GenericTypeUtil {
 	public static String getGenericSignature(final Field field){
 		// 关键的地方得到其Generic的类型
 		Type fc = field.getGenericType();
-		// 如果不为空并且是泛型参数的类型
-		if (fc != null && fc instanceof ParameterizedType) {
-			ParameterizedType pt = (ParameterizedType )fc;
-			Type[] types = pt.getActualTypeArguments();
-			
-			StringBuffer sb = new StringBuffer();
-			
-			if (types != null && types.length > 0) {
-				sb.append('<');
-				for (int i = 0; i < types.length; i++) {
-					// TODO 若此属性的泛型信息是通过引用类的泛型定义传入的话，此处转换将会出错！！！
-					try{
-						sb.append(((Class<?> )types[i]).getName());
-					} catch ( Exception e ) {
-						field.getDeclaringClass().getName();
-						field.getName();
-						throw new RuntimeException(
-								String.format(
-										"EJoker Context need exact generic defination!!!\n\tClass=%s\n\tField=%s",
-										field.getDeclaringClass().getName(),
-										field.getName()
-								),
-								e
-						);
-					}
-					sb.append(SEPARATOR);
-				}
-				return sb.toString().substring(1);
-			}
-		}
-		return NO_GENERAL_SIGNATURE;
+		return getClassDefinationGenericSignature(fc);
+//		// 如果不为空并且是泛型参数的类型
+//		if (fc != null && fc instanceof ParameterizedType) {
+//			ParameterizedType pt = (ParameterizedType )fc;
+//			Type[] types = pt.getActualTypeArguments();
+//			
+//			StringBuffer sb = new StringBuffer();
+//			
+//			if (types != null && types.length > 0) {
+//				// TODO 若此属性的泛型信息是通过引用类的泛型定义传入的话，此处转换将会出错！！！
+//				sb.append('<');
+//				sb.append(((Class<?> )types[0]).getName());
+//				for (int i = 1; i < types.length; i++) {
+//					try{
+//						sb.append(SEPARATOR);
+//						sb.append(((Class<?> )types[i]).getName());
+//					} catch ( Exception e ) {
+//						field.getDeclaringClass().getName();
+//						field.getName();
+//						throw new RuntimeException(
+//								String.format(
+//										"EJoker Context need exact generic defination!!!\n\tClass=%s\n\tField=%s",
+//										field.getDeclaringClass().getName(),
+//										field.getName()
+//								),
+//								e
+//						);
+//					}
+//				}
+//				sb.append('>');
+//				return sb.toString();
+//			}
+//		}
+//		return NO_GENERAL_SIGNATURE;
 	}
 	
 	/**

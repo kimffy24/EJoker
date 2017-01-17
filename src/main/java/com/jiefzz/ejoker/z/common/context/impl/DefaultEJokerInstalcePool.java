@@ -35,20 +35,19 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 		Object instance = instanceMap.getOrDefault(clazz, null);
 		if(null != instance)
 			return (T )instance;
-		else return createInstance(clazz);
+		else return createAndRegistInstance(clazz);
 	}
 
 	@Override
 	public <T> T getInstance(Class<T> clazz, String pSign) {
 		Object instance;
 		Map<String, Object> instanceSubContainer = instanceGenericTypeMap.getOrDefault(clazz, null);
-		if(null != instanceSubContainer) {
-			if(null != (instance = instanceSubContainer.getOrDefault(pSign, null)))
-				return (T )instance;
-			else
-				instanceGenericTypeMap.put(clazz, new HashMap<String, Object>());
-		}
-		return null;
+		if(null == instanceSubContainer)
+			instanceGenericTypeMap.put(clazz, instanceSubContainer = new HashMap<String, Object>());
+		if(null != (instance = instanceSubContainer.getOrDefault(pSign, null)))
+			return (T )instance;
+		else
+			return createAndRegistInstance(clazz, pSign);
 	}
 
 	@Override
@@ -60,7 +59,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 			return (T )getInstance(field.getType(), genericSignature);
 	}
 
-	private <T> T createInstance(Class<T> clazz) {
+	private <T> T createAndRegistInstance(Class<T> clazz) {
 		Class<?> resolvedClass = eJokerClassMetaProvider.resolve(clazz);
 		Object instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
 		{ // 注册到对象记录变量 instanceMap
@@ -72,7 +71,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 		return (T )instance;
 	}
 
-	private <T> T createInstance(Class<T> clazz, String pSign) {
+	private <T> T createAndRegistInstance(Class<T> clazz, String pSign) {
 		Class<?> resolvedClass = eJokerClassMetaProvider.resolve(clazz, pSign);
 		Object instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
 		{ // 注册到对象记录变量 instanceMap

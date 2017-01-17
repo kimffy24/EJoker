@@ -135,11 +135,19 @@ public class RootMetaRecord {
 			// 扫描所有标记为依赖的属性
 			Field[] fieldArray = clazz.getDeclaredFields();
 			for ( Field field : fieldArray ) {
-				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) )
+				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) ) {
+					if(GenericTypeUtil.ensureIsGenericType(field.getType())
+							// 当泛型变量的泛型签名为空时，抛出错误，并结束操作
+							&& GenericTypeUtil.NO_GENERAL_SIGNATURE.equals(GenericTypeUtil.getGenericSignature(field))) {
+						String errInfo = String.format("Unsupport empty GenericSignature on %s.%s", claxx.getName(), field.getName());
+						logger.error(errInfo);
+						throw new ContextRuntimeException(errInfo);
+					}
 					if(!conflictFieldNames.containsKey(field.getName())) { 
 						annotationFields.add(field);
 						conflictFieldNames.put(field.getName(), field);
 					}
+				}
 			}
 
 			// 收集接口映射 收集父类映射 
@@ -174,7 +182,12 @@ public class RootMetaRecord {
 						// 候选实现需要严格满足泛型签名对称
 						if(null == genericityMapper.candidateImplementations)
 							genericityMapper.candidateImplementations = new ImplementationTuple();
-						genericityMapper.candidateImplementations.addImplementation(claxx);
+						else // 如果候选实现多于1个，输出警告
+							warningSameGenericSignature(
+									hierarchyType,
+									superDefinationGenericSignature,
+									genericityMapper.candidateImplementations.addImplementation(claxx)
+							);
 					} else {
 						// 泛型签名不对称，则输出警告
 						logger.warn("Could not make {} to be {}'s candidate implementation! Please make sure it is not influence the program!", claxx.getName(), hierarchyType.getName());
@@ -196,7 +209,7 @@ public class RootMetaRecord {
 						logger.warn("{} could not mapping to {}, it may be loss GenericType while in multi inheriting!\nPlease make sure it is not influence the program!");
 						logger.warn("Unmatch GenericSignature: \n\t{}\t\t{}\n\t{}\t\t{}",
 								hierarchyType.getName(), superDefinationGenericSignature,
-								claxx.getName(), "Lost!!!"
+								claxx.getName(), "!!!Lost!!!"
 							);
 					} else {
 						if(genericityMapper.signatureImplementations.containsKey(realGenericSignature)) {
@@ -224,8 +237,7 @@ public class RootMetaRecord {
 						ImplementationTuple implementationTuple = eJokerTheSupportAbstractDirectInstanceTypeMapper.get(hierarchyType);
 						implementationTuple.addImplementation(claxx);
 						warningSameGenericSignature(hierarchyType, "", implementationTuple);
-					}
-					else
+					} else
 						eJokerTheSupportAbstractDirectInstanceTypeMapper.put(
 								hierarchyType,
 								new ImplementationTuple().addImplementation(claxx)
@@ -247,7 +259,7 @@ public class RootMetaRecord {
 		logger.warn("{}{} has more than one implementation!", hierarchyType.getName(), genericSignature);
 		int count = implementationTuple.getCountOfImplementations();
 		for( int i=0; i<count; i++) {
-			logger.warn("\t\t{}", implementationTuple.getImplementationsType(i).getName());
+			logger.warn("\t\t{}{}", implementationTuple.getImplementationsType(i).getName(), genericSignature);
 		}
 	}
 	
