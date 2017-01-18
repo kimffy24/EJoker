@@ -101,10 +101,10 @@ public class DefaultMemoryCache implements IMemoryCache {
 		if (null!=(previous = aggregateRootInfoDict.getOrDefault(uniqueId, null))) {
 			previous.aggregateRoot = aggregateRoot;
 			previous.lastUpdateTime = System.currentTimeMillis();
-			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
+			logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 		}else{
 			aggregateRootInfoDict.put(aggregateRoot.getUniqueId(), new AggregateCacheInfo(aggregateRoot));
-			logger.debug("Aggregate memory cache refreshed, type: %s, id: %s, version: %d", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
+			logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 		};
 	}
 }

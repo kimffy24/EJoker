@@ -53,13 +53,12 @@ public final class DefaultCommandProcessorImpl implements ICommandProcessor {
         if(null==(mailbox = mailboxDict.getOrDefault(aggregateRootId, null))) {
         	lock4tryCreateMailbox.lock();
         	try {
-        		if(mailboxDict.containsKey(aggregateRootId))	// 若发生竟态，获取锁后，先检查在此线程之前获取锁的线程是否创建了Mailbox
-        			process(processingCommand);					// 在递归调用时似乎会发生死锁？ 似乎在递归调用时不会再进入这个if语句块才是合乎逻辑的
-        		else {
+        		if(!mailboxDict.containsKey(aggregateRootId)){	// 若发生竟态，获取锁后，先检查在此线程之前获取锁的线程是否创建了Mailbox
+        			// 在递归调用时似乎会发生死锁？ 似乎在递归调用时不会再进入这个if语句块才是合乎逻辑的
         			logger.debug("Creating mailbox for aggregateRoot[aggregateRootId={}].", aggregateRootId);
                 	mailboxDict.put(aggregateRootId, new ProcessingCommandMailbox(aggregateRootId, scheduler, handler));
-        			process(processingCommand);
         		}
+    			process(processingCommand);
         	} finally {
         		lock4tryCreateMailbox.unlock();
         	}

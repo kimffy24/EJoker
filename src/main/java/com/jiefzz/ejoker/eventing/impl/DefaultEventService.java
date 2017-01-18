@@ -73,10 +73,7 @@ public class DefaultEventService implements IEventService {
 		if( null == (eventMailbox = eventMailboxDict.getOrDefault(uniqueId, null)) ) {
 			lock4tryCreateEventMailbox.lock();
 			try {
-				if(eventMailboxDict.containsKey(uniqueId)) {
-					commitDomainEventAsync(context);
-					return;
-				} else {
+				if(!eventMailboxDict.containsKey(uniqueId)) {
 					eventMailboxDict.put(
 							uniqueId,
 							new EventMailBox(
@@ -97,6 +94,7 @@ public class DefaultEventService implements IEventService {
 							)
 					);
 				}
+				commitDomainEventAsync(context);
 			} finally {
 				lock4tryCreateEventMailbox.unlock();
 			}
@@ -186,8 +184,15 @@ public class DefaultEventService implements IEventService {
     private void persistEventOneByOne(Collection<EventCommittingConetxt> contextList) {
         // 逐个持久化
         concatContexts(contextList);
+        Iterator<EventCommittingConetxt> iterator = contextList.iterator();
+        while(iterator.hasNext()) {
+        	EventCommittingConetxt currentEventCommittingConetxt = iterator.next();
+        	persistEventAsync(currentEventCommittingConetxt, 0);
+        }
+        
     }
     private void persistEventAsync(EventCommittingConetxt context, int retryTimes) {
     	// 单个事件异步持久化
+    	eventStore.appendAsync(context.eventSteam);
     }
 }

@@ -22,7 +22,7 @@ public class CommandHandlerProxy<TCommand extends ICommand> implements ICommandH
 	}
 
 	@Override
-	public void hadler(ICommandContext context, ICommand command) {
+	public void handle(ICommandContext context, ICommand command) {
 		getInnerObject().handle(context, (TCommand )command);
 	}
 

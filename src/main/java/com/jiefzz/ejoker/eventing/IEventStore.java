@@ -20,19 +20,19 @@ public interface IEventStore {
 	 */
 	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
     
-	public void batchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams);
+	public void batchAppendAsync(LinkedHashSet<DomainEventStream> eventStreams);
 	
 	/**
 	 * 异步保存事件
 	 * @param event
 	 */
-	public void appendAsync(IDomainEvent event);
+	public void appendAsync(DomainEventStream eventStream);
 	
 	/**
 	 * 同步保存事件
 	 * @param event
 	 */
-	public void appendsync(IDomainEvent event);
+	public void appendsync(DomainEventStream eventStream);
 	
 	public void findAsync(String aggregateRootId, int version);
 	

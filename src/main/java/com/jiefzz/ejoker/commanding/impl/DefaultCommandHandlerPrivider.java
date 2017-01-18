@@ -19,7 +19,7 @@ public class DefaultCommandHandlerPrivider implements ICommandHandlerPrivider {
 
 	@Override
 	public ICommandHandlerProxy getHandler(Class<? extends ICommand> commandType) {
-		HandlerReflectionMapper handlerReflection = CommandHandlerJavaHelper.HandlerMapper.getOrDefault(commandType, null);
+		HandlerReflectionMapper handlerReflection = CommandHandlerJavaHelper.handlerMapper.getOrDefault(commandType, null);
 		if(null==handlerReflection)
 			throw new CommandRuntimeException(commandType.getName() +" is no handler found for it!!!");
 		return handlerReflection;

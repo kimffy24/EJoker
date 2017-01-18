@@ -14,7 +14,7 @@ import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 
 public class CommandHandlerJavaHelper {
 	
-	public final static Map<Class<? extends ICommand>, HandlerReflectionMapper> HandlerMapper =
+	public final static Map<Class<? extends ICommand>, HandlerReflectionMapper> handlerMapper =
 			new HashMap<Class<? extends ICommand>, HandlerReflectionMapper>();
 	
 	public final static void regist(Class<? extends AbstractCommandHandler> implementationHandlerClass) {
@@ -30,7 +30,7 @@ public class CommandHandlerJavaHelper {
 			if(!ICommand.class.isAssignableFrom(parameterTypes[1]))
 				throw new CommandRuntimeException(String.format("%s#%s( %s, %s) second parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
 			Class<? extends ICommand> commandType = (Class<? extends ICommand>) parameterTypes[1];
-			HandlerMapper.put(commandType, new HandlerReflectionMapper(implementationHandlerClass, method));
+			handlerMapper.put(commandType, new HandlerReflectionMapper(implementationHandlerClass, method));
 		}
 	}
 	
@@ -55,7 +55,7 @@ public class CommandHandlerJavaHelper {
 			return handler;
 		}
 		@Override
-		public void hadler(ICommandContext context, ICommand command) {
+		public void handle(ICommandContext context, ICommand command) {
 			try {
 				handleReflectionMethod.invoke(getInnerObject(), context, command);
 			} catch (Exception e) {

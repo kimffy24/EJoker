@@ -62,7 +62,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		boolean handleSuccess = false;
 		try {
-			commandHandler.hadler(processingCommand.getCommandExecuteContext(), message);
+			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]", commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
 			handleSuccess = true;
 		} catch( Exception e ) {

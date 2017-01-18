@@ -2,7 +2,9 @@ package com.jiefzz.ejoker.eventing.impl;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -16,13 +18,14 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 @EService
-public class EventStoreUseCacheAsBackendImpl implements IEventStore {
+public class InMemoryEventStore implements IEventStore {
 
-	final static Logger logger = LoggerFactory.getLogger(EventStoreUseCacheAsBackendImpl.class);
+	final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);
 	
 	@Resource
 	IJSONConverter jsonConverter;
-
+	
+	public Map<Long, Object> mStorage = new LinkedHashMap<Long, Object>();
 
 	@Override
 	public boolean isSupportBatchAppendEvent() {
@@ -35,22 +38,20 @@ public class EventStoreUseCacheAsBackendImpl implements IEventStore {
 	}
 
 	@Override
-	public void batchAppendAsync(LinkedHashSet<IDomainEvent> eventStreams) {
-		Iterator<IDomainEvent> iterator = eventStreams.iterator();
+	public void batchAppendAsync(LinkedHashSet<DomainEventStream> eventStreams) {
+		Iterator<DomainEventStream> iterator = eventStreams.iterator();
 		while(iterator.hasNext())
 			appendAsync(iterator.next());
 	}
 
 	@Override
-	public void appendAsync(IDomainEvent event) {
-		System.out.println(
-				jsonConverter.convert(event)
-				);
+	public void appendAsync(DomainEventStream eventStream) {
+		appendsync(eventStream);
 	}
 
 	@Override
-	public void appendsync(IDomainEvent event) {
-		appendAsync(event);
+	public void appendsync(DomainEventStream eventStream) {
+		mStorage.put(System.currentTimeMillis(), jsonConverter.convert(eventStream));
 	}
 
 	@Override

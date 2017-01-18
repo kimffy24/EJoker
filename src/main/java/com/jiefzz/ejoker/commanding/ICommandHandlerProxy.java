@@ -4,6 +4,6 @@ import com.jiefzz.ejoker.infrastructure.IObjectProxy;
 
 public interface ICommandHandlerProxy extends IObjectProxy {
 	
-	public void hadler(ICommandContext context, ICommand command);
+	public void handle(ICommandContext context, ICommand command);
 	
 }
