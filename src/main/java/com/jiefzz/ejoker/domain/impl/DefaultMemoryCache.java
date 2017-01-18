@@ -38,7 +38,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		AggregateCacheInfo aggregateRootInfo;
 		if( null!=(aggregateRootInfo = aggregateRootInfoDict.getOrDefault(aggregateRootId.toString(), null)) ) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
-			if (aggregateRoot.getClass().equals(aggregateRootType))
+			if (!aggregateRoot.getClass().equals(aggregateRootType))
 				throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
 			if (aggregateRoot.getChanges().size() > 0) {
 				IAggregateRoot lastestAggregateRoot = aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
@@ -101,10 +101,9 @@ public class DefaultMemoryCache implements IMemoryCache {
 		if (null!=(previous = aggregateRootInfoDict.getOrDefault(uniqueId, null))) {
 			previous.aggregateRoot = aggregateRoot;
 			previous.lastUpdateTime = System.currentTimeMillis();
-			logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 		}else{
-			aggregateRootInfoDict.put(aggregateRoot.getUniqueId(), new AggregateCacheInfo(aggregateRoot));
-			logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
+			aggregateRootInfoDict.put(uniqueId, new AggregateCacheInfo(aggregateRoot));
 		};
+		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 	}
 }

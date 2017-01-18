@@ -25,9 +25,9 @@ public class ProcessingCommandMailbox implements Runnable {
 	private final IProcessingCommandScheduler scheduler;
 	private final IProcessingCommandHandler messageHandler;
 	
-	private long maxOffset;
-	private long consumingOffset;
-	private long consumedOffset;
+	private long maxOffset = 0;
+	private long consumingOffset = -1;
+	private long consumedOffset = -1;
 	
 	private AtomicInteger isHandlingMessage = new AtomicInteger(0);
 	private AtomicBoolean stopHandling = new AtomicBoolean();
@@ -41,17 +41,15 @@ public class ProcessingCommandMailbox implements Runnable {
 		this.aggregateRootId = aggregateRootId;
 		this.scheduler = scheduler;
 		this.messageHandler = messageHandler;
-		consumedOffset = -1;
 	}
 
 	public void enqueueMessage(ProcessingCommand message)
 	{
 		lock4enqueueMessage.lock();
 		{
-			message.setSequence(maxOffset);
+			message.setSequence(maxOffset++);
 			message.setMailbox(this);
 			messageDict.put(message.getSequence(), message);
-			maxOffset++;
 		}
 		lock4enqueueMessage.unlock();
 		registerForExecution();

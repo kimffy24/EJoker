@@ -119,7 +119,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
 		
-		// TODO event发布从这里开始(可以作为调试点)
+		// TODO event提交从这里开始(可以作为调试点)
 		eventService.commitDomainEventAsync(new EventCommittingConetxt(dirtyAggregateRoot, eventStream, processingCommand));
 		
 	}

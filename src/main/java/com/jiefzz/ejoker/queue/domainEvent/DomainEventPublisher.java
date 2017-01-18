@@ -67,7 +67,7 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 		sendQueueMessageService.sendMessageAsync(
 				producer,
 				queueMessage,
-				queueMessage.topic!=null?queueMessage.topic:eventStream.getAggregateRootId()
+				queueMessage.topic!=null?queueMessage.topic:eventStream.getAggregateRootStringId()
 		);
 	}
 

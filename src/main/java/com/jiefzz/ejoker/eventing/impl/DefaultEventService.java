@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.commanding.CommandResult;
+import com.jiefzz.ejoker.commanding.CommandStatus;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRootFactory;
@@ -27,6 +28,7 @@ import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
+import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
@@ -79,10 +81,10 @@ public class DefaultEventService implements IEventService {
 							new EventMailBox(
 									uniqueId,
 									batchSize,
-									new EventMailBox.EventMailBoxHandler<Collection<EventCommittingConetxt>>() {
+									new EventMailBox.EventMailBoxHandler<List<EventCommittingConetxt>>() {
 										// 由于不能使用lambda表达式。。。。
 										@Override
-										public void handleMessage(Collection<EventCommittingConetxt> committingContexts) {
+										public void handleMessage(List<EventCommittingConetxt> committingContexts) {
 											if (committingContexts == null || committingContexts.size() == 0)
 						                        return;
 						                    if (eventStore.isSupportBatchAppendEvent())
@@ -145,7 +147,7 @@ public class DefaultEventService implements IEventService {
 	 * TODO 由于写法同ENode不同，需要测试！！！
 	 * @param contextList
 	 */
-	private void concatContexts(Collection<EventCommittingConetxt> contextList) {
+	private void concatContexts(List<EventCommittingConetxt> contextList) {
 		Iterator<EventCommittingConetxt> iterator = contextList.iterator();
 		EventCommittingConetxt previous = null;
 		if(iterator.hasNext())
@@ -176,23 +178,34 @@ public class DefaultEventService implements IEventService {
 
 	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
+		processingCommand.getMailbox().tryExecuteNextMessage();
 	}
 	
-	private void batchPersistEventAsync(Collection<EventCommittingConetxt> committingContexts, int retryTimes) {
+	private void batchPersistEventAsync(List<EventCommittingConetxt> committingContexts, int retryTimes) {
 		// 异步批量持久化
+		throw new InfrastructureRuntimeException("批量持久化没完成！");
 	}
-    private void persistEventOneByOne(Collection<EventCommittingConetxt> contextList) {
+    private void persistEventOneByOne(List<EventCommittingConetxt> contextList) {
         // 逐个持久化
         concatContexts(contextList);
-        Iterator<EventCommittingConetxt> iterator = contextList.iterator();
-        while(iterator.hasNext()) {
-        	EventCommittingConetxt currentEventCommittingConetxt = iterator.next();
-        	persistEventAsync(currentEventCommittingConetxt, 0);
-        }
+        persistEventAsync(contextList.get(0), 0);
         
     }
     private void persistEventAsync(EventCommittingConetxt context, int retryTimes) {
+    	
     	// 单个事件异步持久化
     	eventStore.appendAsync(context.eventSteam);
+    	CommandResult commandResult = new CommandResult(
+    			CommandStatus.Success,
+    			context.eventSteam.getAggregateRootId(),
+    			context.eventSteam.getCommandId(),
+    			context.processingCommand.getCommandExecuteContext().getResult(),
+    			String.class.getName()
+    	);
+    	completeCommand(context.processingCommand, commandResult);
+    	if(null!=context.next)
+    		persistEventAsync(context.next, retryTimes);
+    	else
+    		context.eventMailBox.tryRun(true);
     }
 }

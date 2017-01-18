@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.eventing.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,7 +18,7 @@ public class EventMailBox implements Runnable {
 	
 	private final String aggregateRootId;
 	private final Queue<EventCommittingConetxt> messageQueue = new ConcurrentLinkedQueue<EventCommittingConetxt>();
-	private final EventMailBoxHandler<Collection<EventCommittingConetxt>> handleMessageAction;
+	private final EventMailBoxHandler<List<EventCommittingConetxt>> handleMessageAction;
 	private AtomicInteger _isRunning = new AtomicInteger(0);
 	private int batchSize;
 	private long lastActiveTime;
@@ -32,7 +33,7 @@ public class EventMailBox implements Runnable {
 		return _isRunning.get()==1;
 	}
 	
-	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<Collection<EventCommittingConetxt>> handleMessageAction) {
+	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<List<EventCommittingConetxt>> handleMessageAction) {
 		this.aggregateRootId = aggregateRootId;
 		this.batchSize = batchSize;
 		this.handleMessageAction = handleMessageAction;
@@ -77,7 +78,7 @@ public class EventMailBox implements Runnable {
 	public void run() {
 		
 		lastActiveTime = System.currentTimeMillis();
-		Collection<EventCommittingConetxt> contextList = null;
+		List<EventCommittingConetxt> contextList = null;
 		try {
 			EventCommittingConetxt context = null;
 			while(null!=(context = messageQueue.poll())) {
@@ -93,6 +94,7 @@ public class EventMailBox implements Runnable {
 				handleMessageAction.handleMessage(contextList);
 		} catch(Exception e) {
 			logger.error(String.format("Event mailbox run has unknown exception, aggregateRootId: %s", aggregateRootId), e);
+			e.printStackTrace();
 			try { Thread.sleep(1l); } catch (InterruptedException e1) { }
 		} finally {
 			if( null==contextList || contextList.size()==0 ) {
