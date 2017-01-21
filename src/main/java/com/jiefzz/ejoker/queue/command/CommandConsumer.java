@@ -144,14 +144,8 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 			if (aggregateRoot == null)
 				throw new ArgumentNullException("aggregateRoot");
 			String uniqueId = aggregateRoot.getUniqueId();
-			// TODO: Please update this region with high-performance method.
-			if(trackingAggregateRootDict.containsKey(uniqueId))
+			if(null!=trackingAggregateRootDict.putIfAbsent(uniqueId, aggregateRoot))
 				throw new AggregateRootAlreadyExistException(uniqueId, aggregateRoot.getClass());
-			trackingAggregateRootDict.put(uniqueId, aggregateRoot);
-			//if (!_trackingAggregateRootDict.TryAdd(aggregateRoot.UniqueId, aggregateRoot))
-			//{
-			//    throw new AggregateRootAlreadyExistException(aggregateRoot.UniqueId, aggregateRoot.GetType());
-			//}
 		}
 
 		@Override
@@ -190,33 +184,6 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		@Override
 		public <T extends IAggregateRoot> T get(Object id, boolean firstFromCache) {
 			throw new CommandRuntimeException("Do not use this method!!! Please use get(Object, Class, boolean) or get(Object, Class)");
-//			CommandConsumer.logger.warn("com.jiefzz.ejoker.queue.command.CommandConsumer.CommandExecuteContext.get(Object, boolean) maybe work down with unexcpected error!!!");
-//			
-//			if (id == null)
-//				throw new ArgumentNullException("id");
-//
-//			String aggregateRootId = id.toString();
-//			IAggregateRoot aggregateRoot = null;
-//			
-//			// TODO: Perhaps it will has a high-performance method.
-//			// C# use ConcurrentDictionary.TryGetValue() here
-//			if (trackingAggregateRootDict.containsKey(aggregateRootId))
-//				return (T) trackingAggregateRootDict.get(aggregateRootId);
-//
-//			if (firstFromCache) {
-//				// TODO: This method will throw an UnimplementException now!!!
-//				aggregateRoot = repository.get(id);
-//			} else {
-//				// TODO: This method will get a unexpected result!!!
-//				aggregateRoot = aggregateRootStorage.get(IAggregateRoot.class, aggregateRootId);
-//			}
-//
-//			if (aggregateRoot != null) {
-//				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
-//				return (T) aggregateRoot;
-//			}
-//
-//			return null;
 		}
 
 		/**
