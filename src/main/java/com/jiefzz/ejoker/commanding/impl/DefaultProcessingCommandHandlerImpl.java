@@ -144,7 +144,6 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	private void completeMessage(ProcessingCommand processingCommand, CommandStatus commandStatus, String resultType, String result) {
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), result, resultType);
 		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
-		processingCommand.getMailbox().tryExecuteNextMessage();
 	}
 	
 }
