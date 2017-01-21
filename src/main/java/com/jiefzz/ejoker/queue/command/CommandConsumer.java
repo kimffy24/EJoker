@@ -67,8 +67,8 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<String, String>();
-		String bodyString = new String(message.body, Charset.forName("UTF-8"));
-		CommandMessage commandMessage = jsonSerializer.revert(bodyString, CommandMessage.class);
+		String messageBody = new String(message.body, Charset.forName("UTF-8"));
+		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
 		Class<? extends ICommand> commandType;
 		try {
 			commandType = (Class<? extends ICommand> )Class.forName(message.tag);
@@ -156,7 +156,8 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 
 		@Override
 		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean firstFromCache) {
-			if (id == null) throw new ArgumentNullException("id");
+			if (id == null)
+				throw new ArgumentNullException("id");
 
 			String aggregateRootId = id.toString();
 			IAggregateRoot aggregateRoot = null;

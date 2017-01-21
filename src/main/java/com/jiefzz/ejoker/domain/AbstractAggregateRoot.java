@@ -3,6 +3,8 @@ package com.jiefzz.ejoker.domain;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import com.jiefzz.ejoker.domain.helper.AggregateHandlerJavaHelper;
@@ -18,12 +20,9 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@PersistentIgnore
 	private static final long serialVersionUID = -1803833835739801207L;
 
-//	// TODO Please use your IoC to inject this Implement Object!!!
-//	@Dependence
-//	@PersistentIgnore
-//	static IAggregateRootInternalHandlerProvider eventHandlerProvider;
-	
 	private long version=0;
+	
+	private Lock lock4ApplyEvent = new ReentrantLock();
 
 	@PersistentIgnore
 	private Queue<IDomainEvent<?>> uncommittedEvents = new ConcurrentLinkedQueue<IDomainEvent<?>>();
@@ -75,36 +74,29 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	protected void applyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
-
-		if( null == domainEvent )
-			throw new ArgumentNullException("domainEvent");
-		
-		if ( id == null )
-			throw new RuntimeException("Aggregate Root Id can not be null!!!");
-		domainEvent.setAggregateRootId( id );
-		domainEvent.setVersion(version+1);
-		// 接收事件
-		handleEvent(domainEvent);
-		// 提交事件到队列
-		appendUncommittedEvent(domainEvent);
+		try {
+			lock4ApplyEvent.lock();
+			internalApplyEvent(domainEvent);
+		} finally {
+			lock4ApplyEvent.unlock();
+		}
 	}
 	protected void applyEvents(IDomainEvent<TAggregateRootId>[] domainEvents) {
-		for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
-			applyEvent(domainEvent);
+		try {
+			lock4ApplyEvent.lock();
+			for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
+				internalApplyEvent(domainEvent);
+		} finally {
+			lock4ApplyEvent.unlock();
+		}
 	}
 
 	private void handleEvent(IDomainEvent<TAggregateRootId> domainEvent){
-//		if (eventHandlerProvider == null)
-//			throw new RuntimeException("IAggregateRootInternalHandlerProvider was never inject before!!!");
-//		IDelegateAction handler = eventHandlerProvider.getInnerEventHandler(this.getClass(), domainEvent.getClass());
-//		if (handler == null)
-//			throw new RuntimeException("Could not found event handler for " +domainEvent.getClass().getName() +" of " +this.getClass().getName() );
 		
-		// TODO 第一次使用
+		// creating new aggregate root.
 		if ( this.id == null && domainEvent.getVersion() == 1 )
 			this.id = domainEvent.getAggregateRootId();
 		
-//		handler.delegate(this, domainEvent);
 		AggregateHandlerJavaHelper.invokeInternalHandler(this, domainEvent);
 	}
 
@@ -140,16 +132,11 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
 		if(null!=uncommittedEvents.peek())
 			for(IDomainEvent<?> prevousDomainEvent:uncommittedEvents)
-//			uncommittedEvents.forEach(new Consumer<IDomainEvent<?>>(){
-//				@Override
-//				public void accept(IDomainEvent<?> prevousDomainEvent) {
-					if(prevousDomainEvent.getClass().equals(domainEvent.getClass()))
-						throw new InvalidOperationException(String.format(
-								"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
-								domainEvent.getClass().getName(), AbstractAggregateRoot.this.getClass().getName(), id
-						));
-//				}
-//			});
+				if(prevousDomainEvent.getClass().equals(domainEvent.getClass()))
+					throw new InvalidOperationException(String.format(
+							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
+							domainEvent.getClass().getName(), AbstractAggregateRoot.this.getClass().getName(), id
+					));
 		uncommittedEvents.offer(domainEvent);
 	}
 
@@ -173,5 +160,23 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 					+", id:"
 					+current.getUniqueId());
 		}
+	}
+	
+	/**
+	 * 由applyEvent和applyEvents带锁调用，请勿私自调用。
+	 * @param domainEvent
+	 */
+	private void internalApplyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
+		if( null == domainEvent )
+			throw new ArgumentNullException("domainEvent");
+		
+		if ( id == null )
+			throw new RuntimeException("Aggregate Root Id can not be null!!!");
+		domainEvent.setAggregateRootId( id );
+		domainEvent.setVersion(version+1);
+		// 聚合根响应事件
+		handleEvent(domainEvent);
+		// 提交事件(同时包含持久化事件和发布到q端)
+		appendUncommittedEvent(domainEvent);
 	}
 }

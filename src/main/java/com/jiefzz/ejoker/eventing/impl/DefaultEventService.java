@@ -178,7 +178,6 @@ public class DefaultEventService implements IEventService {
 
 	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
-		processingCommand.getMailbox().tryExecuteNextMessage();
 	}
 	
 	private void batchPersistEventAsync(List<EventCommittingConetxt> committingContexts, int retryTimes) {
