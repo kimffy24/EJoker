@@ -7,6 +7,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Simple Remote Procedure Call <br >
@@ -22,11 +24,12 @@ public class RPCFramework {
      * @param port 服务端口 
      * @throws Exception 
      */  
-    public static void export(final Object service, int port) throws Exception {  
+    public static void export(final Object service, final int port) throws Exception {  
         if (service == null)  
             throw new IllegalArgumentException("service instance == null");  
         if (port < 1024 || port > 65535)  
-            throw new IllegalArgumentException("Invalid port " + port);  
+            throw new IllegalArgumentException("Invalid port " + port);
+        reflectAnalyzeAndCacheInfo(service.getClass(), port);
         ServerSocket server = new ServerSocket(port);  
         for(;;) {
             try {  
@@ -39,11 +42,13 @@ public class RPCFramework {
                                 ObjectInputStream input = new ObjectInputStream(socket.getInputStream());  
                                 try {  
                                     String methodName = input.readUTF();  
-                                    Class<?>[] parameterTypes = (Class<?>[] )input.readObject();  
-                                    Object[] arguments = (Object[])input.readObject();  
+                                    Class<?>[] parameterTypes = (Class<?>[] )input.readObject();
+                                    String methodSignature = getMethodSignature(parameterTypes);
+                                    Object[] arguments = (Object[] )input.readObject();  
                                     ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());  
                                     try {  
-                                        Method method = service.getClass().getMethod(methodName, parameterTypes);  
+                                        //Method method = service.getClass().getMethod(methodName, parameterTypes); 
+                                    	Method method = ExportEPCServiceClassInfo.get(port).get(methodName +parameterTypes);
                                         Object result = method.invoke(service, arguments);  
                                         output.writeObject(result);  
                                     } catch (Throwable t) {  
@@ -118,6 +123,32 @@ public class RPCFramework {
 		            }  
         		}
         );  
-    }  
-  
+    }
+    
+    private static void reflectAnalyzeAndCacheInfo(Class<?> clazz, int port) {
+    	HashMap<String, Method> clazzMethodInfoItem = new HashMap<String, Method>();
+    	Method[] methods = clazz.getMethods();
+    	for(Method method:methods) {
+    		String methodName = method.getName();
+    		String methodSignature = getMethodSignature(method.getParameterTypes());
+    		clazzMethodInfoItem.put(methodName +methodSignature, method);
+    	}
+    	//ExportEPCServiceClassInfo.put(clazz, clazzMethodInfoItem);
+    	ExportEPCServiceClassInfo.put(port, clazzMethodInfoItem);
+    }
+    
+    private final static String getMethodSignature(Class<?>[] parameterTypes) {
+    		if(null==parameterTypes || 0==parameterTypes.length)
+    			return "";
+    		StringBuffer sb = new StringBuffer();
+    		sb.append('(');
+    		for(Class<?> paramClazz:parameterTypes) {
+    			sb.append(paramClazz.getName());
+    			sb.append(", ");
+    		}
+    		sb.append(')');
+    		return sb.toString();
+    }
+    
+    private final static Map<Object, Map<String, Method>> ExportEPCServiceClassInfo = new HashMap<Object, Map<String, Method>>();
 }  
