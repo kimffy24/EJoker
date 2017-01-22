@@ -37,7 +37,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	private boolean hasCanceled = false;
 	private Throwable exception = null;
 	private TResult result = null;
-
+	
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		logger.warn("Please do not use {}.cancel(boolean mayInterruptIfRunning), there is no sense here!", this.getClass().getName());

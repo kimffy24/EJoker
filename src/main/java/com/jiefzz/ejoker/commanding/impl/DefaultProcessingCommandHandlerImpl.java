@@ -113,7 +113,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		// if nothing change
 		if(dirtyAggregateRootCount==0 || changeEvents==null || changeEvents.size()==0) {
-			completeMessage(processingCommand, CommandStatus.Failed, String.class.getName(), context.getResult());
+			completeMessage(processingCommand, CommandStatus.NothingChanged, String.class.getName(), context.getResult());
 			return;
 		}
 		

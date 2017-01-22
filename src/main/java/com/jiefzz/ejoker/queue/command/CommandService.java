@@ -23,7 +23,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
-import com.jiefzz.ejoker.z.common.system.extension.FutureTaskUtils;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
@@ -89,7 +89,10 @@ public class CommandService implements ICommandService, IQueueWokerService {
 			return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
 		} catch ( Exception e ) {
 			e.printStackTrace();
-			return FutureTaskUtils.buildFromResult(new BaseAsyncTaskResult(AsyncTaskStatus.Failed, e.getMessage()));
+			BaseAsyncTaskResult taskResult = new BaseAsyncTaskResult(AsyncTaskStatus.Failed, e.getMessage());
+			RipenFuture<BaseAsyncTaskResult> ripenFuture = new RipenFuture<BaseAsyncTaskResult>();
+			ripenFuture.TrySetResult(taskResult);
+			return ripenFuture;
 		}
 	}
 
@@ -167,8 +170,9 @@ public class CommandService implements ICommandService, IQueueWokerService {
 		Ensure.notNull(command.getAggregateRootId(), "aggregateRootId");
         String commandData = jsonConverter.convert(command);
         String topic = commandTopicProvider.getTopic(command);
-        String replyAddress = ""; //needReply && _commandResultProcessor != null ? _commandResultProcessor.BindingAddress.ToString() : null;
+        String replyAddress = needReply && (null!=commandResultProcessor) ? commandResultProcessor.getBindingAddress() : null;
         String messageData = jsonConverter.convert(new CommandMessage(commandData, replyAddress));
+        logger.debug("commandResultProcessor binding address is {}", replyAddress);
         return new Message(
             topic,
             QueueMessageTypeCode.CommandMessage.ordinal(),

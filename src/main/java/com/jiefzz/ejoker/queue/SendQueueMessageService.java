@@ -59,7 +59,7 @@ public class SendQueueMessageService {
 						try {
 							Future<SendResult> future = producer.sendMessageAsync(message, routingKey);
 							SendResult sendResult = future.get();
-							if(sendResult.errorMessage!=null && IOException.class.getName().equals(sendResult.errorMessage))
+							if(sendResult.errorMessage!=null && sendResult.errorMessage.startsWith(IOException.class.getName()))
 								return new BaseAsyncTaskResult(AsyncTaskStatus.IOException);
 							return BaseAsyncTaskResult.Success;
 						} catch ( Exception e ) {
