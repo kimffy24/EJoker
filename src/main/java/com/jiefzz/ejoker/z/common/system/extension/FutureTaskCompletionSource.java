@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.z.common.system.extension;
 
-import java.util.concurrent.Future;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 /**
  * 异步任务结果封装类<br>
@@ -11,6 +11,6 @@ import java.util.concurrent.Future;
  */
 public class FutureTaskCompletionSource<TResult> {
 
-	public Future<TResult> task;
+	public RipenFuture<TResult> task = new RipenFuture<TResult>();
 	
 }
