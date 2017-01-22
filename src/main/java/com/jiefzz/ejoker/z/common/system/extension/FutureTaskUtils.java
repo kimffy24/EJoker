@@ -12,16 +12,11 @@ import java.util.concurrent.FutureTask;
  */
 public class FutureTaskUtils {
 	
-	private final static Method method;
-	static {
-		try {
-			method = FutureTask.class.getDeclaredMethod("set", Object.class);
-			method.setAccessible(true);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+	/**
+	 * 从给定结果中构建FutureTask对象
+	 * @param result
+	 * @return
+	 */
 	public final static <TResult> FutureTask<TResult> buildFromResult(TResult result) {
 		
 		FutureTask<TResult> future = new FutureTask<TResult>(new Runnable(){
@@ -34,6 +29,16 @@ public class FutureTaskUtils {
 			return future;
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private final static Method method;
+	static {
+		try {
+			method = FutureTask.class.getDeclaredMethod("set", Object.class);
+			method.setAccessible(true);
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
