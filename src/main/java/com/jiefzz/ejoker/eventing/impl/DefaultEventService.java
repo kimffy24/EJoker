@@ -196,8 +196,8 @@ public class DefaultEventService implements IEventService {
     	eventStore.appendAsync(context.eventSteam);
     	CommandResult commandResult = new CommandResult(
     			CommandStatus.Success,
-    			context.eventSteam.getAggregateRootId(),
     			context.eventSteam.getCommandId(),
+    			context.eventSteam.getAggregateRootId(),
     			context.processingCommand.getCommandExecuteContext().getResult(),
     			String.class.getName()
     	);

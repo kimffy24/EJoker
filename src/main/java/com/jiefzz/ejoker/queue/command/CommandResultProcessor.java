@@ -27,7 +27,7 @@ public class CommandResultProcessor implements IReplyHandler, IWokerService {
 
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
-	private final static ConcurrentHashMap<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
+	private final ConcurrentHashMap<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
 
 //	@Resource
 //	IJSONConverter jsonConverter;
@@ -102,8 +102,24 @@ public class CommandResultProcessor implements IReplyHandler, IWokerService {
 
 	@Override
 	public void handlerResult(int type, CommandResult commandResult) {
-		logger.debug("type: {}", type);
-		logger.debug("CommandResult: {}", commandResult.toString());
+		
+		CommandTaskCompletionSource commandTaskCompletionSource;
+		if(null!=(commandTaskCompletionSource = commandTaskMap.getOrDefault(commandResult.getCommandId(), null))) {
+			
+			if(CommandReturnType.CommandExecuted == commandTaskCompletionSource.getCommandReturnType()) {
+				commandTaskMap.remove(commandResult.getCommandId());
+				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
+				if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
+					logger.debug("Command result return, {}", commandResult);
+			} else if(CommandReturnType.EventHandled == commandTaskCompletionSource.getCommandReturnType()) {
+				if(CommandStatus.Failed == commandResult.getStatus() || CommandStatus.NothingChanged == commandResult.getStatus()) {
+					commandTaskMap.remove(commandResult.getCommandId());				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
+					if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
+						logger.debug("Command result return, {}", commandResult);
+				}
+			}
+		}
+		
 	}
 
 	class CommandTaskCompletionSource {

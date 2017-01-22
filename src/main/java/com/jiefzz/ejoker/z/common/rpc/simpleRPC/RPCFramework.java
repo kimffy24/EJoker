@@ -143,7 +143,6 @@ public class RPCFramework {
     		String methodName = method.getName();
     		String methodSignature = getMethodSignature(method.getParameterTypes());
     		clazzMethodInfoItem.put(methodName +methodSignature, method);
-    		System.out.println("mark: " +methodName +methodSignature);
     	}
     	//ExportEPCServiceClassInfo.put(clazz, clazzMethodInfoItem);
     	ExportEPCServiceClassInfo.put(port, clazzMethodInfoItem);

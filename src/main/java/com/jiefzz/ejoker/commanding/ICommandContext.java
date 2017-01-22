@@ -47,6 +47,10 @@ public interface ICommandContext {
 //    public <T extends IAggregateRoot> T get(Object id);
     /**/
     
+    /**
+     * 
+     * @param result
+     */
     public void setResult(String result);
     public String getResult();
     

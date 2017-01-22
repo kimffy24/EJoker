@@ -172,7 +172,6 @@ public class CommandService implements ICommandService, IQueueWokerService {
         String topic = commandTopicProvider.getTopic(command);
         String replyAddress = needReply && (null!=commandResultProcessor) ? commandResultProcessor.getBindingAddress() : null;
         String messageData = jsonConverter.convert(new CommandMessage(commandData, replyAddress));
-        logger.debug("commandResultProcessor binding address is {}", replyAddress);
         return new Message(
             topic,
             QueueMessageTypeCode.CommandMessage.ordinal(),
