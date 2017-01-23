@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ public class EventMailBox implements Runnable {
 	private final String aggregateRootId;
 	private final Queue<EventCommittingConetxt> messageQueue = new ConcurrentLinkedQueue<EventCommittingConetxt>();
 	private final EventMailBoxHandler<List<EventCommittingConetxt>> handleMessageAction;
-	private AtomicInteger _isRunning = new AtomicInteger(0);
+	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
 	private int batchSize;
 	private long lastActiveTime;
 
@@ -30,7 +31,7 @@ public class EventMailBox implements Runnable {
 		return lastActiveTime;
 	}
 	public boolean isRunning(){
-		return _isRunning.get()==1;
+		return runningOrNot.get();
 	}
 	
 	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<List<EventCommittingConetxt>> handleMessageAction) {
@@ -59,7 +60,7 @@ public class EventMailBox implements Runnable {
     }
     
     public void exit() {
-    	_isRunning.getAndSet(0);
+    	runningOrNot.compareAndSet(true, false);
     }
 	
 	public void clear() {
@@ -71,7 +72,7 @@ public class EventMailBox implements Runnable {
     }
 
     private boolean tryEnter() {
-		return _isRunning.compareAndSet(0, 1);
+		return runningOrNot.compareAndSet(false, true);
     }
 	
 	@Override
@@ -99,7 +100,7 @@ public class EventMailBox implements Runnable {
 		} finally {
 			if( null==contextList || contextList.size()==0 ) {
 				exit();
-				if(null==messageQueue.peek())
+				if(null!=messageQueue.peek())
 					tryEnter();
 			}
 		}

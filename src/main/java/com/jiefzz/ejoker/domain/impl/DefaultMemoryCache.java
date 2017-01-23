@@ -40,7 +40,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
 			if (!aggregateRoot.getClass().equals(aggregateRootType))
 				throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
-			if (aggregateRoot.getChanges().size() > 0) {
+			if (aggregateRoot.getChangesAmount() > 0) {
 				IAggregateRoot lastestAggregateRoot = aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
 				if (lastestAggregateRoot != null)
 					setInternal(lastestAggregateRoot);

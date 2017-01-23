@@ -60,7 +60,7 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		try {
 			// The second parameter of basicConsume is the bit of AutoAck,
 			// we set it false here.
-			channel.basicConsume(queue, false, consumer);
+			channel.basicConsume(queue, true, consumer);
 		} catch (IOException e) {
 			logger.error("Consumer work faild.");
 			throw new QueueRuntimeException("Consumer start faild!!!", e);

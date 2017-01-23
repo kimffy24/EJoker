@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.domain;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
@@ -12,10 +13,12 @@ public interface IAggregateRoot extends Serializable  {
 	
 	public String getUniqueId();
 	
-	Collection<IDomainEvent<?>> getChanges();
+	public List<IDomainEvent<?>> getChanges();
     
-    void acceptChanges(long newVersion);
+	public void acceptChanges(long newVersion);
+	
+	public int getChangesAmount();
     
-    void replayEvents(Collection<DomainEventStream> eventStreams);
+	public void replayEvents(Collection<DomainEventStream> eventStreams);
 
 }

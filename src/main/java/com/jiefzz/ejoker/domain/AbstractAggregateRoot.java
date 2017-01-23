@@ -1,11 +1,10 @@
 package com.jiefzz.ejoker.domain;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 import com.jiefzz.ejoker.domain.helper.AggregateHandlerJavaHelper;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
@@ -25,7 +24,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	private Lock lock4ApplyEvent = new ReentrantLock();
 
 	@PersistentIgnore
-	private Queue<IDomainEvent<?>> uncommittedEvents = new ConcurrentLinkedQueue<IDomainEvent<?>>();
+	private List<IDomainEvent<?>> uncommittedEvents = new ArrayList<IDomainEvent<?>>();
 	
 	protected TAggregateRootId id=null;
 	
@@ -101,8 +100,15 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	@Override
-	public Collection<IDomainEvent<?>> getChanges() {
-		return uncommittedEvents;
+	public List<IDomainEvent<?>> getChanges() {
+		ArrayList<IDomainEvent<?>> changes = new ArrayList<IDomainEvent<?>>();
+		changes.addAll(uncommittedEvents);
+		return changes;
+	}
+
+	@Override
+	public int getChangesAmount() {
+		return uncommittedEvents.size();
 	}
 
 	@Override
@@ -130,14 +136,14 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 	
 	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
-		if(null!=uncommittedEvents.peek())
+		if(0<uncommittedEvents.size())
 			for(IDomainEvent<?> prevousDomainEvent:uncommittedEvents)
 				if(prevousDomainEvent.getClass().equals(domainEvent.getClass()))
 					throw new InvalidOperationException(String.format(
 							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
 							domainEvent.getClass().getName(), AbstractAggregateRoot.this.getClass().getName(), id
 					));
-		uncommittedEvents.offer(domainEvent);
+		uncommittedEvents.add(domainEvent);
 	}
 
 	private void verifyEvent(DomainEventStream eventStream){
