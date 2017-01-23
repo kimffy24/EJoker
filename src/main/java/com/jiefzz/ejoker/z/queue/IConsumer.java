@@ -8,7 +8,7 @@ import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
  * @author JiefzzLon
  *
  */
-public interface IConsumer extends IQueueWokerService {
+public interface IConsumer extends IQueueComsumerWokerService {
 
 	public IConsumer setMessageHandler(IMessageHandler commandConsumer);
 	

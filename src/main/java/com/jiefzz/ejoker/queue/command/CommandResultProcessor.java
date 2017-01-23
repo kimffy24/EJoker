@@ -19,11 +19,11 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
+import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
-import com.jiefzz.ejoker.z.queue.IWokerService;
 
 @EService
-public class CommandResultProcessor implements IReplyHandler, IWokerService {
+public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
