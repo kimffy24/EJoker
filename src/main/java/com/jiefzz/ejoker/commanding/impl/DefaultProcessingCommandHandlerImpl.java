@@ -1,6 +1,8 @@
 package com.jiefzz.ejoker.commanding.impl;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import javax.annotation.Resource;
 
@@ -94,7 +96,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
-			Collection<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
+			List<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
 			if(null!=changes && changes.size()>0) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
@@ -105,6 +107,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 					);
 					logger.error(errorInfo);
 					completeMessage(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+					return;
 				}
 				dirtyAggregateRoot=aggregateRoot;
 				changeEvents = changes;
@@ -113,7 +116,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		// if nothing change
 		if(dirtyAggregateRootCount==0 || changeEvents==null || changeEvents.size()==0) {
-			completeMessage(processingCommand, CommandStatus.Failed, String.class.getName(), context.getResult());
+			completeMessage(processingCommand, CommandStatus.NothingChanged, String.class.getName(), context.getResult());
 			return;
 		}
 		

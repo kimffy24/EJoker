@@ -12,19 +12,19 @@ public class ThreadPoolMaster {
 
 	private static final int threadPoolSize = 512;
 	
-	private static Map<String, AsyncPool> poolHolder = new HashMap<String, AsyncPool>();
+	private static Map<Class<?>, AsyncPool> poolHolder = new HashMap<Class<?>, AsyncPool>();
 	
 	public static AsyncPool getPoolInstance(Class<?> typeOfCaller){
-		AsyncPool asyncPool = poolHolder.get(typeOfCaller.getName());
-		if(asyncPool!=null) return asyncPool;
-		asyncPool = new AsyncPool(threadPoolSize);
-		poolHolder.put(typeOfCaller.getName(), asyncPool);
+		AsyncPool asyncPool;
+		if(null!=(asyncPool = poolHolder.getOrDefault(typeOfCaller, null)))
+			return asyncPool;
+		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(threadPoolSize)));
 		return asyncPool;
 	}
 	
 	public static void closeAll(){
-		Set<Entry<String,AsyncPool>> entrySet = poolHolder.entrySet();
-		for(Entry<String,AsyncPool> entry : entrySet) {
+		Set<Entry<Class<?>, AsyncPool>> entrySet = poolHolder.entrySet();
+		for(Entry<Class<?>, AsyncPool> entry : entrySet) {
 			AsyncPool value = entry.getValue();
 			value.shutdown();
 		}

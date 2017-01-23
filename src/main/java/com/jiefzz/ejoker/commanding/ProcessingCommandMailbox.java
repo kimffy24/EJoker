@@ -1,56 +1,53 @@
 package com.jiefzz.ejoker.commanding;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ProcessingCommandMailbox implements Runnable {
 	
-	final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
+	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
+	public final static int MAX_BATCH_COMMANDS;
+	
 	
 	private final String aggregateRootId;
 	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<Long, ProcessingCommand>();
 	
-	private final IProcessingCommandScheduler scheduler;
 	private final IProcessingCommandHandler messageHandler;
 	
 	private AtomicLong sequence = new AtomicLong(1l);
 	private AtomicLong cursor = new AtomicLong(1l);
 	
+	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	
+	private long lastActiveTime = System.currentTimeMillis();
+	
 	public String getAggregateRootId() {
 		return aggregateRootId;
 	}
 
-	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandScheduler scheduler, IProcessingCommandHandler messageHandler) {
+	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler) {
 		this.aggregateRootId = aggregateRootId;
-		this.scheduler = scheduler;
 		this.messageHandler = messageHandler;
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		long genericSequence = getSequenceAndIncreatingItAfter();
+		long genericSequence = sequence.getAndIncrement();
 		message.setSequence(genericSequence);
 		message.setMailbox(this);
 		messageDict.put(genericSequence, message);
-		scheduler.scheduleMailbox(this);
-	}
-	
-	public boolean hasRemainingCommand() {
-		return sequence.get()-cursor.get()>0;
+		lastActiveTime = System.currentTimeMillis();
+		tryRun();
 	}
 
 	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
 		long sequence = processingCommand.getSequence();
-		messageDict.remove(processingCommand.getSequence());
+		messageDict.remove(sequence);
 		completeCommand(processingCommand, commandResult);
 	}
 
@@ -58,30 +55,36 @@ public class ProcessingCommandMailbox implements Runnable {
     public void run() {
 		// TODO 通过调度器发起线程处理新的命令 
 		// TODO 此处为调度器发起新线程的起点
-        
+
+		lastActiveTime = System.currentTimeMillis();
         boolean hasException = false;
-        ProcessingCommand processingMessage = null;
+        ProcessingCommand processingCommand = null;
         
         try {
-        	long currentSequence = cursor.getAndIncrement();
-        	processingMessage = messageDict.get(currentSequence);
-        	if (processingMessage != null) {
-                 messageHandler.handle(processingMessage);
-            }
+        	int count = 0;
+        	while(cursor.get() < sequence.get() && count < MAX_BATCH_COMMANDS) {
+            	long currentSequence = cursor.getAndIncrement();
+            	processingCommand = messageDict.get(currentSequence);
+            	if (processingCommand != null)
+                     messageHandler.handle(processingCommand);
+            	count++;
+        	}
         } catch (Exception ex) {
             hasException = true;
             if (ex instanceof IOException) {
-            	ICommand command = processingMessage.getMessage();
+            	ICommand command = processingCommand.getMessage();
             	logger.error(String.format("Failed to handle command [id: {}, type: {}]", command.getId(), command.getClass().getName()), ex);
             } else {
                 logger.error("Failed to run command mailbox.", ex);
             }
             // TODO 触发错误后，还需要处理残留的命令
             ex.printStackTrace();
+            logger.error(String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}", aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""), ex);
+            try { Thread.sleep(1); } catch (InterruptedException e) { }
         } finally {
-            if (!hasException || processingMessage == null) {
-            	scheduler.completeOneSchedule();
-        		scheduler.scheduleMailbox(this);
+        	exit();
+            if (cursor.get() < sequence.get()) {
+            	tryRun();
             }
         }
     }
@@ -98,7 +101,21 @@ public class ProcessingCommandMailbox implements Runnable {
 		}
 	}
 
-	private long getSequenceAndIncreatingItAfter() {
-		return sequence.getAndIncrement();
-	}
+    private void tryRun() {
+        if (tryEnter()) {
+            new Thread(this).run();
+        }
+    }
+    
+    private boolean tryEnter() {
+        return runningOrNot.compareAndSet(false, true);
+    }
+    
+    private void exit() {
+    	runningOrNot.compareAndSet(true, false);
+    }
+    
+    static {
+    	MAX_BATCH_COMMANDS = 5;
+    }
 }

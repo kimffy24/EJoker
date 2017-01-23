@@ -1,7 +1,14 @@
 package com.jiefzz.ejoker.commanding;
 
-public class CommandResult {
+import java.io.Serializable;
 
+import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
+
+public class CommandResult implements Serializable {
+
+	@PersistentIgnore
+	private static final long serialVersionUID = 752016886537166260L;
+	
 	private String commandId;
 	private CommandStatus status;
 	private String aggregateRootId;

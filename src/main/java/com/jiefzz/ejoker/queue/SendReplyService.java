@@ -1,29 +1,37 @@
 package com.jiefzz.ejoker.queue;
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.commanding.CommandResult;
+import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.queue.IQueueWokerService;
+import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
 import com.jiefzz.ejoker.z.queue.IWokerService;
 
 @EService
-public class SendReplyService implements IWokerService {
+public class SendReplyService {
 
-	final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);			
-			
-	@Override
-	public IQueueWokerService start() {
-		return null;
-	}
-
-	@Override
-	public IQueueWokerService shutdown() {
-		return null;
-	}
-
-	public void sendReply(short replyType, Object replyData) {
-		logger.warn("[{}.sendReply() is unimplemented! pass: [ replyType={}, replyData={} ]", this.getClass().getName(), replyType, replyData);
+	final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);
+	
+	@Resource
+	private IJSONConverter jsonSerializer;
+	
+	public void sendReply(int replyType, CommandResult commandResult, String replyAddress) {
+		try {
+			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
+			replyHandler.handlerResult(replyType, commandResult);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
+	public final static int REPLY_PORT;
+	static {
+		// 请从配置文件注入此变量。
+		REPLY_PORT = 65056;
+	}
 }

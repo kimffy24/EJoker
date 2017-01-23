@@ -4,17 +4,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.commanding.ICommandProcessor;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
-import com.jiefzz.ejoker.commanding.IProcessingCommandScheduler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
 import com.jiefzz.ejoker.z.common.ArgumentException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 /**
@@ -33,10 +31,8 @@ public final class DefaultCommandProcessorImpl implements ICommandProcessor {
 	// TODO: C# use ConcurrentDictionary here.
 	private final ConcurrentHashMap<String, ProcessingCommandMailbox> mailboxDict = 
 			new ConcurrentHashMap<String, ProcessingCommandMailbox>();
-
-	@Resource
-    private IProcessingCommandScheduler scheduler;
-	@Resource
+	
+	@Dependence
     private IProcessingCommandHandler handler;
 	
 	@Override
@@ -56,7 +52,7 @@ public final class DefaultCommandProcessorImpl implements ICommandProcessor {
         		if(!mailboxDict.containsKey(aggregateRootId)){	// 若发生竟态，获取锁后，先检查在此线程之前获取锁的线程是否创建了Mailbox
         			// 在递归调用时似乎会发生死锁？ 似乎在递归调用时不会再进入这个if语句块才是合乎逻辑的
         			logger.debug("Creating mailbox for aggregateRoot[aggregateRootId={}].", aggregateRootId);
-                	mailboxDict.put(aggregateRootId, new ProcessingCommandMailbox(aggregateRootId, scheduler, handler));
+                	mailboxDict.put(aggregateRootId, new ProcessingCommandMailbox(aggregateRootId, handler));
         		}
     			process(processingCommand);
         	} finally {

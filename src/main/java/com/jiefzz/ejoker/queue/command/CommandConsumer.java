@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.commanding.AggregateRootAlreadyExistException;
 import com.jiefzz.ejoker.commanding.CommandResult;
+import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.CommandRuntimeException;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandExecuteContext;
@@ -113,7 +114,6 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		private final IRepository repository;
 		private final IAggregateStorage aggregateRootStorage;
 		private final SendReplyService sendReplyService;
-		//private final QueueMessage queueMessage; // in eNode Message is the actually type of QueueMessage
 		private final Message message;
 		private final IMessageContext messageContext;
 		private final CommandMessage commandMessage;
@@ -133,10 +133,8 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 
 			if (commandMessage.replyAddress == null || "".equals(commandMessage.replyAddress))
 				return;
-
-			// TODO: Unfinished SendReplyService !!!
-			throw new UnimplementException(CommandExecuteContext.class.getName()+"#onCommandExecuted()");
-			//_sendReplyService.SendReply((int)CommandReplyType.CommandExecuted, commandResult, _commandMessage.ReplyAddress);
+			
+			sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);
 		}
 
 		@Override
@@ -176,22 +174,6 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 		@Override
 		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz) {
 			return get(id, clazz, true);
-		}
-		
-		/**
-		 * @deprecated
-		 */
-		@Override
-		public <T extends IAggregateRoot> T get(Object id, boolean firstFromCache) {
-			throw new CommandRuntimeException("Do not use this method!!! Please use get(Object, Class, boolean) or get(Object, Class)");
-		}
-
-		/**
-		 * @deprecated
-		 */
-		@Override
-		public <T extends IAggregateRoot> T get(Object id) {
-			return get(id, true);
 		}
 
 		@Override

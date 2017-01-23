@@ -34,7 +34,7 @@ public interface ICommandContext {
      * @param tryFromCache
      * @return
      */
-    public <T extends IAggregateRoot> T get(Object id, boolean tryFromCache);
+//    public <T extends IAggregateRoot> T get(Object id, boolean tryFromCache);
     
     /**
      * Not like C#, T will lost while program running.. Please use get(Object, Class).<br>
@@ -44,8 +44,13 @@ public interface ICommandContext {
      * @param id
      * @return
      */
-    public <T extends IAggregateRoot> T get(Object id);
+//    public <T extends IAggregateRoot> T get(Object id);
+    /**/
     
+    /**
+     * 
+     * @param result
+     */
     public void setResult(String result);
     public String getResult();
     

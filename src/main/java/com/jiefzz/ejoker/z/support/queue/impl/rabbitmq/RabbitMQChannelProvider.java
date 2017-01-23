@@ -20,7 +20,7 @@ public class RabbitMQChannelProvider {
 	private final static Properties props = new Properties();
 	private final static ConnectionFactory factory;
 	private final static Connection connection;
-	
+
 	public final static String EXCHANGE_NAME;
 
 	private RabbitMQChannelProvider() { }

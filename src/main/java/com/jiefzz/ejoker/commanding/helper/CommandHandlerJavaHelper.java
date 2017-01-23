@@ -45,7 +45,7 @@ public class CommandHandlerJavaHelper {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = handlerClass;
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
-			identification = String.format("Proxy[forward:%s#%s(%s, %s)]", handlerClass.getName(), handleReflectionMethod.getName(), parameterTypes[0].getName(), parameterTypes[1].getName());
+			identification = String.format("Proxy[ forward: %s#%s(%s, %s)]", handlerClass.getSimpleName(), handleReflectionMethod.getName(), parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
 		}
 		
 		@Override
