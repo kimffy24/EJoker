@@ -77,6 +77,8 @@ public class ParameterizedTypeUtil {
 	public static Object[] arrayTypeAsObject(Object object) {
 		if(!object.getClass().isArray()) return null;
 		Class<?> clazz = object.getClass().getComponentType();
+		if(!clazz.isPrimitive())
+			return (Object[] )object;
 		//long
 		if(long.class==clazz){
 			int arraySyze = ((long[] )object).length;
@@ -141,8 +143,8 @@ public class ParameterizedTypeUtil {
 				cArray[i] = ((boolean[] )object)[i];
 			return cArray;
 		} else
-//			throw new RuntimeException("On, no!!! What type array are you provide? We just support array of [int, long, short, double, float, char, byte, boolean]!");
-		return (Object[] )object;
+			// this should never happen!!!
+			throw new RuntimeException();
 	}
 
 	/**
