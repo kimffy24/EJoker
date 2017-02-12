@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,7 @@ import com.jiefzz.ejoker.utils.relationship.RelationshipTreeUtil;
 import com.jiefzz.ejoker.utils.relationship.RelationshipTreeUtilCallbackInterface;
 import com.jiefzz.ejoker.utils.relationship.RevertRelationshipTreeDisassemblyInterface;
 import com.jiefzz.ejoker.utils.relationship.RevertRelationshipTreeUitl;
+import com.jiefzz.ejoker.utils.relationship.SpecialTypeHandler;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 
 import net.minidev.json.JSONArray;
@@ -27,99 +29,121 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 
 	private final static Logger logger = LoggerFactory.getLogger(JSONConverterUseJsonSmartImpl.class);
 
-	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil =
-			new RelationshipTreeUtil<JSONObject, JSONArray>(new RelationshipTreeUtilCallbackInterface<JSONObject, JSONArray>() {
-				@Override
-				public JSONObject createNode() {
-					return new JSONObject();
-				}
+	private SpecialTypeHandler<String> specialTypeHandler;
+	
+	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil;
 
-				@Override
-				public JSONArray createValueSet() {
-					return new JSONArray();
-				}
+	private RevertRelationshipTreeUitl<JSONObject, JSONArray> revertRelationshipTreeUitl;
+	
+	@SuppressWarnings("unchecked")
+	public JSONConverterUseJsonSmartImpl() {
+		specialTypeHandler = new SpecialTypeHandler<String>()
+				.append(ObjectId.class, new SpecialTypeHandler.Handler<ObjectId, String>(){
 
-				@Override
-				public boolean isHas(JSONObject targetNode, String key) {
-					return targetNode.containsKey(key);
-				}
+					@Override
+					public String convert(ObjectId target) {
+						return target.toHexString();
+					}
 
-				@Override
-				public void addToValueSet(JSONArray valueSet, Object child) {
-					valueSet.add(child);
-				}
+					@Override
+					public ObjectId revert(String source) {
+						return new ObjectId(source);
+					}
+					
+				});
+		
+		relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new RelationshipTreeUtilCallbackInterface<JSONObject, JSONArray>() {
+					@Override
+					public JSONObject createNode() {
+						return new JSONObject();
+					}
 
-				@Override
-				public void addToKeyValueSet(JSONObject keyValueSet, Object child, String key) {
-					keyValueSet.put(key, child);
-				}
+					@Override
+					public JSONArray createValueSet() {
+						return new JSONArray();
+					}
 
-				@Override
-				public void merge(JSONObject targetNode, JSONObject tempNode) {
-					targetNode.putAll(tempNode);
-				}
+					@Override
+					public boolean isHas(JSONObject targetNode, String key) {
+						return targetNode.containsKey(key);
+					}
 
-				@Override
-				public Object getOne(JSONObject targetNode, String key) {
-					return targetNode.get(key);
-				}
-			});
+					@Override
+					public void addToValueSet(JSONArray valueSet, Object child) {
+						valueSet.add(child);
+					}
 
-	private static final RevertRelationshipTreeUitl<JSONObject, JSONArray> revertRelationshipTreeUitl = 
-			new RevertRelationshipTreeUitl<JSONObject, JSONArray>(new RevertRelationshipTreeDisassemblyInterface<JSONObject, JSONArray>() {
+					@Override
+					public void addToKeyValueSet(JSONObject keyValueSet, Object child, String key) {
+						keyValueSet.put(key, child);
+					}
 
-				@Override
-				public JSONObject getChildKVP(JSONObject source, String key) {
-					return (JSONObject )source.get(key);
-				}
+					@Override
+					public void merge(JSONObject targetNode, JSONObject tempNode) {
+						targetNode.putAll(tempNode);
+					}
 
-				@Override
-				public JSONObject getChildKVP(JSONArray source, int index) {
-					return (JSONObject )source.get(index);
-				}
+					@Override
+					public Object getOne(JSONObject targetNode, String key) {
+						return targetNode.get(key);
+					}
+				}, specialTypeHandler);
+		
+		revertRelationshipTreeUitl = new RevertRelationshipTreeUitl<JSONObject, JSONArray>(new RevertRelationshipTreeDisassemblyInterface<JSONObject, JSONArray>() {
 
-				@Override
-				public JSONArray getChildVP(JSONObject source, String key) {
-					return (JSONArray )source.get(key);
-				}
+					@Override
+					public JSONObject getChildKVP(JSONObject source, String key) {
+						return (JSONObject )source.get(key);
+					}
 
-				@Override
-				public JSONArray getChildVP(JSONArray source, int index) {
-					return (JSONArray )source.get(index);
-				}
+					@Override
+					public JSONObject getChildKVP(JSONArray source, int index) {
+						return (JSONObject )source.get(index);
+					}
 
-				@Override
-				public Object getValue(JSONObject source, String key) {
-					return source.get(key);
-				}
+					@Override
+					public JSONArray getChildVP(JSONObject source, String key) {
+						return (JSONArray )source.get(key);
+					}
 
-				@Override
-				public Object getValue(JSONArray source, int index) {
-					return source.get(index);
-				}
+					@Override
+					public JSONArray getChildVP(JSONArray source, int index) {
+						return (JSONArray )source.get(index);
+					}
 
-				@Override
-				public int getVPSize(JSONArray source) {
-					return source.size();
-				}
+					@Override
+					public Object getValue(JSONObject source, String key) {
+						return source.get(key);
+					}
 
-				@Override
-				public Map convertNodeAsMap(JSONObject source) {
-					return (Map )source;
-				}
+					@Override
+					public Object getValue(JSONArray source, int index) {
+						return source.get(index);
+					}
 
-				@Override
-				public Set convertNodeAsSet(JSONArray source) {
-					Set resultSet = new HashSet();
-					resultSet.addAll(source);
-					return resultSet;
-				}
+					@Override
+					public int getVPSize(JSONArray source) {
+						return source.size();
+					}
 
-				@Override
-				public List convertNodeAsList(JSONArray source) {
-					return (List )source;
-				}
-			});
+					@Override
+					public Map convertNodeAsMap(JSONObject source) {
+						return (Map )source;
+					}
+
+					@Override
+					public Set convertNodeAsSet(JSONArray source) {
+						Set resultSet = new HashSet();
+						resultSet.addAll(source);
+						return resultSet;
+					}
+
+					@Override
+					public List convertNodeAsList(JSONArray source) {
+						return (List )source;
+					}
+				}, specialTypeHandler);
+	}
 	
 	@Override
 	public <T> String convert(T object) {
