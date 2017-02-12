@@ -32,7 +32,6 @@ public class EJokerEnvironment {
 		try{
 	 		props.load(EJokerEnvironment.class.getClassLoader().getResourceAsStream(ENVIROMMENT_FILE));
 		}catch(Exception e){
-			//throw new RuntimeException(EJokerEnvironment.class.getName()+" initialize faild!!!", e);
 			logger.warn("Could not load configure information from {}!", ENVIROMMENT_FILE);
 		}
 		//## region end

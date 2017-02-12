@@ -16,12 +16,12 @@ import com.jiefzz.ejoker.queue.SendQueueMessageService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.queue.IProducer;
-import com.jiefzz.ejoker.z.queue.IQueueWokerService;
-import com.jiefzz.ejoker.z.queue.IWokerService;
+import com.jiefzz.ejoker.z.queue.IQueueComsumerWokerService;
+import com.jiefzz.ejoker.z.queue.IQueueProducerWokerService;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
-public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IQueueWokerService {
+public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IQueueComsumerWokerService {
 
 	final static Logger logger = LoggerFactory.getLogger(DomainEventPublisher.class);
 
@@ -44,19 +44,19 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	public DomainEventPublisher useProducer(IProducer producer) { this.producer = producer; return this;}
 
 	@Override
-	public IWokerService start() {
+	public IQueueProducerWokerService start() {
 		producer.start();
 		return null;
 	}
 
 	@Override
-	public IWokerService shutdown() {
+	public IQueueProducerWokerService shutdown() {
 		logger.error("The method: {}.subscribe(String topic) should not be use! Please fix it.", this.getClass().getName());
 		return null;
 	}
 
 	@Override
-	public IQueueWokerService subscribe(String topic) {
+	public IQueueComsumerWokerService subscribe(String topic) {
 		producer.shutdown();
 		return null;
 	}

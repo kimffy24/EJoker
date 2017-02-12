@@ -10,7 +10,7 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
-import com.jiefzz.ejoker.z.queue.IWokerService;
+import com.jiefzz.ejoker.z.queue.IQueueProducerWokerService;
 
 @EService
 public class SendReplyService {

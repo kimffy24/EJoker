@@ -29,7 +29,8 @@ import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.jiefzz.ejoker.z.queue.IProducer;
-import com.jiefzz.ejoker.z.queue.IQueueWokerService;
+import com.jiefzz.ejoker.z.queue.IQueueComsumerWokerService;
+import com.jiefzz.ejoker.z.queue.IQueueProducerWokerService;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 /**
@@ -37,7 +38,7 @@ import com.jiefzz.ejoker.z.queue.protocols.Message;
  *
  */
 @EService
-public class CommandService implements ICommandService, IQueueWokerService {
+public class CommandService implements ICommandService, IQueueProducerWokerService {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandService.class);
 	
@@ -66,19 +67,13 @@ public class CommandService implements ICommandService, IQueueWokerService {
 	public CommandService useProducer(IProducer producer) { this.producer = producer; return this;}
 
 	@Override
-	public IQueueWokerService start() {
+	public CommandService start() {
 		producer.start();
 		return this;
 	}
 
 	@Override
-	public IQueueWokerService subscribe(String topic) {
-		logger.error("The method: {}.subscribe(String topic) should not be use! Please fix it.", this.getClass().getName());
-		return this;
-	}
-
-	@Override
-	public IQueueWokerService shutdown() {
+	public CommandService shutdown() {
 		producer.shutdown();
 		return this;
 	}

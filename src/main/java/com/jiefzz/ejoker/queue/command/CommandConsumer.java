@@ -24,17 +24,16 @@ import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
-import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.queue.IConsumer;
-import com.jiefzz.ejoker.z.queue.IQueueWokerService;
+import com.jiefzz.ejoker.z.queue.IQueueComsumerWokerService;
 import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
 import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
 import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
-public class CommandConsumer implements IQueueWokerService,IMessageHandler {
+public class CommandConsumer implements IQueueComsumerWokerService, IMessageHandler {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
@@ -85,19 +84,19 @@ public class CommandConsumer implements IQueueWokerService,IMessageHandler {
 	}
 	
 	@Override
-	public IQueueWokerService start() {
+	public CommandConsumer start() {
 		consumer.setMessageHandler(this).start();
 		return this;
 	}
 
 	@Override
-	public IQueueWokerService subscribe(String topic) {
+	public CommandConsumer subscribe(String topic) {
 		consumer.subscribe(topic);
 		return this;
 	}
 
 	@Override
-	public IQueueWokerService shutdown() {
+	public CommandConsumer shutdown() {
 		consumer.shutdown();
 		return this;
 	}

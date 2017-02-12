@@ -1,16 +1,24 @@
 package com.jiefzz.ejoker.utils.relationship;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.utils.relationship.SpecialTypeHandler.Handler;
+
+/**
+ * 对象属性扁平化工具类
+ * @author kimffy
+ *
+ * @param <ContainerKVP>
+ * @param <ContainerVP>
+ */
 public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTypeAnalyze {
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
@@ -18,6 +26,12 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
 	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval) {
 		this.eval = eval;
+	}
+	
+	private SpecialTypeHandler<?> specialTypeHandler = null;
+	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval, SpecialTypeHandler<?> specialTypeHandler) {
+		this(eval);
+		this.specialTypeHandler = specialTypeHandler;
 	}
 
 	public ContainerKVP getTreeStructureMap(Object bean) {
@@ -55,12 +69,15 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			}
 			if( value == null ) continue;
 
+			// TODO 本类中有三个结构类似的语句块，如果能用函数编程那该多好啊。。。。
 
 			// 基础类型
 			if ( ParameterizedTypeUtil.isDirectSerializableType(fieldType) )
 				eval.addToKeyValueSet(resultKVContainer, value, fieldName);
 			// Java集合类型
 			else if ( ParameterizedTypeUtil.hasSublevel(fieldType) ) {
+				if( value instanceof Queue) 
+					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
 				if( value instanceof Collection )
 					eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), fieldName);
 				else if( value instanceof Map )
@@ -72,8 +89,14 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			else if(fieldType.isArray())
 				eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), fieldName);
 			// 普通类类型
-			else 
-				eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), fieldName);
+			else {
+				Handler handler;
+				// 如果有存在 用户指定的解析器
+				if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
+					eval.addToKeyValueSet(resultKVContainer, handler.convert(value), fieldName);
+				} else
+					eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), fieldName);
+			}
 		}
 		return resultKVContainer;
 	}
@@ -95,24 +118,33 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			Object value = entry.getValue();
 			if(value==null) continue;
 			String key = entry.getKey();
+			
 			// 基础类型
 			if ( ParameterizedTypeUtil.isDirectSerializableType(value) )
 				eval.addToKeyValueSet(resultKVContainer, value, key);
 			// Java集合类型
 			else if ( ParameterizedTypeUtil.hasSublevel(value) ) {
+				if( value instanceof Queue) 
+					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
 				if( value instanceof Collection )
 					eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), key);
 				else if( value instanceof Map )
 					eval.addToKeyValueSet(resultKVContainer, innerAssemblingKVP(value), key);
-				// 枚举类型
+			// 枚举类型
 			} else if(value.getClass().isEnum())
 				eval.addToKeyValueSet(resultKVContainer, ((Enum )value).ordinal(), key);
 			// 数组类型
 			else if(value.getClass().isArray())
 				eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), key);
 			// 普通类类型
-			else 
-				eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), key);
+			else {
+				Handler handler;
+				// 如果有存在 用户指定的解析器
+				if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
+					eval.addToKeyValueSet(resultKVContainer, handler.convert(value), key);
+				} else
+					eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), key);
+			}
 		}
 		return resultKVContainer;
 	}
@@ -127,37 +159,56 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	private ContainerVP innerAssemblingVP(Object object) {
 		ContainerVP valueSet = eval.createValueSet();
 		if(object.getClass().isArray()){
-			Class<?> objectType = object.getClass();
-			Class<?> componentType = objectType.getComponentType();
-			Object[] arrayTypeAs=ParameterizedTypeUtil.arrayTypeAsObject(object);
-			List<Object> asList = Arrays.asList(arrayTypeAs);
-			return innerAssemblingVP(asList);
-		}
-		Collection<?> objCollection = (Collection<?> ) object;
-		for ( Object value : objCollection ) {
-			//不需要对空的值集操作
-			if (value==null) continue;
-			else if ( ParameterizedTypeUtil.isDirectSerializableType(value) )
-				// 可直接序列化类型
-				eval.addToValueSet(valueSet, value);
-			else if ( ParameterizedTypeUtil.hasSublevel(value) ) {
-				// 集合类型。 递归调用
-				if ( value instanceof Collection )
-					eval.addToValueSet(valueSet, innerAssemblingVP(value));
-				else if( value instanceof Map ){
-					eval.addToValueSet(valueSet, innerAssemblingKVP(value));
-				}
-				// 枚举类型
-			} else if(value.getClass().isEnum())
-				throw new RuntimeException("Unsupport Enum type in VContainer!!!!");
-			// 数组类型
-			else if(value.getClass().isArray())
-				eval.addToValueSet(valueSet, innerAssemblingVP(value));
-				// 普通类类型
-			else 
-				eval.addToValueSet(valueSet, getTreeStructureMapInner(value));
+			Object[] objArray = ParameterizedTypeUtil.arrayTypeAsObject(object);
+			for ( Object value : objArray ) {
+				//不需要对空的值集操作
+				if (value==null) continue;
+	
+				innerAssemblingVPSkeleton(valueSet, value);
+			}
+		} else {
+			Collection<?> objCollection = (Collection<?> ) object;
+			for ( Object value : objCollection ) {
+				//不需要对空的值集操作
+				if (value==null) continue;
+	
+				innerAssemblingVPSkeleton(valueSet, value);
+			}
 		}
 		return valueSet;
 	}
 
+	/**
+	 * 分离出skeleton主要是为了避免array类型转换为集合类再执行VP装配操作。
+	 * @param valueSet
+	 * @param value
+	 */
+	private void innerAssemblingVPSkeleton(ContainerVP valueSet, Object value){
+		// 基础类型
+		if ( ParameterizedTypeUtil.isDirectSerializableType(value) )
+			eval.addToValueSet(valueSet, value);
+		// Java集合类型
+		else if ( ParameterizedTypeUtil.hasSublevel(value) ) {
+			if( value instanceof Queue) 
+				throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
+			if ( value instanceof Collection )
+				eval.addToValueSet(valueSet, innerAssemblingVP(value));
+			else if( value instanceof Map )
+				eval.addToValueSet(valueSet, innerAssemblingKVP(value));
+		// 枚举类型
+		} else if(value.getClass().isEnum())
+			eval.addToValueSet(valueSet, ((Enum )value).ordinal());
+		// 数组类型
+		else if(value.getClass().isArray())
+			eval.addToValueSet(valueSet, innerAssemblingVP(value));
+		// 普通类类型
+		else {
+			Handler handler;
+			// 如果有存在 用户指定的解析器
+			if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
+				eval.addToValueSet(valueSet, handler.convert(value));
+			} else
+				eval.addToValueSet(valueSet, getTreeStructureMapInner(value));
+		}
+	}
 }
