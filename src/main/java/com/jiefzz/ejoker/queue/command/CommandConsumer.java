@@ -84,19 +84,19 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 	}
 	
 	@Override
-	public IQueueComsumerWokerService start() {
+	public CommandConsumer start() {
 		consumer.setMessageHandler(this).start();
 		return this;
 	}
 
 	@Override
-	public IQueueComsumerWokerService subscribe(String topic) {
+	public CommandConsumer subscribe(String topic) {
 		consumer.subscribe(topic);
 		return this;
 	}
 
 	@Override
-	public IQueueComsumerWokerService shutdown() {
+	public CommandConsumer shutdown() {
 		consumer.shutdown();
 		return this;
 	}

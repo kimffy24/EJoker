@@ -67,13 +67,13 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 	public CommandService useProducer(IProducer producer) { this.producer = producer; return this;}
 
 	@Override
-	public IQueueProducerWokerService start() {
+	public CommandService start() {
 		producer.start();
 		return this;
 	}
 
 	@Override
-	public IQueueProducerWokerService shutdown() {
+	public CommandService shutdown() {
 		producer.shutdown();
 		return this;
 	}
