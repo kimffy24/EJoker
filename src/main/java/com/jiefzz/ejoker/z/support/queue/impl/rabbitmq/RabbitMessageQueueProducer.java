@@ -31,7 +31,8 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 
 	@Override
 	public RabbitMessageQueueProducer start() {
-		if(channel!=null) throw new QueueRuntimeException(RabbitMessageQueueProducer.class.getName() +" has been start!!!");
+		if(channel!=null)
+			throw new QueueRuntimeException(RabbitMessageQueueProducer.class.getName() +" has been start!!!");
 		channel = RabbitMQChannelProvider.getInstance().getNewChannel();
 		return this;
 	}
