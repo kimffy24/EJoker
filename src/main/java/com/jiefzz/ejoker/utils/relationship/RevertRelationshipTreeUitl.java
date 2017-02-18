@@ -2,14 +2,10 @@ package com.jiefzz.ejoker.utils.relationship;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Map.Entry;
-
-import javax.management.RuntimeErrorException;
-
+import java.util.Queue;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,7 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.utils.relationship.SpecialTypeHandler.Handler;
 
-
+/**
+ * 对象关系还原类
+ * @author kimffy
+ *
+ * @param <ContainerKVP> 维度化时使用的键值集类型
+ * @param <ContainerVP>维度化时使用的值集类型
+ */
 public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends AbstractTypeAnalyze {
 
 	private final static Logger logger = LoggerFactory.getLogger(RevertRelationshipTreeUitl.class);
