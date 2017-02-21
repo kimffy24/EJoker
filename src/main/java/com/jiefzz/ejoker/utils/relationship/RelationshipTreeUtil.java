@@ -23,6 +23,10 @@ import com.jiefzz.ejoker.utils.relationship.SpecialTypeHandler.Handler;
 public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTypeAnalyze {
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
+	private final static  Class<?>[] unsupportTypes = new Class<?>[]{
+		java.math.BigDecimal.class,
+		java.math.BigInteger.class
+	};
 
 	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
 
@@ -55,7 +59,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 		// 接受类型：普通类型，java集合类型，数组类型，枚举类型
 		if (clazz.isPrimitive() || ParameterizedTypeUtil.isDirectSerializableType(clazz))
 			throw new RuntimeException("The converting bean is not a complex structure object!");
-		ContainerKVP resultKVContainer = eval.createNode();
+		ContainerKVP keyValueSet = eval.createNode();
 		Map<String, Field> analyzeClazzInfo = analyzeClazzInfo(clazz);
 		Set<Entry<String, Field>> fieldSet = analyzeClazzInfo.entrySet();
 		for (Entry<String, Field> fieldTuple : fieldSet) {
@@ -77,37 +81,48 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			}
 			if (value == null)
 				continue;
+			Class<?> valueType = value.getClass();
 
 			// TODO 本类中有三个结构类似的语句块，如果能用函数编程那该多好啊。。。。
 
 			// 基础类型
 			if (ParameterizedTypeUtil.isDirectSerializableType(fieldType))
-				eval.addToKeyValueSet(resultKVContainer, value, fieldName);
+				eval.addToKeyValueSet(keyValueSet, value, fieldName);
 			// Java集合类型
 			else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
 				if (value instanceof Queue)
 					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
 				if (value instanceof Collection)
-					eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), fieldName);
+					eval.addToKeyValueSet(keyValueSet, innerAssemblingVP(value), fieldName);
 				else if (value instanceof Map)
-					eval.addToKeyValueSet(resultKVContainer, innerAssemblingKVP(value), fieldName);
+					eval.addToKeyValueSet(keyValueSet, innerAssemblingKVP(value), fieldName);
 				// 枚举类型
 			} else if (fieldType.isEnum())
-				eval.addToKeyValueSet(resultKVContainer, ((Enum) value).ordinal(), fieldName);
+				eval.addToKeyValueSet(keyValueSet, ((Enum) value).ordinal(), fieldName);
 			// 数组类型
 			else if (fieldType.isArray())
-				eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), fieldName);
+				eval.addToKeyValueSet(keyValueSet, innerAssemblingVP(value), fieldName);
 			// 普通类类型
 			else {
 				Handler handler;
 				// 如果有存在 用户指定的解析器
-				if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
-					eval.addToKeyValueSet(resultKVContainer, handler.convert(value), fieldName);
-				} else
-					eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), fieldName);
+				if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
+					eval.addToKeyValueSet(keyValueSet, handler.convert(value), fieldName);
+				} else if (fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)) {
+					eval.addToKeyValueSet(keyValueSet, value, fieldName);
+				} else {
+					// 不支持高精度数据类型。
+					for(Class<?> unsupportType:unsupportTypes) {
+						if(unsupportType.isAssignableFrom(valueType))
+							throw new RuntimeException(
+									String.format("Unsupport type %s, unexcepted on field %s.%s", unsupportType.getName(), clazz, fieldName)
+							);
+					}
+					eval.addToKeyValueSet(keyValueSet, getTreeStructureMapInner(value), fieldName);
+				}
 			}
 		}
-		return resultKVContainer;
+		return keyValueSet;
 	}
 
 	/**

@@ -51,10 +51,12 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 		Set<Entry<String,Field>> entrySet = analyzeClazzInfo.entrySet();
 		
 		Object value;
+		Class<?> valueType;
 		for(Entry<String,Field> entry : entrySet){
 			String fieldName = entry.getKey();
 			if(null == (value = disassemblyWorker.getValue(source, fieldName)))
 				continue;
+			valueType = value.getClass();
 			Field field = entry.getValue();
 			Class<?> fieldType = field.getType();
 			field.setAccessible(true);
@@ -99,15 +101,28 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 						field.set(newInstance, revertIntoArrayByte(vpNode));
 					else if(componentType==boolean.class)
 						field.set(newInstance, revertIntoArrayBoolean(vpNode));
-				}
+				} else {
 				// 常规对象
-				else {
+					
+					// 兼容高精度数据类型。
+					if(java.math.BigDecimal.class.isAssignableFrom(valueType)) {
+						value = ((Number )value).doubleValue();
+					}
+					else if(java.math.BigInteger.class.isAssignableFrom(valueType)) {
+						value = ((Number )value).intValue();
+					}
+					valueType = value.getClass();
+					
 					Handler handler;
-					// 如果有存在 用户指定的解析器
 					if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(fieldType))) {
+						// 如果有存在 用户指定的解析器
 						field.set(newInstance, handler.revert(value));
-					} else
+					} else if(fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)) {
+						// 可以接受的泛型。
+						field.set(newInstance, value);
+					} else {
 						field.set(newInstance, revert(fieldType, disassemblyWorker.getChildKVP(source, fieldName)));
+					}
 				}
 			} catch (Exception e) {
 				throw new RuntimeException(String.format("Revert faild on [%s]'s field [%s]", clazz.getName(), fieldName), e);
