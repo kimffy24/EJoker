@@ -9,15 +9,16 @@ public class BaseAsyncTaskResult {
 
 	public final static BaseAsyncTaskResult Success = new BaseAsyncTaskResult(AsyncTaskStatus.Success);
 
-	private AsyncTaskStatus status = AsyncTaskStatus.Undefined;
-	private String errorMessage = null;
+	protected final AsyncTaskStatus status;
+	protected final String errorMessage;
 
 	public BaseAsyncTaskResult(AsyncTaskStatus status) {
-		setStatus(status);
+		this.status = status;
+		this.errorMessage = "";
 	}
 	public BaseAsyncTaskResult(AsyncTaskStatus status, String errorMessage) {
-		this(status);
-		setErrorMessage(errorMessage);
+		this.status = status;
+		this.errorMessage = errorMessage;
 	}
 
 	/* ========Getter and Setter========= */
@@ -26,16 +27,8 @@ public class BaseAsyncTaskResult {
 		return status;
 	}
 
-	protected void setStatus(AsyncTaskStatus status) {
-		this.status = status;
-	}
-
 	public String getErrorMessage() {
 		return errorMessage;
-	}
-
-	protected void setErrorMessage(String errorMessage) {
-		this.errorMessage = errorMessage;
 	}
 
 }
