@@ -28,12 +28,26 @@ public class SendQueueMessageService {
 		try {
 			SendResult sendResult = producer.sendMessage(message, routingKey);
 			if(SendStatus.Success != sendResult.sendStatus) {
-				logger.error("Queue message sync send failed! [sendResult={}, routingKey={}]", sendResult, routingKey);
+				logger.error(
+						"Queue message sync send failed! [sendResult={}, routingKey={}]",
+						sendResult,
+						routingKey
+				);
 				throw new IOException(sendResult.errorMessage);
 			}
-			logger.debug("Queue message sync send succeed. [sendResult={}, routingKey={}]", sendResult, routingKey);
+			logger.debug(
+					"Queue message sync send succeed. [sendResult={}, routingKey={}]",
+					sendResult,
+					routingKey
+			);
 		} catch (Exception e) {
-			logger.error(String.format("Queue message synch send has exception! [message=%s, routingKey=%s]", message.toString(), routingKey), e);
+			logger.error(
+					String.format(
+							"Queue message synch send has exception! [message=%s, routingKey=%s]",
+							message.toString(),
+							routingKey),
+					e
+			);
 			throw new RuntimeException(e);
 		}
 
