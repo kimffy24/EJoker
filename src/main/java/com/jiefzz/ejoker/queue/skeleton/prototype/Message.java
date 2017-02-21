@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue.protocols;
+package com.jiefzz.ejoker.queue.skeleton.prototype;
 
 import java.io.Serializable;
 

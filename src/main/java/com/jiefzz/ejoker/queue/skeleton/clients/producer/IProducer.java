@@ -1,9 +1,9 @@
-package com.jiefzz.ejoker.z.queue;
+package com.jiefzz.ejoker.queue.skeleton.clients.producer;
 
 import java.util.concurrent.Future;
 
-import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 
 public interface IProducer extends IQueueComsumerWokerService {
 

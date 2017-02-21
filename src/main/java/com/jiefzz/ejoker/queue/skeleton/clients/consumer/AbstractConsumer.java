@@ -1,7 +1,6 @@
-package com.jiefzz.ejoker.z.queue.clients.consumers;
+package com.jiefzz.ejoker.queue.skeleton.clients.consumer;
 
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
-import com.jiefzz.ejoker.z.queue.IConsumer;
 
 public abstract class AbstractConsumer implements IConsumer {
 

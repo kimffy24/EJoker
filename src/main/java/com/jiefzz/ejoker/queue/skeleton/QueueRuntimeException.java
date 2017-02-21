@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue;
+package com.jiefzz.ejoker.queue.skeleton;
 
 public class QueueRuntimeException extends RuntimeException {
 

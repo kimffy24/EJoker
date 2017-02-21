@@ -1,6 +1,6 @@
-package com.jiefzz.ejoker.z.queue;
+package com.jiefzz.ejoker.queue.skeleton.clients.consumer;
 
-import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
+import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 
 /**
  * IConsumer is use to make sure that CommandConsumer

@@ -13,12 +13,12 @@ import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
+import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
+import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.queue.IProducer;
-import com.jiefzz.ejoker.z.queue.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.z.queue.IQueueProducerWokerService;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
 public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IQueueComsumerWokerService {

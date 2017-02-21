@@ -6,16 +6,16 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
+import com.jiefzz.ejoker.queue.skeleton.clients.producer.SendResult;
+import com.jiefzz.ejoker.queue.skeleton.clients.producer.SendStatus;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
-import com.jiefzz.ejoker.z.queue.IProducer;
-import com.jiefzz.ejoker.z.queue.clients.producers.SendResult;
-import com.jiefzz.ejoker.z.queue.clients.producers.SendStatus;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
 public class SendQueueMessageService {
@@ -66,6 +66,7 @@ public class SendQueueMessageService {
 							return new BaseAsyncTaskResult(AsyncTaskStatus.Failed, e.getMessage());
 						}
 					}
+					
 				}.bind(producer, message, routingKey)
 		);
 		return execute;

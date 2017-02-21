@@ -6,10 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
+import com.jiefzz.ejoker.queue.skeleton.clients.producer.AbstractProducer;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
-import com.jiefzz.ejoker.z.queue.QueueRuntimeException;
-import com.jiefzz.ejoker.z.queue.clients.producers.AbstractProducer;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
 import com.rabbitmq.client.Channel;
 
 public class RabbitMessageQueueProducer extends AbstractProducer {

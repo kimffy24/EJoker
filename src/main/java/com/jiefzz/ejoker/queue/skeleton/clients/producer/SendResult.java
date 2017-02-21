@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue.clients.producers;
+package com.jiefzz.ejoker.queue.skeleton.clients.producer;
 
 import com.jiefzz.ejoker.z.queue.protocols.MessageStoreResult;
 
@@ -18,7 +18,7 @@ public class SendResult {
     @Override
     public String toString()
     {
-        return String.format("[SendStatus:%d,MessageStoreResult:%s,ErrorMessage:%s]",
+        return String.format("[SendStatus:%d, MessageStoreResult:%s, ErrorMessage:%s]",
         		sendStatus.ordinal(),
         		messageStoreResult,
         		errorMessage);

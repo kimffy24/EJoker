@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue;
+package com.jiefzz.ejoker.queue.skeleton;
 
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 

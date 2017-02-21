@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.queue.clients.producers;
+package com.jiefzz.ejoker.queue.skeleton.clients.producer;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -7,11 +7,10 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
-import com.jiefzz.ejoker.z.queue.IProducer;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 public abstract class AbstractProducer implements IProducer {
 	
@@ -19,8 +18,6 @@ public abstract class AbstractProducer implements IProducer {
 	
 	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(AbstractProducer.class);
 
-	//protected abstract void produce(String routingKey, String body) throws IOException;
-	//protected abstract void produce(String routingKey, byte[] body) throws IOException;
 	protected abstract void produce(String routingKey, Message message) throws IOException;
 	
 	@Override
@@ -29,7 +26,7 @@ public abstract class AbstractProducer implements IProducer {
 		try {
 			return sendMessageAsync.get(12000, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			return new SendResult(SendStatus.Failed, null, e.getMessage());
 		}
 	}

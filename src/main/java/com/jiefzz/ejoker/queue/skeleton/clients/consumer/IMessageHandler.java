@@ -1,6 +1,6 @@
-package com.jiefzz.ejoker.z.queue.clients.consumers;
+package com.jiefzz.ejoker.queue.skeleton.clients.consumer;
 
-import com.jiefzz.ejoker.z.queue.protocols.Message;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 
 public interface IMessageHandler {
 	

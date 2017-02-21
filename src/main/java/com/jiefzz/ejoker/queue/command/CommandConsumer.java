@@ -23,14 +23,13 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IConsumer;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageContext;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageHandler;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.queue.IConsumer;
-import com.jiefzz.ejoker.z.queue.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
-import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
-import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
 
 @EService
 public class CommandConsumer implements IQueueComsumerWokerService, IMessageHandler {
@@ -49,12 +48,12 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 	private IRepository repository;
 	@Resource
 	private IAggregateStorage aggregateRootStorage;
+	
+	private String commandConsumerGroup;
 
 	private IConsumer consumer;
 	
-	public CommandConsumer(String groupName, ConsumerSetting setting) {}
-
-	public CommandConsumer(String groupName) { this(groupName, null); }
+	public CommandConsumer(String groupName) { commandConsumerGroup = groupName; }
 
 	public CommandConsumer() { this(defaultCommandConsumerGroup); }
 
@@ -108,6 +107,7 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 	 *
 	 */
 	class CommandExecuteContext implements ICommandExecuteContext {
+		
 		private String result;
 		private final ConcurrentHashMap<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<String, IAggregateRoot>();;
 		private final IRepository repository;

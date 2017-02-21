@@ -1,10 +1,13 @@
-package com.jiefzz.ejoker.z.queue.clients.producers;
+package com.jiefzz.ejoker.queue.skeleton.clients.producer;
 
 public enum SendStatus {
 	
 	Undefined,
+	
 	Success,
+	
 	Timeout,
+	
 	Failed
 	
 }

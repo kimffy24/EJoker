@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
-import com.jiefzz.ejoker.z.queue.IQueueProducerWokerService;
 
 @EService
 public class SendReplyService {
