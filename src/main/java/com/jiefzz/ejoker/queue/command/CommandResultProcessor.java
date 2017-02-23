@@ -29,9 +29,6 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	private final ConcurrentHashMap<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
 
-//	@Resource
-//	IJSONConverter jsonConverter;
-
 	private AtomicBoolean start = new AtomicBoolean(false);
 	
 	@Override
@@ -57,8 +54,6 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	@Override
 	public CommandResultProcessor shutdown() {
-		//if(!start.compareAndSet(true, false))
-		//	logger.warn("{} has stopped!", this.getClass().getName());
 		logger.error("Actually, we could not shutdown the CommandResultProcessor!!!");
 		return this;
 	}
@@ -113,7 +108,8 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 					logger.debug("Command result return, {}", commandResult);
 			} else if(CommandReturnType.EventHandled == commandTaskCompletionSource.getCommandReturnType()) {
 				if(CommandStatus.Failed == commandResult.getStatus() || CommandStatus.NothingChanged == commandResult.getStatus()) {
-					commandTaskMap.remove(commandResult.getCommandId());				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
+					commandTaskMap.remove(commandResult.getCommandId());
+					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
 					if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
 						logger.debug("Command result return, {}", commandResult);
 				}
@@ -124,8 +120,8 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	class CommandTaskCompletionSource {
 
-		private CommandReturnType commandReturnType;
-		private FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource;
+		private final CommandReturnType commandReturnType;
+		private final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource;
 
 		public CommandTaskCompletionSource(CommandReturnType commandReturnType,
 				FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
@@ -137,17 +133,8 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			return commandReturnType;
 		}
 
-		public void setCommandReturnType(CommandReturnType commandReturnType) {
-			this.commandReturnType = commandReturnType;
-		}
-
 		public FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> getTaskCompletionSource() {
 			return taskCompletionSource;
-		}
-
-		public void setTaskCompletionSource(
-				FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
-			this.taskCompletionSource = taskCompletionSource;
 		}
 	}
 

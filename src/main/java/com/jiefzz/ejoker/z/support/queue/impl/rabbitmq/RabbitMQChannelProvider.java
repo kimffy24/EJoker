@@ -19,7 +19,10 @@ public class RabbitMQChannelProvider {
 	private final static String configFileName = "rabbitmq.properties";
 	private final static Properties props = new Properties();
 	private final static ConnectionFactory factory;
-	private final static Connection connection;
+	
+	private static Connection connection;
+	
+	private static boolean status4init = false;
 
 	public final static String EXCHANGE_NAME;
 
@@ -56,7 +59,10 @@ public class RabbitMQChannelProvider {
 		} else {
 			EXCHANGE_NAME = "ejoker";
 		}
-
+		
+	}
+	
+	private static void init(){
 		try {
 			connection = factory.newConnection();
 			
@@ -74,7 +80,6 @@ public class RabbitMQChannelProvider {
 		} catch ( Exception e ) {
 			throw new InfrastructureRuntimeException("Could not connect to rabbitmq server!!!", e);
 		}
-		
 	}
 	
 	private static RabbitMQChannelProvider instance=null;
@@ -85,6 +90,11 @@ public class RabbitMQChannelProvider {
 	 * @return RabbitMQChannelProvider
 	 */
 	static public RabbitMQChannelProvider getInstance(){
+
+		if(!status4init) {
+			init();
+			status4init = true;
+		}
 		return (null!=instance)?instance:(instance = new RabbitMQChannelProvider());
 	}
 

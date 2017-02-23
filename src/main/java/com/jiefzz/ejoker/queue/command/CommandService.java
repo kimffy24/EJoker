@@ -17,10 +17,9 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
-import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
@@ -63,8 +62,8 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 
 	private IProducer producer;
 
-	public IProducer getProducer() { return producer; }
 	public CommandService useProducer(IProducer producer) { this.producer = producer; return this;}
+	public IProducer getProducer() { return producer; }
 
 	@Override
 	public CommandService start() {

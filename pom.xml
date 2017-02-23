@@ -62,7 +62,7 @@
 			<version>3.6.1</version>
 		</dependency>
 		
-		<!-- 消息队列驱动 - RabbitMQ -->
+		<!-- 消息队列驱动 - RocketMQ -->
 		<dependency>
 		    <groupId>com.aliyun.openservices</groupId>
 		    <artifactId>ons-client</artifactId>

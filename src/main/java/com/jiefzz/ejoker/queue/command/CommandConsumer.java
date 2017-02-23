@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.queue.command;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Resource;
@@ -30,13 +31,12 @@ import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageContext;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageHandler;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.utilities.Ensure;
 
 @EService
 public class CommandConsumer implements IQueueComsumerWokerService, IMessageHandler {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
-
-	private final static String defaultCommandConsumerGroup = "CommandConsumerGroup";
 
 	@Resource
 	private SendReplyService sendReplyService;
@@ -49,13 +49,9 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 	@Resource
 	private IAggregateStorage aggregateRootStorage;
 	
-	private String commandConsumerGroup;
-
 	private IConsumer consumer;
 	
-	public CommandConsumer(String groupName) { commandConsumerGroup = groupName; }
-
-	public CommandConsumer() { this(defaultCommandConsumerGroup); }
+	public CommandConsumer() {}
 
 	public IConsumer getConsumer() { return consumer; }
 	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
@@ -68,14 +64,7 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 		HashMap<String, String> commandItems = new HashMap<String, String>();
 		String messageBody = new String(message.body, Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType;
-		try {
-			commandType = (Class<? extends ICommand> )Class.forName(message.tag);
-		} catch (ClassNotFoundException e) {
-			String format = String.format("Defination of [%s] is not found!!!", message.tag);
-			logger.error(format);
-			throw new CommandRuntimeException(format);
-		}
+		Class<? extends ICommand> commandType = getCommandPrototype(message.tag);
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
 		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(repository, aggregateRootStorage, message, context, commandMessage, sendReplyService);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
@@ -98,6 +87,23 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 	public CommandConsumer shutdown() {
 		consumer.shutdown();
 		return this;
+	}
+	
+	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<String, Class<? extends ICommand>>();
+	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
+		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
+		Class<? extends ICommand> commandType = commandTypeDict.getOrDefault(commandTypeString, null);
+		if(null!=commandType)
+			return commandType;
+		try {
+			commandType = (Class<? extends ICommand> )Class.forName(commandTypeString);
+			commandTypeDict.put(commandTypeString, commandType);
+			return commandType;
+		} catch (ClassNotFoundException e) {
+			String format = String.format("Defination of [%s] is not found!!!", commandTypeString);
+			logger.error(format);
+			throw new CommandRuntimeException(format);
+		}
 	}
 
 	/**
