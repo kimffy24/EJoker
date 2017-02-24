@@ -34,8 +34,8 @@ public class MQConsumer extends AbstractConsumer {
 		
 		jsonSerializer = eJokerContext.get(IJSONConverter.class);
 		
-		consumer = new DefaultMQPushConsumer("PushConsumer");  
-        consumer.setNamesrvAddr(MQProperties.NAMESERVER_ADDRESS);  
+		consumer = new DefaultMQPushConsumer(MQProperties.COMSUMER_GROUP);
+        consumer.setNamesrvAddr(MQProperties.NAMESERVER_ADDRESS);
 	}
 	
 	

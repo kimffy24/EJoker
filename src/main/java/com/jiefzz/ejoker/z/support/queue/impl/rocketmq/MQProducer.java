@@ -22,7 +22,8 @@ public class MQProducer extends AbstractProducer {
 	
 	public MQProducer(IEJokerSimpleContext eJokerContext) {
 		
-		producer = new DefaultMQProducer("Producer");
+		producer = new DefaultMQProducer(MQProperties.PRODUCER_GROUP);
+		producer.setInstanceName("EJokerProducer");
 		producer.setNamesrvAddr(MQProperties.NAMESERVER_ADDRESS);
 		
 	}
