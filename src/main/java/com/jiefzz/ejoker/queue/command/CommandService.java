@@ -85,7 +85,7 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 			e.printStackTrace();
 			BaseAsyncTaskResult taskResult = new BaseAsyncTaskResult(AsyncTaskStatus.Failed, e.getMessage());
 			RipenFuture<BaseAsyncTaskResult> ripenFuture = new RipenFuture<BaseAsyncTaskResult>();
-			ripenFuture.TrySetResult(taskResult);
+			ripenFuture.trySetResult(taskResult);
 			return ripenFuture;
 		}
 	}

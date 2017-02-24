@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.AbstractConsumer;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageContext;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.rabbitmq.client.AMQP;

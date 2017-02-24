@@ -2,6 +2,8 @@ package com.jiefzz.ejoker.eventing;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
@@ -29,14 +31,27 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 	
 	@Override
 	public String toString(){
-		return this.getClass().getName() +"is Unimplementation!";
-		/*return String.format(
-				"[messageId=%s, commandId=%s, aggregateRootId=%s, aggregateRootTypeName=%s]",
+		String eventString = "";
+		if(null!=events && 0<events.size()) {
+			for(IDomainEvent<?> event:events)
+				eventString += event.getClass().getName() +"|";
+		}
+		String itemString = "";
+		if(null!=items && 0<items.size()) {
+			Set<Entry<String,String>> entrySet = items.entrySet();
+			for(Entry<String,String> entry:entrySet)
+				itemString += entry.getKey() +":" +entry.getValue() +"|";
+		}
+		return String.format(
+				"[messageId=%s, commandId=%s, aggregateRootId=%s, aggregateRootTypeName=%s, version=%d, events=%s, items=%s]",
 				this.getId(),
 				commandId,
 				getAggregateRootStringId(),
-				
-		);*/
+				getAggregateRootTypeName(),
+				getVersion(),
+				eventString,
+				itemString
+		);
 	}
 	
 

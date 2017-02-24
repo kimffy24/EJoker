@@ -7,14 +7,14 @@ import com.jiefzz.ejoker.eventing.impl.EventMailBox;
 public class EventCommittingConetxt {
 	
 	public IAggregateRoot aggregateRoot;
-	public DomainEventStream eventSteam;
+	public DomainEventStream eventStream;
 	public ProcessingCommand processingCommand;
 	public EventMailBox eventMailBox = null;
 	public EventCommittingConetxt next = null;
 
 	public EventCommittingConetxt(IAggregateRoot aggregateRoot, DomainEventStream eventSteam, ProcessingCommand processingCommand) {
 		this.aggregateRoot = aggregateRoot;
-		this.eventSteam = eventSteam;
+		this.eventStream = eventSteam;
 		this.processingCommand = processingCommand;
 	}
 	

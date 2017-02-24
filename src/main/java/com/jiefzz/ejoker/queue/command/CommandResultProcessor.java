@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.queue.command;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,7 +28,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
-	private final ConcurrentHashMap<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
+	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
 	
@@ -91,7 +92,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			);
 
 			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
-			commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult);
+			commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult);
 		}
 	}
 
@@ -104,13 +105,13 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			if(CommandReturnType.CommandExecuted == commandTaskCompletionSource.getCommandReturnType()) {
 				commandTaskMap.remove(commandResult.getCommandId());
 				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
-				if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
+				if(commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 					logger.debug("Command result return, {}", commandResult);
 			} else if(CommandReturnType.EventHandled == commandTaskCompletionSource.getCommandReturnType()) {
 				if(CommandStatus.Failed == commandResult.getStatus() || CommandStatus.NothingChanged == commandResult.getStatus()) {
 					commandTaskMap.remove(commandResult.getCommandId());
 					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
-					if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
+					if(commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 						logger.debug("Command result return, {}", commandResult);
 				}
 			}

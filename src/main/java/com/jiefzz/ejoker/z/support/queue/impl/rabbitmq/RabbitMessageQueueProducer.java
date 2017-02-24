@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.AbstractProducer;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.rabbitmq.client.Channel;
 
@@ -26,6 +26,7 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 	
 	@Override
 	public void produce(String key, Message msg) throws IOException {
+		System.out.println("key=" +key);
 		channel.basicPublish(RabbitMQChannelProvider.EXCHANGE_NAME, key, null, jsonSerializer.convert(msg).getBytes());
 	}
 

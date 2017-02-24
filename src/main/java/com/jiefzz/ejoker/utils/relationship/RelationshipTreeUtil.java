@@ -79,8 +79,9 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				logger.error("Could not get [{}] from [{}]!!!", fieldName, clazz.getName());
 				throw new RuntimeException("Could not get field value!!!", e);
 			}
-			if (value == null)
+			if (value == null) {
 				continue;
+			}
 			Class<?> valueType = value.getClass();
 
 			// TODO 本类中有三个结构类似的语句块，如果能用函数编程那该多好啊。。。。

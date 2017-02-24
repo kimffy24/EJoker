@@ -2,21 +2,23 @@ package com.jiefzz.ejoker.z.common.io;
 
 public final class AsyncTaskResult<T> extends BaseAsyncTaskResult {
 
-	private T data = null;
+	private final T data;
 
 	public AsyncTaskResult(AsyncTaskStatus status) {
 		super(status);
+		data = null;
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, String errorMessage) {
 		super(status, errorMessage);
+		data = null;
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, T data) {
 		super(status);
-		setData(data);
+		this.data = data;
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, String errorMessage, T data) {
 		super(status, errorMessage);
-		setData(data);
+		this.data = data;
 	}
 
 
@@ -26,7 +28,4 @@ public final class AsyncTaskResult<T> extends BaseAsyncTaskResult {
 		return data;
 	}
 
-	private void setData(T data) {
-		this.data = data;
-	}
 }

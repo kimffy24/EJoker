@@ -1,6 +1,8 @@
 package com.jiefzz.ejoker.queue.domainEvent;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +15,13 @@ import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
+import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
 
 @EService
 public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IQueueComsumerWokerService {
@@ -62,9 +65,9 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	}
 	
 	@Override
-	public void publishAsync(DomainEventStreamMessage eventStream) {
+	public Future<BaseAsyncTaskResult> publishAsync(DomainEventStreamMessage eventStream) {
 		Message queueMessage = createQueueMessage(eventStream);
-		sendQueueMessageService.sendMessageAsync(
+		return sendQueueMessageService.sendMessageAsync(
 				producer,
 				queueMessage,
 				queueMessage.topic!=null?queueMessage.topic:eventStream.getAggregateRootStringId()
@@ -74,8 +77,9 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	public Message createQueueMessage(DomainEventStreamMessage eventStream){
 		EventStreamMessage eventMessage = CreateEventMessage(eventStream);
 		Collection<IDomainEvent<?>> events = eventStream.getEvents();
-		IDomainEvent<?>[] eventArray = (IDomainEvent<?>[] )events.toArray();
-		String topic = eventTopicProvider.getTopic(eventArray[0]);
+		Iterator<IDomainEvent<?>> iterator = events.iterator();
+//		IDomainEvent<?>[] eventArray = (IDomainEvent<?>[] )events.toArray();
+		String topic = eventTopicProvider.getTopic(iterator.next());
 		String data = jsonConverter.convert(eventMessage);
 		Message queueMessage = new Message(topic, QueueMessageTypeCode.DomainEventStreamMessage.ordinal(), data.getBytes());
 		return queueMessage;

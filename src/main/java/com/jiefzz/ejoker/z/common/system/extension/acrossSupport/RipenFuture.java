@@ -7,7 +7,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -135,7 +134,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 		}
 	}
 	
-	public boolean TrySetResult(TResult result) {
+	public boolean trySetResult(TResult result) {
 		try {
 			if(lock4StatusChange.tryLock()) {
 				if(completedOrNot.get())
