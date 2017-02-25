@@ -90,7 +90,7 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		
 		@Override
 		public void onMessageHandled(Message Message) {
-			logger.warn("RabbitMQConsumerContext is uninplemented now!");
+			//logger.warn("RabbitMQConsumerContext is uninplemented now!");
 		}
 		
 	}

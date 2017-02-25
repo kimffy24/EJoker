@@ -123,18 +123,9 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 	 * Java中没有c# 的 async/await 调用，只能用最原始的创建线程任务对象的方法。
 	 */
 	@Override
-	public Future<AsyncTaskResult<CommandResult>> executeAsync(ICommand command, CommandReturnType commandReturnType) {
+	public Future<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
 		return asyncPool.execute(
 				new IAsyncTask<AsyncTaskResult<CommandResult>>() {
-					private ICommand command;
-					private CommandReturnType commandReturnType;
-
-					public IAsyncTask<AsyncTaskResult<CommandResult>> init(ICommand command, CommandReturnType commandReturnType){
-						this.command = command;
-						this.commandReturnType = commandReturnType;
-						return this;
-					}
-					
 					@Override
 					public AsyncTaskResult<CommandResult> call() throws Exception {
 						try {
@@ -152,7 +143,7 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 						}
 					}
 					
-				}.init(command, commandReturnType)
+				}
 		);
 	}
 

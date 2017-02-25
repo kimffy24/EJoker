@@ -45,21 +45,9 @@ public class SendQueueMessageService {
 
 	}
 		
-	public Future<BaseAsyncTaskResult> sendMessageAsync(IProducer producer, Message message, String routingKey) {
+	public Future<BaseAsyncTaskResult> sendMessageAsync(final IProducer producer, final Message message, final String routingKey) {
 		Future<BaseAsyncTaskResult> execute = asyncPool.execute(
 				new IAsyncTask<BaseAsyncTaskResult>() {
-					
-					IProducer producer;
-					Message message;
-					String routingKey;
-					
-					public IAsyncTask<BaseAsyncTaskResult> bind(IProducer producer, Message message, String routingKey) {
-						this.producer = producer;
-						this.message = message;
-						this.routingKey = routingKey;
-						return this;
-					}
-					
 					@Override
 					public BaseAsyncTaskResult call() throws Exception {
 						try {
@@ -76,8 +64,7 @@ public class SendQueueMessageService {
 						}
 					}
 					
-				}.bind(producer, message, routingKey)
-		);
+				});
 		return execute;
 	}
 }

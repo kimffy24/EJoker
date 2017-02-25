@@ -26,7 +26,6 @@ public class RabbitMessageQueueProducer extends AbstractProducer {
 	
 	@Override
 	public void produce(String key, Message msg) throws IOException {
-		System.out.println("key=" +key);
 		channel.basicPublish(RabbitMQChannelProvider.EXCHANGE_NAME, key, null, jsonSerializer.convert(msg).getBytes());
 	}
 

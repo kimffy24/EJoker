@@ -250,7 +250,7 @@ public class DefaultEventService implements IEventService {
 			}
 		}, new Action<BaseAsyncTaskResult>() {
 			public void execute(BaseAsyncTaskResult parameter) {
-				logger.debug("Publish event success, {}", eventStream);
+				logger.debug("Publish event success, {}", eventStream.toString());
 
 				String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();
 				CommandResult commandResult = new CommandResult(CommandStatus.Success,
