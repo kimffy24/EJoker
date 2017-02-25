@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.SendResult;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.SendStatus;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
@@ -27,7 +27,7 @@ public class SendQueueMessageService {
 	
 	private final static String IOEXCEPTION_SIGN = IOException.class.getName();
 	
-	public void sendMessage(IProducer producer, Message message, String routingKey) {
+	public void sendMessage(IProducer producer, EJokerQueueMessage message, String routingKey) {
 		try {
 			SendResult sendResult = producer.sendMessage(message, routingKey);
 			if(SendStatus.Success != sendResult.sendStatus) {
@@ -45,22 +45,22 @@ public class SendQueueMessageService {
 
 	}
 		
-	public Future<BaseAsyncTaskResult> sendMessageAsync(final IProducer producer, final Message message, final String routingKey) {
-		Future<BaseAsyncTaskResult> execute = asyncPool.execute(
-				new IAsyncTask<BaseAsyncTaskResult>() {
+	public Future<AsyncTaskResultBase> sendMessageAsync(final IProducer producer, final EJokerQueueMessage message, final String routingKey) {
+		Future<AsyncTaskResultBase> execute = asyncPool.execute(
+				new IAsyncTask<AsyncTaskResultBase>() {
 					@Override
-					public BaseAsyncTaskResult call() throws Exception {
+					public AsyncTaskResultBase call() throws Exception {
 						try {
 							Future<SendResult> future = producer.sendMessageAsync(message, routingKey);
 							SendResult sendResult = future.get();
 							if(sendResult.errorMessage!=null && sendResult.errorMessage.startsWith(IOEXCEPTION_SIGN)) {
 								logger.error(String.format("EJoker message async send failed, sendResult: %s", sendResult.toString()));
-								return new BaseAsyncTaskResult(AsyncTaskStatus.IOException, sendResult.errorMessage);
+								return new AsyncTaskResultBase(AsyncTaskStatus.IOException, sendResult.errorMessage);
 							}
-							return BaseAsyncTaskResult.Success;
+							return AsyncTaskResultBase.Success;
 						} catch ( Exception e ) {
 							logger.error(String.format("EJoker message async send has exception."), e);
-							return new BaseAsyncTaskResult(AsyncTaskStatus.IOException, e.getMessage());
+							return new AsyncTaskResultBase(AsyncTaskStatus.IOException, e.getMessage());
 						}
 					}
 					

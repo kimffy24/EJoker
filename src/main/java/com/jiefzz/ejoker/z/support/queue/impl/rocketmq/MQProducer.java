@@ -7,10 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.exception.MQClientException;
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.producer.DefaultMQProducer;
-import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.AbstractProducer;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 
@@ -26,12 +25,6 @@ public class MQProducer extends AbstractProducer {
 		producer.setInstanceName("EJokerProducer");
 		producer.setNamesrvAddr(MQProperties.NAMESERVER_ADDRESS);
 		
-	}
-	
-	@Override
-	public IQueueComsumerWokerService subscribe(String topic) {
-		logger.warn("[{}] is unimplemented!", MQProducer.class.getName() +".subscribe()" );
-		return this;
 	}
 
 	@Override
@@ -53,7 +46,7 @@ public class MQProducer extends AbstractProducer {
 	}
 
 	@Override
-	protected void produce(String routingKey, Message message) throws IOException {
+	protected void produce(String routingKey, EJokerQueueMessage message) throws IOException {
 		com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message rmqMessage = 
 				new com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message();
 		rmqMessage.setTopic(message.topic);

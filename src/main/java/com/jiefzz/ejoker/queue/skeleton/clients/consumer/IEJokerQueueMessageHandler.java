@@ -1,8 +1,8 @@
 package com.jiefzz.ejoker.queue.skeleton.clients.consumer;
 
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 
-public interface IMessageHandler {
+public interface IEJokerQueueMessageHandler {
 	
 	/**
 	 * 发送时是什么格式，就拿回什么格式。
@@ -10,6 +10,6 @@ public interface IMessageHandler {
 	 * @param context
 	 */
 	//void handle(QueueMessage message, IMessageContext context);
-	void handle(Message message, IMessageContext context);
+	void handle(EJokerQueueMessage message, IEJokerQueueMessageContext context);
 	
 }

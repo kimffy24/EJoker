@@ -10,8 +10,8 @@ import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.AbstractConsumer;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageContext;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 import com.rabbitmq.client.AMQP;
@@ -50,7 +50,7 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		DefaultConsumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-				Message ejokerMessage = jsonSerializer.revert(new String(body, Charset.forName("UTF-8")), Message.class);
+				EJokerQueueMessage ejokerMessage = jsonSerializer.revert(new String(body, Charset.forName("UTF-8")), EJokerQueueMessage.class);
 				
 				commandConsumer.handle(ejokerMessage, new RabbitMQConsumerContext());
 				
@@ -86,10 +86,10 @@ public class RabbitMessageQueueConsumer extends AbstractConsumer {
 		return this;
 	}
 	
-	class RabbitMQConsumerContext implements IMessageContext {
+	class RabbitMQConsumerContext implements IEJokerQueueMessageContext {
 		
 		@Override
-		public void onMessageHandled(Message Message) {
+		public void onMessageHandled(EJokerQueueMessage Message) {
 			//logger.warn("RabbitMQConsumerContext is uninplemented now!");
 		}
 		

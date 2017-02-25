@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.commanding.CommandResult;
+import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
 
@@ -16,6 +17,15 @@ public class SendReplyService {
 		try {
 			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
 			replyHandler.handlerResult(replyType, commandResult);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
+		try {
+			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
+			replyHandler.handlerResult(replyType, eomainEventHandledMessage);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

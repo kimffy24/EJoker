@@ -37,12 +37,14 @@ public class DefaultEJokerClassMetaProvider implements IEJokerClassMetaProvidor,
 	public Class<?> resolve(Class<?> type, String pSignature) {
 		GenericityMapper genericityMapper = rootMetaRecord.eJokerTheSupportAbstractGenericityInstanceTypeMapper.get(type);
 		ImplementationTuple implementationTuple;
+		if(null==genericityMapper)
+			throw new ContextRuntimeException(String.format("Could not resolve type: %s%s", type.getName(), pSignature));
 		if(GenericTypeUtil.NO_GENERAL_SIGNATURE.equals(pSignature)) {
 			if(null == (implementationTuple = genericityMapper.candidateImplementations))
-				throw new ContextRuntimeException(String.format("Could not resolve type: %s<%s>", type.getName(), pSignature));
-		} else {
-			if(null == (implementationTuple = genericityMapper.signatureImplementations.getOrDefault(pSignature, null)))
-				throw new ContextRuntimeException(String.format("Could not resolve type: %s<%s>", type.getName(), pSignature));
+				throw new ContextRuntimeException(String.format("Could not resolve type: %s%s", type.getName(), pSignature));
+		} else if(null == (implementationTuple = genericityMapper.signatureImplementations.getOrDefault(pSignature, null))) {
+			if(null == (implementationTuple = genericityMapper.candidateImplementations))
+				throw new ContextRuntimeException(String.format("Could not resolve type: %s%s", type.getName(), pSignature));
 		}
 
 		int count = implementationTuple.getCountOfImplementations();

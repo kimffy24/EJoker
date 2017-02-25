@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.context.annotation.assemblies;
+package com.jiefzz.ejoker.z.common.context.annotation.assemblies.varieties;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,6 +15,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.EJokerAnnotation;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @EJokerAnnotation
-public @interface Domain {
+public @interface ApplicationMessageHandler {
 
 }

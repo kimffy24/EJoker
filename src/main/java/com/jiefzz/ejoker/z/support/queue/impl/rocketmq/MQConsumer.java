@@ -17,8 +17,8 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.AbstractConsumer;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageContext;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 
@@ -60,7 +60,7 @@ public class MQConsumer extends AbstractConsumer {
 			public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 				MessageExt msg = msgs.get(0);
 				
-				Message ejokerMessage = jsonSerializer.revert(new String(msg.getBody(), Charset.forName("UTF-8")), Message.class);
+				EJokerQueueMessage ejokerMessage = jsonSerializer.revert(new String(msg.getBody(), Charset.forName("UTF-8")), EJokerQueueMessage.class);
 				commandConsumer.handle(ejokerMessage, new MQConsumerContext());
 				
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
@@ -83,10 +83,10 @@ public class MQConsumer extends AbstractConsumer {
 		return this;
 	}
 
-	class MQConsumerContext implements IMessageContext {
+	class MQConsumerContext implements IEJokerQueueMessageContext {
 		
 		@Override
-		public void onMessageHandled(Message Message) {
+		public void onMessageHandled(EJokerQueueMessage Message) {
 			logger.warn("MQConsumerContext is uninplemented now!");
 		}
 		

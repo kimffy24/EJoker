@@ -19,12 +19,12 @@ import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
 import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
@@ -78,13 +78,13 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 	}
 	
 	@Override
-	public Future<BaseAsyncTaskResult> sendAsync(ICommand command) {
+	public Future<AsyncTaskResultBase> sendAsync(ICommand command) {
 		try {
 			return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
 		} catch ( Exception e ) {
 			e.printStackTrace();
-			BaseAsyncTaskResult taskResult = new BaseAsyncTaskResult(AsyncTaskStatus.Failed, e.getMessage());
-			RipenFuture<BaseAsyncTaskResult> ripenFuture = new RipenFuture<BaseAsyncTaskResult>();
+			AsyncTaskResultBase taskResult = new AsyncTaskResultBase(AsyncTaskStatus.Failed, e.getMessage());
+			RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<AsyncTaskResultBase>();
 			ripenFuture.trySetResult(taskResult);
 			return ripenFuture;
 		}
@@ -133,7 +133,7 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 							FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource = new FutureTaskCompletionSource<AsyncTaskResult<CommandResult>>();
 							commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, taskCompletionSource);
 							
-							BaseAsyncTaskResult result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
+							AsyncTaskResultBase result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
 							if(AsyncTaskStatus.Success == result.getStatus())
 								return taskCompletionSource.task.get();
 							commandResultProcessor.processFailedSendingCommand(command);
@@ -147,17 +147,17 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 		);
 	}
 
-	private Message buildCommandMessage(ICommand command){
+	private EJokerQueueMessage buildCommandMessage(ICommand command){
 		return buildCommandMessage(command, false);
 	}
 
-	private Message buildCommandMessage(ICommand command, boolean needReply){
+	private EJokerQueueMessage buildCommandMessage(ICommand command, boolean needReply){
 		Ensure.notNull(command.getAggregateRootId(), "aggregateRootId");
         String commandData = jsonConverter.convert(command);
         String topic = commandTopicProvider.getTopic(command);
         String replyAddress = needReply && (null!=commandResultProcessor) ? commandResultProcessor.getBindingAddress() : null;
         String messageData = jsonConverter.convert(new CommandMessage(commandData, replyAddress));
-        return new Message(
+        return new EJokerQueueMessage(
             topic,
             QueueMessageTypeCode.CommandMessage.ordinal(),
             messageData.getBytes(Charset.forName("UTF-8")),

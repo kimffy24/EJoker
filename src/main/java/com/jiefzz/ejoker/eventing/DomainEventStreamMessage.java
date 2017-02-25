@@ -14,6 +14,7 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 	private static final long serialVersionUID = -721576949011677756L;
 	
 	private String commandId;
+	private String aggregateRootId;
 	private Map<String, String> items;
 	private Collection<IDomainEvent<?>> events;
 	
@@ -77,5 +78,16 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 
 	public void setEvents(Collection<IDomainEvent<?>> events) {
 		this.events = events;
+	}
+
+	@Override
+	public void setAggregateRootId(String aggregateRootId) {
+		this.aggregateRootId = aggregateRootId;
+		getAggregateRootStringId();
+	}
+
+	@Override
+	public String getAggregateRootId() {
+		return aggregateRootId;
 	}
 }

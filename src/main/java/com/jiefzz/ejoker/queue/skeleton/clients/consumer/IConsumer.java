@@ -10,6 +10,6 @@ import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
  */
 public interface IConsumer extends IQueueComsumerWokerService {
 
-	public IConsumer setMessageHandler(IMessageHandler commandConsumer);
+	public IConsumer setMessageHandler(IEJokerQueueMessageHandler commandConsumer);
 	
 }

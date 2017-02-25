@@ -5,18 +5,18 @@ package com.jiefzz.ejoker.z.common.io;
  * @author jiefzz
  *
  */
-public class BaseAsyncTaskResult {
+public class AsyncTaskResultBase {
 
-	public final static BaseAsyncTaskResult Success = new BaseAsyncTaskResult(AsyncTaskStatus.Success);
+	public final static AsyncTaskResultBase Success = new AsyncTaskResultBase(AsyncTaskStatus.Success);
 
 	protected final AsyncTaskStatus status;
 	protected final String errorMessage;
 
-	public BaseAsyncTaskResult(AsyncTaskStatus status) {
+	public AsyncTaskResultBase(AsyncTaskStatus status) {
 		this.status = status;
 		this.errorMessage = "";
 	}
-	public BaseAsyncTaskResult(AsyncTaskStatus status, String errorMessage) {
+	public AsyncTaskResultBase(AsyncTaskStatus status, String errorMessage) {
 		this.status = status;
 		this.errorMessage = errorMessage;
 	}

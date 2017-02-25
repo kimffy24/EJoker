@@ -10,8 +10,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.jiefzz.ejoker.EJoker;
-import com.jiefzz.ejoker.utils.helper.RegistCommandHandlerHelper;
-import com.jiefzz.ejoker.utils.helper.RegistDomainEventHandlerHelper;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
@@ -119,6 +120,7 @@ public class DefaultEJokerContext implements IEJokerContext {
 				// 扫描非框架内的包时，注册CommandHandler和DomainEventHandler
 				RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
 				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
+				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
 			}
 		}
 	}

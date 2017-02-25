@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.eventing.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -40,7 +41,8 @@ public class DefaultEventSerializer implements IEventSerializer {
 			} catch (ClassNotFoundException e) {
 				throw new RuntimeException(e.getMessage(), e);
 			}
-			Object event = jsonSerializer.revert(entry.getValue(), eventType);
+			Serializable event = JavaObjectSerializeUtil.deserialize(entry.getValue());
+//			Object event = jsonSerializer.revert(entry.getValue(), eventType);
 			list.add((IDomainEvent<?> )event);
 		}
 		return list;

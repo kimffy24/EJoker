@@ -8,10 +8,9 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.action.Action;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 /**
  * 模拟IOHelper的实现
@@ -25,28 +24,28 @@ public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
 
-	public <TAsyncResult extends BaseAsyncTaskResult> void tryAsyncActionRecursively(String asyncActionName,
+	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
 			Callable<String> getContextInfoAction, Action<String> failedAction) {
 		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, 0, false, 3,
 				1000);
 	}
 
-	public <TAsyncResult extends BaseAsyncTaskResult> void tryAsyncActionRecursively(String asyncActionName,
+	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
 			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes) {
 		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, retryTimes,
 				false, 3, 1000);
 	}
 
-	public <TAsyncResult extends BaseAsyncTaskResult> void tryAsyncActionRecursively(String asyncActionName,
+	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
 			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes, boolean retryWhenFailed) {
 		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, retryTimes,
 				retryWhenFailed, 3, 1000);
 	}
 
-	public <TAsyncResult extends BaseAsyncTaskResult> void tryAsyncActionRecursively(String asyncActionName,
+	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
 			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes, boolean retryWhenFailed, int maxRetryTimes) {
 		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, retryTimes,
@@ -77,7 +76,7 @@ public class IOHelper {
 	 * @param retryInterval
 	 *            重试间隔（毫秒)
 	 */
-	public <TAsyncResult extends BaseAsyncTaskResult> void tryAsyncActionRecursively(String asyncActionName,
+	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
 			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes, boolean retryWhenFailed, int maxRetryTimes,
 			int retryInterval) {
@@ -182,7 +181,7 @@ public class IOHelper {
 		}
 	}
 
-	private <TAsyncResult extends BaseAsyncTaskResult> void taskContinueAction(Future<TAsyncResult> task, Object obj) {
+	private <TAsyncResult extends AsyncTaskResultBase> void taskContinueAction(Future<TAsyncResult> task, Object obj) {
 		TaskExecutionContext<TAsyncResult> context = (TaskExecutionContext<TAsyncResult>) obj;
 		try {
 			if (task.isCancelled()) {
@@ -255,9 +254,5 @@ public class IOHelper {
 		public boolean retryWhenFailed;
 		public int maxRetryTimes;
 		public int retryInterval;
-	}
-
-	public static interface Action<TType> {
-		void execute(TType parameter);
 	}
 }

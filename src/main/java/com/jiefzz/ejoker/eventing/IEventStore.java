@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.concurrent.Future;
 
-import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 
 public interface IEventStore {
 	
@@ -29,7 +29,7 @@ public interface IEventStore {
 	 * 异步保存事件
 	 * @param event
 	 */
-	public Future<BaseAsyncTaskResult> appendAsync(DomainEventStream eventStream);
+	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream);
 	
 	/**
 	 * 同步保存事件

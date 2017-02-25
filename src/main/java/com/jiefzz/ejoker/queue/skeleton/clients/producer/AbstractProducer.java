@@ -7,7 +7,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
@@ -18,10 +19,10 @@ public abstract class AbstractProducer implements IProducer {
 	
 	AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(AbstractProducer.class);
 
-	protected abstract void produce(String routingKey, Message message) throws IOException;
+	protected abstract void produce(String routingKey, EJokerQueueMessage message) throws IOException;
 	
 	@Override
-	public SendResult sendMessage(Message message, String routingKey) {
+	public SendResult sendMessage(EJokerQueueMessage message, String routingKey) {
 		Future<SendResult> sendMessageAsync = sendMessageAsync(message, routingKey);
 		try {
 			return sendMessageAsync.get(12000, TimeUnit.MILLISECONDS);
@@ -32,19 +33,9 @@ public abstract class AbstractProducer implements IProducer {
 	}
 
 	@Override
-	public Future<SendResult> sendMessageAsync(Message message, String routingKey) {
+	public Future<SendResult> sendMessageAsync(final EJokerQueueMessage message, final String routingKey) {
 		return asyncPool.execute(
 				new IAsyncTask<SendResult>() {
-
-					Message message;
-					String routingKey;
-
-					public IAsyncTask<SendResult> bind(Message message, String routingKey) {
-						this.message = message;
-						this.routingKey = routingKey;
-						return this;
-					}
-
 					@Override
 					public SendResult call() {
 						try {
@@ -57,7 +48,10 @@ public abstract class AbstractProducer implements IProducer {
 						return new SendResult(SendStatus.Success, null, null);
 					}
 
-				}.bind(message, routingKey)
+				}
 		);
 	}
+
+	public IProducer getProducer(){ return this; }
+	public IQueueProducerWokerService useProducer(IProducer producer) { return this; }
 }

@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.domain.helper;
+package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -7,7 +7,7 @@ import java.util.Map;
 import com.jiefzz.ejoker.domain.AbstractAggregateRoot;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 
-public class AggregateHandlerJavaHelper {
+public class AggregateRootHandlerPool {
 	
 	private final static Map<Class<? extends IDomainEvent>, HandlerReflectionMapper> handlerMapper =
 			new HashMap<Class<? extends IDomainEvent>, HandlerReflectionMapper>();

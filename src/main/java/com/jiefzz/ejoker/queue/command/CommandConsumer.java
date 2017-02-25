@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,38 +24,37 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IConsumer;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageContext;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IMessageHandler;
-import com.jiefzz.ejoker.queue.skeleton.prototype.Message;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageHandler;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 
 @EService
-public class CommandConsumer implements IQueueComsumerWokerService, IMessageHandler {
+public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueueMessageHandler {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
-	@Resource
+	@Dependence
 	private SendReplyService sendReplyService;
-	@Resource
+	@Dependence
 	private IJSONConverter jsonSerializer;
-	@Resource
+	@Dependence
 	private ICommandProcessor processor;
-	@Resource
+	@Dependence
 	private IRepository repository;
-	@Resource
+	@Dependence
 	private IAggregateStorage aggregateRootStorage;
 	
 	private IConsumer consumer;
 	
-	public CommandConsumer() {}
-
 	public IConsumer getConsumer() { return consumer; }
 	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
 
 	@Override
-	public void handle(Message message, IMessageContext context) {
+	public void handle(EJokerQueueMessage message, IEJokerQueueMessageContext context) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
@@ -119,11 +116,11 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 		private final IRepository repository;
 		private final IAggregateStorage aggregateRootStorage;
 		private final SendReplyService sendReplyService;
-		private final Message message;
-		private final IMessageContext messageContext;
+		private final EJokerQueueMessage message;
+		private final IEJokerQueueMessageContext messageContext;
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, Message message, IMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
+		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
 			this.repository = repository;
 			this.aggregateRootStorage = aggregateRootStorage;
 			this.sendReplyService = sendReplyService;

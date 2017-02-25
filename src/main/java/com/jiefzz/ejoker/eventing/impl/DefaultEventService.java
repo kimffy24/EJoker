@@ -31,12 +31,12 @@ import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import com.jiefzz.ejoker.z.common.action.Action;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.io.IOHelper.Action;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 
@@ -181,9 +181,9 @@ public class DefaultEventService implements IEventService {
 		else
 			context.eventMailBox.tryRun(true);
 
-		ioHelper.tryAsyncActionRecursively("persistEventAsync", new IAsyncTask<Future<BaseAsyncTaskResult>>() {
+		ioHelper.tryAsyncActionRecursively("persistEventAsync", new IAsyncTask<Future<AsyncTaskResultBase>>() {
 			// AsyncAction
-			public Future<BaseAsyncTaskResult> call() throws Exception {
+			public Future<AsyncTaskResultBase> call() throws Exception {
 				return DefaultEventService.this.eventStore.appendAsync(context.eventStream);
 			}
 		}, new Action<Integer>() {
@@ -192,9 +192,9 @@ public class DefaultEventService implements IEventService {
 			public void execute(Integer currentRetryTimes) {
 				DefaultEventService.this.persistEventAsync(context, currentRetryTimes);
 			}
-		}, new Action<BaseAsyncTaskResult>() {
+		}, new Action<AsyncTaskResultBase>() {
 			// SuccessAction
-			public void execute(BaseAsyncTaskResult result) {
+			public void execute(AsyncTaskResultBase result) {
 				AsyncTaskResult<EventAppendResult> realrResult = (AsyncTaskResult<EventAppendResult> )result;
 				switch (realrResult.getData()) {
 				case Success:
@@ -239,8 +239,8 @@ public class DefaultEventService implements IEventService {
 	private void publishDomainEventAsync(final ProcessingCommand processingCommand,
 			final DomainEventStreamMessage eventStream, int retryTimes) {
 
-		ioHelper.tryAsyncActionRecursively("publishDomainEventAsync", new IAsyncTask<Future<BaseAsyncTaskResult>>() {
-			public Future<BaseAsyncTaskResult> call() throws Exception {
+		ioHelper.tryAsyncActionRecursively("publishDomainEventAsync", new IAsyncTask<Future<AsyncTaskResultBase>>() {
+			public Future<AsyncTaskResultBase> call() throws Exception {
 				return DefaultEventService.this.domainEventPublisher.publishAsync(eventStream);
 			}
 		}, new Action<Integer>() {
@@ -248,8 +248,8 @@ public class DefaultEventService implements IEventService {
 			public void execute(Integer currentRetryTimes) {
 				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, currentRetryTimes);
 			}
-		}, new Action<BaseAsyncTaskResult>() {
-			public void execute(BaseAsyncTaskResult parameter) {
+		}, new Action<AsyncTaskResultBase>() {
+			public void execute(AsyncTaskResultBase parameter) {
 				logger.debug("Publish event success, {}", eventStream.toString());
 
 				String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();

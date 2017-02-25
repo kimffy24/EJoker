@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.z.common.io;
 
-public final class AsyncTaskResult<T> extends BaseAsyncTaskResult {
+public final class AsyncTaskResult<T> extends AsyncTaskResultBase {
 
 	private final T data;
 

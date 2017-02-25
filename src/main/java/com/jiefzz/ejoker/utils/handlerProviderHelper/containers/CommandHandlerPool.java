@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.commanding.helper;
+package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandContext;
 import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 
-public class CommandHandlerJavaHelper {
+public class CommandHandlerPool {
 	
 	public final static Map<Class<? extends ICommand>, HandlerReflectionMapper> handlerMapper =
 			new HashMap<Class<? extends ICommand>, HandlerReflectionMapper>();

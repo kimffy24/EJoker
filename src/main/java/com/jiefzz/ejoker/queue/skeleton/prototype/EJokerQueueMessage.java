@@ -5,7 +5,7 @@ import java.io.Serializable;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
 
-public class Message implements Serializable {
+public class EJokerQueueMessage implements Serializable {
 
 	@PersistentIgnore
 	private static final long serialVersionUID = 8472364779319333477L;
@@ -16,17 +16,17 @@ public class Message implements Serializable {
 	public long createdTime;
 	public String tag;
 	
-	public Message() { }
-	public Message(String topic, int code, byte[] body) {
+	public EJokerQueueMessage() { }
+	public EJokerQueueMessage(String topic, int code, byte[] body) {
 		this(topic, code, body, System.currentTimeMillis(), null);
 	}
-	public Message(String topic, int code, byte[] body, String tag) {
+	public EJokerQueueMessage(String topic, int code, byte[] body, String tag) {
 		this(topic, code, body, System.currentTimeMillis(), tag);
 	}
-	public Message(String topic, int code, byte[] body, long createdTime) {
+	public EJokerQueueMessage(String topic, int code, byte[] body, long createdTime) {
 		this(topic, code, body, createdTime, null);
 	}
-	public Message(String topic, int code, byte[] body, long createdTime, String tag) {
+	public EJokerQueueMessage(String topic, int code, byte[] body, long createdTime, String tag) {
         Ensure.notNull(topic, "topic");
         Ensure.positive(code, "code");
         Ensure.notNull(body, "body");

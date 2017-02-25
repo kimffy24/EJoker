@@ -21,7 +21,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.io.BaseAsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 @EService
@@ -54,7 +54,7 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	@Override
-	public Future<BaseAsyncTaskResult> appendAsync(DomainEventStream eventStream) {
+	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream) {
 		LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
 		data.put("aggregateRootId", eventStream.getAggregateRootId());
 		data.put("aggregateRootTypeName", eventStream.getAggregateRootTypeName());
@@ -68,7 +68,7 @@ public class InMemoryEventStore implements IEventStore {
 			)
 		);
 		appendsync(eventStream);
-		RipenFuture<BaseAsyncTaskResult> future = new RipenFuture<BaseAsyncTaskResult>();
+		RipenFuture<AsyncTaskResultBase> future = new RipenFuture<AsyncTaskResultBase>();
 		future.trySetResult(new AsyncTaskResult<EventAppendResult>(AsyncTaskStatus.Success, EventAppendResult.Success));
 		return future;
 	}
