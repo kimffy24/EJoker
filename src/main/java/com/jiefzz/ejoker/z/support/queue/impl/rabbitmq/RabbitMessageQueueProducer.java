@@ -14,7 +14,7 @@ import com.rabbitmq.client.Channel;
 
 public class RabbitMessageQueueProducer extends AbstractProducer {
 
-	final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueProducer.class);
+	private final static Logger logger = LoggerFactory.getLogger(RabbitMessageQueueProducer.class);
 	
 	private Channel channel = null;
 	

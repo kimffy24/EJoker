@@ -7,9 +7,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +27,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	private final static Logger logger = LoggerFactory.getLogger(RipenFuture.class);
 	
 	private AtomicBoolean completedOrNot = new AtomicBoolean(false);
-	private Lock lock4StatusChange = new ReentrantLock();
+
 	private Queue<Thread> arriveThread = new ConcurrentLinkedQueue<Thread>();
 	
 	private boolean hasException = false;
@@ -63,7 +61,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 		if(hasCanceled)
 			return null;
 		if(hasException)
-			throw new TaskFaildException("A key thread executed faild!!!", exception);
+			throw new TaskFaildException("Thread executed faild!!!", exception);
 		return result;
 	}
 
@@ -73,97 +71,40 @@ public class RipenFuture<TResult> implements Future<TResult> {
 		return get();
 	}
 
-	public void setCanceled() {
-		if(completedOrNot.get())
-			throw new TimeNotPermitException();
-		if(completedOrNot.compareAndSet(false, true)) {
+	public boolean trySetCanceled() {
+		if (completedOrNot.compareAndSet(false, true)) {
 			this.hasCanceled = true;
 			finishedTheFuture();
-		}
-		
+			return true;
+		} else
+			return false;
 	}
 
-	public void setException(Throwable exception) {
-		if(completedOrNot.get())
-			throw new TimeNotPermitException();
-		if(completedOrNot.compareAndSet(false, true)) {
+	public boolean trySetException(Throwable exception) {
+		if (completedOrNot.compareAndSet(false, true)) {
 			this.hasException = true;
 			this.exception = exception;
 			finishedTheFuture();
-		}
-	}
-	
-	public void setResult(TResult result) {
-		if(completedOrNot.get())
-			throw new TimeNotPermitException();
-		if(completedOrNot.compareAndSet(false, true)) {
-			this.result = result;
-			finishedTheFuture();
-		}
-	}
-	
-	public boolean trySetCanceled() {
-		try {
-			if(lock4StatusChange.tryLock()) {
-				if(completedOrNot.get())
-					return false;
-				setCanceled();
-				return true;
-			} else
-				return false;
-		} catch (Exception e) {
+			return true;
+		} else
 			return false;
-		} finally {
-			lock4StatusChange.unlock();
-		}
-	}
-	
-	public boolean trySetException(Throwable exception) {
-		try {
-			if(lock4StatusChange.tryLock()) {
-				if(completedOrNot.get())
-					return false;
-				setException(exception);
-				return true;
-			} else
-				return false;
-		} catch (Exception e) {
-			return false;
-		} finally {
-			lock4StatusChange.unlock();
-		}
 	}
 	
 	public boolean trySetResult(TResult result) {
-		try {
-			if(lock4StatusChange.tryLock()) {
-				if(completedOrNot.get())
-					return false;
-				setResult(result);
-				return true;
-			} else
-				return false;
-		} catch (Exception e) {
+		if (completedOrNot.compareAndSet(false, true)) {
+			this.result = result;
+			finishedTheFuture();
+			return true;
+		} else
 			return false;
-		} finally {
-			lock4StatusChange.unlock();
-		}
 	}
 	
 	/**
 	 * 唤醒执行get方法而等待的线程
 	 */
 	private void finishedTheFuture() {
-		if(null!=arriveThread.peek()){
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					Thread thread;
-					while(null!=(thread = RipenFuture.this.arriveThread.poll())) {
-						LockSupport.unpark(thread);
-					}
-				}
-			}).run();
-		}
+		Thread thread;
+		if(null != (thread = arriveThread.poll()))
+			LockSupport.unpark(thread);
 	}
 }

@@ -8,7 +8,6 @@ import java.util.Enumeration;
 
 public class EObjectId {
 
-	@SuppressWarnings("unused")
 	private static enum BinarySystem {
 		Hexadecimal,
 		Duotricemary,

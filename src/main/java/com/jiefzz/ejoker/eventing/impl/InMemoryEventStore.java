@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Resource;
 
@@ -27,7 +28,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 @EService
 public class InMemoryEventStore implements IEventStore {
 
-	final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);
+	private final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);
 	
 	@Resource
 	IJSONConverter jsonConverter;
@@ -52,21 +53,24 @@ public class InMemoryEventStore implements IEventStore {
 		while(iterator.hasNext())
 			appendAsync(iterator.next());
 	}
+	
+	private AtomicLong atLong = new AtomicLong(0);
 
 	@Override
 	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream) {
-		LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
-		data.put("aggregateRootId", eventStream.getAggregateRootId());
-		data.put("aggregateRootTypeName", eventStream.getAggregateRootTypeName());
-		data.put("commandId", eventStream.getCommandId());
-		data.put("version", eventStream.getVersion());
-		data.put("createdOn", eventStream.getTimestamp());
-		data.put("events", jsonConverter.convert(
-				eventSerializer.serializer(
-						eventStream.getEvents()
-				)
-			)
-		);
+//		LinkedHashMap<String, Object> data = new LinkedHashMap<String, Object>();
+//		data.put("aggregateRootId", eventStream.getAggregateRootId());
+//		data.put("aggregateRootTypeName", eventStream.getAggregateRootTypeName());
+//		data.put("commandId", eventStream.getCommandId());
+//		data.put("version", eventStream.getVersion());
+//		data.put("createdOn", eventStream.getTimestamp());
+//		data.put("events", jsonConverter.convert(
+//				eventSerializer.serializer(
+//						eventStream.getEvents()
+//				)
+//			)
+//		);
+		logger.debug("模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), eventStream.toString());
 		appendsync(eventStream);
 		RipenFuture<AsyncTaskResultBase> future = new RipenFuture<AsyncTaskResultBase>();
 		future.trySetResult(new AsyncTaskResult<EventAppendResult>(AsyncTaskStatus.Success, EventAppendResult.Success));

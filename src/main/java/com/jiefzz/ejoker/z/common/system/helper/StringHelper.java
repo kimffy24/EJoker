@@ -7,8 +7,7 @@ public final class StringHelper {
 	}
 	
 	public static boolean isNullOrWhiteSpace(String targetString) {
-		if(null==targetString)
-			return true;
-		return "".equals(targetString.trim())?true:false;
+		return (null==targetString || "".equals(targetString.trim()))?true:false;
 	}
+	
 }

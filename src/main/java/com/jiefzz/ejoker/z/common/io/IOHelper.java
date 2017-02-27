@@ -181,8 +181,7 @@ public class IOHelper {
 		}
 	}
 
-	private <TAsyncResult extends AsyncTaskResultBase> void taskContinueAction(Future<TAsyncResult> task, Object obj) {
-		TaskExecutionContext<TAsyncResult> context = (TaskExecutionContext<TAsyncResult>) obj;
+	private <TAsyncResult extends AsyncTaskResultBase> void taskContinueAction(Future<TAsyncResult> task, TaskExecutionContext<TAsyncResult> context) {
 		try {
 			if (task.isCancelled()) {
 				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.", context.asyncActionName,
@@ -208,7 +207,7 @@ public class IOHelper {
 							context.maxRetryTimes, context.retryInterval);
 				} else {
 					executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
-							result.errorMessage);
+							"task result is null!!!");
 				}
 				return;
 			}

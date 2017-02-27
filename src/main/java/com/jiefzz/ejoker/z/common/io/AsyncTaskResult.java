@@ -21,7 +21,6 @@ public final class AsyncTaskResult<T> extends AsyncTaskResultBase {
 		this.data = data;
 	}
 
-
 	/* ========Getter and Setter========= */
 
 	public T getData() {

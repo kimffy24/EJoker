@@ -11,7 +11,7 @@ import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
 @EService
 public class SendReplyService {
 
-	final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);
+	private final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);
 	
 	public void sendReply(int replyType, CommandResult commandResult, String replyAddress) {
 		try {
