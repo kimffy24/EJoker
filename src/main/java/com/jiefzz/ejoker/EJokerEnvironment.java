@@ -15,9 +15,11 @@ import com.jiefzz.ejoker.z.common.utilities.Ensure;
  * 在ejoker.properties中封装一些跟执行环境相关的变量
  * @author JiefzzLon
 */
-public class EJokerEnvironment {
+public final class EJokerEnvironment {
 	
 	public final static String ENVIROMMENT_FILE="ejoker.properties";
+	
+	public final static long MAILBOX_IDLE_TIMEOUT = 30l;
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 
