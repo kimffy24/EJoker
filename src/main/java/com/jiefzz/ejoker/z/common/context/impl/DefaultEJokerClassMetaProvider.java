@@ -70,7 +70,9 @@ public class DefaultEJokerClassMetaProvider implements IEJokerClassMetaProvidor,
 	
 	@Override
 	public void executeEInitialize(Class<?> type, Object instance) {
-		Set<Method> methodSet = rootMetaRecord.eInitializeMapper.get(type);
+		Set<Method> methodSet = rootMetaRecord.eInitializeMapper.getOrDefault(type, null);
+		if(null == methodSet)
+			return;
 		for(Method method:methodSet) {
 			try {
 				method.invoke(instance);
