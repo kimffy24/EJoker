@@ -28,5 +28,6 @@ public class Scavenger {
 				e.printStackTrace();
 			}
 		logger.info("In the end of Invoking Scavenger.cleanUp(), there {} jobs faild.", amountOfJob.get());
+		System.gc();
 	}
 }
