@@ -78,7 +78,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		}
 	}
 
-	public boolean isInactive(int timeoutSeconds) {
+	public boolean isInactive(long timeoutSeconds) {
 		return (System.currentTimeMillis() - lastActiveTime) >= timeoutSeconds;
 	}
 
