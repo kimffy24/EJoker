@@ -4,8 +4,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerInstalcePool;
@@ -19,12 +18,12 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 	 * 对象容器<br>
 	 * ** public是为了让DefaultEJokerContext实现自注入用。
 	 */
-	public final Map<Class<?>, Object> instanceMap = new HashMap<Class<?>, Object>();
+	public final Map<Class<?>, Object> instanceMap = new ConcurrentHashMap<Class<?>, Object>();
 
 	/**
 	 * 对象容器(有泛型的)
 	 */
-	private final Map<Class<?>, Map<String, Object>> instanceGenericTypeMap = new HashMap<Class<?>, Map<String, Object>>();
+	private final Map<Class<?>, Map<String, Object>> instanceGenericTypeMap = new ConcurrentHashMap<Class<?>, Map<String, Object>>();
 	
 	public DefaultEJokerInstalcePool(DefaultEJokerClassMetaProvider eJokerClassMetaProvider){
 		this.eJokerClassMetaProvider = eJokerClassMetaProvider;
@@ -63,7 +62,11 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 		Class<?> resolvedClass = eJokerClassMetaProvider.resolve(clazz);
 		Object instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
 		{ // 注册到对象记录变量 instanceMap
-			instanceMap.put(clazz, instance);
+			Object prevous = instanceMap.putIfAbsent(clazz, instance);
+			if(null!=prevous) {
+				try { Thread.sleep(100l); } catch (Exception e) { }
+				instance = prevous;
+			}
 		}
 		{ // 注入依赖
 			assembling(instance);
@@ -73,12 +76,26 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 
 	private <T> T createAndRegistInstance(Class<T> clazz, String pSign) {
 		Class<?> resolvedClass = eJokerClassMetaProvider.resolve(clazz, pSign);
-		Object instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
-		{ // 注册到对象记录变量 instanceMap
-			instanceGenericTypeMap.get(clazz).put(pSign, instance);
+		Object instance = null;
+		if(!GenericTypeUtil.ensureIsGenericType(resolvedClass)) {
+			// 如果解析类型并不是泛型，怎同时去非泛型容器中查找一次
+			instance=instanceMap.get(resolvedClass);
 		}
-		{ // 注入依赖
-			assembling(instance);
+		if(null==instance) {
+			instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
+			{ // 注册到泛型对象记录变量 instanceGenericTypeMap
+				instanceGenericTypeMap.get(clazz).put(pSign, instance);
+			}
+			if(!GenericTypeUtil.ensureIsGenericType(resolvedClass)) {
+				// 如果解析类型并不是泛型，则同时注册到非泛型容器中。
+				instanceMap.putIfAbsent(resolvedClass, instance);
+			}
+			{ // 注入依赖
+				assembling(instance);
+			}
+		} else  {
+			// 注册到泛型对象记录变量 instanceGenericTypeMap
+			instanceGenericTypeMap.get(clazz).put(pSign, instance);
 		}
 		return (T )instance;
 	}

@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.eventing.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 	private IJSONConverter jsonSerializer;
 	
 	@Override
-	public Map<String, String> serializer(Collection<IDomainEvent<?>> events) {
+	public Map<String, String> serializer(List<IDomainEvent<?>> events) {
 		Map<String, String> dict = new LinkedHashMap<String, String>();
 		for(IDomainEvent<?> event:events)
 			dict.put(event.getClass().getName(), JavaObjectSerializeUtil.serialize(event));
@@ -30,7 +30,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 	}
 
 	@Override
-	public Collection<IDomainEvent<?>> deserializer(Map<String, String> data) {
+	public List<IDomainEvent<?>> deserializer(Map<String, String> data) {
 		List<IDomainEvent<?>> list = new ArrayList<IDomainEvent<?>>();
 		Set<Entry<String,String>> entrySet = data.entrySet();
 		for(Entry<String,String> entry:entrySet) {
@@ -40,7 +40,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 			} catch (ClassNotFoundException e) {
 				throw new RuntimeException(e.getMessage(), e);
 			}
-			Object event = jsonSerializer.revert(entry.getValue(), eventType);
+			Serializable event = JavaObjectSerializeUtil.deserialize(entry.getValue());
 			list.add((IDomainEvent<?> )event);
 		}
 		return list;

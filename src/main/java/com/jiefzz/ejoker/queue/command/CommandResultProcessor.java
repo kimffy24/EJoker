@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.queue.command;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,6 +16,7 @@ import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.queue.IReplyHandler;
 import com.jiefzz.ejoker.queue.SendReplyService;
+import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
@@ -27,23 +29,21 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
-	private final ConcurrentHashMap<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
-
-//	@Resource
-//	IJSONConverter jsonConverter;
+	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
-	
+
 	@Override
 	public CommandResultProcessor start() {
-		if(!start.compareAndSet(false, true)) {
+		if (!start.compareAndSet(false, true)) {
 			logger.warn("{} has started!", this.getClass().getName());
 		} else {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						RPCFramework rpcFramework = new RPCFramework(CommandResultProcessor.this, SendReplyService.REPLY_PORT);
+						RPCFramework rpcFramework = new RPCFramework(CommandResultProcessor.this,
+								SendReplyService.REPLY_PORT);
 						rpcFramework.export();
 					} catch (Exception e) {
 						logger.error("{} faild on start!!!", this.getClass().getName());
@@ -57,13 +57,11 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	@Override
 	public CommandResultProcessor shutdown() {
-		//if(!start.compareAndSet(true, false))
-		//	logger.warn("{} has stopped!", this.getClass().getName());
 		logger.error("Actually, we could not shutdown the CommandResultProcessor!!!");
 		return this;
 	}
-	
-	public String getBindingAddress(){
+
+	public String getBindingAddress() {
 		try {
 			return InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) {
@@ -74,7 +72,8 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,
 			FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
-		if (null != commandTaskMap.putIfAbsent(command.getId(), new CommandTaskCompletionSource(commandReturnType, taskCompletionSource))) {
+		if (null != commandTaskMap.putIfAbsent(command.getId(),
+				new CommandTaskCompletionSource(commandReturnType, taskCompletionSource))) {
 			throw new RuntimeException(String.format("Duplicate processing command registion, [type={}, id={}]",
 					command.getClass().getName(), command.getId()));
 		}
@@ -82,50 +81,66 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	/**
 	 * 直接标记任务失败
+	 * 
 	 * @param command
 	 */
 	public void processFailedSendingCommand(ICommand command) {
 		CommandTaskCompletionSource commandTaskCompletionSource;
 		if (null != (commandTaskCompletionSource = commandTaskMap.remove(command.getId()))) {
-			CommandResult commandResult = new CommandResult(
-					CommandStatus.Failed,
-					command.getId(),
-					command.getAggregateRootId(),
-					"Failed to send the command.",
-					String.class.getName()
-			);
+			CommandResult commandResult = new CommandResult(CommandStatus.Failed, command.getId(),
+					command.getAggregateRootId(), "Failed to send the command.", String.class.getName());
 
-			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
-			commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult);
+			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success,
+					commandResult);
+			commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult);
 		}
 	}
 
 	@Override
 	public void handlerResult(int type, CommandResult commandResult) {
-		
+
 		CommandTaskCompletionSource commandTaskCompletionSource;
-		if(null!=(commandTaskCompletionSource = commandTaskMap.getOrDefault(commandResult.getCommandId(), null))) {
-			
-			if(CommandReturnType.CommandExecuted == commandTaskCompletionSource.getCommandReturnType()) {
+		if (null != (commandTaskCompletionSource = commandTaskMap.getOrDefault(commandResult.getCommandId(), null))) {
+
+			if (CommandReturnType.CommandExecuted == commandTaskCompletionSource.getCommandReturnType()) {
 				commandTaskMap.remove(commandResult.getCommandId());
-				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
-				if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
+				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(
+						AsyncTaskStatus.Success, commandResult);
+				if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 					logger.debug("Command result return, {}", commandResult);
-			} else if(CommandReturnType.EventHandled == commandTaskCompletionSource.getCommandReturnType()) {
-				if(CommandStatus.Failed == commandResult.getStatus() || CommandStatus.NothingChanged == commandResult.getStatus()) {
-					commandTaskMap.remove(commandResult.getCommandId());				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult);
-					if(commandTaskCompletionSource.taskCompletionSource.task.TrySetResult(asyncTaskResult))
+			} else if (CommandReturnType.EventHandled == commandTaskCompletionSource.getCommandReturnType()) {
+				if (CommandStatus.Failed == commandResult.getStatus()
+						|| CommandStatus.NothingChanged == commandResult.getStatus()) {
+					commandTaskMap.remove(commandResult.getCommandId());
+					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(
+							AsyncTaskStatus.Success, commandResult);
+					if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 						logger.debug("Command result return, {}", commandResult);
 				}
 			}
 		}
-		
+
+	}
+
+	@Override
+	public void handlerResult(int type, DomainEventHandledMessage message) {
+		String commandId = message.getCommandId();
+		CommandTaskCompletionSource commandTaskCompletionSource;
+		if (null != (commandTaskCompletionSource = commandTaskMap.getOrDefault(commandId, null))) {
+			commandTaskMap.remove(commandId);
+			CommandResult commandResult = new CommandResult(CommandStatus.Success, commandId,
+					message.getAggregateRootId(), message.getCommandResult(),
+					message.getCommandResult() != null ? message.getCommandResult().getClass().getName() : null);
+			if (commandTaskCompletionSource.taskCompletionSource.task
+					.trySetResult(new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult)))
+				logger.debug("Command result return, {}", commandResult.toString());
+		}
 	}
 
 	class CommandTaskCompletionSource {
 
-		private CommandReturnType commandReturnType;
-		private FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource;
+		private final CommandReturnType commandReturnType;
+		private final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource;
 
 		public CommandTaskCompletionSource(CommandReturnType commandReturnType,
 				FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
@@ -137,19 +152,9 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			return commandReturnType;
 		}
 
-		public void setCommandReturnType(CommandReturnType commandReturnType) {
-			this.commandReturnType = commandReturnType;
-		}
-
 		public FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> getTaskCompletionSource() {
 			return taskCompletionSource;
 		}
-
-		public void setTaskCompletionSource(
-				FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
-			this.taskCompletionSource = taskCompletionSource;
-		}
 	}
-
 
 }

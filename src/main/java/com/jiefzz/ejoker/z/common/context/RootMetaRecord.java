@@ -181,7 +181,7 @@ public class RootMetaRecord {
 					if(claxxDefinationGenericSignature.equals(superDefinationGenericSignature)) {
 						// 候选实现需要严格满足泛型签名对称
 						if(null == genericityMapper.candidateImplementations)
-							genericityMapper.candidateImplementations = new ImplementationTuple();
+							genericityMapper.candidateImplementations = new ImplementationTuple().addImplementation(claxx);
 						else // 如果候选实现多于1个，输出警告
 							warningSameGenericSignature(
 									hierarchyType,
@@ -206,7 +206,7 @@ public class RootMetaRecord {
 						//			（像 有 interface IBasicA<T>{} ,
 						//				又有 interface IBasicB<T> extend IBasicA<T>{}
 						//				在 class BImpl implements IBasicB<String> {} 这样的过程中，就会丢失传递。
-						logger.warn("{} could not mapping to {}, it may be loss GenericType while in multi inheriting!\nPlease make sure it is not influence the program!");
+						logger.warn("{} could not mapping to {}, it may be loss GenericType while in multi inheriting!\n\tPlease make sure it is not influence the program!", hierarchyType.getName(), claxx.getName());
 						logger.warn("Unmatch GenericSignature: \n\t{}\t\t{}\n\t{}\t\t{}",
 								hierarchyType.getName(), superDefinationGenericSignature,
 								claxx.getName(), "!!!Lost!!!"

@@ -1,29 +1,31 @@
 package com.jiefzz.ejoker.queue;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.commanding.CommandResult;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
-import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
-import com.jiefzz.ejoker.z.queue.IQueueProducerWokerService;
 
 @EService
 public class SendReplyService {
 
-	final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);
-	
-	@Resource
-	private IJSONConverter jsonSerializer;
+	private final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);
 	
 	public void sendReply(int replyType, CommandResult commandResult, String replyAddress) {
 		try {
 			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
 			replyHandler.handlerResult(replyType, commandResult);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
+		try {
+			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
+			replyHandler.handlerResult(replyType, eomainEventHandledMessage);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

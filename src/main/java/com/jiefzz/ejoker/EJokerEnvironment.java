@@ -18,8 +18,6 @@ import com.jiefzz.ejoker.z.common.utilities.Ensure;
 public class EJokerEnvironment {
 	
 	public final static String ENVIROMMENT_FILE="ejoker.properties";
-
-	//public final static String EXCHANGE_NAME;
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 
@@ -27,18 +25,15 @@ public class EJokerEnvironment {
 	
 	static {
 
-		//## region start 加载相关公共变量配置
+		// ## region start 加载相关公共变量配置
 		Properties props = new Properties();
 		try{
 	 		props.load(EJokerEnvironment.class.getClassLoader().getResourceAsStream(ENVIROMMENT_FILE));
 		}catch(Exception e){
 			logger.warn("Could not load configure information from {}!", ENVIROMMENT_FILE);
 		}
-		//## region end
+		// ## region end
 
-		// 获取ejoker使用的交换机
-		//EXCHANGE_NAME = props.getProperty("ejoker.rabbitmq.defaultExchange", "ejoker");
-		
 		// 提取写在配置文件中的主题队列配对
 		Set<Entry<Object, Object>> entrySet = props.entrySet();
 		for(Entry<Object, Object> entry : entrySet){
@@ -57,7 +52,7 @@ public class EJokerEnvironment {
 	 * @param topic
 	 * @return
 	 */
-	static public String getTopicQueue(String topic) {
+	static public String getQueueWhichFocusedTopic(String topic) {
 		String queue = topicQueueMapper.get(topic);
 		Ensure.notNullOrEmpty(queue, "queue");
 		return queue;

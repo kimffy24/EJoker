@@ -6,10 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.jiefzz.ejoker.EJoker;
-import com.jiefzz.ejoker.utils.helper.RegistCommandHandlerHelper;
-import com.jiefzz.ejoker.utils.helper.RegistDomainEventHandlerHelper;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
@@ -25,6 +28,8 @@ public class DefaultEJokerContext implements IEJokerContext {
 	
 	private IEJokerInstalcePool eJokerInstalcePool = new DefaultEJokerInstalcePool(eJokerClassMetaProvider);
 
+	private Lock lock4InvokeGetMethod = new ReentrantLock();
+	
 	/**
 	 * 主动覆盖的对象容器
 	 * @deprecated 未完成
@@ -60,12 +65,26 @@ public class DefaultEJokerContext implements IEJokerContext {
 
 	@Override
 	public <T> T get(Class<T> clazz) {
-		return eJokerInstalcePool.getInstance(clazz);
+		if(lock4InvokeGetMethod.tryLock()) {
+			try {
+				return eJokerInstalcePool.getInstance(clazz);
+			} finally {
+				lock4InvokeGetMethod.unlock();
+			}
+		} else 
+			throw new ContextRuntimeException("Cannot accept more than one context.get() method at the same time!!!");
 	}
 
 	@Override
 	public <T> T get(Class<T> clazz, String pSign) {
-		return eJokerInstalcePool.getInstance(clazz, pSign);
+		if(lock4InvokeGetMethod.tryLock()) {
+			try {
+				return eJokerInstalcePool.getInstance(clazz, pSign);
+			} finally {
+				lock4InvokeGetMethod.unlock();
+			}
+		} else 
+			throw new ContextRuntimeException("Cannot accept more than one context.get() method at the same time!!!");
 	}
 
 	@Override
@@ -102,6 +121,7 @@ public class DefaultEJokerContext implements IEJokerContext {
 				RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
 				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 			}
+			RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
 		}
 	}
 

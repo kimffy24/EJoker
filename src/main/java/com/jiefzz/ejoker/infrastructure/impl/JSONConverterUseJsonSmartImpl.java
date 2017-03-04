@@ -64,7 +64,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 					}
 
 					@Override
-					public boolean isHas(JSONObject targetNode, String key) {
+					public boolean isHas(JSONObject targetNode, Object key) {
 						return targetNode.containsKey(key);
 					}
 
@@ -78,15 +78,15 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 						keyValueSet.put(key, child);
 					}
 
-					@Override
-					public void merge(JSONObject targetNode, JSONObject tempNode) {
-						targetNode.putAll(tempNode);
-					}
-
-					@Override
-					public Object getOne(JSONObject targetNode, String key) {
-						return targetNode.get(key);
-					}
+//					@Override
+//					public void merge(JSONObject targetNode, JSONObject tempNode) {
+//						targetNode.putAll(tempNode);
+//					}
+//
+//					@Override
+//					public Object getOne(JSONObject targetNode, String key) {
+//						return targetNode.get(key);
+//					}
 				}, specialTypeHandler);
 		
 		revertRelationshipTreeUitl = new RevertRelationshipTreeUitl<JSONObject, JSONArray>(new RevertRelationshipTreeDisassemblyInterface<JSONObject, JSONArray>() {
@@ -112,7 +112,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 					}
 
 					@Override
-					public Object getValue(JSONObject source, String key) {
+					public Object getValue(JSONObject source, Object key) {
 						return source.get(key);
 					}
 

@@ -3,9 +3,8 @@ package com.jiefzz.ejoker.queue.command;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,60 +22,46 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
+import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IConsumer;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageHandler;
+import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.queue.IConsumer;
-import com.jiefzz.ejoker.z.queue.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.z.queue.clients.consumers.ConsumerSetting;
-import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageContext;
-import com.jiefzz.ejoker.z.queue.clients.consumers.IMessageHandler;
-import com.jiefzz.ejoker.z.queue.protocols.Message;
+import com.jiefzz.ejoker.z.common.utilities.Ensure;
 
 @EService
-public class CommandConsumer implements IQueueComsumerWokerService, IMessageHandler {
+public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueueMessageHandler {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
-	private final static String defaultCommandConsumerGroup = "CommandConsumerGroup";
-
-	@Resource
+	@Dependence
 	private SendReplyService sendReplyService;
-	@Resource
+	@Dependence
 	private IJSONConverter jsonSerializer;
-	@Resource
+	@Dependence
 	private ICommandProcessor processor;
-	@Resource
+	@Dependence
 	private IRepository repository;
-	@Resource
+	@Dependence
 	private IAggregateStorage aggregateRootStorage;
-
+	
 	private IConsumer consumer;
 	
-	public CommandConsumer(String groupName, ConsumerSetting setting) {}
-
-	public CommandConsumer(String groupName) { this(groupName, null); }
-
-	public CommandConsumer() { this(defaultCommandConsumerGroup); }
-
 	public IConsumer getConsumer() { return consumer; }
 	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
 
 	@Override
-	public void handle(Message message, IMessageContext context) {
+	public void handle(EJokerQueueMessage message, IEJokerQueueMessageContext context) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<String, String>();
 		String messageBody = new String(message.body, Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType;
-		try {
-			commandType = (Class<? extends ICommand> )Class.forName(message.tag);
-		} catch (ClassNotFoundException e) {
-			String format = String.format("Defination of [%s] is not found!!!", message.tag);
-			logger.error(format);
-			throw new CommandRuntimeException(format);
-		}
+		Class<? extends ICommand> commandType = getCommandPrototype(message.tag);
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
 		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(repository, aggregateRootStorage, message, context, commandMessage, sendReplyService);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
@@ -100,6 +85,23 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 		consumer.shutdown();
 		return this;
 	}
+	
+	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<String, Class<? extends ICommand>>();
+	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
+		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
+		Class<? extends ICommand> commandType = commandTypeDict.getOrDefault(commandTypeString, null);
+		if(null!=commandType)
+			return commandType;
+		try {
+			commandType = (Class<? extends ICommand> )Class.forName(commandTypeString);
+			commandTypeDict.put(commandTypeString, commandType);
+			return commandType;
+		} catch (ClassNotFoundException e) {
+			String format = String.format("Defination of [%s] is not found!!!", commandTypeString);
+			logger.error(format);
+			throw new CommandRuntimeException(format);
+		}
+	}
 
 	/**
 	 * commandHandler处理过程中，使用的上下文就是这个上下文。<br>
@@ -108,16 +110,17 @@ public class CommandConsumer implements IQueueComsumerWokerService, IMessageHand
 	 *
 	 */
 	class CommandExecuteContext implements ICommandExecuteContext {
+		
 		private String result;
 		private final ConcurrentHashMap<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<String, IAggregateRoot>();;
 		private final IRepository repository;
 		private final IAggregateStorage aggregateRootStorage;
 		private final SendReplyService sendReplyService;
-		private final Message message;
-		private final IMessageContext messageContext;
+		private final EJokerQueueMessage message;
+		private final IEJokerQueueMessageContext messageContext;
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, Message message, IMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
+		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
 			this.repository = repository;
 			this.aggregateRootStorage = aggregateRootStorage;
 			this.sendReplyService = sendReplyService;

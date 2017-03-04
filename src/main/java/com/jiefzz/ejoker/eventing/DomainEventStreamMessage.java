@@ -1,7 +1,10 @@
 package com.jiefzz.ejoker.eventing;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
@@ -12,12 +15,13 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 	private static final long serialVersionUID = -721576949011677756L;
 	
 	private String commandId;
+	private String aggregateRootId;
 	private Map<String, String> items;
-	private Collection<IDomainEvent<?>> events;
+	private List<IDomainEvent<?>> events;
 	
 	public DomainEventStreamMessage() {}
 	
-	public DomainEventStreamMessage(String commandId, String aggregateRootId, long version, String aggregateRootTypeName, Collection<IDomainEvent<?>> events, Map<String, String> items)
+	public DomainEventStreamMessage(String commandId, String aggregateRootId, long version, String aggregateRootTypeName, List<IDomainEvent<?>> events, Map<String, String> items)
     {
         this.setCommandId(commandId);
         this.setAggregateRootId(aggregateRootId);
@@ -29,14 +33,27 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 	
 	@Override
 	public String toString(){
-		return this.getClass().getName() +"is Unimplementation!";
-		/*return String.format(
-				"[messageId=%s, commandId=%s, aggregateRootId=%s, aggregateRootTypeName=%s]",
+		String eventString = "";
+		if(null!=events && 0<events.size()) {
+			for(IDomainEvent<?> event:events)
+				eventString += event.getClass().getName() +"|";
+		}
+		String itemString = "";
+		if(null!=items && 0<items.size()) {
+			Set<Entry<String,String>> entrySet = items.entrySet();
+			for(Entry<String,String> entry:entrySet)
+				itemString += entry.getKey() +":" +entry.getValue() +"|";
+		}
+		return String.format(
+				"[messageId=%s, commandId=%s, aggregateRootId=%s, aggregateRootTypeName=%s, version=%d, events=%s, items=%s]",
 				this.getId(),
 				commandId,
 				getAggregateRootStringId(),
-				
-		);*/
+				getAggregateRootTypeName(),
+				getVersion(),
+				eventString,
+				itemString
+		);
 	}
 	
 
@@ -56,11 +73,22 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 		this.items = items;
 	}
 
-	public Collection<IDomainEvent<?>> getEvents() {
+	public List<IDomainEvent<?>> getEvents() {
 		return events;
 	}
 
-	public void setEvents(Collection<IDomainEvent<?>> events) {
+	public void setEvents(List<IDomainEvent<?>> events) {
 		this.events = events;
+	}
+
+	@Override
+	public void setAggregateRootId(String aggregateRootId) {
+		this.aggregateRootId = aggregateRootId;
+		getAggregateRootStringId();
+	}
+
+	@Override
+	public String getAggregateRootId() {
+		return aggregateRootId;
 	}
 }

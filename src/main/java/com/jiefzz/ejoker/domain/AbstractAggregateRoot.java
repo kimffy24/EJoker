@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.jiefzz.ejoker.domain.helper.AggregateHandlerJavaHelper;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.containers.AggregateRootHandlerPool;
 import com.jiefzz.ejoker.z.common.ArgumentException;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.InvalidOperationException;
@@ -96,7 +96,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		if ( this.id == null && domainEvent.getVersion() == 1 )
 			this.id = domainEvent.getAggregateRootId();
 		
-		AggregateHandlerJavaHelper.invokeInternalHandler(this, domainEvent);
+		AggregateRootHandlerPool.invokeInternalHandler(this, domainEvent);
 	}
 
 	@Override

@@ -20,7 +20,7 @@ public abstract class AbstractMessage implements  IMessage {
 	
 	@Override
 	public String getRoutingKey() {
-		throw new MessageException("Unimplemented!!!");
+		return null;
 	}
 
 	@Override

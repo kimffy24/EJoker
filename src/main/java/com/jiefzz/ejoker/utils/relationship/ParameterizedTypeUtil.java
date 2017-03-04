@@ -74,6 +74,12 @@ public class ParameterizedTypeUtil {
 		return isAcceptArray(object.getClass());
 	}
 	
+	/**
+	 * 转换基本类型的数组为封装数组
+	 * <br>每一个对象装箱？？？不怕栈空间不够？
+	 * @param object
+	 * @return
+	 */
 	public static Object[] arrayTypeAsObject(Object object) {
 		if(!object.getClass().isArray()) return null;
 		Class<?> clazz = object.getClass().getComponentType();
@@ -120,7 +126,7 @@ public class ParameterizedTypeUtil {
 			return cArray;
 		}
 		//char
-		else if(long.class==clazz){
+		else if(char.class==clazz){
 			int arraySyze = ((char[] )object).length;
 			Character[] cArray = new Character[arraySyze];
 			for(int i=0; i<arraySyze; i++)

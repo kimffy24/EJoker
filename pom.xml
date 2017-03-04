@@ -48,21 +48,27 @@
 			<version>2.6.3</version>
 		</dependency>
 
-		<!-- mongo缓存驱动 -->
+		<!-- mongo驱动 -->
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
 			<version>3.2.1</version>
 		</dependency>
 		
-		<!-- 消息队列驱动 -->
+		<!-- 消息队列驱动 - RabbitMQ -->
 		<dependency>
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
 			<version>3.6.1</version>
 		</dependency>
-
-
+		
+		<!-- 消息队列驱动 - RocketMQ -->
+		<dependency>
+		    <groupId>com.aliyun.openservices</groupId>
+		    <artifactId>ons-client</artifactId>
+		    <version>1.2.7.Final</version>
+		</dependency>
+		
 	</dependencies>
 
 

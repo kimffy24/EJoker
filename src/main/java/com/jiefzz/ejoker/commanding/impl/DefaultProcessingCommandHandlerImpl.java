@@ -1,6 +1,5 @@
 package com.jiefzz.ejoker.commanding.impl;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -92,7 +91,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		Collection<IAggregateRoot> trackedAggregateRoots = context.getTrackedAggregateRoots();
 		int dirtyAggregateRootCount = 0;
 		IAggregateRoot dirtyAggregateRoot = null;
-		Collection<IDomainEvent<?>> changeEvents = null;
+		List<IDomainEvent<?>> changeEvents = null;
 
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
@@ -127,7 +126,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 	}
 	
-	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, Collection<IDomainEvent<?>> changeEvents, ProcessingCommand processingCommand) {
+	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, List<IDomainEvent<?>> changeEvents, ProcessingCommand processingCommand) {
 		String result = processingCommand.getCommandExecuteContext().getResult();
 		if(null!=result)
 			processingCommand.getItems().put("CommandResult", result);

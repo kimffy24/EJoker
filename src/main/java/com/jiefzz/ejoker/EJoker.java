@@ -11,7 +11,7 @@ import com.jiefzz.ejoker.z.common.context.impl.DefaultEJokerContext;
  */
 public class EJoker {
 	
-	// public:
+	//////  public:
 	
 	public static final String SELF_PACNAGE_NAME = "com.jiefzz.ejoker";
 	
@@ -25,14 +25,14 @@ public class EJoker {
 		return context;
 	}
 
-	// private:
+	//////  private:
 	
 	private EJoker() {
 		context = new DefaultEJokerContext();
 		context.scanPackageClassMeta(SELF_PACNAGE_NAME);
 	}
 
-	// properties:
+	//////  properties:
 	
 	private static EJoker instance;
 	private IEJokerContext context;

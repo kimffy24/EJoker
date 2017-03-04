@@ -11,6 +11,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
  */
 public class FutureTaskCompletionSource<TResult> {
 
-	public RipenFuture<TResult> task = new RipenFuture<TResult>();
+	public final RipenFuture<TResult> task = new RipenFuture<TResult>();
 	
 }
