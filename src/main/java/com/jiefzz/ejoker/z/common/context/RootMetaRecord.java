@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.context.annotation.context.Initialize;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
 import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
 
@@ -45,7 +45,7 @@ public class RootMetaRecord {
 	public final Map<Class<?>, Set<Field>> eDependenceMapper = new HashMap<Class<?>, Set<Field>>();
 
 	/**
-	 * EService类里面有声明要初始化执行的方法
+	 * EInitialize类里面有声明要初始化执行的方法
 	 */
 	public final Map<Class<?>, Set<Method>> eInitializeMapper = new HashMap<Class<?>, Set<Method>>();
 	
@@ -91,7 +91,7 @@ public class RootMetaRecord {
 	 * DONE: 记录是否已经被分析
 	 * DONE: 记录所有@EService
 	 * 
-	 * DONE: 记录类的@Initialize方法
+	 * DONE: 记录类的@EInitialize方法
 	 * DONE: 记录类的@Dependence/@Resource属性
 	 * @param claxx
 	 */
@@ -122,7 +122,7 @@ public class RootMetaRecord {
 			Method[] methods = clazz.getDeclaredMethods();
 			for ( Method method : methods ) {
 				if ( conflictMethodNames.containsKey(method.getName()) ) continue;
-				if ( method.isAnnotationPresent(Initialize.class) ) {
+				if ( method.isAnnotationPresent(EInitialize.class) ) {
 					if(method.getParameterCount()>0) {
 						logger.error("Unsupport pass parameters to @Initialize method now!!! Found at {}#{}()", clazz.getName(), method.getName());
 						throw new ContextRuntimeException("Unsupport pass parameters to @Initialize method now!!!");

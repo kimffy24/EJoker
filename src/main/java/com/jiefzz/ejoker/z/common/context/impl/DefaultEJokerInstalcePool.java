@@ -71,6 +71,9 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 		{ // 注入依赖
 			assembling(instance);
 		}
+		{ // 执行EInitialize标记的方法
+			eJokerClassMetaProvider.executeEInitialize(clazz, instance);
+		}
 		return (T )instance;
 	}
 
@@ -92,6 +95,9 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 			}
 			{ // 注入依赖
 				assembling(instance);
+			}
+			{ // 执行EInitialize标记的方法
+				eJokerClassMetaProvider.executeEInitialize(clazz, instance);
 			}
 		} else  {
 			// 注册到泛型对象记录变量 instanceGenericTypeMap
