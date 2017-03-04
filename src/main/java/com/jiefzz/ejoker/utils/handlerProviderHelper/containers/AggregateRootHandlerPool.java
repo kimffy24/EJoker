@@ -23,11 +23,13 @@ public class AggregateRootHandlerPool {
 			if(!method.isAccessible())
 				method.setAccessible(true);
 			Class<?>[] parameterTypes = method.getParameterTypes();
+			if(null==parameterTypes || 1<parameterTypes.length)
+				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", aggregateRootClass.getName(), method.getName()));
 			if(!IDomainEvent.class.isAssignableFrom(parameterTypes[0]))
 				throw new RuntimeException(String.format("%s#%s(%s) parameter type is not accept!!!", aggregateRootClass.getName(), method.getName(), parameterTypes[0].getName()));
 			Class<? extends IDomainEvent> domainEventType = (Class<? extends IDomainEvent> )parameterTypes[0];
 			if(null!=handlerMapper.putIfAbsent(domainEventType, new HandlerReflectionMapper(method)))
-				throw new RuntimeException(String.format("DomainEvent[type=%s] has more than onw handler!!!", domainEventType.getName()));
+				throw new RuntimeException(String.format("DomainEvent[type=%s] has more than one handler!!!", domainEventType.getName()));
 		}
 	}
 	
@@ -46,7 +48,7 @@ public class AggregateRootHandlerPool {
 		private HandlerReflectionMapper(Method handleReflectionMethod) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
-			identification = String.format("%s#%s(%s)", handleReflectionMethod.getDeclaringClass(), handleReflectionMethod.getName(), parameterTypes[0].getName());
+			identification = String.format("Proxy[ forward: %s#%s( %s )]", handleReflectionMethod.getDeclaringClass().getSimpleName(), handleReflectionMethod.getName(), parameterTypes[0].getName());
 		}
 		
 		public void handler(AbstractAggregateRoot aggregateRoot, IDomainEvent<?> domainEvent) {

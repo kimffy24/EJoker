@@ -19,6 +19,6 @@ public interface IMessageDispatcher {
 	 * @param messages
 	 * @return
 	 */
-	Future<AsyncTaskResultBase> dispatchMessagesAsync(List<IMessage> messages);
+	Future<AsyncTaskResultBase> dispatchMessagesAsync(List<? extends IMessage> messages);
     
 }

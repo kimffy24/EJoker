@@ -3,9 +3,6 @@ package com.jiefzz.ejoker.infrastructure.impl;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
 import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
@@ -16,8 +13,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 @EService
 public class DefaultMessageDispatcher implements IMessageDispatcher {
-
-	private final static Logger logger = LoggerFactory.getLogger(DefaultMessageDispatcher.class);
 
 	@Override
 	public Future<AsyncTaskResultBase> dispatchMessageAsync(IMessage message) {
@@ -32,9 +27,16 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	}
 
 	@Override
-	public Future<AsyncTaskResultBase> dispatchMessagesAsync(List<IMessage> messages) {
-		logger.warn("Unsupport multi dispatch now!!!!!!!");
-		return null;
+	public Future<AsyncTaskResultBase> dispatchMessagesAsync(List<? extends IMessage> messages) {
+		
+		// 对每个message寻找单独的handler进行单独调用。
+		for(IMessage msg:messages) {
+			dispatchMessageAsync(msg);
+		}
+
+		RipenFuture<AsyncTaskResultBase> task = new RipenFuture<AsyncTaskResultBase>();
+		task.trySetResult(AsyncTaskResultBase.Success);
+		return task;
 	}
 
 }

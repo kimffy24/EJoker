@@ -120,8 +120,8 @@ public class DefaultEJokerContext implements IEJokerContext {
 				// 扫描非框架内的包时，注册CommandHandler和DomainEventHandler
 				RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
 				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
-				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
 			}
+			RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
 		}
 	}
 

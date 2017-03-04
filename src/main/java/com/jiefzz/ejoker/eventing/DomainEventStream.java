@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.eventing;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
@@ -16,10 +17,10 @@ public class DomainEventStream implements Serializable {
 	private String aggregateRootId;
 	private long version;
 	private Map<String, String> items;
-	private Collection<IDomainEvent<?>> events;
+	private List<IDomainEvent<?>> events;
 	private long timestamp;
 	
-	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent<?>> events, Map<String, String> items) {
+	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, List<IDomainEvent<?>> events, Map<String, String> items) {
         this.setCommandId(commandId);
         this.setAggregateRootId(aggregateRootId);
         this.setVersion(version);
@@ -44,7 +45,7 @@ public class DomainEventStream implements Serializable {
             evnt.setSequence(sequence++);
         }
     }
-	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent<?>> events) {
+	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, List<IDomainEvent<?>> events) {
         this(commandId, aggregateRootId, aggregateRootTypeName, version, timestamp, events, null);
     }
 
@@ -68,7 +69,7 @@ public class DomainEventStream implements Serializable {
 		this.items = items;
 	}
 
-	private void setEvents(Collection<IDomainEvent<?>> events) {
+	private void setEvents(List<IDomainEvent<?>> events) {
 		this.events = events;
 	}
 
@@ -96,7 +97,7 @@ public class DomainEventStream implements Serializable {
 		return items;
 	}
 
-	public Collection<IDomainEvent<?>> getEvents() {
+	public List<IDomainEvent<?>> getEvents() {
 		return events;
 	}
 

@@ -5,12 +5,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.jiefzz.ejoker.EJoker;
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageHandler;
+import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 
 /**
  * 由于message类型可以有多个handler，
@@ -42,12 +46,14 @@ public class MessageHandlerPool {
 			if (!method.isAccessible())
 				method.setAccessible(true);
 			Class<?>[] parameterTypes = method.getParameterTypes();
+			if(null==parameterTypes || 1!=parameterTypes.length)
+				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
 			if (!PARAMETER_TYPE_SUPER_0.isAssignableFrom(parameterTypes[0]))
 				throw new InfrastructureRuntimeException(String.format(
-						"Type of %s#%s( %s ) first parameters is not accept!!!", implementationHandlerClass.getName(),
+						"%s#%s( %s ) first parameters is not accept!!!", implementationHandlerClass.getName(),
 						HANDLER_METHOD_NAME, parameterTypes[0].getName()));
-			Class<? extends IMessage> messageType = (Class<? extends IMessage>) parameterTypes[0];
-			getOrAddNewElementContainer(messageType).add(new MessageHandlerReflectionTuple(implementationHandlerClass, method));
+			Class<? extends IMessage> messageType = (Class<? extends IMessage> )parameterTypes[0];
+			getOrAddNewElementContainer(messageType).add(new MessageHandlerReflectionTuple(method));
 		}
 	}
 
@@ -60,6 +66,9 @@ public class MessageHandlerPool {
 		if(null == (containerList = handlerMapper.getOrDefault(messageType, null))) {
 			lock4addNewTupleContainer.lock();
 			try {
+				// 当执行递归调用时，逻辑上能保证线程不会再进入临界区。
+				if(handlerMapper.containsKey(messageType))
+					return getOrAddNewElementContainer(messageType);
 				containerList = new ArrayList<MessageHandlerReflectionTuple>();
 				handlerMapper.put(messageType, containerList);
 				return containerList;
@@ -68,6 +77,62 @@ public class MessageHandlerPool {
 			}
 		} else
 			return containerList;
+	}
+	
+	public static class MessageHandlerReflectionTuple implements IMessageHandlerProxy {
+		
+		public final Class<? extends IMessageHandler> handlerClass;
+		public final Method handleReflectionMethod;
+		public final String identification;
+
+		private IMessageHandler handler = null;
+
+		/**
+		 * EJoker context是严格禁止同事获取对象的
+		 * <br>用于在判断handler为空需要从上下中获取Handler的时候排他执行。
+		 */
+		private final static Lock lock4getHandler = new ReentrantLock();
+
+		public MessageHandlerReflectionTuple(Method handleReflectionMethod) {
+			this.handleReflectionMethod = handleReflectionMethod;
+			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
+			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
+			identification = String.format("Proxy[ forward: %s#%s(%s) ]", handlerClass.getSimpleName(),
+					MessageHandlerPool.HANDLER_METHOD_NAME, parameterTypes[0].getSimpleName());
+		}
+
+		@Override
+		public IMessageHandler getInnerObject() {
+			if (null == handler) {
+				lock4getHandler.lock();
+				try {
+					if (null == handler) {
+						handler = EJoker.getInstance().getEJokerContext().get(handlerClass);
+						return handler;
+					} else
+						// 当执行递归调用时，逻辑上能保证线程不会再进入临界区。
+						return getInnerObject();
+				} finally {
+					lock4getHandler.unlock();
+				}
+			} else
+				return handler;
+		}
+
+		@Override
+		public Future<AsyncTaskResultBase> handleAsync(IMessage message) {
+			try {
+				return (Future<AsyncTaskResultBase> )handleReflectionMethod.invoke(getInnerObject(), message);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new InfrastructureRuntimeException("Invoke handleAsync failed!!! " + message.toString(), e);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return identification;
+		}
 	}
 
 }
