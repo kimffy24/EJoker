@@ -41,9 +41,9 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	}
 
 	public void enqueueMessage(X processingMessage) {
+		lastActiveTime = System.currentTimeMillis();
 		processingMessage.setMailBox(this);
 		messageQueue.offer(processingMessage);
-		lastActiveTime = System.currentTimeMillis();
 		tryRun();
 	}
 
