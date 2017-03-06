@@ -1,19 +1,12 @@
 package com.jiefzz.ejoker.z.common.system.extension.acrossSupport;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.system.extension.TaskFaildException;
-import com.jiefzz.ejoker.z.common.system.extension.TimeNotPermitException;
+import com.jiefzz.ejoker.z.common.system.extension.TaskWaitingTimeoutException;
 
 /**
  * 一个用于等待重要任务执行结果的封装对象。<br>
@@ -24,11 +17,7 @@ import com.jiefzz.ejoker.z.common.system.extension.TimeNotPermitException;
  */
 public class RipenFuture<TResult> implements Future<TResult> {
 	
-	private final static Logger logger = LoggerFactory.getLogger(RipenFuture.class);
-	
-	private AtomicBoolean completedOrNot = new AtomicBoolean(false);
-
-	private Queue<Thread> arriveThread = new ConcurrentLinkedQueue<Thread>();
+	private CountDownLatch countDownLatch = new CountDownLatch(1);
 	
 	private boolean hasException = false;
 	private boolean hasCanceled = false;
@@ -37,74 +26,78 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		logger.warn("Please do not use {}.cancel(boolean mayInterruptIfRunning), there is no sense here!", this.getClass().getName());
-		return false;
+		if(mayInterruptIfRunning)
+			return false;
+		countDownLatch.countDown();
+		return true;
 	}
 
 	@Override
 	public boolean isCancelled() {
-		return hasCanceled;
+		return countDownLatch.getCount()==0?hasCanceled:false;
 	}
 
 	@Override
 	public boolean isDone() {
-		return completedOrNot.get();
+		return countDownLatch.getCount()==0?(!hasException && !hasCanceled):false;
 	}
 
 	@Override
 	public TResult get() throws InterruptedException, ExecutionException {
-		if(!completedOrNot.get()) {
-			arriveThread.offer(Thread.currentThread());
-			LockSupport.park();
+		try {
+			countDownLatch.await();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
-		// if the thread run to here, it means this task is turn to complete or exception!
-		if(hasCanceled)
+		if (hasCanceled)
 			return null;
-		if(hasException)
+		if (hasException)
 			throw new TaskFaildException("Thread executed faild!!!", exception);
 		return result;
 	}
 
 	@Override
-	public TResult get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		logger.warn("Please do not use {}.get(long timeout, TimeUnit unit), cause the time control function is no sense here!", this.getClass().getName());
-		return get();
+	public TResult get(long timeout, TimeUnit unit) {
+		boolean awaitSuccess = true;
+		try {
+			awaitSuccess = countDownLatch.await(timeout, unit);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}        
+		if(!awaitSuccess)  
+            throw new TaskWaitingTimeoutException(); 
+		if (hasCanceled)
+			return null;
+		if (hasException)
+			throw new TaskFaildException("Thread executed faild!!!", exception);
+		return result;
 	}
 
 	public boolean trySetCanceled() {
-		if (completedOrNot.compareAndSet(false, true)) {
+		if (0<countDownLatch.getCount()) {
 			this.hasCanceled = true;
-			finishedTheFuture();
+			countDownLatch.countDown();
 			return true;
 		} else
 			return false;
 	}
 
 	public boolean trySetException(Throwable exception) {
-		if (completedOrNot.compareAndSet(false, true)) {
+		if (0<countDownLatch.getCount()) {
 			this.hasException = true;
 			this.exception = exception;
-			finishedTheFuture();
+			countDownLatch.countDown();
 			return true;
 		} else
 			return false;
 	}
 	
 	public boolean trySetResult(TResult result) {
-		if (completedOrNot.compareAndSet(false, true)) {
+		if (0<countDownLatch.getCount()) {
 			this.result = result;
-			finishedTheFuture();
+			countDownLatch.countDown();
 			return true;
 		} else
 			return false;
-	}
-	
-	/**
-	 * 唤醒执行get方法而等待的线程
-	 */
-	private void finishedTheFuture() {
-		Thread thread;
-		if(null != (thread = arriveThread.poll()))
-			LockSupport.unpark(thread);
 	}
 }
