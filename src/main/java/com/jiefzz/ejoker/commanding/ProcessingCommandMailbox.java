@@ -1,6 +1,5 @@
 package com.jiefzz.ejoker.commanding;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,15 +11,17 @@ import org.slf4j.LoggerFactory;
 public class ProcessingCommandMailbox implements Runnable {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
+	
 	public final static int MAX_BATCH_COMMANDS;
 	
-	
 	private final String aggregateRootId;
-	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<Long, ProcessingCommand>();
 	
 	private final IProcessingCommandHandler messageHandler;
 	
+	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<Long, ProcessingCommand>();
+	
 	private AtomicLong sequence = new AtomicLong(1l);
+	
 	private AtomicLong cursor = new AtomicLong(1l);
 	
 	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
@@ -37,11 +38,11 @@ public class ProcessingCommandMailbox implements Runnable {
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
+		lastActiveTime = System.currentTimeMillis();
 		long genericSequence = sequence.getAndIncrement();
 		message.setSequence(genericSequence);
 		message.setMailbox(this);
 		messageDict.put(genericSequence, message);
-		lastActiveTime = System.currentTimeMillis();
 		tryRun();
 	}
 
@@ -57,7 +58,7 @@ public class ProcessingCommandMailbox implements Runnable {
 		// TODO 此处为调度器发起新线程的起点
 
 		lastActiveTime = System.currentTimeMillis();
-        boolean hasException = false;
+//        boolean hasException = false;
         ProcessingCommand processingCommand = null;
         
         try {
@@ -70,18 +71,19 @@ public class ProcessingCommandMailbox implements Runnable {
             	count++;
         	}
         } catch (Exception ex) {
-            hasException = true;
-            if (ex instanceof IOException) {
-            	ICommand command = processingCommand.getMessage();
-            	logger.error(String.format("Failed to handle command [id: {}, type: {}]", command.getId(), command.getClass().getName()), ex);
-            } else {
-                logger.error("Failed to run command mailbox.", ex);
-            }
+//            hasException = true;
+//            if (ex instanceof IOException || ex instanceof IOExceptionOnRuntime) {
+//            	ICommand command = processingCommand.getMessage();
+//            	logger.error(String.format("Failed to handle command [id: %s, type: %s]!!!", command.getId(), command.getClass().getName()), ex);
+//            } else {
+//                logger.error(String.format("Failed to run command mailbox[aggregateRootId=%s]!!!", aggregateRootId), ex);
+//            }
             // TODO 触发错误后，还需要处理残留的命令
             ex.printStackTrace();
             logger.error(String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}", aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""), ex);
             try { Thread.sleep(1); } catch (InterruptedException e) { }
         } finally {
+        	runningOrNot.set(false);
         	exit();
             if (cursor.get() < sequence.get()) {
             	tryRun();
@@ -114,6 +116,10 @@ public class ProcessingCommandMailbox implements Runnable {
     private void exit() {
     	runningOrNot.compareAndSet(true, false);
     }
+
+	public boolean isInactive(long timeoutSeconds) {
+		return (System.currentTimeMillis() - lastActiveTime) >= timeoutSeconds;
+	}
     
     static {
     	MAX_BATCH_COMMANDS = 5;

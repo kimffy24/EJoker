@@ -62,9 +62,6 @@ public abstract class AbstractMessageProcessor<X extends IProcessingMessage<X, Y
 	
 	/**
 	 * 清理超时mailbox的函数。<br>
-	 * TODO 逻辑上无法排他，非线程安全<br>
-	 * TODO 逻辑上无法排他，非线程安全<br>
-	 * TODO 逻辑上无法排他，非线程安全<br>
 	 */
 	private void cleanInactiveMailbox() {
 		List<String> idelMailboxKeyList = new ArrayList<String>();
