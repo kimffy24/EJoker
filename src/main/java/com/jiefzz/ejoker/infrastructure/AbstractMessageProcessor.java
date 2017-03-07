@@ -86,7 +86,7 @@ public abstract class AbstractMessageProcessor<X extends IProcessingMessage<X, Y
 	
 	@EInitialize
 	public void init() {
-		scheduleService.StartTask("", new Runnable() {
+		scheduleService.StartTask(this.getClass().getName() +"#cleanInactiveMailbox()", new Runnable() {
 			@Override
 			public void run() {
 				AbstractMessageProcessor.this.cleanInactiveMailbox();
