@@ -1,5 +1,8 @@
 package com.jiefzz.ejoker.z.common.context.impl;
 
+import java.lang.reflect.Method;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +66,20 @@ public class DefaultEJokerClassMetaProvider implements IEJokerClassMetaProvidor,
 	@Override
 	public RootMetaRecord getRootMetaRecord() {
 		return rootMetaRecord;
+	}
+	
+	@Override
+	public void executeEInitialize(Class<?> type, Object instance) {
+		Set<Method> methodSet = rootMetaRecord.eInitializeMapper.getOrDefault(type, null);
+		if(null == methodSet)
+			return;
+		for(Method method:methodSet) {
+			try {
+				method.invoke(instance);
+			} catch (Exception e) {
+				throw new ContextRuntimeException("Exception occur while execute initialize method of class[" +type.getName() +"]", e);
+			}
+		}
 	}
 	
 	@Override

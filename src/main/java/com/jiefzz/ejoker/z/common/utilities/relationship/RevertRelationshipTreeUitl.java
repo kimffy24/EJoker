@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.utils.relationship;
+package com.jiefzz.ejoker.z.common.utilities.relationship;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -11,7 +11,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.utils.relationship.SpecialTypeHandler.Handler;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler.Handler;
 
 /**
  * 对象关系还原类

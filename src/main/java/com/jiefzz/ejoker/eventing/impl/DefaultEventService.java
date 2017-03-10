@@ -189,12 +189,12 @@ public class DefaultEventService implements IEventService {
 		}, new Action<Integer>() {
 			// MainAction
 			@Override
-			public void execute(Integer currentRetryTimes) {
+			public void trigger(Integer currentRetryTimes) {
 				DefaultEventService.this.persistEventAsync(context, currentRetryTimes);
 			}
 		}, new Action<AsyncTaskResultBase>() {
 			// SuccessAction
-			public void execute(AsyncTaskResultBase result) {
+			public void trigger(AsyncTaskResultBase result) {
 				AsyncTaskResult<EventAppendResult> realrResult = (AsyncTaskResult<EventAppendResult> )result;
 				switch (realrResult.getData()) {
 				case Success:
@@ -227,7 +227,7 @@ public class DefaultEventService implements IEventService {
 		}, new Action<String>() {
 			// FailedAction
 			@Override
-			public void execute(String errorMessage) {
+			public void trigger(String errorMessage) {
 				logger.error(
 						"Persist event has unknown exception, the code should not be run to here, errorMessage: {}",
 						errorMessage);
@@ -245,11 +245,11 @@ public class DefaultEventService implements IEventService {
 			}
 		}, new Action<Integer>() {
 			@Override
-			public void execute(Integer currentRetryTimes) {
+			public void trigger(Integer currentRetryTimes) {
 				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, currentRetryTimes);
 			}
 		}, new Action<AsyncTaskResultBase>() {
-			public void execute(AsyncTaskResultBase parameter) {
+			public void trigger(AsyncTaskResultBase parameter) {
 				logger.debug("Publish event success, {}", eventStream.toString());
 
 				String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();
@@ -264,7 +264,7 @@ public class DefaultEventService implements IEventService {
 			}
 		}, new Action<String>() {
 			@Override
-			public void execute(String errorMessage) {
+			public void trigger(String errorMessage) {
 				logger.error(
 						"Publish event has unknown exception, the code should not be run to here, errorMessage: {}",
 						errorMessage);

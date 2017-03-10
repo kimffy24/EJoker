@@ -20,6 +20,7 @@ public class Scavenger {
 	}
 
 	public static void cleanUp(){
+		int totalJob = amountOfJob.get();
 		for(Runnable cleanJob : waitingCleanJobs)
 			try {
 				cleanJob.run();
@@ -27,7 +28,7 @@ public class Scavenger {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		logger.info("In the end of Invoking Scavenger.cleanUp(), there {} jobs faild.", amountOfJob.get());
+		logger.info("In the end of Invoking Scavenger.cleanUp(), execute {} jobs, there {} jobs faild.", totalJob, amountOfJob.get());
 		System.gc();
 	}
 }

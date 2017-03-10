@@ -149,27 +149,6 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 			}}).start();
 		return localTask;
 		
-//		return asyncPool.execute(
-//				new IAsyncTask<AsyncTaskResult<CommandResult>>() {
-//					@Override
-//					public AsyncTaskResult<CommandResult> call() throws Exception {
-//						try {
-//							Ensure.notNull(commandResultProcessor, "commandResultProcessor");
-//							FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource = new FutureTaskCompletionSource<AsyncTaskResult<CommandResult>>();
-//							commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, taskCompletionSource);
-//							
-//							AsyncTaskResultBase result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
-//							if(AsyncTaskStatus.Success == result.getStatus())
-//								return taskCompletionSource.task.get();
-//							commandResultProcessor.processFailedSendingCommand(command);
-//							return new AsyncTaskResult<CommandResult>(result.getStatus(), result.getErrorMessage());
-//						} catch ( Exception e ) {
-//							return new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Failed, e.getMessage());
-//						}
-//					}
-//					
-//				}
-//		);
 	}
 
 	private EJokerQueueMessage buildCommandMessage(ICommand command){

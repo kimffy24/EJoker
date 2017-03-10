@@ -15,8 +15,10 @@ import java.util.Map;
  * @author kimffy
  *
  */
+@Deprecated
 public class RPCFramework {  
 	// 复制自http://javatar.iteye.com/blog/1123915
+	// 由于同步io存在性能问题，此类仅做参考
 	
 	private final Object service;
 	private final int port;

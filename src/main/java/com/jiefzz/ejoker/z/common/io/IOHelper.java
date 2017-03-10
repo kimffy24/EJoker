@@ -126,7 +126,7 @@ public class IOHelper {
 	private void executeFailedAction(String asyncActionName, Callable<String> getContextInfoAction, Action<String> failedAction, String errorMessage) {
 		try {
 			if (failedAction != null) {
-				failedAction.execute(errorMessage);
+				failedAction.trigger(errorMessage);
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the failedAction of asyncAction: '%s', context info: %s", asyncActionName, getContextInfo(getContextInfoAction)), ex);
@@ -145,7 +145,7 @@ public class IOHelper {
 
 					@Override
 					public void run() {
-						mainAction.execute(nextRetryTimes);
+						mainAction.trigger(nextRetryTimes);
 					}
 
 					public Runnable bind(Action<Integer> mainAction, Integer nextRetryTimes) {
@@ -156,7 +156,7 @@ public class IOHelper {
 
 				}.bind(mainAction, currentRetryTimes + 1)).start();
 			} else {
-				mainAction.execute(currentRetryTimes + 1);
+				mainAction.trigger(currentRetryTimes + 1);
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the retryAction, asyncActionName: %s, context info: %s", asyncActionName, getContextInfo(getContextInfoAction)), ex);
@@ -214,7 +214,7 @@ public class IOHelper {
 			switch (result.status) {
 			case Success:
 				if (null != context.successAction)
-					context.successAction.execute(result);
+					context.successAction.trigger(result);
 				break;
 			case IOException:
 				logger.error(

@@ -25,6 +25,11 @@
 		</repository>
 	</repositories>
 
+	<properties>
+		<!-- 参数化版本号 -->
+		<version.netty>4.1.8.Final</version.netty>
+	</properties>
+
 	<dependencies>
 
 		<!-- 日志组件 -->
@@ -41,12 +46,20 @@
 			<version>2.2.1</version>
 		</dependency>
 
-		<!-- redis缓存驱动 -->
+		<!-- 高性能序列化工具kryo-serializers -->
 		<dependency>
-			<groupId>redis.clients</groupId>
-			<artifactId>jedis</artifactId>
-			<version>2.6.3</version>
+			<groupId>de.javakaffee</groupId>
+			<artifactId>kryo-serializers</artifactId>
+			<version>0.41</version>
 		</dependency>
+
+		<!-- netty -->
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>${version.netty}</version>
+		</dependency>
+
 
 		<!-- mongo驱动 -->
 		<dependency>
@@ -54,21 +67,21 @@
 			<artifactId>mongo-java-driver</artifactId>
 			<version>3.2.1</version>
 		</dependency>
-		
+
 		<!-- 消息队列驱动 - RabbitMQ -->
 		<dependency>
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
 			<version>3.6.1</version>
 		</dependency>
-		
+
 		<!-- 消息队列驱动 - RocketMQ -->
 		<dependency>
-		    <groupId>com.aliyun.openservices</groupId>
-		    <artifactId>ons-client</artifactId>
-		    <version>1.2.7.Final</version>
+			<groupId>com.aliyun.openservices</groupId>
+			<artifactId>ons-client</artifactId>
+			<version>1.2.7.Final</version>
 		</dependency>
-		
+
 	</dependencies>
 
 

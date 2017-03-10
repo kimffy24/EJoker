@@ -15,6 +15,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.EJokerAnnotation;
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 @EJokerAnnotation
-public @interface Initialize {
+public @interface EInitialize {
 
 }

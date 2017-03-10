@@ -25,7 +25,9 @@ public class ScheduleServiceImpl implements IScheduleService {
 					Timer timer = entry.getValue();
 					try {
 						timer.cancel();
-					} catch (Exception e) { }
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 				ScheduleServiceImpl.this.timerTaskList.clear();
 			}
@@ -33,7 +35,7 @@ public class ScheduleServiceImpl implements IScheduleService {
 	}
 	
 	@Override
-	public void StartTask(String name, Runnable action, int dueTime, int period) {
+	public void StartTask(String name, Runnable action, long dueTime, long period) {
 		Timer timer;
 		timerTaskList.put(name, (timer = new Timer()));
         timer.schedule(new RemindTask(action), dueTime, period);
