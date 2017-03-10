@@ -5,14 +5,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.jiefzz.ejoker.EJoker;
-import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
-import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
-import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
@@ -20,6 +17,7 @@ import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaScanner;
 import com.jiefzz.ejoker.z.common.context.IEJokerContext;
 import com.jiefzz.ejoker.z.common.context.IEJokerInstalcePool;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
+import com.jiefzz.ejoker.z.common.context.IEjokerClassScanHook;
 import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
 
 public class DefaultEJokerContext implements IEJokerContext {
@@ -107,23 +105,37 @@ public class DefaultEJokerContext implements IEJokerContext {
 		} catch (ClassNotFoundException e) {
 			throw new ContextRuntimeException(e);
 		}
-		boolean inSelfPackage = false;
-		if(EJoker.SELF_PACNAGE_NAME.equals(javaPackage))
-			inSelfPackage = true;
+		
+		IEjokerClassScanHook[] hookArray = null;
+		if(0 != hookMap.size()) {
+			hookArray = new IEjokerClassScanHook[hookMap.size()];
+			int i=0;
+			Set<Entry<Class<? extends IEjokerClassScanHook>,IEjokerClassScanHook>> entrySet = hookMap.entrySet();
+			for(Entry<Class<? extends IEjokerClassScanHook>,IEjokerClassScanHook> entry:entrySet)
+				hookArray[i++]=entry.getValue();
+		}
+		
 		for(Class<?> clazz : scanClass) {
 			// skip Throwable \ Abstract \ Interface class
 			if(Throwable.class.isAssignableFrom(clazz)) continue;
 			if(Modifier.isAbstract(clazz.getModifiers())) continue;
 			if(clazz.isInterface()) continue;
 			eJokerClassMetaProvider.analyzeClassMeta(clazz);
-			if(!inSelfPackage) {
-				// 扫描非框架内的包时，注册CommandHandler和DomainEventHandler
-				RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
-				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
-			}
-			RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
+			
+			if(null!=hookArray)
+				for(IEjokerClassScanHook hook:hookArray)
+					hook.accept(clazz);
 		}
 	}
+
+	@Override
+	public void registeScanHook(IEjokerClassScanHook hook) {
+		hookMap.put(hook.getClass(), hook);
+	}
+	
+	private Map<Class<? extends IEjokerClassScanHook>, IEjokerClassScanHook> hookMap = 
+			new HashMap<Class<? extends IEjokerClassScanHook>, IEjokerClassScanHook>();
+	
 
 	@Override
 	public <T> void regist(Object instance, Class<T> clazz) {
