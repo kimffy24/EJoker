@@ -19,4 +19,10 @@ public interface IEJokerClassMetaScanner {
 	 */
 	public void scanPackageClassMeta(String javaPackage);
 	
+	/**
+	 * 添加钩子函数用于处理外部对于容器内扫描包内对象的需求
+	 * @param hook
+	 */
+	public void registeScanHook(IEjokerClassScanHook hook);
+	
 }
