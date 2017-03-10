@@ -20,6 +20,8 @@ public final class EJokerEnvironment {
 	public final static String ENVIROMMENT_FILE="ejoker.properties";
 	
 	public final static long MAILBOX_IDLE_TIMEOUT = 30l;
+
+	public final static int REPLY_PORT = 65056;
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 
