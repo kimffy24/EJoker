@@ -33,7 +33,7 @@ public class CommandResult implements Serializable {
 	@Override
 	public String toString() {
 		return String.format(
-				"[commandId=%s, status=%s, aggregateRootId=%s, result={}, resultType={}]",
+				"[commandId=%s, status=%s, aggregateRootId=%s, result=%s, resultType=%s]",
 				commandId, status.toString(), aggregateRootId, null==result?"null":result.toString(), null==resultType?"null":resultType.toString()
 		);
 	}
