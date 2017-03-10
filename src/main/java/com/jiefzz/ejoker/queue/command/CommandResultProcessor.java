@@ -50,7 +50,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			
 			rpcService.export(new Action<String>() {
 				@Override
-				public void execute(String parameter) {
+				public void trigger(String parameter) {
 					ReplyMessage revert = jsonConverter.revert(parameter, ReplyMessage.class);
 					if(null!=revert.c)
 						CommandResultProcessor.this.handlerResult(revert.t, revert.c);

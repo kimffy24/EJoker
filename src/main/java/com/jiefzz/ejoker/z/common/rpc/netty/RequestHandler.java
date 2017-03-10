@@ -18,7 +18,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         
-        action.execute(msg);
+        action.trigger(msg);
         
         ctx.writeAndFlush('\n');
 	}

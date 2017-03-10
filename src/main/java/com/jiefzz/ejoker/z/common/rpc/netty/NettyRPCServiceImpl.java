@@ -114,11 +114,11 @@ public class NettyRPCServiceImpl implements IRPCService<String> {
 						return ripenFuture;
 					}
 				}, new Action<Integer>() {
-					public void execute(Integer currentRetryTimes) {
+					public void trigger(Integer currentRetryTimes) {
 						NettyRPCServiceImpl.this.remoteInvokeInternal(data, host, port, currentRetryTimes);
 					}
 				}, new Action<AsyncTaskResultBase>() {
-					public void execute(AsyncTaskResultBase parameter) {
+					public void trigger(AsyncTaskResultBase parameter) {
 						// System.out.println("successAction invoke! parameter" +
 						// parameter);
 					}
@@ -127,7 +127,7 @@ public class NettyRPCServiceImpl implements IRPCService<String> {
 						return "";
 					}
 				}, new Action<String>() {
-					public void execute(String parameter) {
+					public void trigger(String parameter) {
 						// System.out.println("failedAction invoke! parameter" +
 						// parameter);
 						logger.error("failedAction invoke! parameter: {}", parameter);
