@@ -1,39 +1,49 @@
 package com.jiefzz.ejoker.queue;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
+import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
+import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 
 @EService
 public class SendReplyService {
 
-	private final static Logger logger = LoggerFactory.getLogger(SendReplyService.class);
+	@Dependence
+	IRPCService<String> rpcService;
+
+	@Dependence
+	IJSONConverter jsonConverter;
 	
 	public void sendReply(int replyType, CommandResult commandResult, String replyAddress) {
-		try {
-			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
-			replyHandler.handlerResult(replyType, commandResult);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		ReplyMessage rm = new ReplyMessage();
+		rm.t = replyType;
+		rm.c = commandResult;
+		sendReplyInternal(replyAddress, rm);
 	}
 	
 	public void sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
-		try {
-			IReplyHandler replyHandler = RPCFramework.refer(IReplyHandler.class, replyAddress, REPLY_PORT);
-			replyHandler.handlerResult(replyType, eomainEventHandledMessage);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		ReplyMessage rm = new ReplyMessage();
+		rm.t = replyType;
+		rm.d = eomainEventHandledMessage;
+		sendReplyInternal(replyAddress, rm);
 	}
 	
-	public final static int REPLY_PORT;
-	static {
-		// 请从配置文件注入此变量。
-		REPLY_PORT = 65056;
+	private void sendReplyInternal(String replyAddress, ReplyMessage rm) {
+		String convert = jsonConverter.convert(rm);
+		rpcService.remoteInvoke(convert, replyAddress, EJokerEnvironment.REPLY_PORT);
+	}
+
+	/**
+	 * 用于处理节点之间传输处理的消息体格式，使用简短名称节约空间
+	 * @author kimffy
+	 *
+	 */
+	public static class ReplyMessage {
+		public int t = 0;
+		public CommandResult c = null;
+		public DomainEventHandledMessage d = null;
 	}
 }

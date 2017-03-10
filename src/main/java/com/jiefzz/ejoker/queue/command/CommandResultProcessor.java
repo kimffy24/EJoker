@@ -9,18 +9,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.CommandStatus;
 import com.jiefzz.ejoker.commanding.ICommand;
-import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.IReplyHandler;
-import com.jiefzz.ejoker.queue.SendReplyService;
+import com.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
+import com.jiefzz.ejoker.z.common.action.Action;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.rpc.simpleRPC.RPCFramework;
+import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
 
@@ -29,6 +32,12 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
+	@Dependence
+	IRPCService<String> rpcService;
+
+	@Dependence
+	IJSONConverter jsonConverter;
+	
 	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
@@ -38,19 +47,18 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 		if (!start.compareAndSet(false, true)) {
 			logger.warn("{} has started!", this.getClass().getName());
 		} else {
-			new Thread(new Runnable() {
+			
+			rpcService.export(new Action<String>() {
 				@Override
-				public void run() {
-					try {
-						RPCFramework rpcFramework = new RPCFramework(CommandResultProcessor.this,
-								SendReplyService.REPLY_PORT);
-						rpcFramework.export();
-					} catch (Exception e) {
-						logger.error("{} faild on start!!!", this.getClass().getName());
-						throw new InfrastructureRuntimeException("CommandResultProcessor RPC binding faild!!!", e);
-					}
+				public void execute(String parameter) {
+					ReplyMessage revert = jsonConverter.revert(parameter, ReplyMessage.class);
+					if(null!=revert.c)
+						CommandResultProcessor.this.handlerResult(revert.t, revert.c);
+					else if(null!=revert.d)
+						CommandResultProcessor.this.handlerResult(revert.t, revert.d);
 				}
-			}).start();
+			}, EJokerEnvironment.REPLY_PORT);
+			
 		}
 		return this;
 	}
