@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.utils.relationship;
+package com.jiefzz.ejoker.z.common.utilities.relationship;
 
 import java.util.Arrays;
 import java.util.Collection;

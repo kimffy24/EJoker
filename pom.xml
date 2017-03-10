@@ -46,6 +46,13 @@
 			<version>2.2.1</version>
 		</dependency>
 
+		<!-- 高性能序列化工具kryo-serializers -->
+		<dependency>
+			<groupId>de.javakaffee</groupId>
+			<artifactId>kryo-serializers</artifactId>
+			<version>0.41</version>
+		</dependency>
+
 		<!-- netty -->
 		<dependency>
 			<groupId>io.netty</groupId>

@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @author jiefzz
  *
  */
-public class JavaObjectSerializeUtil {
+public final class JavaObjectSerializeUtil {
 
 	/**
 	 * java自带的序列化函数<br>
