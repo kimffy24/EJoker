@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaAnalyzer;
@@ -21,6 +25,8 @@ import com.jiefzz.ejoker.z.common.context.IEjokerClassScanHook;
 import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
 
 public class DefaultEJokerContext implements IEJokerContext {
+	
+	private final static Logger logger = LoggerFactory.getLogger(DefaultEJokerContext.class);
 	
 	private DefaultEJokerClassMetaProvider eJokerClassMetaProvider = new DefaultEJokerClassMetaProvider();
 	
@@ -130,11 +136,13 @@ public class DefaultEJokerContext implements IEJokerContext {
 
 	@Override
 	public void registeScanHook(IEjokerClassScanHook hook) {
-		hookMap.put(hook.getClass(), hook);
+		if(null!=hookMap.putIfAbsent(hook.getClass(), hook)) {
+			logger.warn("Context Hook[Type: {}] has regist before! It will ignore this invokation.");
+		};
 	}
 	
 	private Map<Class<? extends IEjokerClassScanHook>, IEjokerClassScanHook> hookMap = 
-			new HashMap<Class<? extends IEjokerClassScanHook>, IEjokerClassScanHook>();
+			new ConcurrentHashMap<Class<? extends IEjokerClassScanHook>, IEjokerClassScanHook>();
 	
 
 	@Override
