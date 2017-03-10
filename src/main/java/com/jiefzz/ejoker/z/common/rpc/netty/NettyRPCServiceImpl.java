@@ -110,7 +110,7 @@ public class NettyRPCServiceImpl implements IRPCService<String> {
 						}
 		
 						RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<AsyncTaskResultBase>();
-						System.out.println(ripenFuture.trySetResult(new AsyncTaskResultBase(AsyncTaskStatus.Success)));
+						ripenFuture.trySetResult(new AsyncTaskResultBase(AsyncTaskStatus.Success));
 						return ripenFuture;
 					}
 				}, new Action<Integer>() {
