@@ -37,7 +37,7 @@ public class DomainEventConsumer implements IQueueComsumerWokerService, IEJokerQ
 	@Dependence
     private AbstractMessageProcessor<ProcessingDomainEventStreamMessage, DomainEventStreamMessage> processor;
 
-	private final boolean sendEventHandledMessage = false;
+	private final boolean sendEventHandledMessage = true;
 
 	private IConsumer consumer;
 
@@ -114,10 +114,9 @@ public class DomainEventConsumer implements IQueueComsumerWokerService, IEJokerQ
 				return;
 
 			String replyAddress;
-			if (null != (replyAddress = domainEventStreamMessage.getItems().getOrDefault("CommandReplyAddress", null))
-					|| StringHelper.isNullOrEmpty(replyAddress))
+			if (StringHelper.isNullOrEmpty(replyAddress = domainEventStreamMessage.getItems().getOrDefault("CommandReplyAddress", null)))
 				return;
-			String commandResult = domainEventStreamMessage.getItems().getOrDefault("CommandResult", null);
+			String commandResult = domainEventStreamMessage.getItems().get("CommandResult");
 			DomainEventHandledMessage domainEventHandledMessage = new DomainEventHandledMessage();
 			domainEventHandledMessage.setCommandId(domainEventStreamMessage.getCommandId());
 			domainEventHandledMessage.setAggregateRootId(domainEventStreamMessage.getAggregateRootId());
