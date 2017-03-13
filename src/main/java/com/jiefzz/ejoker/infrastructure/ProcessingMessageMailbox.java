@@ -48,7 +48,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	}
 
     public void completeMessage(X processingMessage) {
-//        _lastActiveTime = DateTime.Now;
+    	lastActiveTime = System.currentTimeMillis();
 //        if (!TryExecuteWaitingMessage(processingMessage))
 //        {
 //            Exit();

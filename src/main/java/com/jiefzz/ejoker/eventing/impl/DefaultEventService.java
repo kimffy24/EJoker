@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandStatus;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
@@ -68,11 +69,6 @@ public class DefaultEventService implements IEventService {
 
 	private final int batchSize = 1;
 
-	/**
-	 * 不活动超时 TODO 需要配置文件注入变量 TODO 需要配置文件注入变量 TODO 需要配置文件注入变量
-	 */
-	private final long timeoutSeconds = 30l;
-
 	@Override
 	public void commitDomainEventAsync(EventCommittingConetxt context) {
 		String uniqueId = context.aggregateRoot.getUniqueId();
@@ -81,9 +77,9 @@ public class DefaultEventService implements IEventService {
 			lock4tryCreateEventMailbox.lock();
 			try {
 				if (!eventMailboxDict.containsKey(uniqueId)) {
-					eventMailboxDict.put(uniqueId, new EventMailBox(uniqueId, batchSize,
+					eventMailboxDict.put(uniqueId, eventMailbox = new EventMailBox(uniqueId, batchSize,
 							new EventMailBox.EventMailBoxHandler<List<EventCommittingConetxt>>() {
-								// 由于不能使用lambda表达式。。。。
+								// 暂不使用lambda表达式。。。。
 								@Override
 								public void handleMessage(List<EventCommittingConetxt> committingContexts) {
 									if (committingContexts == null || committingContexts.size() == 0)
@@ -94,15 +90,14 @@ public class DefaultEventService implements IEventService {
 										DefaultEventService.this.persistEventOneByOne(committingContexts);
 								}
 							}));
-				}
-				commitDomainEventAsync(context);
+				} else
+					eventMailbox = eventMailboxDict.get(uniqueId);
 			} finally {
 				lock4tryCreateEventMailbox.unlock();
 			}
-		} else {
-			eventMailbox.enqueueMessage(context);
-			refreshAggregateMemoryCache(context);
 		}
+		eventMailbox.enqueueMessage(context);
+		refreshAggregateMemoryCache(context);
 
 	}
 
@@ -141,11 +136,17 @@ public class DefaultEventService implements IEventService {
 		Set<Entry<String, EventMailBox>> entrySet = eventMailboxDict.entrySet();
 		for (KeyValuePair<String, EventMailBox> pair : inactiveList) {
 			EventMailBox mailbox = pair.getValue();
-			if (mailbox.isInactive(timeoutSeconds) && !mailbox.isRunning())
+			if (mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT) && !mailbox.isRunning())
 				inactiveList.add(new KeyValuePair<String, EventMailBox>(pair.getKey(), mailbox));
 		}
 
 		for (KeyValuePair<String, EventMailBox> pair : inactiveList) {
+			EventMailBox mailbox = pair.getValue();
+			if(!mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
+				// 在上面判断其达到空闲条件后，又被重新使能（临界情况）
+				// 放弃本次操作
+				continue;
+			}
 			if (null != eventMailboxDict.remove(pair.getKey())) {
 				logger.info("Removed inactive event mailbox, aggregateRootId: {}", pair.getKey());
 			}
@@ -168,18 +169,8 @@ public class DefaultEventService implements IEventService {
 
 	}
 
-	private void persistEventAsync(final EventCommittingConetxt context, int retryTimes) {
+	private void persistEventAsync(final EventCommittingConetxt context, int currentRetryTimes) {
 
-		// 单个事件异步持久化
-		// eventStore.appendAsync(context.eventSteam);
-		CommandResult commandResult = new CommandResult(CommandStatus.Success, context.eventStream.getCommandId(),
-				context.eventStream.getAggregateRootId(),
-				context.processingCommand.getCommandExecuteContext().getResult(), String.class.getName());
-		completeCommand(context.processingCommand, commandResult);
-		if (null != context.next)
-			persistEventAsync(context.next, retryTimes);
-		else
-			context.eventMailBox.tryRun(true);
 
 		ioHelper.tryAsyncActionRecursively("persistEventAsync", new IAsyncTask<Future<AsyncTaskResultBase>>() {
 			// AsyncAction
@@ -189,8 +180,8 @@ public class DefaultEventService implements IEventService {
 		}, new Action<Integer>() {
 			// MainAction
 			@Override
-			public void trigger(Integer currentRetryTimes) {
-				DefaultEventService.this.persistEventAsync(context, currentRetryTimes);
+			public void trigger(Integer nextRetryTimes) {
+				DefaultEventService.this.persistEventAsync(context, nextRetryTimes);
 			}
 		}, new Action<AsyncTaskResultBase>() {
 			// SuccessAction
@@ -232,12 +223,12 @@ public class DefaultEventService implements IEventService {
 						"Persist event has unknown exception, the code should not be run to here, errorMessage: {}",
 						errorMessage);
 			}
-		}, retryTimes, true);
+		}, currentRetryTimes, true);
 
 	}
 
 	private void publishDomainEventAsync(final ProcessingCommand processingCommand,
-			final DomainEventStreamMessage eventStream, int retryTimes) {
+			final DomainEventStreamMessage eventStream, int currentRetryTimes) {
 
 		ioHelper.tryAsyncActionRecursively("publishDomainEventAsync", new IAsyncTask<Future<AsyncTaskResultBase>>() {
 			public Future<AsyncTaskResultBase> call() throws Exception {
@@ -245,8 +236,8 @@ public class DefaultEventService implements IEventService {
 			}
 		}, new Action<Integer>() {
 			@Override
-			public void trigger(Integer currentRetryTimes) {
-				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, currentRetryTimes);
+			public void trigger(Integer nextRetryTimes) {
+				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, nextRetryTimes);
 			}
 		}, new Action<AsyncTaskResultBase>() {
 			public void trigger(AsyncTaskResultBase parameter) {
@@ -270,7 +261,7 @@ public class DefaultEventService implements IEventService {
 						errorMessage);
 
 			}
-		}, retryTimes, true);
+		}, currentRetryTimes, true);
 	}
 
 	/**

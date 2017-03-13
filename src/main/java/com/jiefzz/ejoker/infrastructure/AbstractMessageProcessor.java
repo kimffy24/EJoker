@@ -43,16 +43,15 @@ public abstract class AbstractMessageProcessor<X extends IProcessingMessage<X, Y
 				lock4tryCreateMailbox.lock();
 				try {
 					if (!mailboxDict.containsKey(routingKey)) {
-						mailboxDict.put(routingKey, (mailbox = new ProcessingMessageMailbox<X, Y>(routingKey,
-								getProcessingMessageScheduler(), getProcessingMessageHandler())));
-					}
-					// process(processingMessage);
-					mailbox.enqueueMessage(processingMessage);
+						mailboxDict.put(routingKey, mailbox = new ProcessingMessageMailbox<X, Y>(routingKey,
+								getProcessingMessageScheduler(), getProcessingMessageHandler()));
+					} else
+						mailbox = mailboxDict.get(routingKey);
 				} finally {
 					lock4tryCreateMailbox.unlock();
 				}
-			} else
-				mailbox.enqueueMessage(processingMessage);
+			}
+			mailbox.enqueueMessage(processingMessage);
 		} else {
 			getProcessingMessageScheduler().scheduleMessage(processingMessage);
 		}

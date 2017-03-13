@@ -42,24 +42,20 @@ public final class DefaultCommandProcessorImpl implements ICommandProcessor {
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());
 
         ProcessingCommandMailbox mailbox;
-        /**
-         * C# GetOrAdd 方法能做到不存在则构建。 Java没有。
-         * TODO: 调试检查起正确性！！！！ 是不是可以考虑下使用 putIfAbsent 呢
-         */
+        
         if(null==(mailbox = mailboxDict.getOrDefault(aggregateRootId, null))) {
         	lock4tryCreateMailbox.lock();
         	try {
-        		if(!mailboxDict.containsKey(aggregateRootId)){	// 若发生竟态，获取锁后，先检查在此线程之前获取锁的线程是否创建了Mailbox
-        			// 在递归调用时似乎会发生死锁？ 似乎在递归调用时不会再进入这个if语句块才是合乎逻辑的
+        		if(!mailboxDict.containsKey(aggregateRootId)){
         			logger.debug("Creating mailbox for aggregateRoot[aggregateRootId={}].", aggregateRootId);
-                	mailboxDict.put(aggregateRootId, new ProcessingCommandMailbox(aggregateRootId, handler));
-        		}
-    			process(processingCommand);
+                	mailboxDict.put(aggregateRootId, mailbox = new ProcessingCommandMailbox(aggregateRootId, handler));
+        		} else
+        			mailbox = mailboxDict.get(aggregateRootId);
         	} finally {
         		lock4tryCreateMailbox.unlock();
         	}
-        } else
-        	mailbox.enqueueMessage(processingCommand);
+        }
+        mailbox.enqueueMessage(processingCommand);
 	}
 
 }
