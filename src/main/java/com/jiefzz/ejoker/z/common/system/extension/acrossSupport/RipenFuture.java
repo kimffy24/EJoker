@@ -43,7 +43,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	}
 
 	@Override
-	public TResult get() throws InterruptedException, ExecutionException {
+	public TResult get() {
 		try {
 			countDownLatch.await();
 		} catch (InterruptedException e) {
