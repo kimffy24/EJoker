@@ -82,7 +82,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
 		if (null != commandTaskMap.putIfAbsent(command.getId(),
 				new CommandTaskCompletionSource(commandReturnType, taskCompletionSource))) {
-			throw new RuntimeException(String.format("Duplicate processing command registion, [type={}, id={}]",
+			throw new RuntimeException(String.format("Duplicate processing command registion, [type=%s, id=%s]",
 					command.getClass().getName(), command.getId()));
 		}
 	}
