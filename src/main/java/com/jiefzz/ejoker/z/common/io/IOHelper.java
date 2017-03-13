@@ -33,22 +33,22 @@ public class IOHelper {
 
 	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, retryTimes,
+			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes) {
+		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, currentRetryTimes,
 				false, 3, 1000);
 	}
 
 	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes, boolean retryWhenFailed) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, retryTimes,
+			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes, boolean retryWhenFailed) {
+		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, currentRetryTimes,
 				retryWhenFailed, 3, 1000);
 	}
 
 	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes, boolean retryWhenFailed, int maxRetryTimes) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, retryTimes,
+			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes, boolean retryWhenFailed, int maxRetryTimes) {
+		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, currentRetryTimes,
 				retryWhenFailed, maxRetryTimes, 1000);
 	}
 
@@ -67,8 +67,8 @@ public class IOHelper {
 	 *            封装方法：获取上下文信息的方法
 	 * @param failedAction
 	 *            封装方法：失败后执行
-	 * @param retryTimes
-	 *            重试次数
+	 * @param currentRetryTimes
+	 *            当前重试次数
 	 * @param retryWhenFailed
 	 *            是否失败后重试
 	 * @param maxRetryTimes
@@ -78,7 +78,7 @@ public class IOHelper {
 	 */
 	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
 			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int retryTimes, boolean retryWhenFailed, int maxRetryTimes,
+			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes, boolean retryWhenFailed, int maxRetryTimes,
 			int retryInterval) {
 		try {
 
@@ -88,7 +88,7 @@ public class IOHelper {
 			taskExecutionContext.successAction = successAction;
 			taskExecutionContext.contextInfo = getContextInfoAction;
 			taskExecutionContext.failedAction = failedAction;
-			taskExecutionContext.retryTimes = retryTimes;
+			taskExecutionContext.currentRetryTimes = currentRetryTimes;
 			taskExecutionContext.retryWhenFailed = retryWhenFailed;
 			taskExecutionContext.maxRetryTimes = maxRetryTimes;
 			taskExecutionContext.retryInterval = retryInterval;
@@ -98,15 +98,15 @@ public class IOHelper {
 			if (ex instanceof IOException || ex instanceof IOExceptionOnRuntime) {
 				logger.error(String.format(
 						"IOException raised when executing async task '%s', context info: %s, current retryTimes: %d, try to execute the async task again.",
-						asyncActionName, getContextInfo(getContextInfoAction), retryTimes), ex);
-				executeRetryAction(asyncActionName, getContextInfoAction, mainAction, retryTimes, maxRetryTimes, retryInterval);
+						asyncActionName, getContextInfo(getContextInfoAction), currentRetryTimes), ex);
+				executeRetryAction(asyncActionName, getContextInfoAction, mainAction, currentRetryTimes, maxRetryTimes, retryInterval);
 			} else {
 				logger.error(
 						String.format("Unknown exception raised when executing async task '%s', context info: %s, current retryTimes: %d",
-								asyncActionName, getContextInfo(getContextInfoAction), retryTimes),
+								asyncActionName, getContextInfo(getContextInfoAction), currentRetryTimes),
 						ex);
 				if (retryWhenFailed) {
-					executeRetryAction(asyncActionName, getContextInfoAction, mainAction, retryTimes, maxRetryTimes, retryInterval);
+					executeRetryAction(asyncActionName, getContextInfoAction, mainAction, currentRetryTimes, maxRetryTimes, retryInterval);
 				} else {
 					executeFailedAction(asyncActionName, getContextInfoAction, failedAction, ex.getMessage());
 				}
@@ -185,7 +185,7 @@ public class IOHelper {
 		try {
 			if (task.isCancelled()) {
 				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.", context.asyncActionName,
-						getContextInfo(context.contextInfo), context.retryTimes);
+						getContextInfo(context.contextInfo), context.currentRetryTimes);
 				executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
 						String.format("Async task '%s' was cancelled.", context.asyncActionName));
 				return;
@@ -196,14 +196,14 @@ public class IOHelper {
 			} catch (ExecutionException e) {
 				Exception cause = (Exception )e.getCause();
 				processTaskException(context.asyncActionName, context.contextInfo, context.mainAction, context.failedAction, cause,
-						context.retryTimes, context.maxRetryTimes, context.retryInterval, context.retryWhenFailed);
+						context.currentRetryTimes, context.maxRetryTimes, context.retryInterval, context.retryWhenFailed);
 				return;
 			}
 			if (result == null) {
 				logger.error("Async task '{}' result is null, context info: {}, current retryTimes: {}", context.asyncActionName,
-						getContextInfo(context.contextInfo), context.retryTimes);
+						getContextInfo(context.contextInfo), context.currentRetryTimes);
 				if (context.retryWhenFailed) {
-					executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.retryTimes,
+					executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.currentRetryTimes,
 							context.maxRetryTimes, context.retryInterval);
 				} else {
 					executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
@@ -219,15 +219,15 @@ public class IOHelper {
 			case IOException:
 				logger.error(
 						"Async task '{}' result status is io exception, context info: {}, current retryTimes:{}, errorMsg:{}, try to run the async task again.",
-						context.asyncActionName, getContextInfo(context.contextInfo), context.retryTimes, result.getErrorMessage());
-				executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.retryTimes,
+						context.asyncActionName, getContextInfo(context.contextInfo), context.currentRetryTimes, result.getErrorMessage());
+				executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.currentRetryTimes,
 						context.maxRetryTimes, context.retryInterval);
 				break;
 			case Failed:
 				logger.error("Async task '{}' failed, context info: {}, current retryTimes:{}, errorMsg:{}", context.asyncActionName,
-						getContextInfo(context.contextInfo), context.retryTimes, result.errorMessage);
+						getContextInfo(context.contextInfo), context.currentRetryTimes, result.errorMessage);
 				if (context.retryWhenFailed) {
-					executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.retryTimes,
+					executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.currentRetryTimes,
 							context.maxRetryTimes, context.retryInterval);
 				} else {
 					executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
@@ -249,7 +249,7 @@ public class IOHelper {
 		public Action<TAsyncResult> successAction;
 		public Action<String> failedAction;
 		public Callable<String> contextInfo;
-		public int retryTimes;
+		public int currentRetryTimes;
 		public boolean retryWhenFailed;
 		public int maxRetryTimes;
 		public int retryInterval;
