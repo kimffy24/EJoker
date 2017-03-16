@@ -8,11 +8,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.z.common.task.AsyncPool;
+import com.jiefzz.ejoker.z.common.task.IAsyncTask;
+import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
+
 public class ProcessingCommandMailbox implements Runnable {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
-	
-	public final static int MAX_BATCH_COMMANDS;
 	
 	private final String aggregateRootId;
 	
@@ -63,7 +66,7 @@ public class ProcessingCommandMailbox implements Runnable {
         
         try {
         	int count = 0;
-        	while(cursor.get() < sequence.get() && count < MAX_BATCH_COMMANDS) {
+        	while(cursor.get() < sequence.get() && count < EJokerEnvironment.MAX_BATCH_COMMANDS) {
             	long currentSequence = cursor.getAndIncrement();
             	processingCommand = messageDict.get(currentSequence);
             	if (processingCommand != null)
@@ -71,13 +74,6 @@ public class ProcessingCommandMailbox implements Runnable {
             	count++;
         	}
         } catch (Exception ex) {
-//            hasException = true;
-//            if (ex instanceof IOException || ex instanceof IOExceptionOnRuntime) {
-//            	ICommand command = processingCommand.getMessage();
-//            	logger.error(String.format("Failed to handle command [id: %s, type: %s]!!!", command.getId(), command.getClass().getName()), ex);
-//            } else {
-//                logger.error(String.format("Failed to run command mailbox[aggregateRootId=%s]!!!", aggregateRootId), ex);
-//            }
             // TODO 触发错误后，还需要处理残留的命令
             ex.printStackTrace();
             logger.error(String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}", aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""), ex);
@@ -105,7 +101,8 @@ public class ProcessingCommandMailbox implements Runnable {
 
     private void tryRun() {
         if (tryEnter()) {
-            new Thread(this).run();
+            // new Thread(this).run();
+        	threadStrategyExecute(this);
         }
     }
     
@@ -120,8 +117,19 @@ public class ProcessingCommandMailbox implements Runnable {
 	public boolean isInactive(long timeoutSeconds) {
 		return (System.currentTimeMillis() - lastActiveTime) >= timeoutSeconds;
 	}
+	
+	// =================== thread strategy
     
-    static {
-    	MAX_BATCH_COMMANDS = 5;
+    private IAsyncTask<Boolean> tryRunTask = new IAsyncTask<Boolean>(){
+		@Override
+		public Boolean call() throws Exception {
+			ProcessingCommandMailbox.this.run();
+			return true;
+		}
+    	
+    };
+    private final static AsyncPool poolInstance = ThreadPoolMaster.getPoolInstance(ProcessingCommandMailbox.class);
+    private static void threadStrategyExecute(ProcessingCommandMailbox box) {
+    	poolInstance.execute(box.tryRunTask);
     }
 }

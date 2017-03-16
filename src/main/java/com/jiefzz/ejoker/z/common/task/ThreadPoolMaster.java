@@ -9,13 +9,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 
 public class ThreadPoolMaster {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ThreadPoolMaster.class);
-
-	private static final int threadPoolSize = 64;
 	
 	private static Map<Class<?>, AsyncPool> poolHolder = new HashMap<Class<?>, AsyncPool>();
 	
@@ -23,7 +22,7 @@ public class ThreadPoolMaster {
 		AsyncPool asyncPool;
 		if(null!=(asyncPool = poolHolder.getOrDefault(typeOfCaller, null)))
 			return asyncPool;
-		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(threadPoolSize)));
+		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(EJokerEnvironment.THREAD_POOL_SIZE)));
 		logger.debug("Create a new ThreadPool[{}] for {}.", AsyncPool.class.getName(), typeOfCaller.getName());
 		return asyncPool;
 	}
