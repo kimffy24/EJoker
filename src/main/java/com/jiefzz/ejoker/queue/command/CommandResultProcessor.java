@@ -70,12 +70,16 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	}
 
 	public String getBindingAddress() {
-		try {
-			return InetAddress.getLocalHost().getHostAddress();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return null;
-		}
+		//return "10.1.2.2";
+		
+		return "127.0.0.1";
+		
+//		try {
+//			return InetAddress.getLocalHost().getHostAddress();
+//		} catch (UnknownHostException e) {
+//			e.printStackTrace();
+//			return null;
+//		}
 	}
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,
