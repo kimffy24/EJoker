@@ -29,6 +29,8 @@ public class ProcessingCommandMailbox implements Runnable {
 	
 	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
 	
+	private boolean isProcessingCommand = false;
+	
 	private long lastActiveTime = System.currentTimeMillis();
 	
 	public String getAggregateRootId() {
@@ -65,6 +67,7 @@ public class ProcessingCommandMailbox implements Runnable {
         ProcessingCommand processingCommand = null;
         
         try {
+        	isProcessingCommand = true;
         	int count = 0;
         	while(cursor.get() < sequence.get() && count < EJokerEnvironment.MAX_BATCH_COMMANDS) {
             	long currentSequence = cursor.getAndIncrement();
@@ -79,7 +82,7 @@ public class ProcessingCommandMailbox implements Runnable {
             logger.error(String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}", aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""), ex);
             try { Thread.sleep(1); } catch (InterruptedException e) { }
         } finally {
-        	runningOrNot.set(false);
+        	isProcessingCommand = false;
         	exit();
             if (cursor.get() < sequence.get()) {
             	tryRun();

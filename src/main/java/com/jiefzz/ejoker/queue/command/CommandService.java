@@ -137,16 +137,17 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 			public void run() {
 				try {
 					AsyncTaskResultBase result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
-				if(AsyncTaskStatus.Success == result.getStatus()) {
-					localTask.trySetResult(remoteTaskCompletionSource.task.get());
-				} else {
-					commandResultProcessor.processFailedSendingCommand(command);
-					localTask.trySetResult(new AsyncTaskResult<CommandResult>(result.getStatus(), result.getErrorMessage()));
+					if(AsyncTaskStatus.Success == result.getStatus()) {
+						localTask.trySetResult(remoteTaskCompletionSource.task.get());
+					} else {
+						commandResultProcessor.processFailedSendingCommand(command);
+						localTask.trySetResult(new AsyncTaskResult<CommandResult>(result.getStatus(), result.getErrorMessage()));
+					}
+				} catch ( Exception e ) {
+					localTask.trySetResult(new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Failed, e.getMessage()));
 				}
-			} catch ( Exception e ) {
-				localTask.trySetResult(new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Failed, e.getMessage()));
 			}
-			}}).start();
+		}).start();
 		return localTask;
 		
 	}

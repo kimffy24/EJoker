@@ -18,11 +18,15 @@ public class ThreadPoolMaster {
 	
 	private static Map<Class<?>, AsyncPool> poolHolder = new HashMap<Class<?>, AsyncPool>();
 	
-	public static AsyncPool getPoolInstance(Class<?> typeOfCaller){
+	public static AsyncPool getPoolInstance(Class<?> typeOfCaller) {
+		return getPoolInstance(typeOfCaller, EJokerEnvironment.THREAD_POOL_SIZE);
+	}
+	
+	public static AsyncPool getPoolInstance(Class<?> typeOfCaller, int poolSize) {
 		AsyncPool asyncPool;
 		if(null!=(asyncPool = poolHolder.getOrDefault(typeOfCaller, null)))
 			return asyncPool;
-		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(EJokerEnvironment.THREAD_POOL_SIZE)));
+		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(poolSize)));
 		logger.debug("Create a new ThreadPool[{}] for {}.", AsyncPool.class.getName(), typeOfCaller.getName());
 		return asyncPool;
 	}

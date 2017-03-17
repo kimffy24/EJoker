@@ -104,6 +104,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		}else{
 			aggregateRootInfoDict.put(uniqueId, new AggregateCacheInfo(aggregateRoot));
 		};
-		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
+		if(logger.isDebugEnabled())
+			logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
 	}
 }

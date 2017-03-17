@@ -72,8 +72,7 @@ public class CommandHandlerPool {
 						handler = EJoker.getInstance().getEJokerContext().get(handlerClass);
 						return handler;
 					} else
-						// 当执行递归调用时，逻辑上能保证线程不会再进入临界区。
-						return getInnerObject();
+						return handler;
 				} finally {
 					lock4getHandler.unlock();
 				}
@@ -90,9 +89,11 @@ public class CommandHandlerPool {
 				throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
 			}
 		}
+		
 		@Override
 		public String toString() {
 			return identification;
 		}
+		
 	}
 }

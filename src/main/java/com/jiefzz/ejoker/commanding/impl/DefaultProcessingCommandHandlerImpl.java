@@ -64,7 +64,8 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		boolean handleSuccess = false;
 		try {
 			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
-			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]", commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
+			if(logger.isDebugEnabled())
+				logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]", commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
 			handleSuccess = true;
 		} catch( Exception e ) {
 			// TODO 此处应该进入EJoker的异常发布过程
