@@ -22,6 +22,10 @@ public final class EJokerEnvironment {
 	public final static long MAILBOX_IDLE_TIMEOUT = 30l;
 
 	public final static int REPLY_PORT = 65056;
+
+	public final static int THREAD_POOL_SIZE = 512;
+	
+	public final static int MAX_BATCH_COMMANDS = 5;
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 

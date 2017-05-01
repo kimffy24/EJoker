@@ -7,7 +7,7 @@
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
-	<repositories>
+	<!-- <repositories>
 		<repository>
 			<id>CN</id>
 			<name>OSChina Central</name>
@@ -23,7 +23,7 @@
 			<id>central</id>
 			<url>https://repo1.maven.org/maven2</url>
 		</repository>
-	</repositories>
+	</repositories> -->
 
 	<properties>
 		<!-- 参数化版本号 -->
@@ -92,8 +92,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 		</plugins>
