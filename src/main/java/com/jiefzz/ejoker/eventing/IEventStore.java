@@ -31,12 +31,6 @@ public interface IEventStore {
 	 */
 	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream);
 	
-	/**
-	 * 同步保存事件
-	 * @param event
-	 */
-	public void appendsync(DomainEventStream eventStream);
-	
 	public void findAsync(String aggregateRootId, int version);
 	
 	public void findAsync(String aggregateRootId, String commandId);
