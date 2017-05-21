@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.eventing.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
+import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 
@@ -115,7 +117,7 @@ public class DefaultEventService implements IEventService {
 		DomainEventStreamMessage domainEventStreamMessage = new DomainEventStreamMessage(
 				processingCommand.getMessage().getId(), eventStream.getAggregateRootId(), eventStream.getVersion(),
 				eventStream.getAggregateRootTypeName(), eventStream.getEvents(), eventStream.getItems());
-		publishDomainEventAsync(processingCommand, domainEventStreamMessage, 0);
+		publishDomainEventAsync(processingCommand, domainEventStreamMessage);
 	}
 
 	private void refreshAggregateMemoryCache(EventCommittingConetxt context) {
@@ -165,27 +167,31 @@ public class DefaultEventService implements IEventService {
 	private void persistEventOneByOne(List<EventCommittingConetxt> contextList) {
 		// 逐个持久化
 		concatContexts(contextList);
-		persistEventAsync(contextList.get(0), 0);
+		persistEventAsync(contextList.get(0));
 
 	}
 
-	private void persistEventAsync(final EventCommittingConetxt context, int currentRetryTimes) {
+	private void persistEventAsync(final EventCommittingConetxt context) {
+		
+		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext() {
 
+			@Override
+			public String getAsyncActionName() {
+				return "persistEventAsync";
+			}
 
-		ioHelper.tryAsyncActionRecursively("persistEventAsync", new IAsyncTask<Future<AsyncTaskResultBase>>() {
-			// AsyncAction
-			public Future<AsyncTaskResultBase> call() throws Exception {
+			@Override
+			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
 				return DefaultEventService.this.eventStore.appendAsync(context.eventStream);
 			}
-		}, new Action<Integer>() {
-			// MainAction
+
 			@Override
-			public void trigger(Integer nextRetryTimes) {
-				DefaultEventService.this.persistEventAsync(context, nextRetryTimes);
+			public void faildLoopAction() {
+				ioHelper.tryAsyncActionRecursively(this);
 			}
-		}, new Action<AsyncTaskResultBase>() {
-			// SuccessAction
-			public void trigger(AsyncTaskResultBase result) {
+
+			@Override
+			public void finishAction(AsyncTaskResultBase result) {
 				AsyncTaskResult<EventAppendResult> realrResult = (AsyncTaskResult<EventAppendResult> )result;
 				switch (realrResult.getData()) {
 				case Success:
@@ -198,7 +204,7 @@ public class DefaultEventService implements IEventService {
 						}
 					}).start();
 					if (null != context.next)
-						persistEventAsync(context.next, 0);
+						persistEventAsync(context.next);
 					else
 						context.eventMailBox.tryRun(true);
 					break;
@@ -210,37 +216,44 @@ public class DefaultEventService implements IEventService {
 					break;
 				}
 			}
-		}, new Callable<String>() {
-			// GetContextInfoAction
-			public String call() {
+
+			@Override
+			public String getContextInfo() {
 				return String.format("[eventStream: %s]", context.eventStream.toString());
 			}
-		}, new Action<String>() {
-			// FailedAction
+
 			@Override
-			public void trigger(String errorMessage) {
+			public void faildAction(Exception ex) {
 				logger.error(
 						"Persist event has unknown exception, the code should not be run to here, errorMessage: {}",
-						errorMessage);
-			}
-		}, currentRetryTimes, true);
+						ex.getMessage());
+			}});
 
 	}
 
 	private void publishDomainEventAsync(final ProcessingCommand processingCommand,
-			final DomainEventStreamMessage eventStream, int currentRetryTimes) {
+			final DomainEventStreamMessage eventStream) {
 
-		ioHelper.tryAsyncActionRecursively("publishDomainEventAsync", new IAsyncTask<Future<AsyncTaskResultBase>>() {
-			public Future<AsyncTaskResultBase> call() throws Exception {
+		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext() {
+
+			@Override
+			public String getAsyncActionName() {
+				return "publishDomainEventAsync";
+			}
+
+			@Override
+			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
 				return DefaultEventService.this.domainEventPublisher.publishAsync(eventStream);
 			}
-		}, new Action<Integer>() {
+
 			@Override
-			public void trigger(Integer nextRetryTimes) {
-				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, nextRetryTimes);
+			public void faildLoopAction() {
+				ioHelper.tryAsyncActionRecursively(this);
+//				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, nextRetryTimes);
 			}
-		}, new Action<AsyncTaskResultBase>() {
-			public void trigger(AsyncTaskResultBase parameter) {
+
+			@Override
+			public void finishAction(AsyncTaskResultBase result) {
 				logger.debug("Publish event success, {}", eventStream.toString());
 
 				String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();
@@ -249,19 +262,19 @@ public class DefaultEventService implements IEventService {
 						String.class.getName());
 				completeCommand(processingCommand, commandResult);
 			}
-		}, new Callable<String>() {
-			public String call() {
+
+			@Override
+			public String getContextInfo() {
 				return String.format("[eventStream: %s]", eventStream.toString());
 			}
-		}, new Action<String>() {
+			
 			@Override
-			public void trigger(String errorMessage) {
+			public void faildAction(Exception ex) {
 				logger.error(
 						"Publish event has unknown exception, the code should not be run to here, errorMessage: {}",
-						errorMessage);
-
-			}
-		}, currentRetryTimes, true);
+						ex.getMessage());
+			}});
+		
 	}
 
 	/**

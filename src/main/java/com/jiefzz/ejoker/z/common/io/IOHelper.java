@@ -1,22 +1,18 @@
 package com.jiefzz.ejoker.z.common.io;
 
 import java.io.IOException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.action.Action;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 
 /**
  * 模拟IOHelper的实现
  * {@link https://github.com/tangxuehua/ecommon/blob/master/src/ECommon/IO/IOHelper.cs}
  * 
- * @author kimffy
+ * @author JiefzzLon
  *
  */
 @EService
@@ -24,234 +20,221 @@ public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
 
-	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
-			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, 0, false, 3,
-				1000);
-	}
+	public void tryAsyncActionRecursively(AsyncIOHelperExecutionContext externalContext) {
 
-	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
-			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, currentRetryTimes,
-				false, 3, 1000);
-	}
+		if (!externalContext.hasInitialized) {
+			externalContext.init();
+			externalContext.hasInitialized = true;
+		}
 
-	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
-			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes, boolean retryWhenFailed) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, currentRetryTimes,
-				retryWhenFailed, 3, 1000);
-	}
-
-	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
-			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes, boolean retryWhenFailed, int maxRetryTimes) {
-		tryAsyncActionRecursively(asyncActionName, asyncAction, mainAction, successAction, getContextInfoAction, failedAction, currentRetryTimes,
-				retryWhenFailed, maxRetryTimes, 1000);
-	}
-
-	/**
-	 * 封装用于io的异步任务执行类。
-	 * 
-	 * @param asyncActionName
-	 *            异步任务名
-	 * @param asyncAction
-	 *            异步任务封装类
-	 * @param mainAction
-	 *            主方法
-	 * @param successAction
-	 *            封装方法：成功后执行
-	 * @param getContextInfoAction
-	 *            封装方法：获取上下文信息的方法
-	 * @param failedAction
-	 *            封装方法：失败后执行
-	 * @param currentRetryTimes
-	 *            当前重试次数
-	 * @param retryWhenFailed
-	 *            是否失败后重试
-	 * @param maxRetryTimes
-	 *            最大重试次数
-	 * @param retryInterval
-	 *            重试间隔（毫秒)
-	 */
-	public <TAsyncResult extends AsyncTaskResultBase> void tryAsyncActionRecursively(String asyncActionName,
-			IAsyncTask<Future<TAsyncResult>> asyncAction, Action<Integer> mainAction, Action<TAsyncResult> successAction,
-			Callable<String> getContextInfoAction, Action<String> failedAction, int currentRetryTimes, boolean retryWhenFailed, int maxRetryTimes,
-			int retryInterval) {
 		try {
-
-			TaskExecutionContext<TAsyncResult> taskExecutionContext = new TaskExecutionContext<TAsyncResult>();
-			taskExecutionContext.asyncActionName = asyncActionName;
-			taskExecutionContext.mainAction = mainAction;
-			taskExecutionContext.successAction = successAction;
-			taskExecutionContext.contextInfo = getContextInfoAction;
-			taskExecutionContext.failedAction = failedAction;
-			taskExecutionContext.currentRetryTimes = currentRetryTimes;
-			taskExecutionContext.retryWhenFailed = retryWhenFailed;
-			taskExecutionContext.maxRetryTimes = maxRetryTimes;
-			taskExecutionContext.retryInterval = retryInterval;
-
-			taskContinueAction(asyncAction.call(), taskExecutionContext);
+			taskContinueAction(externalContext);
 		} catch (Exception ex) {
-			if (ex instanceof IOException || ex instanceof IOExceptionOnRuntime) {
-				logger.error(String.format(
-						"IOException raised when executing async task '%s', context info: %s, current retryTimes: %d, try to execute the async task again.",
-						asyncActionName, getContextInfo(getContextInfoAction), currentRetryTimes), ex);
-				executeRetryAction(asyncActionName, getContextInfoAction, mainAction, currentRetryTimes, maxRetryTimes, retryInterval);
-			} else {
-				logger.error(
-						String.format("Unknown exception raised when executing async task '%s', context info: %s, current retryTimes: %d",
-								asyncActionName, getContextInfo(getContextInfoAction), currentRetryTimes),
-						ex);
-				if (retryWhenFailed) {
-					executeRetryAction(asyncActionName, getContextInfoAction, mainAction, currentRetryTimes, maxRetryTimes, retryInterval);
-				} else {
-					executeFailedAction(asyncActionName, getContextInfoAction, failedAction, ex.getMessage());
-				}
-			}
+			processTaskException(externalContext, ex);
 		}
-	}
-	
-	private String getContextInfo(Callable<String> getContextInfoAction) {
-		try {
-			return getContextInfoAction.call();
-		} catch (Exception e) {
-			logger.error("Failed to execute the getContextInfoAction.", e);
-			return null;
-		}
+
 	}
 
-	private void executeFailedAction(String asyncActionName, Callable<String> getContextInfoAction, Action<String> failedAction, String errorMessage) {
-		try {
-			if (failedAction != null) {
-				failedAction.trigger(errorMessage);
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to execute the failedAction of asyncAction: '%s', context info: %s", asyncActionName, getContextInfo(getContextInfoAction)), ex);
-		}
-	}
-
-	private void executeRetryAction(String asyncActionName, Callable<String> getContextInfoAction, Action<Integer> mainAction, int currentRetryTimes,
-			int maxRetryTimes, int retryInterval) {
-		try {
-			if (currentRetryTimes >= maxRetryTimes) {
-				Thread.sleep(retryInterval);
-				new Thread(new Runnable() {
-
-					Action<Integer> mainAction;
-					int nextRetryTimes;
-
-					@Override
-					public void run() {
-						mainAction.trigger(nextRetryTimes);
-					}
-
-					public Runnable bind(Action<Integer> mainAction, Integer nextRetryTimes) {
-						this.mainAction = mainAction;
-						this.nextRetryTimes = nextRetryTimes;
-						return this;
-					}
-
-				}.bind(mainAction, currentRetryTimes + 1)).start();
-			} else {
-				mainAction.trigger(currentRetryTimes + 1);
-			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to execute the retryAction, asyncActionName: %s, context info: %s", asyncActionName, getContextInfo(getContextInfoAction)), ex);
-		}
-	}
-
-	private void processTaskException(String asyncActionName, Callable<String> getContextInfoAction, Action<Integer> mainAction, Action<String> failedAction,
-			Exception exception, int currentRetryTimes, int maxRetryTimes, int retryInterval, boolean retryWhenFailed) {
-		if (exception instanceof IOException || exception instanceof IOExceptionOnRuntime) {
-			logger.error(String.format(
-					"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
-					asyncActionName, getContextInfo(getContextInfoAction), currentRetryTimes), exception);
-			executeRetryAction(asyncActionName, getContextInfoAction, mainAction, currentRetryTimes, maxRetryTimes, retryInterval);
-		} else {
-			logger.error(String.format("Async task '%s' has unknown exception, context info: %s, current retryTimes: %d", asyncActionName, getContextInfo(getContextInfoAction),
-					currentRetryTimes), exception);
-			if (retryWhenFailed) {
-				executeRetryAction(asyncActionName, getContextInfoAction, mainAction, currentRetryTimes, maxRetryTimes, retryInterval);
-			} else {
-				executeFailedAction(asyncActionName, getContextInfoAction, failedAction, exception.getMessage());
-			}
-		}
-	}
-
-	private <TAsyncResult extends AsyncTaskResultBase> void taskContinueAction(Future<TAsyncResult> task, TaskExecutionContext<TAsyncResult> context) {
+	private <TAsyncResult extends AsyncTaskResultBase> void taskContinueAction(
+			AsyncIOHelperExecutionContext externalContext) throws IOException {
+		Future<AsyncTaskResultBase> task = externalContext.asyncAction();
 		try {
 			if (task.isCancelled()) {
-				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.", context.asyncActionName,
-						getContextInfo(context.contextInfo), context.currentRetryTimes);
-				executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
-						String.format("Async task '%s' was cancelled.", context.asyncActionName));
+				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.",
+						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.currentRetryTimes);
+				externalContext.faildAction(new Exception(
+						String.format("Async task '%s' was cancelled.", externalContext.getAsyncActionName())));
 				return;
 			}
 			TAsyncResult result = null;
 			try {
-				result = task.get();
-			} catch (ExecutionException e) {
-				Exception cause = (Exception )e.getCause();
-				processTaskException(context.asyncActionName, context.contextInfo, context.mainAction, context.failedAction, cause,
-						context.currentRetryTimes, context.maxRetryTimes, context.retryInterval, context.retryWhenFailed);
+				result = (TAsyncResult) task.get();
+			} catch (Exception e) {
+				Exception cause = (Exception) e.getCause();
+				processTaskException(externalContext, cause);
 				return;
 			}
 			if (result == null) {
-				logger.error("Async task '{}' result is null, context info: {}, current retryTimes: {}", context.asyncActionName,
-						getContextInfo(context.contextInfo), context.currentRetryTimes);
-				if (context.retryWhenFailed) {
-					executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.currentRetryTimes,
-							context.maxRetryTimes, context.retryInterval);
+				logger.error("Async task '{}' result is null, context info: {}, current retryTimes: {}",
+						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.currentRetryTimes);
+				if (externalContext.retryWhenFailed) {
+					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
-							"task result is null!!!");
+					externalContext.faildAction(new Exception("task result is null!!!"));
 				}
 				return;
 			}
 			switch (result.status) {
 			case Success:
-				if (null != context.successAction)
-					context.successAction.trigger(result);
+				externalContext.finishAction(result);
 				break;
 			case IOException:
 				logger.error(
 						"Async task '{}' result status is io exception, context info: {}, current retryTimes:{}, errorMsg:{}, try to run the async task again.",
-						context.asyncActionName, getContextInfo(context.contextInfo), context.currentRetryTimes, result.getErrorMessage());
-				executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.currentRetryTimes,
-						context.maxRetryTimes, context.retryInterval);
+						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.currentRetryTimes, result.getErrorMessage());
+				executeRetryAction(externalContext);
 				break;
 			case Failed:
-				logger.error("Async task '{}' failed, context info: {}, current retryTimes:{}, errorMsg:{}", context.asyncActionName,
-						getContextInfo(context.contextInfo), context.currentRetryTimes, result.errorMessage);
-				if (context.retryWhenFailed) {
-					executeRetryAction(context.asyncActionName, context.contextInfo, context.mainAction, context.currentRetryTimes,
-							context.maxRetryTimes, context.retryInterval);
+				logger.error("Async task '{}' failed, context info: {}, current retryTimes:{}, errorMsg:{}",
+						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.currentRetryTimes, result.errorMessage);
+				if (externalContext.retryWhenFailed) {
+					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(context.asyncActionName, context.contextInfo, context.failedAction,
-							result.errorMessage);
+					externalContext.faildAction(new Exception(result.errorMessage));
 				}
 				break;
 			default:
-				throw new RuntimeException(String.format("Async task '%s', context info: %s ", context.asyncActionName, getContextInfo(context.contextInfo)) +" result.status=" + result.status);
+				throw new RuntimeException(
+						String.format("Async task '%s', context info: %s ", externalContext.getAsyncActionName(),
+								externalContext.getContextInfo()) + " result.status=" + result.status);
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the taskContinueAction, asyncActionName: '%s'",
-					context.asyncActionName), ex);
+					externalContext.getAsyncActionName()), ex);
 		}
 	}
 
-	public static class TaskExecutionContext<TAsyncResult> {
-		public String asyncActionName;
-		public Action<Integer> mainAction;
-		public Action<TAsyncResult> successAction;
-		public Action<String> failedAction;
-		public Callable<String> contextInfo;
-		public int currentRetryTimes;
-		public boolean retryWhenFailed;
-		public int maxRetryTimes;
-		public int retryInterval;
+	private void processTaskException(AsyncIOHelperExecutionContext externalContext, Exception exception) {
+		if (exception instanceof IOException || exception instanceof IOExceptionOnRuntime) {
+			logger.error(String.format(
+					"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
+					externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+					externalContext.currentRetryTimes), exception);
+			executeRetryAction(externalContext);
+		} else {
+			logger.error(
+					String.format("Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
+							externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+							externalContext.currentRetryTimes),
+					exception);
+			if (externalContext.retryWhenFailed) {
+				executeRetryAction(externalContext);
+			} else {
+				externalContext.faildAction(exception);
+			}
+		}
+	}
+
+	private void executeRetryAction(final AsyncIOHelperExecutionContext externalContext) {
+		externalContext.currentRetryTimes++;
+		try {
+			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
+				Thread.sleep(externalContext.retryInterval);
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						externalContext.faildLoopAction();
+					}
+				}).start();
+			} else {
+				externalContext.faildLoopAction();
+			}
+		} catch (Exception ex) {
+			logger.error(String.format("Failed to execute the retryAction, asyncActionName: %s, context info: %s",
+					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
+		}
+	}
+
+	/**
+	 * ioHelper连接实际执行环境的上下文
+	 * 
+	 * @author JiefzzLon
+	 *
+	 */
+	public static abstract class AsyncIOHelperExecutionContext {
+
+		/**
+		 * 当前重试次数
+		 */
+		private int currentRetryTimes = 0;
+
+		/**
+		 * 标识-当失败时是否重试
+		 */
+		protected boolean retryWhenFailed = false;
+
+		/**
+		 * 最大的即时重试次数<br>
+		 * 若失败重试次数超过此数字，则执行重试时会等待 ${重试间隔} ms 的时间再重试
+		 */
+		protected int maxRetryTimes = 3;
+
+		/**
+		 * 重试间隔
+		 */
+		protected int retryInterval = 1000;
+
+		/**
+		 * 设定异步任务名
+		 */
+		abstract public String getAsyncActionName();
+
+		/**
+		 * 要执行的异步方法
+		 * 
+		 * @return
+		 */
+		abstract public Future<AsyncTaskResultBase> asyncAction() throws IOException;
+
+		/**
+		 * 重试执行的方法
+		 * 
+		 * @param nextRetryTimes
+		 */
+		abstract public void faildLoopAction();
+
+		/**
+		 * 异步执行完成后对结果的处理的方法<br>
+		 * !!! 异步执行完成不代表 异步任务正确并完成 需要对结果返回信息确认。
+		 * 
+		 * @param result
+		 */
+		abstract public void finishAction(AsyncTaskResultBase result);
+
+		/**
+		 * 异步执行失败后执行的处理方法
+		 * 
+		 * @param errorMessage
+		 */
+		abstract public void faildAction(Exception ex);
+
+		/**
+		 * 初始化方法<br>
+		 * * 允许用户执行一些初始化方法
+		 */
+		public void init() {
+			;
+		}
+
+		/**
+		 * 返回相关上下文信息（默认为空字符串）
+		 * 
+		 * @return
+		 */
+		public String getContextInfo() {
+			return "";
+		}
+
+		/**
+		 * 将当前重试次数清0，重新计算
+		 */
+		public void resetCurrentRetryTimes() {
+			currentRetryTimes = 0;
+		}
+		
+		/**
+		 * 获取当前的重试次数<br>
+		 * 有可能客户需要按照当前重试次数做出相应控制
+		 * @return
+		 */
+		protected int getCurrentRetryTimes() {
+			return currentRetryTimes;
+		}
+
+		private boolean hasInitialized = false;
 	}
 }
