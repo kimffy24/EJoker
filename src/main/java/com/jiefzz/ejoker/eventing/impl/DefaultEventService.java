@@ -27,7 +27,7 @@ import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import com.jiefzz.ejoker.eventing.EventAppendResult;
-import com.jiefzz.ejoker.eventing.EventCommittingConetxt;
+import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
@@ -72,7 +72,7 @@ public class DefaultEventService implements IEventService {
 	private final int batchSize = 1;
 
 	@Override
-	public void commitDomainEventAsync(EventCommittingConetxt context) {
+	public void commitDomainEventAsync(EventCommittingContext context) {
 		String uniqueId = context.aggregateRoot.getUniqueId();
 		EventMailBox eventMailbox;
 		if (null == (eventMailbox = eventMailboxDict.getOrDefault(uniqueId, null))) {
@@ -80,10 +80,10 @@ public class DefaultEventService implements IEventService {
 			try {
 				if (!eventMailboxDict.containsKey(uniqueId)) {
 					eventMailboxDict.put(uniqueId, eventMailbox = new EventMailBox(uniqueId, batchSize,
-							new EventMailBox.EventMailBoxHandler<List<EventCommittingConetxt>>() {
+							new EventMailBox.EventMailBoxHandler<List<EventCommittingContext>>() {
 								// 暂不使用lambda表达式。。。。
 								@Override
-								public void handleMessage(List<EventCommittingConetxt> committingContexts) {
+								public void handleMessage(List<EventCommittingContext> committingContexts) {
 									if (committingContexts == null || committingContexts.size() == 0)
 										return;
 									if (eventStore.isSupportBatchAppendEvent())
@@ -120,7 +120,7 @@ public class DefaultEventService implements IEventService {
 		publishDomainEventAsync(processingCommand, domainEventStreamMessage);
 	}
 
-	private void refreshAggregateMemoryCache(EventCommittingConetxt context) {
+	private void refreshAggregateMemoryCache(EventCommittingContext context) {
 		try {
 			context.aggregateRoot.acceptChanges(context.eventStream.getVersion());
 			memoryCache.set(context.aggregateRoot);
@@ -159,19 +159,19 @@ public class DefaultEventService implements IEventService {
 		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
 	}
 
-	private void batchPersistEventAsync(List<EventCommittingConetxt> committingContexts, int retryTimes) {
+	private void batchPersistEventAsync(List<EventCommittingContext> committingContexts, int retryTimes) {
 		// 异步批量持久化
 		throw new InfrastructureRuntimeException("批量持久化没完成！");
 	}
 
-	private void persistEventOneByOne(List<EventCommittingConetxt> contextList) {
+	private void persistEventOneByOne(List<EventCommittingContext> contextList) {
 		// 逐个持久化
 		concatContexts(contextList);
 		persistEventAsync(contextList.get(0));
 
 	}
 
-	private void persistEventAsync(final EventCommittingConetxt context) {
+	private void persistEventAsync(final EventCommittingContext context) {
 		
 		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext() {
 
@@ -209,6 +209,11 @@ public class DefaultEventService implements IEventService {
 						context.eventMailBox.tryRun(true);
 					break;
 				case DuplicateEvent:
+					if(context.eventStream.getVersion() - 1 == 0) {
+						handleFirstEventDuplicationAsync(context);
+					} else {
+						logger.warn("Persist event has concurrent version conflict, eventStream: {}", context.eventStream);
+					}
 					break;
 				case DuplicateCommand:
 					break;
@@ -229,6 +234,58 @@ public class DefaultEventService implements IEventService {
 						ex.getMessage());
 			}});
 
+	}
+	
+	/**
+	 * 遇到Version为1的时间的重复的时候，做特殊处理。
+	 * @param context
+	 */
+	private void handleFirstEventDuplicationAsync(final EventCommittingContext context) {
+		
+		final DomainEventStream eventStream = context.eventStream;
+		
+		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext(){
+
+			@Override
+			public String getAsyncActionName() {
+				return "FindFirstEventByVersion";
+			}
+
+			@Override
+			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
+				return (Future )eventStore.findAsync(eventStream.getAggregateRootId(), 1);
+			}
+
+			@Override
+			public void faildLoopAction() {
+				ioHelper.tryAsyncActionRecursively(this);
+			}
+
+			@Override
+			public void finishAction(AsyncTaskResultBase result) {
+				AsyncTaskResult<DomainEventStream> realResult = (AsyncTaskResult<DomainEventStream> )result;
+				DomainEventStream firstEventStream = realResult.getData();
+				if(null != firstEventStream) {
+					//判断是否是同一个command，如果是，则再重新做一遍发布事件；
+                    //之所以要这样做，是因为虽然该command产生的事件已经持久化成功，但并不表示事件也已经发布出去了；
+                    //有可能事件持久化成功了，但那时正好机器断电了，则发布事件都没有做；
+					if(context.processingCommand.getMessage().getId().equals(firstEventStream.getCommandId())) {
+						System.out.println("判断为重复的事件（命令和事件版本都相同）");
+					} else {
+						
+					}
+				} else {
+					
+				}
+			}
+
+			@Override
+			public void faildAction(Exception ex) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
 	}
 
 	private void publishDomainEventAsync(final ProcessingCommand processingCommand,
@@ -282,13 +339,13 @@ public class DefaultEventService implements IEventService {
 	 * 
 	 * @param contextList
 	 */
-	private void concatContexts(List<EventCommittingConetxt> contextList) {
-		Iterator<EventCommittingConetxt> iterator = contextList.iterator();
-		EventCommittingConetxt previous = null;
+	private void concatContexts(List<EventCommittingContext> contextList) {
+		Iterator<EventCommittingContext> iterator = contextList.iterator();
+		EventCommittingContext previous = null;
 		if (iterator.hasNext())
 			previous = iterator.next();
 		while (iterator.hasNext()) {
-			EventCommittingConetxt current = iterator.next();
+			EventCommittingContext current = iterator.next();
 			previous.next = current;
 			previous = current;
 		}

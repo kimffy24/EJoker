@@ -39,20 +39,20 @@ public class IOHelper {
 			AsyncIOHelperExecutionContext externalContext) throws IOException {
 		Future<AsyncTaskResultBase> task = externalContext.asyncAction();
 		try {
-			if (task.isCancelled()) {
-				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.",
-						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
-						externalContext.currentRetryTimes);
-				externalContext.faildAction(new Exception(
-						String.format("Async task '%s' was cancelled.", externalContext.getAsyncActionName())));
-				return;
-			}
 			TAsyncResult result = null;
 			try {
 				result = (TAsyncResult) task.get();
 			} catch (Exception e) {
 				Exception cause = (Exception) e.getCause();
 				processTaskException(externalContext, cause);
+				return;
+			}
+			if (task.isCancelled()) {
+				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.",
+						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.currentRetryTimes);
+				externalContext.faildAction(new Exception(
+						String.format("Async task '%s' was cancelled.", externalContext.getAsyncActionName())));
 				return;
 			}
 			if (result == null) {

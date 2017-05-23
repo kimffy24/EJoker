@@ -18,7 +18,7 @@ import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
-import com.jiefzz.ejoker.eventing.EventCommittingConetxt;
+import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
@@ -123,7 +123,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
 		
 		// TODO event提交从这里开始(可以作为调试点)
-		eventService.commitDomainEventAsync(new EventCommittingConetxt(dirtyAggregateRoot, eventStream, processingCommand));
+		eventService.commitDomainEventAsync(new EventCommittingContext(dirtyAggregateRoot, eventStream, processingCommand));
 		
 	}
 	

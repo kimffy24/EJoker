@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.concurrent.Future;
 
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 
 public interface IEventStore {
@@ -31,9 +32,9 @@ public interface IEventStore {
 	 */
 	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream);
 	
-	public void findAsync(String aggregateRootId, int version);
+	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, int version);
 	
-	public void findAsync(String aggregateRootId, String commandId);
+	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId);
 	
 	public void queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
 

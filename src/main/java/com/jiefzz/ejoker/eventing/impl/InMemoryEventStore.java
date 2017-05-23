@@ -66,18 +66,21 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	@Override
-	public void findAsync(String aggregateRootId, int version) {
-		// TODO Auto-generated method stub
-		logger.debug(String.format("invoke %s#%s(%s, %d)", this.getClass().getName(), "findAsync", aggregateRootId,
-				version));
+	public Future<AsyncTaskResult<DomainEventStream>> findAsync(final String aggregateRootId, final int version) {
+		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<AsyncTaskResult<DomainEventStream>>();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				Object prevous = InMemoryEventStore.this.mStorage.getOrDefault(aggregateRootId +"." +version, null);
+				future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, revertFromStorageFormat((String )prevous)));
+			}
+		}).start();
+		return future;
 	}
 
 	@Override
-	public void findAsync(String aggregateRootId, String commandId) {
-		// TODO Auto-generated method stub
-		logger.debug(String.format("invoke %s#%s(%s, %d)", this.getClass().getName(), "findAsync", aggregateRootId,
-				commandId));
-
+	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
+		return null;
 	}
 
 	@Override
@@ -94,7 +97,7 @@ public class InMemoryEventStore implements IEventStore {
 	private EventAppendResult appendsync(DomainEventStream eventStream) {
 		try {
 			Object prevous = mStorage.putIfAbsent(eventStream.getAggregateRootId() + "." + eventStream.getVersion(),
-					jsonConverter.convert(eventStream));
+					convertToStorageFormat(eventStream));
 			if (null != prevous)
 				return EventAppendResult.DuplicateEvent;
 			else
@@ -104,6 +107,14 @@ public class InMemoryEventStore implements IEventStore {
 			return EventAppendResult.Failed;
 		}
 
+	}
+	
+	private String convertToStorageFormat(DomainEventStream eventStream) {
+		return jsonConverter.convert(eventStream);
+	}
+	
+	private DomainEventStream revertFromStorageFormat(String content) {
+		return jsonConverter.revert(content, DomainEventStream.class);
 	}
 
 }

@@ -20,6 +20,8 @@ public class DomainEventStream implements Serializable {
 	private List<IDomainEvent<?>> events;
 	private long timestamp;
 	
+	public DomainEventStream(){}
+	
 	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, List<IDomainEvent<?>> events, Map<String, String> items) {
         this.setCommandId(commandId);
         this.setAggregateRootId(aggregateRootId);

@@ -1,7 +1,5 @@
 package com.jiefzz.ejoker.queue.command;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
