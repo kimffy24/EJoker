@@ -19,8 +19,10 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandStatus;
+import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
+import com.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
 import com.jiefzz.ejoker.domain.IAggregateRootFactory;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
@@ -270,7 +272,8 @@ public class DefaultEventService implements IEventService {
                     //之所以要这样做，是因为虽然该command产生的事件已经持久化成功，但并不表示事件也已经发布出去了；
                     //有可能事件持久化成功了，但那时正好机器断电了，则发布事件都没有做；
 					if(context.processingCommand.getMessage().getId().equals(firstEventStream.getCommandId())) {
-						System.out.println("判断为重复的事件（命令和事件版本都相同）");
+						resetCommandMailBoxConsumingSequence(context, context.processingCommand.getSequence());
+						publishDomainEventAsync(context.processingCommand, firstEventStream);
 					} else {
 						
 					}
@@ -286,6 +289,36 @@ public class DefaultEventService implements IEventService {
 			}
 			
 		});
+	}
+
+	private void resetCommandMailBoxConsumingSequence(EventCommittingContext context, long consumingSequence) {
+
+		EventMailBox eventMailBox = context.eventMailBox;
+		ProcessingCommand processingCommand = context.processingCommand;
+		ICommand command = processingCommand.getMessage();
+		ProcessingCommandMailbox commandMailBox = processingCommand.getMailbox();
+
+		commandMailBox.pause();
+		try {
+			refreshAggregateMemoryCacheToLatestVersion(context.eventStream.getAggregateRootTypeName(),
+					context.eventStream.getAggregateRootId());
+			commandMailBox.resetConsumingSequence(consumingSequence);
+			eventMailBox.clear();
+			eventMailBox.exit();
+			logger.info(
+					"ResetCommandMailBoxConsumingSequence success, commandId: {}, aggregateRootId: {}, consumingSequence: {}",
+					command.getId(), command.getAggregateRootId(), consumingSequence);
+		} catch (Exception ex) {
+			logger.error(String.format(
+					"ResetCommandMailBoxConsumingOffset has unknown exception, commandId: %s, aggregateRootId: %s",
+					command.getId(), command.getAggregateRootId()), ex);
+		} finally {
+			commandMailBox.resume();
+		}
+	}
+
+	private void refreshAggregateMemoryCacheToLatestVersion(String aggregateRootTypeName, String aggregateRootId) {
+		memoryCache.refreshAggregateFromEventStore(aggregateRootTypeName, aggregateRootId);
 	}
 
 	private void publishDomainEventAsync(final ProcessingCommand processingCommand,
