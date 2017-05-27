@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.eventing.EventCommittingConetxt;
+import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
@@ -20,8 +20,8 @@ public class EventMailBox implements Runnable {
 	private final static Logger logger = LoggerFactory.getLogger(EventMailBox.class);
 	
 	private final String aggregateRootId;
-	private final Queue<EventCommittingConetxt> messageQueue = new ConcurrentLinkedQueue<EventCommittingConetxt>();
-	private final EventMailBoxHandler<List<EventCommittingConetxt>> handleMessageAction;
+	private final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<EventCommittingContext>();
+	private final EventMailBoxHandler<List<EventCommittingContext>> handleMessageAction;
 	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
 	private int batchSize;
 	private long lastActiveTime;
@@ -36,14 +36,14 @@ public class EventMailBox implements Runnable {
 		return runningOrNot.get();
 	}
 	
-	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<List<EventCommittingConetxt>> handleMessageAction) {
+	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<List<EventCommittingContext>> handleMessageAction) {
 		this.aggregateRootId = aggregateRootId;
 		this.batchSize = batchSize;
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
 	}
 	
-	public void enqueueMessage(EventCommittingConetxt message) {
+	public void enqueueMessage(EventCommittingContext message) {
 		if(!messageQueue.offer(message)) {
 			throw new RuntimeException("MailBox for " +aggregateRootId +" overloaded!!!");
 		}
@@ -83,13 +83,13 @@ public class EventMailBox implements Runnable {
 	public void run() {
 		
 		lastActiveTime = System.currentTimeMillis();
-		List<EventCommittingConetxt> contextList = null;
+		List<EventCommittingContext> contextList = null;
 		try {
-			EventCommittingConetxt context = null;
+			EventCommittingContext context = null;
 			while(null!=(context = messageQueue.poll())) {
 				context.eventMailBox = this;
 				if( null==contextList )
-					contextList = new ArrayList<EventCommittingConetxt>();
+					contextList = new ArrayList<EventCommittingContext>();
 				contextList.add(context);
 				if(contextList.size()==batchSize)
 					break;

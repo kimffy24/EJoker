@@ -20,7 +20,7 @@ public class SendResult {
     {
         return String.format("[SendStatus:%d, MessageStoreResult:%s, ErrorMessage:%s]",
         		sendStatus.ordinal(),
-//        		messageStoreResult,
+        		" ",
         		errorMessage);
     }
 }
