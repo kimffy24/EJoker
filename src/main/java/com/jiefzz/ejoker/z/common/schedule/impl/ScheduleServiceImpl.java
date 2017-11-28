@@ -58,7 +58,11 @@ public class ScheduleServiceImpl implements IScheduleService {
     	}
     	
         public void run() {
-        	action.run();
+        	try{
+        		action.run();
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
         }
     }
     
