@@ -23,10 +23,6 @@ import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler.Hand
 public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTypeAnalyze {
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
-	private final static  Class<?>[] unsupportTypes = new Class<?>[]{
-		java.math.BigDecimal.class,
-		java.math.BigInteger.class
-	};
 
 	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
 
@@ -86,25 +82,26 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 
 			// TODO 本类中有三个结构类似的语句块，如果能用函数编程那该多好啊。。。。
 
-			// 基础类型
-			if (ParameterizedTypeUtil.isDirectSerializableType(fieldType))
+			if (ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
+				// 基础类型
 				eval.addToKeyValueSet(keyValueSet, value, fieldName);
-			// Java集合类型
-			else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
-				if (value instanceof Queue)
+			} else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
+				// Java集合类型
+				if (value instanceof Queue) {
 					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
+				}
 				if (value instanceof Collection)
 					eval.addToKeyValueSet(keyValueSet, innerAssemblingVP(value), fieldName);
 				else if (value instanceof Map)
 					eval.addToKeyValueSet(keyValueSet, innerAssemblingKVP(value), fieldName);
+			} else if (fieldType.isEnum()) {
 				// 枚举类型
-			} else if (fieldType.isEnum())
-				eval.addToKeyValueSet(keyValueSet, ((Enum) value).ordinal(), fieldName);
-			// 数组类型
-			else if (fieldType.isArray())
+				eval.addToKeyValueSet(keyValueSet, ((Enum )value).name(), fieldName);
+			} else if (fieldType.isArray()) {
+				// 数组类型
 				eval.addToKeyValueSet(keyValueSet, innerAssemblingVP(value), fieldName);
-			// 普通类类型
-			else {
+			} else {
+				// 普通类类型
 				Handler handler;
 				// 如果有存在 用户指定的解析器
 				if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
@@ -112,13 +109,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				} else if (fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)) {
 					eval.addToKeyValueSet(keyValueSet, value, fieldName);
 				} else {
-					// 不支持高精度数据类型。
-					for(Class<?> unsupportType:unsupportTypes) {
-						if(unsupportType.isAssignableFrom(valueType))
-							throw new RuntimeException(
-									String.format("Unsupport type %s, unexcepted on field %s.%s", unsupportType.getName(), clazz, fieldName)
-							);
-					}
+					// 不支持部分数据类型。
+					if(UnsupportTypes.isUnsupportType(valueType))
+						throw new RuntimeException(
+								String.format("Unsupport type %s, unexcepted on field %s.%s", valueType.getName(), clazz, fieldName)
+						);
 					eval.addToKeyValueSet(keyValueSet, getTreeStructureMapInner(value), fieldName);
 				}
 			}
@@ -148,31 +143,39 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				continue;
 			String key = entry.getKey();
 
-			// 基础类型
-			if (ParameterizedTypeUtil.isDirectSerializableType(value))
+			Class<?> valueType = value.getClass();
+
+			if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
+				// 基础类型
 				eval.addToKeyValueSet(resultKVContainer, value, key);
-			// Java集合类型
-			else if (ParameterizedTypeUtil.hasSublevel(value)) {
+			} else if (ParameterizedTypeUtil.hasSublevel(value)) {
+				// Java集合类型
 				if (value instanceof Queue)
 					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
 				if (value instanceof Collection)
 					eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), key);
 				else if (value instanceof Map)
 					eval.addToKeyValueSet(resultKVContainer, innerAssemblingKVP(value), key);
+			} else if (value.getClass().isEnum()) {
 				// 枚举类型
-			} else if (value.getClass().isEnum())
-				eval.addToKeyValueSet(resultKVContainer, ((Enum) value).ordinal(), key);
-			// 数组类型
-			else if (value.getClass().isArray())
+				eval.addToKeyValueSet(resultKVContainer, ((Enum )value).name(), key);
+			} else if (value.getClass().isArray()) {
+				// 数组类型
 				eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), key);
-			// 普通类类型
-			else {
+			} else {
+				// 普通类类型
 				Handler handler;
 				// 如果有存在 用户指定的解析器
 				if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
 					eval.addToKeyValueSet(resultKVContainer, handler.convert(value), key);
-				} else
+				} else {
+					// 不支持部分数据类型。
+					if(UnsupportTypes.isUnsupportType(valueType))
+						throw new RuntimeException(
+								String.format("Unsupport type %s, unexcepted on %s", valueType.getName(), Map.class.getName())
+						);
 					eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), key);
+				}
 			}
 		}
 		return resultKVContainer;
@@ -220,36 +223,47 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	 * @param value
 	 */
 	private void innerAssemblingVPSkeleton(ContainerVP valueSet, Object value) {
-		// 基础类型
-		if (ParameterizedTypeUtil.isDirectSerializableType(value))
+
+		Class<?> valueType = value.getClass();
+		if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
+			// 基础类型
 			eval.addToValueSet(valueSet, value);
-		// Java集合类型
-		else if (ParameterizedTypeUtil.hasSublevel(value)) {
-			if (value instanceof Queue)
+		} else if (ParameterizedTypeUtil.hasSublevel(value)) {
+			// Java集合类型
+			if (value instanceof Queue) {
 				throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
-			if (value instanceof Collection)
+			}
+			if (value instanceof Collection) {
 				eval.addToValueSet(valueSet, innerAssemblingVP(value));
-			else if (value instanceof Map)
+			} else if (value instanceof Map) {
 				eval.addToValueSet(valueSet, innerAssemblingKVP(value));
+			}
+		} else if (value.getClass().isEnum()) {
 			// 枚举类型
-		} else if (value.getClass().isEnum())
-			eval.addToValueSet(valueSet, ((Enum) value).ordinal());
-		// 数组类型
-		else if (value.getClass().isArray())
+			eval.addToValueSet(valueSet, ((Enum )value).name());
+		} else if (value.getClass().isArray()) {
+			// 数组类型
 			eval.addToValueSet(valueSet, innerAssemblingVP(value));
-		// 普通类类型
-		else {
+		} else {
+			// 普通类类型
 			Handler handler;
 			// 如果有存在 用户指定的解析器
 			if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
 				eval.addToValueSet(valueSet, handler.convert(value));
-			} else
+			} else {
+				// 不支持部分数据类型。
+				if(UnsupportTypes.isUnsupportType(valueType))
+					throw new RuntimeException(
+							String.format("Unsupport type %s, unexcepted on %s", valueType.getName(), Map.class.getName())
+					);
 				eval.addToValueSet(valueSet, getTreeStructureMapInner(value));
+			}
 		}
 	}
 
 	/**
-	 * 尽量减少装箱操作。
+	 * 尽量减少装箱操作。<br>
+	 * * 皆因java不支持基数类型的泛型
 	 * @param valueSet
 	 * @param componentType
 	 * @param object

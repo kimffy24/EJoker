@@ -2,12 +2,15 @@ package com.jiefzz.ejoker.z.common.utilities.relationship;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Queue;
 import java.util.Set;
 
+import org.omg.CORBA.PUBLIC_MEMBER;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +39,10 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	}
 
 	public <T> T revert(Class<T> clazz, ContainerKVP source) {
+		return internalRevert(new SerializingContext().process(clazz.getName()), clazz, source);
+	}
+
+	public <T> T internalRevert(SerializingContext context, Class<T> clazz, ContainerKVP source) {
 
 		T newInstance=null;
 
@@ -46,7 +53,6 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 			logger.error(format);
 			throw new RuntimeException(format, e);
 		}
-
 		Map<String, Field> analyzeClazzInfo = analyzeClazzInfo(clazz);
 		Set<Entry<String,Field>> entrySet = analyzeClazzInfo.entrySet();
 		
@@ -60,30 +66,37 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 			Field field = entry.getValue();
 			Class<?> fieldType = field.getType();
 			field.setAccessible(true);
+			context.process(fieldName);
 			try {
-				// 基础数据还原
-				if(ParameterizedTypeUtil.isDirectSerializableType(fieldType))
+				if(ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
+					// 基础数据还原
 					field.set(newInstance, directSerializableTypeRevert(ParameterizedTypeUtil.getPrimitiveObjectType(fieldType), value));
-				// Java集合类型
-				else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
-					if(Queue.class.isAssignableFrom(fieldType)) 
+				} else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
+					// Java集合类型
+					if(Queue.class.isAssignableFrom(fieldType)) {
 						throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
-					if(Map.class.isAssignableFrom(fieldType))
+					}
+					if(Map.class.isAssignableFrom(fieldType)) {
 						field.set(newInstance, disassemblyWorker.convertNodeAsMap(disassemblyWorker.getChildKVP(source, fieldName)));
-					else if(Set.class.isAssignableFrom(fieldType))
+					} else if(Set.class.isAssignableFrom(fieldType)) {
 						field.set(newInstance, disassemblyWorker.convertNodeAsSet(disassemblyWorker.getChildVP(source, fieldName)));
-					else if(List.class.isAssignableFrom(fieldType))
+					} else if(List.class.isAssignableFrom(fieldType)) {
 						field.set(newInstance, disassemblyWorker.convertNodeAsList(disassemblyWorker.getChildVP(source, fieldName)));
-				}
-				// 枚举还原
-				else if(fieldType.isEnum())
-					field.set(newInstance, revertIntoEnum(fieldType, value, clazz, fieldName));
-				// 数组
-				else if(fieldType.isArray()) {
+					}
+				} else if(fieldType.isEnum()) {
+					// 枚举还原
+					if(String.class.equals(valueType)) {
+						field.set(newInstance, revertIntoEnumType(fieldType, (String )value));
+					} else {
+						logger.warn("Enum data should represent as a String!");
+						throw new RuntimeException(String.format("Revert %s#%s faild!!! target: %s", clazz, fieldName, context.getCoordinate()));
+					}
+				} else if(fieldType.isArray()) {
+					// 数组
 					ContainerVP vpNode = disassemblyWorker.getChildVP(source, fieldName);
 					Class<?> componentType = fieldType.getComponentType();
 					if(!componentType.isPrimitive())
-						field.set(newInstance, revertIntoArray(componentType, vpNode));
+						field.set(newInstance, revertIntoArray(context, componentType, vpNode));
 					// TODO  java 没有原生的委托，如果有就直接委托了。。。自定义的委托模式并没有8连if的效率。。。哎。。。下同
 					else if(componentType==int.class)
 						field.set(newInstance, revertIntoArrayInt(vpNode));
@@ -102,17 +115,7 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 					else if(componentType==boolean.class)
 						field.set(newInstance, revertIntoArrayBoolean(vpNode));
 				} else {
-				// 常规对象
-					
-					// 兼容高精度数据类型。
-					if(java.math.BigDecimal.class.isAssignableFrom(valueType)) {
-						value = ((Number )value).doubleValue();
-					}
-					else if(java.math.BigInteger.class.isAssignableFrom(valueType)) {
-						value = ((Number )value).intValue();
-					}
-					valueType = value.getClass();
-					
+					// 常规对象
 					Handler handler;
 					if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(fieldType))) {
 						// 如果有存在 用户指定的解析器
@@ -121,53 +124,81 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 						// 可以接受的泛型。
 						field.set(newInstance, value);
 					} else {
-						field.set(newInstance, revert(fieldType, disassemblyWorker.getChildKVP(source, fieldName)));
+
+						// 不支持部分数据类型。
+						if(UnsupportTypes.isUnsupportType(fieldType))
+							throw new RuntimeException(
+									String.format("Unsupport field type %s!!! target: %s", fieldType.getName(), context.getCoordinate())
+							);
+						if(UnsupportTypes.isUnsupportType(valueType))
+							throw new RuntimeException(
+									String.format("Unsupport value type %s!!! target: %s", valueType.getName(), context.getCoordinate())
+							);
+						field.set(newInstance, internalRevert(context, fieldType, disassemblyWorker.getChildKVP(source, fieldName)));
 					}
 				}
 			} catch (Exception e) {
-				throw new RuntimeException(String.format("Revert faild on [%s]'s field [%s]", clazz.getName(), fieldName), e);
+				throw new RuntimeException(String.format("Revert faild on [%s]'s field [%s]!!! target: %s", clazz.getName(), fieldName, context.getCoordinate()), e);
 			}
+			context.shot();
 		}
 
 		return newInstance;
 	}
 
-	/**
-	 * 还原枚举类
-	 * @param enumType 枚举类型
-	 * @param value 源值
-	 * @param targetClazz 所在对象类型（用于错误显示）
-	 * @param fieldName 所在对象的属性名（用于错误显示）
-	 * @return 目标值
-	 */
-	private <TEnum> TEnum revertIntoEnum(Class<TEnum> enumType, Object value, Class<?> targetClazz, String fieldName){
-		if(value.getClass()==int.class || value.getClass()==Integer.class)
-			return revertIntoEnumType(enumType, (Integer )value);
-		else if(value.getClass()==String.class)
-			return revertIntoEnumType(enumType, (String )value);
-		else
-			throw new RuntimeException(String.format("Revert %s#%s faild!!!", targetClazz, fieldName));
-	}
-	
-	/**
-	 * 还原枚举类型，通过枚举Index
-	 */
-	private <TEnum> TEnum revertIntoEnumType(Class<TEnum> enumType, int index){
-		if(enumType.isEnum())
-			return enumType.getEnumConstants()[index];
-		throw new RuntimeException(String.format("[%s] is not a Enum type!!!", enumType.getName()));
-	}
+//	/**
+//	 * 还原枚举类
+//	 * @param enumType 枚举类型
+//	 * @param value 源值
+//	 * @param targetClazz 所在对象类型（用于错误显示）
+//	 * @param fieldName 所在对象的属性名（用于错误显示）
+//	 * @return 目标值
+//	 */
+//	private <TEnum> TEnum revertIntoEnum(Class<TEnum> enumType, Object value, Class<?> targetClazz, String fieldName){
+//		if(value.getClass()==int.class || value.getClass()==Integer.class)
+//			return revertIntoEnumType(enumType, (Integer )value);
+//		else if(value.getClass()==String.class)
+//			return revertIntoEnumType(enumType, (String )value);
+//		else
+//			throw new RuntimeException(String.format("Revert %s#%s faild!!!", targetClazz, fieldName));
+//	}
+//	
+//	/**
+//	 * 还原枚举类型，通过枚举Index
+//	 */
+//	private <TEnum> TEnum revertIntoEnumType(Class<TEnum> enumType, int index){
+//		if(enumType.isEnum())
+//			return enumType.getEnumConstants()[index];
+//		throw new RuntimeException(String.format("[%s] is not a Enum type!!!", enumType.getName()));
+//	}
 
 	/**
 	 * 还原枚举类型，通过枚举的表现字符值
 	 */
 	private <TEnum> TEnum revertIntoEnumType(Class<TEnum> enumType, String represent){
+		Object value = null;
 		if(enumType.isEnum()) {
-			for(TEnum obj:enumType.getEnumConstants())
-				if(obj.toString().equals(represent)) return obj;
+			Map<String, Enum<?>> eInfoMap;
+			if(eMapItemPlaceHolder.equals(eInfoMap = eMap.getOrDefault(enumType, eMapItemPlaceHolder))) {
+				eInfoMap = new HashMap<>();
+				TEnum[] enumConstants = enumType.getEnumConstants();
+				for(TEnum obj:enumConstants) {
+					eInfoMap.put(obj.toString(), (Enum<?> )obj);
+				}
+				eMap.putIfAbsent((Class<Enum<?>> )enumType, eInfoMap);
+			};
+			value = eInfoMap.get(represent);
+		} else {
+			throw new RuntimeException(String.format("[%s] is not a Enum type!!!", enumType.getName()));
 		}
-		throw new RuntimeException(String.format("[%s] is not a Enum type!!!", enumType.getName()));
+		if(null == value) {
+			throw new RuntimeException(String.format("[%s] has not such a value[%s]!!!", enumType.getName(), represent));
+		}
+		return (TEnum )value;
 	}
+	
+	private Map<Class<Enum<?>>, Map<String, Enum<?>>> eMap = new ConcurrentHashMap<>();
+	private final static Map<String, Enum<?>> eMapItemPlaceHolder = new HashMap<>();
 
 	/**
 	 * 在回显对象过程中，会可能出现类型匹配不上的情况。
@@ -184,6 +215,8 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 			return ((Number )rawValue).doubleValue();
 		else if(fieldType==Float.class || fieldType==float.class)
 			return ((Number )rawValue).floatValue();
+		else if(fieldType==Short.class || fieldType==short.class)
+			return ((Number )rawValue).shortValue();
 		return rawValue;
 	}
 
@@ -195,7 +228,7 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	 * @param valueArray
 	 * @return
 	 */
-	public <TComponent> TComponent[] revertIntoArray(Class<TComponent> componentType, ContainerVP vpNode) {
+	public <TComponent> TComponent[] revertIntoArray(SerializingContext context, Class<TComponent> componentType, ContainerVP vpNode) {
 		int size = disassemblyWorker.getVPSize(vpNode);
 		TComponent[] rArray = (TComponent[] )Array.newInstance(componentType, size);
 		if(ParameterizedTypeUtil.isDirectSerializableType(componentType))
@@ -204,13 +237,24 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 		else if(ParameterizedTypeUtil.hasSublevel(componentType))
 			throw new RuntimeException("Unsupport revert Java Collection/Map in Java Array!!!");
 		else if(componentType.isEnum())
-			for(int i=0; i<size; i++)
-				rArray[i] = (TComponent )revertIntoEnum(componentType, disassemblyWorker.getValue(vpNode, i), Object.class, "[unknow field in unknow array]");
+			for(int i=0; i<size; i++) {
+				Object rawValue = disassemblyWorker.getValue(vpNode, i);
+				Class<?> rawValueType = rawValue.getClass();
+				if(String.class.equals(rawValueType)) {
+					rArray[i] = (TComponent )revertIntoEnumType(componentType, (String )rawValue);
+				} else {
+					logger.warn("Enum data should represent as a String!");
+					throw new RuntimeException(String.format("Revert %s#%s faild!!!", "lost", "[]lost"));
+				}
+			}
 		else if(componentType.isArray()) {
 			Class<?> childComponentType = componentType.getComponentType();
 			if(!childComponentType.isPrimitive())
-				for(int i=0; i<size; i++)
-					rArray[i] = (TComponent )revertIntoArray(childComponentType, disassemblyWorker.getChildVP(vpNode, i));
+				for(int i=0; i<size; i++) {
+					context.process(i);
+					rArray[i] = (TComponent )revertIntoArray(context, childComponentType, disassemblyWorker.getChildVP(vpNode, i));
+					context.shot();
+				}
 			else if(childComponentType==int.class)
 				for(int i=0; i<size; i++)
 					rArray[i] = (TComponent )revertIntoArrayInt(disassemblyWorker.getChildVP(vpNode, i));
@@ -236,14 +280,41 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 				for(int i=0; i<size; i++)
 					rArray[i] = (TComponent )revertIntoArrayBoolean(disassemblyWorker.getChildVP(vpNode, i));
 		} else {
-			Handler handler;
-			// 如果有存在 用户指定的解析器
-			if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(componentType))) {
-				for(int i=0; i<size; i++)
-					rArray[i] = (TComponent )handler.revert(disassemblyWorker.getValue(vpNode, i));
-			} else
-				for(int i=0; i<size; i++)
-					rArray[i] = revert(componentType, disassemblyWorker.getChildKVP(vpNode, i));
+			Handler handler = (null == specialTypeHandler)?null:specialTypeHandler.getHandler(componentType);
+			for(int i=0; i<size; i++) {
+				context.process(i);
+				Object value = disassemblyWorker.getValue(vpNode, i);
+				if(null != handler) {
+					// 如果有存在 用户指定的解析器
+					rArray[i] = (TComponent )handler.revert(value);
+				} else if (componentType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(value)) {
+//					 可以接受的泛型。
+					rArray[i] = (TComponent )directSerializableTypeRevert(Object.class, value);
+				} else {
+					Class<?> valueType = value.getClass();
+					// 不支持部分数据类型。
+					if(UnsupportTypes.isUnsupportType(componentType))
+						throw new RuntimeException(
+								String.format("Unsupport component type %s!!! target: %s", componentType.getName(), context.getCoordinate())
+						);
+					if(UnsupportTypes.isUnsupportType(valueType))
+							throw new RuntimeException(
+									String.format("Unsupport value type %s!!! target: %s", valueType, context.getCoordinate())
+							);
+					if(componentType==Object.class) {
+						// 使用泛型时，类型丢失！！！ 如果构造object类型对象装载数据，将会丢失全部数据！！！！
+						String info = String.format("We lost object type info here!!! target: %s", context.getCoordinate());
+						logger.error(info);
+						if(true)
+							throw new RuntimeException(info);
+						else 
+							continue;
+					}
+					rArray[i] = internalRevert(context, componentType, disassemblyWorker.getChildKVP(vpNode, i));
+				}
+				context.shot();
+					
+			}
 		}
 		return rArray;
 	}
