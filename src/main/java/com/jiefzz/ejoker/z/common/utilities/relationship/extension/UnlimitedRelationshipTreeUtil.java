@@ -4,9 +4,10 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Supplier;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,9 @@ import com.jiefzz.ejoker.z.common.utilities.relationship.UnsupportTypes;
 
 /**
  * 实现无限级的装配工具
- * 
+ * * 此实例不搭配对应的反序列化工具
+ * * 使用FIFO队列实现，并不绝对无限，如果结构打包任务数量超过 Integer.MAX_VALUE，依然汇报异常
+ * * TODO 优化实现可以考虑自己实现链表管理了打包任务，这样能使用上无限堆空间。
  * @author JiefzzLon
  *
  * @param <ContainerKVP>
@@ -33,16 +36,11 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
 
 	private SpecialTypeHandler<?> specialTypeHandler = null;
-	
-	/**
-	 * 严格模式
-	 */
-	private boolean strict = false;
 
-	private ThreadLocal<TaskChain> TaskChainBox = ThreadLocal.withInitial(new Supplier<TaskChain>() {
+	private ThreadLocal<Queue<AbstractTask>> taskQueueBox = ThreadLocal.withInitial(new Supplier<Queue<AbstractTask>>() {
 		@Override
-		public TaskChain get() {
-			return new TaskChain(defaultTaskChain, null);
+		public Queue<AbstractTask> get() {
+			return new LinkedBlockingQueue<>();
 		}
 	});
 
@@ -57,32 +55,40 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 	}
 
 	public ContainerKVP processKVP(Object bean) {
-		TaskChain taskChainHead = TaskChainBox.get();
+		Queue<AbstractTask> taskQueue = taskQueueBox.get();
 		ContainerKVP resutl = innerAssemblingKVP(bean);
-		while (taskChainHead.hasNext()) {
-			TaskChain currentPoint = taskChainHead.popAndReconnect();
-			AbstractTask currentTask = currentPoint.task;
+		
+		AbstractTask currentTask;
+		while(null != (currentTask = taskQueue.poll())) {
 			currentTask.process();
 		}
+		taskQueueBox.remove();
 		return resutl;
 	}
 
 	public ContainerVP processVP(Object bean) {
-		TaskChain taskChainHead = TaskChainBox.get();
+		Queue<AbstractTask> taskQueue = taskQueueBox.get();
 		ContainerVP resutl = innerAssemblingVP(bean);
-		while (taskChainHead.hasNext()) {
-			TaskChain currentPoint = taskChainHead.popAndReconnect();
-			AbstractTask currentTask = currentPoint.task;
+		
+		AbstractTask currentTask;
+		while(null != (currentTask = taskQueue.poll())) {
 			currentTask.process();
 		}
+		taskQueueBox.remove();
 		return resutl;
+	}
+	
+	private void join(AbstractTask task) {
+		Queue<AbstractTask> taskQueue = taskQueueBox.get();
+		if(!taskQueue.offer(task)) {
+			throw new RuntimeException("Task Queue has no more capacity!!!");
+		}
 	}
 
 	private ContainerKVP processNumalObject(Object bean) {
 		if (bean == null)
 			return null;
 
-		TaskChain taskChainHead = TaskChainBox.get();
 		ContainerKVP keyValueSet = eval.createNode();
 		Class<?> clazz = bean.getClass();
 		Map<String, Field> analyzeClazzInfo = analyzeClazzInfo(clazz);
@@ -120,33 +126,51 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 				// Java集合类型
 				if (value instanceof Queue)
 					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
-				if (value instanceof Collection || value instanceof Map)
-					taskChainHead.join(new AssemblyKVPTask(keyValueSet, value, fieldName));
-				else
+				if (value instanceof Collection || value instanceof Map) {
+//					if(strict) {
+//						ParameterizedType fieldGenericType = (ParameterizedType )field.getGenericType();
+//				        Type[] fieldActualTypeArguments = fieldGenericType.getActualTypeArguments();
+//				        if(value instanceof Collection) {
+//				        	Type vType = fieldActualTypeArguments[0];
+//				        	if(GenericTypeUtil.ensureIsGenericType(vType))
+//								throw new RuntimeException(String.format("Unsupport GenericType in %s#%s!!!", clazz.getName(), fieldName));
+//				        } else {
+//				        	Type kType = fieldActualTypeArguments[0];
+//				        	Type vType = fieldActualTypeArguments[1];
+//				        	if(!ParameterizedTypeUtil.isDirectSerializableType(kType)) {
+//				        		throw new RuntimeException(String.format("Unsupport KeyType in %s#%s!!!", clazz.getName(), fieldName));
+//				        	}
+//				        	if(GenericTypeUtil.ensureIsGenericType(vType)) {
+//				        		throw new RuntimeException(String.format("Unsupport ValueType in %s#%s!!!", clazz.getName(), fieldName));
+//				        	}
+//				        }
+//					}
+					join(new AssemblyKVPTask(keyValueSet, value, fieldName));
+				} else
 					throw new RuntimeException(String.format("Unsupport convert type %s!!!", fieldType.getName()));
 			} else if (fieldType.isEnum()) {
 				// 枚举类型 ******* （解析成字符串） 原来解析为数字，现在更新为解析出字符串
 				eval.addToKeyValueSet(keyValueSet, ((Enum) value).name(), fieldName);
 			} else if (fieldType.isArray()) {
 				// 数组类型
-				taskChainHead.join(new AssemblyKVPTask(keyValueSet, value, fieldName));
+				join(new AssemblyKVPTask(keyValueSet, value, fieldName));
 			} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
-				// 存在用户期望使用的解析器, 
-				if (!strict || valueType.equals(fieldType)) {
-					// 非严格模式 或者 类型明确的前提下, 则优先使用
+				// 存在用户期望使用的解析器,
+//				if (!strict || valueType.equals(fieldType)) {
+//					// 非严格模式 或者 类型明确的前提下, 则优先使用
 					eval.addToKeyValueSet(keyValueSet, handler.convert(value), fieldName);
-				} else {
-					// 否则 （情况包含 严格模式 或 类型不明确对应）
-					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of map %s.%s",
-							valueType.getName(), clazz.getName(), fieldName));
-				}
+//				} else {
+//					// 否则 （情况包含 严格模式 或 类型不明确对应）
+//					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of map %s.%s",
+//							valueType.getName(), clazz.getName(), fieldName));
+//				}
 			} else if (UnsupportTypes.isUnsupportType(clazz)) {
 				// 明确不支持的类型
 				// 如果还是希望使用，可以声明用户自定义解析器
 				throw new RuntimeException(String.format("Unsupport type %s, unexcepted on field %s.%s",
 						valueType.getName(), clazz, fieldName));
 			} else {
-				taskChainHead.join(new AssemblyKVPTask(keyValueSet, value, fieldName));
+				join(new AssemblyKVPTask(keyValueSet, value, fieldName));
 			}
 		}
 		return keyValueSet;
@@ -163,16 +187,15 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 	private ContainerKVP innerAssemblingKVP(Object object) {
 		if (object == null)
 			return null;
-		TaskChain taskChainHeader = TaskChainBox.get();
 		if (object instanceof Map) {
 			// 工具类里的map
 			ContainerKVP resultKVContainer = eval.createNode();
 			Map<String, Object> objMap = (Map<String, Object>) object;
-			
+
 			// TODO 严格模式时
 			// TODO 此处应该先解析出Map的泛型类型。
 			// TODO 当且仅当泛型明确时多类型解析才能成立。
-			
+
 			Set<Entry<String, Object>> entrySet = objMap.entrySet();
 			for (Entry<String, Object> entry : entrySet) {
 				Object value = entry.getValue();
@@ -189,26 +212,26 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 					// Java集合类型
 					if (value instanceof Queue)
 						throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
-					if (value instanceof Collection || value instanceof Map)
-						taskChainHeader.join(new AssemblyKVPTask(resultKVContainer, value, key));
-					else
+					if (value instanceof Collection || value instanceof Map) {
+						join(new AssemblyKVPTask(resultKVContainer, value, key));
+					} else
 						throw new RuntimeException(String.format("Unsupport convert type %s!!!", valueType.getName()));
 				} else if (value.getClass().isEnum()) {
 					// 枚举类型
 					eval.addToKeyValueSet(resultKVContainer, ((Enum) value).name(), key);
 				} else if (value.getClass().isArray()) {
 					// 数组类型
-					taskChainHeader.join(new AssemblyKVPTask(resultKVContainer, value, key));
+					join(new AssemblyKVPTask(resultKVContainer, value, key));
 				} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
-					// 存在用户期望使用的解析器, 
-					if (!strict/* || valueType.equals(fieldType) */) {
-						// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
+					// 存在用户期望使用的解析器,
+//					if (!strict/* || valueType.equals(fieldType) */) {
+//						// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
 						eval.addToKeyValueSet(resultKVContainer, handler.convert(value), key);
-					} else {
-						// 否则 （情况包含 严格模式 或 泛型类型不明确对应）
-						throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of map %s.%s",
-								valueType.getName(), "(**unanalysable**)", key));
-					}
+//					} else {
+//						// 否则 （情况包含 严格模式 或 泛型类型不明确对应）
+//						throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of map %s.%s",
+//								valueType.getName(), "(**unanalysable**)", key));
+//					}
 				} else if (UnsupportTypes.isUnsupportType(valueType)) {
 					// 明确不支持的类型
 					// 如果还是希望使用，可以声明用户自定义解析器
@@ -216,7 +239,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 							valueType.getName(), "(**unanalysable**)", key));
 				} else {
 					// 普通类类型
-					taskChainHeader.join(new AssemblyKVPTask(resultKVContainer, value, key));
+					join(new AssemblyKVPTask(resultKVContainer, value, key));
 				}
 			}
 			return resultKVContainer;
@@ -269,7 +292,6 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 	 * @param value
 	 */
 	private void innerAssemblingVPSkeleton(ContainerVP valueSet, Object value) {
-		TaskChain taskChainHeader = TaskChainBox.get();
 		Class<?> valueType = value.getClass();
 		Handler handler;
 		if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
@@ -279,26 +301,26 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 			// Java集合类型
 			if (value instanceof Queue)
 				throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
-			if (value instanceof Collection || value instanceof Map)
-				taskChainHeader.join(new AssemblyVPTask(valueSet, value));
-			else
+			if (value instanceof Collection || value instanceof Map) {
+				join(new AssemblyVPTask(valueSet, value));
+			} else
 				throw new RuntimeException(String.format("Unsupport convert type %s!!!", valueType.getName()));
 		} else if (value.getClass().isEnum()) {
 			// 枚举类型
 			eval.addToValueSet(valueSet, ((Enum) value).name());
 		} else if (value.getClass().isArray()) {
 			// 数组类型
-			taskChainHeader.join(new AssemblyVPTask(valueSet, value));
+			join(new AssemblyVPTask(valueSet, value));
 		} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
-			// 存在用户期望使用的解析器, 
-			if (!strict/* || valueType.equals(fieldType) */) {
-				// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
+			// 存在用户期望使用的解析器,
+//			if (!strict/* || valueType.equals(fieldType) */) {
+//				// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
 				eval.addToValueSet(valueSet, handler.convert(value));
-			} else {
-				// 否则 （情况包含 严格模式 或 泛型类型不明确对应）
-				throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of collection %s.%s",
-						valueType.getName(), "(**unanalysable**)", "(**unanalysable**)"));
-			}
+//			} else {
+//				// 否则 （情况包含 严格模式 或 泛型类型不明确对应）
+//				throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of collection %s.%s",
+//						valueType.getName(), "(**unanalysable**)", "(**unanalysable**)"));
+//			}
 		} else if (UnsupportTypes.isUnsupportType(valueType)) {
 			// 明确不支持的类型
 			// 如果还是希望使用，可以声明用户自定义解析器
@@ -306,7 +328,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 					valueType.getName(), "(**unanalysable**)", "(**unanalysable**)"));
 		} else {
 			// 普通类类型
-			taskChainHeader.join(new AssemblyVPTask(valueSet, value));
+			join(new AssemblyVPTask(valueSet, value));
 		}
 	}
 
@@ -372,6 +394,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 
 	private abstract class AbstractTask {
 		public abstract boolean isKvp();
+
 		public abstract void process();
 	}
 
@@ -397,7 +420,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 		@Override
 		public void process() {
 			Object result;
-			if(originTarget.getClass().isArray() || originTarget instanceof Collection) {
+			if (originTarget.getClass().isArray() || originTarget instanceof Collection) {
 				result = UnlimitedRelationshipTreeUtil.this.innerAssemblingVP(originTarget);
 			} else {
 				result = UnlimitedRelationshipTreeUtil.this.innerAssemblingKVP(originTarget);
@@ -427,7 +450,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 		@Override
 		public void process() {
 			Object result;
-			if(originTarget.getClass().isArray() || originTarget instanceof Collection) {
+			if (originTarget.getClass().isArray() || originTarget instanceof Collection) {
 				result = UnlimitedRelationshipTreeUtil.this.innerAssemblingVP(originTarget);
 			} else {
 				result = UnlimitedRelationshipTreeUtil.this.innerAssemblingKVP(originTarget);
@@ -437,29 +460,4 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 
 	}
 
-	private class TaskChain {
-		private TaskChain next;
-		final AbstractTask task;
-
-		TaskChain(TaskChain next, AbstractTask task) {
-			this.next = next;
-			this.task = task;
-		}
-
-		TaskChain join(AbstractTask task) {
-			return (this.next = new TaskChain(this.next, task));
-		}
-
-		TaskChain popAndReconnect() {
-			TaskChain next = this.next;
-			this.next = next.next;
-			return next;
-		}
-
-		boolean hasNext() {
-			return !defaultTaskChain.equals(next) && null != next;
-		}
-	}
-
-	private final TaskChain defaultTaskChain = new TaskChain(null, null);
 }
