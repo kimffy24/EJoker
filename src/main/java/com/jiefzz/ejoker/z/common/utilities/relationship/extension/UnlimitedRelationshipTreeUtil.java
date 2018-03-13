@@ -20,10 +20,10 @@ import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler.Hand
 import com.jiefzz.ejoker.z.common.utilities.relationship.UnsupportTypes;
 
 /**
- * 实现无限级的装配工具
- * * 此实例不搭配对应的反序列化工具
- * * 使用FIFO队列实现，并不绝对无限，如果结构打包任务数量超过 Integer.MAX_VALUE，依然汇报异常
- * * TODO 优化实现可以考虑自己实现链表管理了打包任务，这样能使用上无限堆空间。
+ * 实现无限级的装配工具<br>
+ * * 此实例不搭配对应的反序列化工具<br>
+ * * 使用FIFO队列实现，并不绝对无限，如果结构打包任务数量超过 Integer.MAX_VALUE，依然汇报异常<br>
+ * * TODO 优化实现可以考虑自己实现链表管理了打包任务，这样能使用上无限堆空间。<br>
  * @author JiefzzLon
  *
  * @param <ContainerKVP>
@@ -56,26 +56,31 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 
 	public ContainerKVP processKVP(Object bean) {
 		Queue<AbstractTask> taskQueue = taskQueueBox.get();
-		ContainerKVP resutl = innerAssemblingKVP(bean);
-		
-		AbstractTask currentTask;
-		while(null != (currentTask = taskQueue.poll())) {
-			currentTask.process();
+		try {
+			ContainerKVP resutl = innerAssemblingKVP(bean);
+			AbstractTask currentTask;
+			while(null != (currentTask = taskQueue.poll())) {
+				currentTask.process();
+			}
+			taskQueueBox.remove();
+			return resutl;
+		} finally {
+			taskQueueBox.remove();
 		}
-		taskQueueBox.remove();
-		return resutl;
 	}
 
 	public ContainerVP processVP(Object bean) {
 		Queue<AbstractTask> taskQueue = taskQueueBox.get();
-		ContainerVP resutl = innerAssemblingVP(bean);
-		
-		AbstractTask currentTask;
-		while(null != (currentTask = taskQueue.poll())) {
-			currentTask.process();
+		try {
+			ContainerVP resutl = innerAssemblingVP(bean);
+			AbstractTask currentTask;
+			while(null != (currentTask = taskQueue.poll())) {
+				currentTask.process();
+			}
+			return resutl;
+		} finally {
+			taskQueueBox.remove();
 		}
-		taskQueueBox.remove();
-		return resutl;
 	}
 	
 	private void join(AbstractTask task) {
