@@ -68,7 +68,10 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 			field.setAccessible(true);
 			context.process(fieldName);
 			try {
-				if(ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
+				Object specialValue;
+				if (null != (specialValue = processWithUserSpecialHandler(value, valueType, fieldType))) {
+					field.set(newInstance, specialValue);
+				} else if(ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
 					// 基础数据还原
 					field.set(newInstance, directSerializableTypeRevert(ParameterizedTypeUtil.getPrimitiveObjectType(fieldType), value));
 				} else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
@@ -231,12 +234,20 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	public <TComponent> TComponent[] revertIntoArray(SerializingContext context, Class<TComponent> componentType, ContainerVP vpNode) {
 		int size = disassemblyWorker.getVPSize(vpNode);
 		TComponent[] rArray = (TComponent[] )Array.newInstance(componentType, size);
-		if(ParameterizedTypeUtil.isDirectSerializableType(componentType))
+		Handler handler;
+		Object specialValue;
+		if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(componentType))) {
+			for(int i=0; i<size; i++) {
+				context.process(i);
+				rArray[i] = (TComponent )handler.revert(disassemblyWorker.getValue(vpNode, i));
+				context.shot();
+			}
+		} else if(ParameterizedTypeUtil.isDirectSerializableType(componentType)) {
 			for(int i=0; i<size; i++)
 				rArray[i] = (TComponent )directSerializableTypeRevert(componentType, disassemblyWorker.getValue(vpNode, i));
-		else if(ParameterizedTypeUtil.hasSublevel(componentType))
+		} else if(ParameterizedTypeUtil.hasSublevel(componentType)) {
 			throw new RuntimeException("Unsupport revert Java Collection/Map in Java Array!!!");
-		else if(componentType.isEnum())
+		} else if(componentType.isEnum()) {
 			for(int i=0; i<size; i++) {
 				Object rawValue = disassemblyWorker.getValue(vpNode, i);
 				Class<?> rawValueType = rawValue.getClass();
@@ -247,7 +258,7 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 					throw new RuntimeException(String.format("Revert %s#%s faild!!!", "lost", "[]lost"));
 				}
 			}
-		else if(componentType.isArray()) {
+		} else if(componentType.isArray()) {
 			Class<?> childComponentType = componentType.getComponentType();
 			if(!childComponentType.isPrimitive())
 				for(int i=0; i<size; i++) {
@@ -280,14 +291,10 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 				for(int i=0; i<size; i++)
 					rArray[i] = (TComponent )revertIntoArrayBoolean(disassemblyWorker.getChildVP(vpNode, i));
 		} else {
-			Handler handler = (null == specialTypeHandler)?null:specialTypeHandler.getHandler(componentType);
 			for(int i=0; i<size; i++) {
 				context.process(i);
 				Object value = disassemblyWorker.getValue(vpNode, i);
-				if(null != handler) {
-					// 如果有存在 用户指定的解析器
-					rArray[i] = (TComponent )handler.revert(value);
-				} else if (componentType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(value)) {
+				if (componentType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(value)) {
 //					 可以接受的泛型。
 					rArray[i] = (TComponent )directSerializableTypeRevert(Object.class, value);
 				} else {
@@ -423,5 +430,24 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 		for(int i=0; i<size; i++)
 			rArray[i] = (Boolean )disassemblyWorker.getValue(vpNode, i);
 		return rArray;
+	}
+
+	
+	private Object processWithUserSpecialHandler(Object value, Class<?> valueType, Class<?> fieldType) {
+		if(null == specialTypeHandler)
+			return null;
+		Handler handler;
+		if(valueType.equals(fieldType) && null != (handler = specialTypeHandler.getHandler(fieldType))) {
+			return handler.revert(value);
+		} else if(null != (handler = specialTypeHandler.getHandler(fieldType)) || null != (handler = specialTypeHandler.getHandler(valueType))) {
+			
+			// TODO 完善结构！！！
+			// 。。。 
+			// 
+			
+			return handler.revert(value);
+			
+		}
+		return null;
 	}
 }

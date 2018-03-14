@@ -81,8 +81,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			Class<?> valueType = value.getClass();
 
 			// TODO 本类中有三个结构类似的语句块，如果能用函数编程那该多好啊。。。。
-
-			if (ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
+			Object specialValue;
+			if (null != (specialValue = processWithUserSpecialHandler(value, valueType, fieldType))) {
+				eval.addToKeyValueSet(keyValueSet, specialValue, fieldName);
+			} else if (ParameterizedTypeUtil.isDirectSerializableType(fieldType) || ((fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)))) {
 				// 基础类型
 				eval.addToKeyValueSet(keyValueSet, value, fieldName);
 			} else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
@@ -101,21 +103,12 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				// 数组类型
 				eval.addToKeyValueSet(keyValueSet, innerAssemblingVP(value), fieldName);
 			} else {
-				// 普通类类型
-				Handler handler;
-				// 如果有存在 用户指定的解析器
-				if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
-					eval.addToKeyValueSet(keyValueSet, handler.convert(value), fieldName);
-				} else if (fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)) {
-					eval.addToKeyValueSet(keyValueSet, value, fieldName);
-				} else {
-					// 不支持部分数据类型。
-					if(UnsupportTypes.isUnsupportType(valueType))
-						throw new RuntimeException(
-								String.format("Unsupport type %s, unexcepted on field %s.%s", valueType.getName(), clazz, fieldName)
-						);
-					eval.addToKeyValueSet(keyValueSet, getTreeStructureMapInner(value), fieldName);
-				}
+				// 不支持部分数据类型。
+				if(UnsupportTypes.isUnsupportType(valueType))
+					throw new RuntimeException(
+							String.format("Unsupport type %s, unexcepted on field %s.%s", valueType.getName(), clazz, fieldName)
+					);
+				eval.addToKeyValueSet(keyValueSet, getTreeStructureMapInner(value), fieldName);
 			}
 		}
 		return keyValueSet;
@@ -145,7 +138,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 
 			Class<?> valueType = value.getClass();
 
-			if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
+			Object specialValue;
+			if (null != (specialValue = processWithUserSpecialHandler(value, valueType, Object.class))) {
+				eval.addToKeyValueSet(resultKVContainer, specialValue, key);
+			} else if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
 				// 基础类型
 				eval.addToKeyValueSet(resultKVContainer, value, key);
 			} else if (ParameterizedTypeUtil.hasSublevel(value)) {
@@ -163,19 +159,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				// 数组类型
 				eval.addToKeyValueSet(resultKVContainer, innerAssemblingVP(value), key);
 			} else {
-				// 普通类类型
-				Handler handler;
-				// 如果有存在 用户指定的解析器
-				if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
-					eval.addToKeyValueSet(resultKVContainer, handler.convert(value), key);
-				} else {
-					// 不支持部分数据类型。
-					if(UnsupportTypes.isUnsupportType(valueType))
-						throw new RuntimeException(
-								String.format("Unsupport type %s, unexcepted on %s", valueType.getName(), Map.class.getName())
-						);
-					eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), key);
-				}
+				// 不支持部分数据类型。
+				if (UnsupportTypes.isUnsupportType(valueType))
+					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on %s", valueType.getName(),
+							Map.class.getName()));
+				eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), key);
 			}
 		}
 		return resultKVContainer;
@@ -225,7 +213,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	private void innerAssemblingVPSkeleton(ContainerVP valueSet, Object value) {
 
 		Class<?> valueType = value.getClass();
-		if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
+		
+		Object specialValue;
+		if (null != (specialValue = processWithUserSpecialHandler(value, valueType, Object.class))) {
+			eval.addToValueSet(valueSet, specialValue);
+		} else if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
 			// 基础类型
 			eval.addToValueSet(valueSet, value);
 		} else if (ParameterizedTypeUtil.hasSublevel(value)) {
@@ -269,55 +261,67 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	 * @param object
 	 */
 	private void privateTypeForEach(ContainerVP valueSet, Class<?> componentType, Object object) {
-		// long
 		if (long.class == componentType) {
+			// long
 			long[] pArray = ((long[]) object);
 			for (long value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// integer
-		else if (int.class == componentType) {
+		} else if (int.class == componentType) {
+			// integer
 			int[] pArray = ((int[]) object);
 			for (int value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// short
-		else if (short.class == componentType) {
+		} else if (short.class == componentType) {
+			// short
 			short[] pArray = ((short[]) object);
 			for (short value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// double
-		else if (double.class == componentType) {
+		} else if (double.class == componentType) {
+			// double
 			double[] pArray = ((double[]) object);
 			for (double value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// float
-		else if (float.class == componentType) {
+		} else if (float.class == componentType) {
+			// float
 			float[] pArray = ((float[]) object);
 			for (float value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// char
-		else if (char.class == componentType) {
+		} else if (char.class == componentType) {
+			// char
 			char[] pArray = ((char[]) object);
 			for (char value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// byte
-		else if (byte.class == componentType) {
+		} else if (byte.class == componentType) {
+			// byte
 			byte[] pArray = ((byte[]) object);
 			for (byte value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		}
-		// boolean
-		else if (boolean.class == componentType) {
+		} else if (boolean.class == componentType) {
+			// boolean
 			boolean[] pArray = ((boolean[]) object);
 			for (boolean value : pArray)
 				innerAssemblingVPSkeleton(valueSet, value);
-		} else
+		} else {
 			// this should never happen!!!
 			throw new RuntimeException();
+		}
+	}
+	
+	private Object processWithUserSpecialHandler(Object value, Class<?> valueType, Class<?> fieldType) {
+		if(null == specialTypeHandler)
+			return null;
+		Handler handler;
+		if(valueType.equals(fieldType) && null != (handler = specialTypeHandler.getHandler(fieldType))) {
+			return handler.convert(value);
+		} else if(null != (handler = specialTypeHandler.getHandler(fieldType)) || null != (handler = specialTypeHandler.getHandler(valueType))) {
+			
+			// TODO 完善结构！！！
+			// 。。。 
+			// 
+			
+			return handler.convert(value);
+			
+		}
+		return null;
 	}
 }

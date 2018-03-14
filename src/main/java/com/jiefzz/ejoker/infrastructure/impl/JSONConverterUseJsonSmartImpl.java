@@ -50,6 +50,30 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 						return new ObjectId(source);
 					}
 					
+				}).append(Character.class, new SpecialTypeHandler.Handler<Character, Integer>(){
+
+					@Override
+					public Integer convert(Character target) {
+						return (int )target.charValue();
+					}
+
+					@Override
+					public Character revert(Integer source) {
+						return (char )source.intValue();
+					}
+					
+				}).append(char.class, new SpecialTypeHandler.Handler<Character, Integer>(){
+
+					@Override
+					public Integer convert(Character target) {
+						return (int )target.charValue();
+					}
+
+					@Override
+					public Character revert(Integer source) {
+						return (char )source.intValue();
+					}
+					
 				});
 		
 		relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new RelationshipTreeUtilCallbackInterface<JSONObject, JSONArray>() {
