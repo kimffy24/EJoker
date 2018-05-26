@@ -85,7 +85,7 @@ public class Ensure {
 	public static <T> void equal(T expected, T actual, String argumentName) {
 		if (null == expected && null == actual)
 			return;
-		if (null == expected || expected.equals(actual))
+		if (null == expected || !expected.equals(actual))
 			throw new ArgumentException("["+argumentName+"] expected value: "+expected+", actual value: "+actual);
 	}
 }
