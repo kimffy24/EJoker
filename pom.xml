@@ -27,7 +27,7 @@
 
 	<properties>
 		<!-- 参数化版本号 -->
-		<version.netty>4.1.8.Final</version.netty>
+		<version.netty>4.1.25.Final</version.netty>
 	</properties>
 
 	<dependencies>
@@ -36,14 +36,14 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.21</version>
+			<version>1.7.25</version>
 		</dependency>
 
 		<!-- 最快的json包 -->
 		<dependency>
 			<groupId>net.minidev</groupId>
 			<artifactId>json-smart</artifactId>
-			<version>2.2.1</version>
+			<version>2.3</version>
 		</dependency>
 
 		<!-- netty -->
@@ -58,14 +58,14 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>3.2.1</version>
+			<version>3.8.0</version>
 		</dependency>
 
 		<!-- 消息队列驱动 - RabbitMQ -->
 		<dependency>
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
-			<version>3.6.1</version>
+			<version>5.3.0</version>
 		</dependency>
 
 		<!-- 消息队列驱动 - RocketMQ -->
