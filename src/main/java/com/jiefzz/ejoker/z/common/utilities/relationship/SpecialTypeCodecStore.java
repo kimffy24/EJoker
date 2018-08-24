@@ -25,8 +25,6 @@ public class SpecialTypeCodecStore<TDistType> {
 	
 	public <TSpecType> SpecialTypeCodec<TSpecType, TDistType> getHandler(Class<TSpecType> clazz) {
 		SpecialTypeCodec<TSpecType, TDistType> handler = (SpecialTypeCodec<TSpecType, TDistType> )handlers.getOrDefault(clazz, null);
-		if(null == handler)
-			throw new RuntimeException(String.format("%s has no handler found!!!", clazz.getName()));
 		return handler;
 	}
 
