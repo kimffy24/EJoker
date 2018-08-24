@@ -14,7 +14,7 @@ import org.omg.CORBA.PUBLIC_MEMBER;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler.Handler;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
 
 /**
  * 对象关系还原类
@@ -32,8 +32,8 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 		this.disassemblyWorker = disassemblyWorker;
 	}
 	
-	private SpecialTypeHandler<?> specialTypeHandler = null;
-	public RevertRelationshipTreeUitl(RevertRelationshipTreeDisassemblyInterface<ContainerKVP, ContainerVP> disassemblyWorker, SpecialTypeHandler<?> specialTypeHandler) {
+	private SpecialTypeCodecStore<?> specialTypeHandler = null;
+	public RevertRelationshipTreeUitl(RevertRelationshipTreeDisassemblyInterface<ContainerKVP, ContainerVP> disassemblyWorker, SpecialTypeCodecStore<?> specialTypeHandler) {
 		this(disassemblyWorker);
 		this.specialTypeHandler = specialTypeHandler;
 	}
@@ -119,10 +119,10 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 						field.set(newInstance, revertIntoArrayBoolean(vpNode));
 				} else {
 					// 常规对象
-					Handler handler;
+					SpecialTypeCodec handler;
 					if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(fieldType))) {
 						// 如果有存在 用户指定的解析器
-						field.set(newInstance, handler.revert(value));
+						field.set(newInstance, handler.decode(value));
 					} else if(fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)) {
 						// 可以接受的泛型。
 						field.set(newInstance, value);
@@ -234,12 +234,12 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	public <TComponent> TComponent[] revertIntoArray(SerializingContext context, Class<TComponent> componentType, ContainerVP vpNode) {
 		int size = disassemblyWorker.getVPSize(vpNode);
 		TComponent[] rArray = (TComponent[] )Array.newInstance(componentType, size);
-		Handler handler;
+		SpecialTypeCodec handler;
 		Object specialValue;
 		if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(componentType))) {
 			for(int i=0; i<size; i++) {
 				context.process(i);
-				rArray[i] = (TComponent )handler.revert(disassemblyWorker.getValue(vpNode, i));
+				rArray[i] = (TComponent )handler.decode(disassemblyWorker.getValue(vpNode, i));
 				context.shot();
 			}
 		} else if(ParameterizedTypeUtil.isDirectSerializableType(componentType)) {
@@ -436,16 +436,16 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	private Object processWithUserSpecialHandler(Object value, Class<?> valueType, Class<?> fieldType) {
 		if(null == specialTypeHandler)
 			return null;
-		Handler handler;
+		SpecialTypeCodec handler;
 		if(valueType.equals(fieldType) && null != (handler = specialTypeHandler.getHandler(fieldType))) {
-			return handler.revert(value);
+			return handler.decode(value);
 		} else if(null != (handler = specialTypeHandler.getHandler(fieldType)) || null != (handler = specialTypeHandler.getHandler(valueType))) {
 			
 			// TODO 完善结构！！！
 			// 。。。 
 			// 
 			
-			return handler.revert(value);
+			return handler.decode(value);
 			
 		}
 		return null;

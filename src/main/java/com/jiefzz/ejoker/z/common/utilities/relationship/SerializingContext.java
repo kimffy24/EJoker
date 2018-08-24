@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.z.common.utilities.relationship;
 
+
 public class SerializingContext {
 	
 	private LevelNode start = null, end = null;

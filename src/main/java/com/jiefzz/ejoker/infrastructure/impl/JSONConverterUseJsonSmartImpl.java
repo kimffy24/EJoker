@@ -16,7 +16,8 @@ import com.jiefzz.ejoker.z.common.utilities.relationship.RelationshipTreeUtil;
 import com.jiefzz.ejoker.z.common.utilities.relationship.RelationshipTreeUtilCallbackInterface;
 import com.jiefzz.ejoker.z.common.utilities.relationship.RevertRelationshipTreeDisassemblyInterface;
 import com.jiefzz.ejoker.z.common.utilities.relationship.RevertRelationshipTreeUitl;
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodecStore;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -29,7 +30,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 
 	private final static Logger logger = LoggerFactory.getLogger(JSONConverterUseJsonSmartImpl.class);
 
-	private SpecialTypeHandler<String> specialTypeHandler;
+	private SpecialTypeCodecStore<String> specialTypeHandler;
 	
 	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil;
 
@@ -37,40 +38,40 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	
 	@SuppressWarnings("unchecked")
 	public JSONConverterUseJsonSmartImpl() {
-		specialTypeHandler = new SpecialTypeHandler<String>()
-				.append(ObjectId.class, new SpecialTypeHandler.Handler<ObjectId, String>(){
+		specialTypeHandler = new SpecialTypeCodecStore<String>()
+				.append(ObjectId.class, new SpecialTypeCodec<ObjectId, String>(){
 
 					@Override
-					public String convert(ObjectId target) {
+					public String encode(ObjectId target) {
 						return target.toHexString();
 					}
 
 					@Override
-					public ObjectId revert(String source) {
+					public ObjectId decode(String source) {
 						return new ObjectId(source);
 					}
 					
-				}).append(Character.class, new SpecialTypeHandler.Handler<Character, Integer>(){
+				}).append(Character.class, new SpecialTypeCodec<Character, Integer>(){
 
 					@Override
-					public Integer convert(Character target) {
+					public Integer encode(Character target) {
 						return (int )target.charValue();
 					}
 
 					@Override
-					public Character revert(Integer source) {
+					public Character decode(Integer source) {
 						return (char )source.intValue();
 					}
 					
-				}).append(char.class, new SpecialTypeHandler.Handler<Character, Integer>(){
+				}).append(char.class, new SpecialTypeCodec<Character, Integer>(){
 
 					@Override
-					public Integer convert(Character target) {
+					public Integer encode(Character target) {
 						return (int )target.charValue();
 					}
 
 					@Override
-					public Character revert(Integer source) {
+					public Character decode(Integer source) {
 						return (char )source.intValue();
 					}
 					

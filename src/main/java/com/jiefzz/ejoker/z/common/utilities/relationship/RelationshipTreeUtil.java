@@ -10,7 +10,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler.Handler;
+import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
 
 /**
  * 对象关系二维化工具类
@@ -24,32 +25,31 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
 
-	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
+	private final RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval;
 
 	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval) {
+		Ensure.notNull(eval, "RelationshipTreeUtil.eval");
 		this.eval = eval;
 	}
 
-	private SpecialTypeHandler<?> specialTypeHandler = null;
+	private SpecialTypeCodecStore<?> specialTypeCodecStore = null;
 
 	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval,
-			SpecialTypeHandler<?> specialTypeHandler) {
+			SpecialTypeCodecStore<?> specialTypeCodecStore) {
 		this(eval);
-		this.specialTypeHandler = specialTypeHandler;
+		this.specialTypeCodecStore = specialTypeCodecStore;
 	}
 
 	public ContainerKVP getTreeStructureMap(Object bean) {
-		if (eval == null)
-			throw new RuntimeException("No tree builder is provided!");
 		if (bean instanceof Map)
 			return innerAssemblingKVP(bean);
 		if (ParameterizedTypeUtil.hasSublevel(bean))
-			throw new RuntimeException("Unsupport the top element is Collection now!!!");
+			throw new RuntimeException("Unsupport the top element is Collection!!!");
 		return getTreeStructureMapInner(bean);
 	}
 
 	private ContainerKVP getTreeStructureMapInner(Object bean) {
-		if (bean == null || eval == null)
+		if (bean == null)
 			throw new NullPointerException();
 		Class<?> clazz = bean.getClass();
 		// 接受类型：普通类型，java集合类型，数组类型，枚举类型
@@ -238,10 +238,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			eval.addToValueSet(valueSet, innerAssemblingVP(value));
 		} else {
 			// 普通类类型
-			Handler handler;
+			SpecialTypeCodec handler;
 			// 如果有存在 用户指定的解析器
-			if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(value.getClass()))) {
-				eval.addToValueSet(valueSet, handler.convert(value));
+			if (null != specialTypeCodecStore && null != (handler = specialTypeCodecStore.getHandler(value.getClass()))) {
+				eval.addToValueSet(valueSet, handler.encode(value));
 			} else {
 				// 不支持部分数据类型。
 				if(UnsupportTypes.isUnsupportType(valueType))
@@ -308,18 +308,18 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	}
 	
 	private Object processWithUserSpecialHandler(Object value, Class<?> valueType, Class<?> fieldType) {
-		if(null == specialTypeHandler)
+		if(null == specialTypeCodecStore)
 			return null;
-		Handler handler;
-		if(valueType.equals(fieldType) && null != (handler = specialTypeHandler.getHandler(fieldType))) {
-			return handler.convert(value);
-		} else if(null != (handler = specialTypeHandler.getHandler(fieldType)) || null != (handler = specialTypeHandler.getHandler(valueType))) {
+		SpecialTypeCodec handler;
+		if(valueType.equals(fieldType) && null != (handler = specialTypeCodecStore.getHandler(fieldType))) {
+			return handler.encode(value);
+		} else if(null != (handler = specialTypeCodecStore.getHandler(fieldType)) || null != (handler = specialTypeCodecStore.getHandler(valueType))) {
 			
 			// TODO 完善结构！！！
 			// 。。。 
 			// 
 			
-			return handler.convert(value);
+			return handler.encode(value);
 			
 		}
 		return null;

@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.utilities.relationship.AbstractTypeAnalyze;
 import com.jiefzz.ejoker.z.common.utilities.relationship.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utilities.relationship.RelationshipTreeUtilCallbackInterface;
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler;
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeHandler.Handler;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodecStore;
+import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
 import com.jiefzz.ejoker.z.common.utilities.relationship.UnsupportTypes;
 
 /**
@@ -35,7 +35,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 
 	private RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval = null;
 
-	private SpecialTypeHandler<?> specialTypeHandler = null;
+	private SpecialTypeCodecStore<?> specialTypeHandler = null;
 
 	private ThreadLocal<Queue<AbstractTask>> taskQueueBox = ThreadLocal.withInitial(new Supplier<Queue<AbstractTask>>() {
 		@Override
@@ -49,7 +49,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 	}
 
 	public UnlimitedRelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval,
-			SpecialTypeHandler<?> specialTypeHandler) {
+			SpecialTypeCodecStore<?> specialTypeHandler) {
 		this(eval);
 		this.specialTypeHandler = specialTypeHandler;
 	}
@@ -119,7 +119,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 				continue;
 			}
 			Class<?> valueType = value.getClass();
-			Handler handler;
+			SpecialTypeCodec handler;
 
 			if (ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
 				// 键为基础类型 （类型明确，直接写入）
@@ -163,7 +163,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 				// 存在用户期望使用的解析器,
 //				if (!strict || valueType.equals(fieldType)) {
 //					// 非严格模式 或者 类型明确的前提下, 则优先使用
-					eval.addToKeyValueSet(keyValueSet, handler.convert(value), fieldName);
+					eval.addToKeyValueSet(keyValueSet, handler.encode(value), fieldName);
 //				} else {
 //					// 否则 （情况包含 严格模式 或 类型不明确对应）
 //					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of map %s.%s",
@@ -209,7 +209,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 				Class<?> valueType = value.getClass();
 				String key = entry.getKey();
 
-				Handler handler;
+				SpecialTypeCodec handler;
 				if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
 					// 基础类型
 					eval.addToKeyValueSet(resultKVContainer, value, key);
@@ -231,7 +231,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 					// 存在用户期望使用的解析器,
 //					if (!strict/* || valueType.equals(fieldType) */) {
 //						// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
-						eval.addToKeyValueSet(resultKVContainer, handler.convert(value), key);
+						eval.addToKeyValueSet(resultKVContainer, handler.encode(value), key);
 //					} else {
 //						// 否则 （情况包含 严格模式 或 泛型类型不明确对应）
 //						throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of map %s.%s",
@@ -298,7 +298,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 	 */
 	private void innerAssemblingVPSkeleton(ContainerVP valueSet, Object value) {
 		Class<?> valueType = value.getClass();
-		Handler handler;
+		SpecialTypeCodec handler;
 		if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
 			// 基础类型
 			eval.addToValueSet(valueSet, value);
@@ -320,7 +320,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 			// 存在用户期望使用的解析器,
 //			if (!strict/* || valueType.equals(fieldType) */) {
 //				// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
-				eval.addToValueSet(valueSet, handler.convert(value));
+				eval.addToValueSet(valueSet, handler.encode(value));
 //			} else {
 //				// 否则 （情况包含 严格模式 或 泛型类型不明确对应）
 //				throw new RuntimeException(String.format("Unsupport type %s, unexcepted on value of collection %s.%s",
