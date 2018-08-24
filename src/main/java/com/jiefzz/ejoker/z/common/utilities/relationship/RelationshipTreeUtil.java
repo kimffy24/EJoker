@@ -82,10 +82,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 
 			// TODO 本类中有三个结构类似的语句块，如果能用函数编程那该多好啊。。。。
 			Object specialValue;
-			if (null != (specialValue = processWithUserSpecialHandler(value, valueType, fieldType))) {
+			if (null != (specialValue = processWithUserSpecialCodec(value, valueType, fieldType))) {
+				// 存在用户指定解析器的情况。
 				eval.addToKeyValueSet(keyValueSet, specialValue, fieldName);
-			} else if (ParameterizedTypeUtil.isDirectSerializableType(fieldType) || ((fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)))) {
-				// 基础类型
+			} else if (ParameterizedTypeUtil.isDirectSerializableType(fieldType) || (fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType))) {
+				// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
 				eval.addToKeyValueSet(keyValueSet, value, fieldName);
 			} else if (ParameterizedTypeUtil.hasSublevel(fieldType)) {
 				// Java集合类型
@@ -106,8 +107,9 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				// 不支持部分数据类型。
 				if(UnsupportTypes.isUnsupportType(valueType))
 					throw new RuntimeException(
-							String.format("Unsupport type %s, unexcepted on field %s.%s", valueType.getName(), clazz, fieldName)
+							String.format("Unsupport type %s, unexcepted on field %s#%s", valueType.getName(), clazz.getName(), fieldName)
 					);
+				// 视为普通对象处理，进入递归过程
 				eval.addToKeyValueSet(keyValueSet, getTreeStructureMapInner(value), fieldName);
 			}
 		}
@@ -125,8 +127,6 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	private ContainerKVP innerAssemblingKVP(Object object) {
 		if (object == null)
 			return null;
-		if (!(object instanceof Map))
-			throw new RuntimeException("Wrong Assemble Type!");
 		ContainerKVP resultKVContainer = eval.createNode();
 		Map<String, Object> objMap = (Map<String, Object>) object;
 		Set<Entry<String, Object>> entrySet = objMap.entrySet();
@@ -139,7 +139,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			Class<?> valueType = value.getClass();
 
 			Object specialValue;
-			if (null != (specialValue = processWithUserSpecialHandler(value, valueType, Object.class))) {
+			if (null != (specialValue = processWithUserSpecialCodec(value, valueType, Object.class))) {
 				eval.addToKeyValueSet(resultKVContainer, specialValue, key);
 			} else if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
 				// 基础类型
@@ -163,6 +163,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				if (UnsupportTypes.isUnsupportType(valueType))
 					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on %s", valueType.getName(),
 							Map.class.getName()));
+				// 当作普通对象处理
 				eval.addToKeyValueSet(resultKVContainer, getTreeStructureMapInner(value), key);
 			}
 		}
@@ -170,7 +171,8 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	}
 
 	/**
-	 * 装配值集合的方法
+	 * 装配值集合的方法<br>
+	 * 需要分开原生数字和list处理
 	 * 
 	 * @param eval
 	 * @param object
@@ -189,7 +191,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 					// 不需要对空的值集操作
 					if (value == null)
 						continue;
-					innerAssemblingVPSkeleton(valueSet, value);
+					innerAssemblingVPBase(valueSet, value);
 				}
 			}
 		} else {
@@ -198,7 +200,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 				// 不需要对空的值集操作
 				if (value == null)
 					continue;
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 			}
 		}
 		return valueSet;
@@ -210,12 +212,12 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 	 * @param valueSet
 	 * @param value
 	 */
-	private void innerAssemblingVPSkeleton(ContainerVP valueSet, Object value) {
+	private void innerAssemblingVPBase(ContainerVP valueSet, Object value) {
 
 		Class<?> valueType = value.getClass();
 		
 		Object specialValue;
-		if (null != (specialValue = processWithUserSpecialHandler(value, valueType, Object.class))) {
+		if (null != (specialValue = processWithUserSpecialCodec(value, valueType, Object.class))) {
 			eval.addToValueSet(valueSet, specialValue);
 		} else if (ParameterizedTypeUtil.isDirectSerializableType(value)) {
 			// 基础类型
@@ -237,19 +239,13 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			// 数组类型
 			eval.addToValueSet(valueSet, innerAssemblingVP(value));
 		} else {
-			// 普通类类型
-			SpecialTypeCodec handler;
-			// 如果有存在 用户指定的解析器
-			if (null != specialTypeCodecStore && null != (handler = specialTypeCodecStore.getHandler(value.getClass()))) {
-				eval.addToValueSet(valueSet, handler.encode(value));
-			} else {
-				// 不支持部分数据类型。
-				if(UnsupportTypes.isUnsupportType(valueType))
-					throw new RuntimeException(
-							String.format("Unsupport type %s, unexcepted on %s", valueType.getName(), Map.class.getName())
-					);
-				eval.addToValueSet(valueSet, getTreeStructureMapInner(value));
-			}
+			// 不支持部分数据类型。
+			if(UnsupportTypes.isUnsupportType(valueType))
+				throw new RuntimeException(
+						String.format("Unsupport type %s, unexcepted on %s", valueType.getName(), Map.class.getName())
+				);
+			// 当作普通对象处理
+			eval.addToValueSet(valueSet, getTreeStructureMapInner(value));
 		}
 	}
 
@@ -265,63 +261,60 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			// long
 			long[] pArray = ((long[]) object);
 			for (long value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (int.class == componentType) {
 			// integer
 			int[] pArray = ((int[]) object);
 			for (int value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (short.class == componentType) {
 			// short
 			short[] pArray = ((short[]) object);
 			for (short value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (double.class == componentType) {
 			// double
 			double[] pArray = ((double[]) object);
 			for (double value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (float.class == componentType) {
 			// float
 			float[] pArray = ((float[]) object);
 			for (float value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (char.class == componentType) {
 			// char
 			char[] pArray = ((char[]) object);
 			for (char value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (byte.class == componentType) {
 			// byte
 			byte[] pArray = ((byte[]) object);
 			for (byte value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else if (boolean.class == componentType) {
 			// boolean
 			boolean[] pArray = ((boolean[]) object);
 			for (boolean value : pArray)
-				innerAssemblingVPSkeleton(valueSet, value);
+				innerAssemblingVPBase(valueSet, value);
 		} else {
 			// this should never happen!!!
 			throw new RuntimeException();
 		}
 	}
 	
-	private Object processWithUserSpecialHandler(Object value, Class<?> valueType, Class<?> fieldType) {
+	private Object processWithUserSpecialCodec(Object value, Class<?> valueType, Class<?> fieldType) {
 		if(null == specialTypeCodecStore)
 			return null;
-		SpecialTypeCodec handler;
-		if(valueType.equals(fieldType) && null != (handler = specialTypeCodecStore.getHandler(fieldType))) {
-			return handler.encode(value);
-		} else if(null != (handler = specialTypeCodecStore.getHandler(fieldType)) || null != (handler = specialTypeCodecStore.getHandler(valueType))) {
-			
-			// TODO 完善结构！！！
-			// 。。。 
-			// 
-			
-			return handler.encode(value);
-			
-		}
+		
+		SpecialTypeCodec fieldTypeCodec = specialTypeCodecStore.getHandler(fieldType);
+		if(null == fieldTypeCodec)
+			return null;
+		
+		/// 完全类型对等 or 泛型的情况
+		if(valueType.equals(fieldType) || Object.class.equals(fieldType))
+			return fieldTypeCodec.encode(value);
+		
 		return null;
 	}
 }
