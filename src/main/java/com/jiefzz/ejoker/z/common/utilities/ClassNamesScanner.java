@@ -46,7 +46,7 @@ public class ClassNamesScanner {
 					//获取包的物理路径
 					String filePath = URLDecoder.decode(url.getFile(), "UTF-8");
 					//以文件的方式扫描整个包下的文件 并添加到集合中
-					classes.addAll(scanPachagesClass(packageName, filePath));
+					classes.addAll(scanPackagesClass(packageName, filePath));
 				}else if ("jar".equals(protocol)){
 					// 在jar中，package的信息就包含在文件目录结构上，
 					// jar的根目录就是package的顶级路径 
@@ -85,7 +85,7 @@ public class ClassNamesScanner {
 		return classes;
 	}
 
-	private static List<String> scanPachagesClass(String packageName, String packagePath){
+	private static List<String> scanPackagesClass(String packageName, String packagePath){
 		File dir = new File(packagePath);
 		if (!dir.exists() || !dir.isDirectory()) return null;
 		List<String> classes = new ArrayList<String>();
@@ -105,7 +105,9 @@ public class ClassNamesScanner {
 				if (fileName.contains("$")) continue;
 				// 去掉 .class 这6个结尾的字符
 				classes.add(packageName+"."+fileName.substring(0, fileName.length() - 6));
-			} else classes.addAll(scanPachagesClass(packageName + "." + file.getName(),file.getAbsolutePath()));
+			} else {
+				classes.addAll(scanPackagesClass(packageName + "." + file.getName(),file.getAbsolutePath()));
+			}
 		}
 		return classes;
 	}
