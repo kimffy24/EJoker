@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.utilities.Ensure;
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
 
 /**
  * 对象关系二维化工具类
@@ -21,23 +20,20 @@ import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
  * @param <ContainerKVP>
  * @param <ContainerVP>
  */
-public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTypeAnalyze {
+public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRelationshipUtil {
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
 
 	private final RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval;
 
-	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval) {
-		Ensure.notNull(eval, "RelationshipTreeUtil.eval");
-		this.eval = eval;
-	}
-
-	private SpecialTypeCodecStore<?> specialTypeCodecStore = null;
-
 	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval,
 			SpecialTypeCodecStore<?> specialTypeCodecStore) {
-		this(eval);
-		this.specialTypeCodecStore = specialTypeCodecStore;
+		super(specialTypeCodecStore);
+		this.eval = eval;
+		Ensure.notNull(eval, "RelationshipTreeUtil.eval");
+	}
+	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval) {
+		this(eval, null);
 	}
 
 	public ContainerKVP getTreeStructureMap(Object bean) {
@@ -301,20 +297,5 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractTyp
 			// this should never happen!!!
 			throw new RuntimeException();
 		}
-	}
-	
-	private Object processWithUserSpecialCodec(Object value, Class<?> valueType, Class<?> fieldType) {
-		if(null == specialTypeCodecStore)
-			return null;
-		
-		SpecialTypeCodec fieldTypeCodec = specialTypeCodecStore.getHandler(fieldType);
-		if(null == fieldTypeCodec)
-			return null;
-		
-		/// 完全类型对等 or 泛型的情况
-		if(valueType.equals(fieldType) || Object.class.equals(fieldType))
-			return fieldTypeCodec.encode(value);
-		
-		return null;
 	}
 }

@@ -159,7 +159,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 			} else if (fieldType.isArray()) {
 				// 数组类型
 				join(new AssemblyKVPTask(keyValueSet, value, fieldName));
-			} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
+			} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getCodec(valueType))) {
 				// 存在用户期望使用的解析器,
 //				if (!strict || valueType.equals(fieldType)) {
 //					// 非严格模式 或者 类型明确的前提下, 则优先使用
@@ -227,7 +227,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 				} else if (value.getClass().isArray()) {
 					// 数组类型
 					join(new AssemblyKVPTask(resultKVContainer, value, key));
-				} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
+				} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getCodec(valueType))) {
 					// 存在用户期望使用的解析器,
 //					if (!strict/* || valueType.equals(fieldType) */) {
 //						// 非严格模式 或者 泛型类型明确的前提下, 则优先使用
@@ -316,7 +316,7 @@ public class UnlimitedRelationshipTreeUtil<ContainerKVP, ContainerVP> extends Ab
 		} else if (value.getClass().isArray()) {
 			// 数组类型
 			join(new AssemblyVPTask(valueSet, value));
-		} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(valueType))) {
+		} else if (null != specialTypeHandler && null != (handler = specialTypeHandler.getCodec(valueType))) {
 			// 存在用户期望使用的解析器,
 //			if (!strict/* || valueType.equals(fieldType) */) {
 //				// 非严格模式 或者 泛型类型明确的前提下, 则优先使用

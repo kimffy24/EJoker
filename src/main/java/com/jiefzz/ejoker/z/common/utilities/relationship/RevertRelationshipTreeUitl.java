@@ -27,15 +27,16 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 
 	private final static Logger logger = LoggerFactory.getLogger(RevertRelationshipTreeUitl.class);
 
-	private RevertRelationshipTreeDisassemblyInterface<ContainerKVP, ContainerVP> disassemblyWorker;
+	private final RevertRelationshipTreeDisassemblyInterface<ContainerKVP, ContainerVP> disassemblyWorker;
+	
+	private SpecialTypeCodecStore<?> specialTypeCodecStore = null;
+	
 	public RevertRelationshipTreeUitl(RevertRelationshipTreeDisassemblyInterface<ContainerKVP, ContainerVP> disassemblyWorker){
 		this.disassemblyWorker = disassemblyWorker;
 	}
-	
-	private SpecialTypeCodecStore<?> specialTypeHandler = null;
 	public RevertRelationshipTreeUitl(RevertRelationshipTreeDisassemblyInterface<ContainerKVP, ContainerVP> disassemblyWorker, SpecialTypeCodecStore<?> specialTypeHandler) {
 		this(disassemblyWorker);
-		this.specialTypeHandler = specialTypeHandler;
+		this.specialTypeCodecStore = specialTypeHandler;
 	}
 
 	public <T> T revert(Class<T> clazz, ContainerKVP source) {
@@ -53,11 +54,12 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 			logger.error(format);
 			throw new RuntimeException(format, e);
 		}
-		Map<String, Field> analyzeClazzInfo = analyzeClazzInfo(clazz);
-		Set<Entry<String,Field>> entrySet = analyzeClazzInfo.entrySet();
 		
 		Object value;
 		Class<?> valueType;
+		
+		Map<String, Field> analyzeClazzInfo = analyzeClazzInfo(clazz);
+		Set<Entry<String,Field>> entrySet = analyzeClazzInfo.entrySet();
 		for(Entry<String,Field> entry : entrySet){
 			String fieldName = entry.getKey();
 			if(null == (value = disassemblyWorker.getValue(source, fieldName)))
@@ -69,7 +71,7 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 			context.process(fieldName);
 			try {
 				Object specialValue;
-				if (null != (specialValue = processWithUserSpecialHandler(value, valueType, fieldType))) {
+				if (null != (specialValue = processWithUserSpecialCodec(value, valueType, fieldType))) {
 					field.set(newInstance, specialValue);
 				} else if(ParameterizedTypeUtil.isDirectSerializableType(fieldType)) {
 					// 基础数据还原
@@ -120,7 +122,7 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 				} else {
 					// 常规对象
 					SpecialTypeCodec handler;
-					if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(fieldType))) {
+					if(null != specialTypeCodecStore && null != (handler = specialTypeCodecStore.getCodec(fieldType))) {
 						// 如果有存在 用户指定的解析器
 						field.set(newInstance, handler.decode(value));
 					} else if(fieldType==Object.class && ParameterizedTypeUtil.isDirectSerializableType(valueType)) {
@@ -236,7 +238,7 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 		TComponent[] rArray = (TComponent[] )Array.newInstance(componentType, size);
 		SpecialTypeCodec handler;
 		Object specialValue;
-		if(null != specialTypeHandler && null != (handler = specialTypeHandler.getHandler(componentType))) {
+		if(null != specialTypeCodecStore && null != (handler = specialTypeCodecStore.getCodec(componentType))) {
 			for(int i=0; i<size; i++) {
 				context.process(i);
 				rArray[i] = (TComponent )handler.decode(disassemblyWorker.getValue(vpNode, i));
@@ -433,21 +435,14 @@ public class RevertRelationshipTreeUitl<ContainerKVP, ContainerVP> extends Abstr
 	}
 
 	
-	private Object processWithUserSpecialHandler(Object value, Class<?> valueType, Class<?> fieldType) {
-		if(null == specialTypeHandler)
+	private Object processWithUserSpecialCodec(Object value, Class<?> valueType, Class<?> fieldType) {
+		if(null == specialTypeCodecStore)
 			return null;
-		SpecialTypeCodec handler;
-		if(valueType.equals(fieldType) && null != (handler = specialTypeHandler.getHandler(fieldType))) {
-			return handler.decode(value);
-		} else if(null != (handler = specialTypeHandler.getHandler(fieldType)) || null != (handler = specialTypeHandler.getHandler(valueType))) {
-			
-			// TODO 完善结构！！！
-			// 。。。 
-			// 
-			
-			return handler.decode(value);
-			
-		}
+		
+		SpecialTypeCodec codec = specialTypeCodecStore.getCodec(fieldType);
+		if(null == codec)
+			codec.decode(value);
+		
 		return null;
 	}
 }

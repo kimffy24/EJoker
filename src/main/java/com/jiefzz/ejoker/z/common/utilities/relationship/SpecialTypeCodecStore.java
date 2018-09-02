@@ -23,7 +23,7 @@ public class SpecialTypeCodecStore<TDistType> {
 		return this;
 	}
 	
-	public <TSpecType> SpecialTypeCodec<TSpecType, TDistType> getHandler(Class<TSpecType> clazz) {
+	public <TSpecType> SpecialTypeCodec<TSpecType, TDistType> getCodec(Class<TSpecType> clazz) {
 		SpecialTypeCodec<TSpecType, TDistType> handler = (SpecialTypeCodec<TSpecType, TDistType> )handlers.getOrDefault(clazz, null);
 		return handler;
 	}

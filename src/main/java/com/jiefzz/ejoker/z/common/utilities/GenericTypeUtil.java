@@ -35,71 +35,40 @@ public class GenericTypeUtil {
 	 * @param field
 	 * @return
 	 */
-	public static String getGenericSignature(final Field field){
+	public static String getDeclaredGenericSignature(final Field field){
 		// 关键的地方得到其Generic的类型
 		Type fc = field.getGenericType();
-		return getClassDefinationGenericSignature(fc);
-//		// 如果不为空并且是泛型参数的类型
-//		if (fc != null && fc instanceof ParameterizedType) {
-//			ParameterizedType pt = (ParameterizedType )fc;
-//			Type[] types = pt.getActualTypeArguments();
-//			
-//			StringBuffer sb = new StringBuffer();
-//			
-//			if (types != null && types.length > 0) {
-//				// TODO 若此属性的泛型信息是通过引用类的泛型定义传入的话，此处转换将会出错！！！
-//				sb.append('<');
-//				sb.append(((Class<?> )types[0]).getName());
-//				for (int i = 1; i < types.length; i++) {
-//					try{
-//						sb.append(SEPARATOR);
-//						sb.append(((Class<?> )types[i]).getName());
-//					} catch ( Exception e ) {
-//						field.getDeclaringClass().getName();
-//						field.getName();
-//						throw new RuntimeException(
-//								String.format(
-//										"EJoker Context need exact generic defination!!!\n\tClass=%s\n\tField=%s",
-//										field.getDeclaringClass().getName(),
-//										field.getName()
-//								),
-//								e
-//						);
-//					}
-//				}
-//				sb.append('>');
-//				return sb.toString();
-//			}
-//		}
-//		return NO_GENERAL_SIGNATURE;
+		String typeName = fc.getTypeName();
+		int index = typeName.indexOf('<');
+		if(index<=0) return NO_GENERAL_SIGNATURE;
+		return typeName.substring(index);
 	}
 	
+//	/**
+//	 * 确定Type包装的类型是否是泛型类型
+//	 * @param type
+//	 * @return
+//	 */
+//	public static boolean ensureIsGenericTypex(final Type type) {
+//		return type.getTypeName().indexOf('<')>0;
+//	}
+	
 	/**
-	 * 确定对象类型是否是泛型
+	 * 确定 类 是否是 泛型类
 	 * @param clazz
 	 * @return
 	 */
-	public static boolean ensureIsGenericType(final Class<?> clazz){
-		return getGenericTypeAmount(clazz)>0?true:false;
+	public static boolean ensureClassIsGenericType(final Class<?> clazz){
+		return getTypeVariableAmount(clazz)>0?true:false;
 	}
 	
 	/**
-	 * 确定Type包装的类型是否是泛型类型
-	 * @param type
-	 * @return
-	 */
-	public static boolean ensureIsGenericType(final Type type) {
-		return type.getTypeName().indexOf('<')>0;
-	}
-	
-	/**
-	 * 获取对象类型的泛型使用数量。
+	 * 获取 类 的 泛型类型变量 的 数量。
 	 * @param clazz
 	 * @return
 	 */
-	public static int getGenericTypeAmount(final Class<?> clazz) {
+	public static int getTypeVariableAmount(final Class<?> clazz) {
 		TypeVariable<?>[] typeParameters = clazz.getTypeParameters();
-		if(null==typeParameters) return 0;
 		return typeParameters.length;
 	}
 	
@@ -137,31 +106,38 @@ public class GenericTypeUtil {
 		return typeName.substring(index);
 	}
 
-	public static synchronized Map<String, String> getClassSuperGenericSignatureTree(final Class<?> clazz) {
-		Map<String, String> superGenericSignatureMapper = new HashMap<String, String>();
-		for ( Class<?> clayy = clazz; clayy != Object.class; clayy = clayy.getSuperclass() ) {
-			Type genericAbstractClass = clayy.getGenericSuperclass();
-			Type[] genericInterfaces = clayy.getGenericInterfaces();
-			Type genericSuperClass;
-			for (int i=0; i<genericInterfaces.length+1; i++) {
-				if(i==0) genericSuperClass = genericAbstractClass;
-				else genericSuperClass = genericInterfaces[i-1];
-				if(ensureIsGenericType(genericSuperClass)) {
-					String typeName = genericSuperClass.getTypeName();
-					if(!ensureIsGenericType(genericSuperClass)) superGenericSignatureMapper.put(typeName, NO_GENERAL_SIGNATURE);
-					String genericSuperName = typeName.substring(0, typeName.indexOf('<'));
-					String classDefinationGenericSignature = getClassDefinationGenericSignature(genericSuperClass);
-					if(superGenericSignatureMapper.containsKey(genericSuperName)) {
-						if(!superGenericSignatureMapper.get(genericSuperName).equals(classDefinationGenericSignature))
-							throw new RuntimeException(clazz.getName() +" inherit " +genericSuperName +" more than once and with the difference Generic Signature!!!");
-					} else {
-						superGenericSignatureMapper.put(genericSuperName, classDefinationGenericSignature);
-					}
-				}
-			}
-		}
-		return superGenericSignatureMapper;
-	}
+//	/**
+//	 * 获取父类中整个继承树中的泛型对象
+//	 * @param clazz
+//	 * @return
+//	 */
+//	public static synchronized Map<String, String> getClassSuperGenericSignatureTreex(final Class<?> clazz) {
+//		Map<String, String> superGenericSignatureMapper = new HashMap<String, String>();
+//		for ( Class<?> clayy = clazz; clayy != Object.class; clayy = clayy.getSuperclass() ) {
+//			Type genericAbstractClass = clayy.getGenericSuperclass();
+//			Type[] genericInterfaces = clayy.getGenericInterfaces();
+//			Type genericSuperClass;
+//			for (int i=0; i<genericInterfaces.length+1; i++) {
+//				if(i==0) genericSuperClass = genericAbstractClass;
+//				else genericSuperClass = genericInterfaces[i-1];
+//				if(ensureIsGenericType(genericSuperClass)) {
+//					String typeName = genericSuperClass.getTypeName();
+//					if(!ensureIsGenericType(genericSuperClass)) superGenericSignatureMapper.put(typeName, NO_GENERAL_SIGNATURE);
+//					String genericSuperName = typeName.substring(0, typeName.indexOf('<'));
+//					String classDefinationGenericSignature = getClassDefinationGenericSignature(genericSuperClass);
+//					if(superGenericSignatureMapper.containsKey(genericSuperName)) {
+//						if(!superGenericSignatureMapper.get(genericSuperName).equals(classDefinationGenericSignature))
+//							throw new RuntimeException(clazz.getName() +" inherit " +genericSuperName +" more than once and with the difference Generic Signature!!!");
+//					} else {
+//						superGenericSignatureMapper.put(genericSuperName, classDefinationGenericSignature);
+//					}
+//				}
+//			}
+//		}
+//		return superGenericSignatureMapper;
+//	}
+	
+	
 	
 	/**
 	 * 参考的空的泛型(未指定类型时)的泛型签名表
