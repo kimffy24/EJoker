@@ -1,12 +1,12 @@
 package com.jiefzz.ejoker.z.common.utilities;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
@@ -41,6 +41,8 @@ public final class GenericDefination {
 	private final Map<Class<?>, GenericDefinedTypeMeta[]> interfaceDeliveryTypeMetasTables = new HashMap<>();
 	
 	private final Map<Class<?>, GenericDefination> interfaceDefinations = new HashMap<>();
+	
+	private final Map<String, GenericDefinedField> fieldDefinations;
 
 	private GenericDefination(Class<?> genericPrototype) {
 		super();
@@ -133,6 +135,24 @@ public final class GenericDefination {
 				throw new RuntimeException("Unknow type in genericPrototype.getGenericInterfaces()!!!");
 			}
 		}
+		
+		if(this.isInterface) {
+			fieldDefinations = null;
+		} else {
+			Field[] declaredFields = this.genericPrototype.getDeclaredFields();
+			if(null == declaredFields) {
+				fieldDefinations = null;
+			} else {
+				fieldDefinations = new HashMap<>();
+				for(Field field : declaredFields) {
+					if(Modifier.isFinal(field.getModifiers()))
+						continue;
+					if(Modifier.isStatic(field.getModifiers()))
+						continue;
+					fieldDefinations.put(field.getName(), new GenericDefinedField(this, field));
+				}
+			}
+		}
 	}
 
 	// TODO
@@ -178,25 +198,21 @@ public final class GenericDefination {
 	public void forEachDefinationMeta(IVoidFunction1<GenericDefinedMeta> vf) {
 		if(!isGenericType)
 			return;
-		for(GenericDefinedMeta metaTuple:exports)
-			vf.trigger(metaTuple);
+		ForEachUtil.processForEach(exports, vf);
 	}
 	
 	public void forEachDefinationMeta(IVoidFunction2<GenericDefinedMeta, Integer> vf) {
 		if(!isGenericType)
 			return;
-		
-		for(int i=0; i<exports.length; i++)
-			vf.trigger(exports[i], i);
+		ForEachUtil.processForEach(exports, vf);
 	}
 	
-	public void forEachInterfaceDefinationMeta(IVoidFunction2<Class<?>, GenericDefination> vf) {
-		if(null == interfaceDefinations || interfaceDefinations.size() == 0)
-			return;
-		Set<Entry<Class<?>,GenericDefination>> entrySet = interfaceDefinations.entrySet();
-		for(Entry<Class<?>,GenericDefination> entry : entrySet) {
-			vf.trigger(entry.getKey(), entry.getValue());
-		}
+	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefination> vf) {
+		ForEachUtil.processForEach(interfaceDefinations, vf);
+	}
+	
+	public void forEachFieldDefinations(IVoidFunction2<String, GenericDefinedField> vf) {
+		ForEachUtil.processForEach(fieldDefinations, vf);
 	}
 	
 	public int getGenericTypeAmount() {
@@ -257,7 +273,7 @@ public final class GenericDefination {
 			return null;
 		return new HashMap<>(interfaceDeliveryMapper);
 	}
-
+	
 	/// ========================== ///
 	
 	private final static Map<Class<?>, GenericDefination> definationStore= new ConcurrentHashMap<>();

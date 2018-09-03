@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.z.common.utilities;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 
 import com.jiefzz.ejoker.z.common.utilities.GenericDefination.GenericDefinationRef;
@@ -11,7 +12,7 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 
 	public final Type regionTye;
 
-	public final String TypeName;
+	public final String typeName;
 
 	public final int level;
 
@@ -32,7 +33,7 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 	protected GenericDefinedTypeMeta(Type regionTye, GenericDefination referMeta, int level) {
 		super(referMeta);
 		this.regionTye = regionTye;
-		this.TypeName = regionTye.getTypeName();
+		this.typeName = regionTye.getTypeName();
 		this.level = level;
 		
 		if (Class.class.equals(regionTye.getClass())) {
@@ -112,6 +113,14 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 					}
 				}
 			}
+		} else if(regionTye instanceof TypeVariable<?>) {
+			isGeneric = false;
+			isArray = false;
+			rawType = null;
+			deliveryTypeMetasTable = null;
+			isWildcardType = false;
+			boundsUpper = null;
+			boundsLower = null;
 		} else {
 			throw new RuntimeException("Do you ensure that this statement will happen???");
 		}
@@ -121,4 +130,45 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 		this(regionTye, referMeta, 0);
 	}
 
+	/**
+	 * 复制一个GenericDefinedTypeMeta
+	 * @param targetGenericDefinedTypeMeta
+	 */
+	public GenericDefinedTypeMeta(GenericDefinedTypeMeta targetGenericDefinedTypeMeta) {
+		super(targetGenericDefinedTypeMeta.referDefination);
+		regionTye = targetGenericDefinedTypeMeta.regionTye;
+		typeName = targetGenericDefinedTypeMeta.typeName;
+		level = targetGenericDefinedTypeMeta.level;
+		isGeneric = targetGenericDefinedTypeMeta.isGeneric;
+		isArray = targetGenericDefinedTypeMeta.isArray;
+		rawType = targetGenericDefinedTypeMeta.rawType;
+		isWildcardType = targetGenericDefinedTypeMeta.isWildcardType;
+		
+		if(null != targetGenericDefinedTypeMeta.deliveryTypeMetasTable) {
+			deliveryTypeMetasTable = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length];
+			for(int i=0; i<targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length; i++ ) {
+				deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.deliveryTypeMetasTable[i]);
+			}
+		} else {
+			deliveryTypeMetasTable = null;
+		}
+
+		if(null != targetGenericDefinedTypeMeta.boundsUpper) {
+			boundsUpper = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.boundsUpper.length];
+			for(int i=0; i<targetGenericDefinedTypeMeta.boundsUpper.length; i++ ) {
+				boundsUpper[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsUpper[i]);
+			}
+		} else {
+			boundsUpper = null;
+		}
+
+		if(null != targetGenericDefinedTypeMeta.boundsLower) {
+			boundsLower = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.boundsLower.length];
+			for(int i=0; i<targetGenericDefinedTypeMeta.boundsLower.length; i++ ) {
+				boundsLower[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsLower[i]);
+			}
+		} else {
+			boundsLower = null;
+		}
+	}
 }

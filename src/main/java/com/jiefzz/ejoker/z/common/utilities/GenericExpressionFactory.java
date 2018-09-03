@@ -8,7 +8,7 @@ public final class GenericExpressionFactory {
 
 	private final static Map<String, GenericExpression> expressionStore = new ConcurrentHashMap<>();
 	
-	private final static GenericExpression defaultExpression = new GenericExpression(GenericDefination.getOrCreateDefination(Object.class));
+	public final static GenericExpression defaultExpression = new GenericExpression(GenericDefination.getOrCreateDefination(Object.class));
 
 	public final static GenericExpression getGenericExpress(Class<?> prototype, Type... types) {
 		
@@ -56,7 +56,7 @@ public final class GenericExpressionFactory {
 		}
 	}
 
-	private final static GenericExpression getMiddleStatementGenericExpression(Class<?> prototype) {
+	public final static GenericExpression getMiddleStatementGenericExpression(Class<?> prototype) {
 		
 		String expressionSignature = GenericExpression.getExpressionSignature(prototype);
 		
