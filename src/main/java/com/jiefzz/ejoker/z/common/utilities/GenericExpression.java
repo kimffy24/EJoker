@@ -235,9 +235,7 @@ public class GenericExpression {
 //					}
 //				});
 				
-				Set<Entry<String, GenericDefinedField>> entrySet = target.fieldExpressions.entrySet();
-				for(Entry<String, GenericDefinedField> entry : entrySet) {
-					GenericDefinedField genericDefinedField = entry.getValue();
+				ForEachUtil.processForEach(target.fieldExpressions, (fieldName, genericDefinedField) -> {
 					GenericDefinedTypeMeta currentGenericDefinedTypeMeta;
 					if(genericDefinedField.isGenericVariable) {
 						/// 如果是泛型类型变量，则从 exportMapper 泛型导出表中获取对应具现化类型
@@ -249,10 +247,9 @@ public class GenericExpression {
 					} else {
 						/// 如果是普通类型变量，则分情况处理
 						GenericDefinedTypeMeta originalGenericDefinedTypeMeta = genericDefinedField.genericDefinedTypeMeta;
-						currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta);
 						if(originalGenericDefinedTypeMeta.isGeneric) {
 							/// 声明中带有泛型
-//							currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta);
+							currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta, exportMapper);
 							fillAndCompleteGenericDefinedTypeMeta(
 									genericDefinedField,
 									exportMapper.keySet(),
@@ -264,17 +261,60 @@ public class GenericExpression {
 //							if(originalGenericDefinedTypeMeta.isWildcardType) {
 //								throw new RuntimeException("Fuck!!! This statement should not be happen!!!");
 //							}
-//							currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta);
+							currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta, exportMapper);
 						}
 						
 					}
 					fieldExpressions.put(
-							entry.getKey(),
+							fieldName,
 							new GenericDefinedField(genericDefinedField, currentGenericDefinedTypeMeta));
-				}
-				
+				});
 			}
 		}
+		
+	}
+	
+	public Class<?> getDeclarePrototype() {
+		return meta.genericPrototype;
+	}
+	
+	public int getExportAmount() {
+		return null == exportMapper ? 0 : exportMapper.size();
+	}
+
+	public int getInterfacesAmount() {
+		return meta.getInterfacesAmount();
+	}
+	
+	public boolean isComplete() {
+		return isComplete;
+	}
+	
+	public GenericExpression getChild() {
+		return child;
+	}
+	
+	public GenericExpression getParent() {
+		return parent;
+	}
+	
+	public GenericExpression getImplementer() {
+		return implementer;
+	}
+	
+	public void forEachImplementationsExpressions(IVoidFunction1<GenericExpression> vf) {
+		ForEachUtil.processForEach(implementationsExpressions, vf);
+	}
+	
+	public void forEachImplementationsExpressionsDeeply(IVoidFunction1<GenericExpression> vf) {
+		ForEachUtil.processForEach(implementationsExpressions, genericExpression -> {
+			vf.trigger(genericExpression);
+			genericExpression.forEachImplementationsExpressionsDeeply(vf);
+		});
+	}
+	
+	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
+		ForEachUtil.processForEach(fieldExpressions, vf);
 		
 	}
 	
@@ -317,39 +357,6 @@ public class GenericExpression {
 				fillAndCompleteGenericDefinedTypeMeta(genericDefinedField, exportTypeVariableNames, typeMeta.deliveryTypeMetasTable, typeMeta.boundsUpper, typeMeta.boundsLower);
 			}
 		}
-	}
-	
-	public Class<?> getDeclarePrototype() {
-		return meta.genericPrototype;
-	}
-
-	public int getInterfacesAmount() {
-		return meta.getInterfacesAmount();
-	}
-	
-	public boolean isComplete() {
-		return isComplete;
-	}
-	
-	public GenericExpression getChild() {
-		return child;
-	}
-	
-	public GenericExpression getParent() {
-		return parent;
-	}
-	
-	public GenericExpression getImplementer() {
-		return implementer;
-	}
-	
-	public void forEachImplementationsExpressions(IVoidFunction1<GenericExpression> vf) {
-		ForEachUtil.processForEach(implementationsExpressions, vf);
-	}
-	
-	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
-		ForEachUtil.processForEach(fieldExpressions, vf);
-		
 	}
 
 	public final static String getExpressionSignature(Class<?> prototype, GenericDefinedTypeMeta... typeMetas) {

@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Map;
 
 import com.jiefzz.ejoker.z.common.utilities.GenericDefination.GenericDefinationRef;
 
@@ -131,13 +132,12 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 	}
 
 	/**
-	 * 复制一个GenericDefinedTypeMeta
+	 * 复制构造一个GenericDefinedTypeMeta
 	 * @param targetGenericDefinedTypeMeta
 	 */
-	public GenericDefinedTypeMeta(GenericDefinedTypeMeta targetGenericDefinedTypeMeta) {
+	public GenericDefinedTypeMeta(GenericDefinedTypeMeta targetGenericDefinedTypeMeta, Map<String, GenericExpressionExportTuple> exportMapper) {
 		super(targetGenericDefinedTypeMeta.referDefination);
 		regionTye = targetGenericDefinedTypeMeta.regionTye;
-		typeName = targetGenericDefinedTypeMeta.typeName;
 		level = targetGenericDefinedTypeMeta.level;
 		isGeneric = targetGenericDefinedTypeMeta.isGeneric;
 		isArray = targetGenericDefinedTypeMeta.isArray;
@@ -147,7 +147,13 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 		if(null != targetGenericDefinedTypeMeta.deliveryTypeMetasTable) {
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length];
 			for(int i=0; i<targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length; i++ ) {
-				deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.deliveryTypeMetasTable[i]);
+				String currentTypeName = targetGenericDefinedTypeMeta.deliveryTypeMetasTable[i].typeName;
+				GenericExpressionExportTuple genericExpressionExportTuple = exportMapper.get(currentTypeName);
+				if(null == genericExpressionExportTuple) {
+					deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.deliveryTypeMetasTable[i], exportMapper);
+				} else {
+					deliveryTypeMetasTable[i] = genericExpressionExportTuple.declarationTypeMeta;
+				}
 			}
 		} else {
 			deliveryTypeMetasTable = null;
@@ -156,7 +162,13 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 		if(null != targetGenericDefinedTypeMeta.boundsUpper) {
 			boundsUpper = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.boundsUpper.length];
 			for(int i=0; i<targetGenericDefinedTypeMeta.boundsUpper.length; i++ ) {
-				boundsUpper[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsUpper[i]);
+				String currentTypeName = targetGenericDefinedTypeMeta.boundsUpper[i].typeName;
+				GenericExpressionExportTuple genericExpressionExportTuple = exportMapper.get(currentTypeName);
+				if(null == genericExpressionExportTuple) {
+					boundsUpper[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsUpper[i], exportMapper);
+				} else {
+					boundsUpper[i] = genericExpressionExportTuple.declarationTypeMeta;
+				}
 			}
 		} else {
 			boundsUpper = null;
@@ -165,10 +177,18 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 		if(null != targetGenericDefinedTypeMeta.boundsLower) {
 			boundsLower = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.boundsLower.length];
 			for(int i=0; i<targetGenericDefinedTypeMeta.boundsLower.length; i++ ) {
-				boundsLower[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsLower[i]);
+				String currentTypeName = targetGenericDefinedTypeMeta.boundsLower[i].typeName;
+				GenericExpressionExportTuple genericExpressionExportTuple = exportMapper.get(currentTypeName);
+				if(null == genericExpressionExportTuple) {
+					boundsLower[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsLower[i], exportMapper);
+				} else {
+					boundsLower[i] = genericExpressionExportTuple.declarationTypeMeta;
+				}
 			}
 		} else {
 			boundsLower = null;
 		}
+
+		typeName = GenericExpression.getExpressionSignature(targetGenericDefinedTypeMeta.rawType, deliveryTypeMetasTable);
 	}
 }

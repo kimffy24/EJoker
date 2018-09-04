@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
 import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
 
@@ -27,7 +27,7 @@ public class RootMetaRecord {
 	/**
 	 * 记录EService类的所有父类和继承接口。
 	 */
-	public final Map<Class<?>, Set<Class<?>>> eServiceHierarchyType = new HashMap<Class<?>, Set<Class<?>>>();
+	public final Map<Class<?>, Set<Class<?>>> eServiceHierarchyMapper = new HashMap<Class<?>, Set<Class<?>>>();
 
 	/**
 	 * 非泛型的 接口类型/抽象类型/实现类型 EService实现类映射对象
@@ -93,154 +93,169 @@ public class RootMetaRecord {
 	 * 
 	 * DONE: 记录类的@EInitialize方法
 	 * DONE: 记录类的@Dependence/@Resource属性
-	 * @param claxx
+	 * @param clazz
 	 */
-	public void analyzeContextAnnotation(final Class<?> claxx) {
+	public void analyzeContextAnnotation(final Class<?> clazz) {
 
 		// 已经分析过的类就跳过
-		if(hasBeenAnalyzeClass.contains(claxx)) return;
-		else hasBeenAnalyzeClass.add(claxx);
+		if(hasBeenAnalyzeClass.contains(clazz)) return;
+		else hasBeenAnalyzeClass.add(clazz);
 
 		// 只关注被标记EService的类
-		if(!claxx.isAnnotationPresent(EService.class)) return;
+		if(!clazz.isAnnotationPresent(EService.class)) return;
 
 		// 同名方法在在不同的对象中的反射Method是不一样的，用方法名作唯一控制会更好
-		Map<String, Object> conflictMethodNames = new HashMap<String, Object>();
+		// 分析会从子类到父类方向延伸，如果子类中出现过此方法，则会被跳过
+		Map<String, Method> reflectMethodStore = new HashMap<>();
 		// 同名属性在在不同的对象中的反射Field是不一样的，用属性名作唯一控制会更好
-		Map<String, Object> conflictFieldNames = new HashMap<String, Object>();
+		// 分析会从子类到父类方向延伸，如果子类中出现过此方法，则会被跳过
+		Map<String, Field> reflectFieldStore = new HashMap<>();
 
 		// collect the method which annotate by @Initialize .
-		Set<Method> annotationMethods = new HashSet<Method>();
+		Set<Method> annotationMethods = new HashSet<>();
 		// collect the properties which annotate by @Dependence or @Resource .
-		Set<Field> annotationFields = new HashSet<Field>();
+		Set<Field> annotationFields = new HashSet<>();
 		// collect the superClass or superInterface
-		Set<Class<?>> resolvedHierarchyType = new HashSet<Class<?>>();
+		Set<Class<?>> resolvedHierarchyType = new HashSet<>();
 
-		for ( Class<?> clazz = claxx; clazz != Object.class; clazz = clazz.getSuperclass() ) {
+		for ( Class<?> clayy = clazz; clayy != Object.class; clayy = clayy.getSuperclass() ) {
 
 			// 扫描所有被标注为初始化的方法
-			Method[] methods = clazz.getDeclaredMethods();
+			Method[] methods = clayy.getDeclaredMethods();
 			for ( Method method : methods ) {
-				if ( conflictMethodNames.containsKey(method.getName()) ) continue;
+				// 已经添加过的方法
+				if ( reflectMethodStore.containsKey(method.getName()) ) continue;
 				if ( method.isAnnotationPresent(EInitialize.class) ) {
+
+					// TODO 默认规则： 初始化函数不传参
+					/// * 带上参数后存在大量分析拆解以及上下文匹配工作，参数完全可以通过其他方法传入
 					if(method.getParameterCount()>0) {
-						logger.error("Unsupport pass parameters to @Initialize method now!!! Found at {}#{}()", clazz.getName(), method.getName());
+						logger.error("Unsupport pass parameters to @Initialize method now!!! Found at {}#{}()", clayy.getName(), method.getName());
 						throw new ContextRuntimeException("Unsupport pass parameters to @Initialize method now!!!");
 					}
+					
+					reflectMethodStore.put(method.getName(), method);
 					annotationMethods.add(method);
-					conflictMethodNames.put(method.getName(), method);
 				}
 			}
 
 			// 扫描所有标记为依赖的属性
-			Field[] fieldArray = clazz.getDeclaredFields();
+			Field[] fieldArray = clayy.getDeclaredFields();
 			for ( Field field : fieldArray ) {
 				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) ) {
-					if(GenericTypeUtil.ensureIsGenericType(field.getType())
-							// 当泛型变量的泛型签名为空时，抛出错误，并结束操作
-							&& GenericTypeUtil.NO_GENERAL_SIGNATURE.equals(GenericTypeUtil.getGenericSignature(field))) {
-						String errInfo = String.format("Unsupport empty GenericSignature on %s.%s", claxx.getName(), field.getName());
+					Class<?> fieldClazz = field.getType();
+					if(fieldClazz.isEnum() || fieldClazz.isArray() || fieldClazz.isPrimitive()) {
+						String errInfo = String.format("Unsupport Dependence|Resource annotation on %s.%s", clazz.getName(), field.getName());
 						logger.error(errInfo);
 						throw new ContextRuntimeException(errInfo);
 					}
-					if(!conflictFieldNames.containsKey(field.getName())) { 
+					if(
+							// 当field的声明的类型是泛型时
+							GenericTypeUtil.ensureClassIsGenericType(fieldClazz)
+							// 且 当泛型变量的泛型签名为空时，抛出错误，并结束操作
+							&& GenericTypeUtil.NO_GENERAL_SIGNATURE.equals(GenericTypeUtil.getDeclaredGenericSignature(field))) {
+						String errInfo = String.format("Unsupport empty GenericSignature on %s.%s", clazz.getName(), field.getName());
+						logger.error(errInfo);
+						throw new ContextRuntimeException(errInfo);
+					}
+					if(!reflectFieldStore.containsKey(field.getName())) { 
+						reflectFieldStore.put(field.getName(), field);
 						annotationFields.add(field);
-						conflictFieldNames.put(field.getName(), field);
 					}
 				}
 			}
 
 			// 收集接口映射 收集父类映射 
-			Class<?>[] interfaces = clazz.getInterfaces();
+			Class<?>[] interfaces = clayy.getInterfaces();
 			for ( Class<?> interfaceType : interfaces )
 				if(!resolvedHierarchyType.contains(interfaceType))
 					resolvedHierarchyType.add(interfaceType);
 
 			// 收集 父类/抽象父类 
-			resolvedHierarchyType.add(clazz);
+			resolvedHierarchyType.add(clayy);
 		}
 		
-		eDependenceMapper.put(claxx, annotationFields);
-		eInitializeMapper.put(claxx, annotationMethods);
-		eServiceHierarchyType.put(claxx, resolvedHierarchyType);
+		eDependenceMapper.put(clazz, annotationFields);
+		eInitializeMapper.put(clazz, annotationMethods);
+		eServiceHierarchyMapper.put(clazz, resolvedHierarchyType);
 		
-		Boolean whetherClaxxIsGenericOrNot = GenericTypeUtil.ensureIsGenericType(claxx);
-		String claxxDefinationGenericSignature = GenericTypeUtil.getClassDefinationGenericSignature(claxx);
-		Map<String, String> classSuperGenericSignatureTree = GenericTypeUtil.getClassSuperGenericSignatureTree(claxx);
+		Boolean whetherClazzIsGeneric = GenericTypeUtil.ensureClassIsGenericType(clazz);
+		String clazzDefinationGenericSignature = GenericTypeUtil.getClassDefinationGenericSignature(clazz);
+		Map<String, String> classSuperGenericSignatureTreex = null;//GenericTypeUtil.getClassSuperGenericSignatureTreex(claxx);
 		
-		for(Class<?> hierarchyType : resolvedHierarchyType) {
+		for(Class<?> extractClazz : resolvedHierarchyType) {
 			
-			if(GenericTypeUtil.ensureIsGenericType(hierarchyType)) {
+			if(GenericTypeUtil.ensureClassIsGenericType(extractClazz)) {
 				// 父类/接口 是泛型
 				GenericityMapper genericityMapper;
-				if(null==(genericityMapper = eJokerTheSupportAbstractGenericityInstanceTypeMapper.getOrDefault(hierarchyType, null)))
-					eJokerTheSupportAbstractGenericityInstanceTypeMapper.put(hierarchyType, (genericityMapper = new GenericityMapper()));
-				String superDefinationGenericSignature = GenericTypeUtil.getClassDefinationGenericSignature(hierarchyType);
-				if(whetherClaxxIsGenericOrNot) {
+				if(null==(genericityMapper = eJokerTheSupportAbstractGenericityInstanceTypeMapper.getOrDefault(extractClazz, null)))
+					eJokerTheSupportAbstractGenericityInstanceTypeMapper.put(extractClazz, (genericityMapper = new GenericityMapper()));
+				String extractClazzDefinationGenericSignature = GenericTypeUtil.getClassDefinationGenericSignature(extractClazz);
+				if(whetherClazzIsGeneric) {
 					// 候选实现( 抽象是泛型定义， 实现是泛型定义 )
-					if(claxxDefinationGenericSignature.equals(superDefinationGenericSignature)) {
+					if(clazzDefinationGenericSignature.equals(extractClazzDefinationGenericSignature)) {
 						// 候选实现需要严格满足泛型签名对称
 						if(null == genericityMapper.candidateImplementations)
-							genericityMapper.candidateImplementations = new ImplementationTuple().addImplementation(claxx);
+							genericityMapper.candidateImplementations = new ImplementationTuple().addImplementation(clazz);
 						else // 如果候选实现多于1个，输出警告
 							warningSameGenericSignature(
-									hierarchyType,
-									superDefinationGenericSignature,
-									genericityMapper.candidateImplementations.addImplementation(claxx)
+									extractClazz,
+									extractClazzDefinationGenericSignature,
+									genericityMapper.candidateImplementations.addImplementation(clazz)
 							);
 					} else {
 						// 泛型签名不对称，则输出警告
-						logger.warn("Could not make {} to be {}'s candidate implementation! Please make sure it is not influence the program!", claxx.getName(), hierarchyType.getName());
+						logger.warn("Could not make {} to be {}'s candidate implementation! Please make sure it is not influence the program!", clazz.getName(), extractClazz.getName());
 						logger.warn("Unmatch GenericSignature: \n\t{}\t\t{}\n\t{}\t\t{}",
-							hierarchyType.getName(), superDefinationGenericSignature,
-							claxx.getName(), claxxDefinationGenericSignature
+							extractClazz.getName(), extractClazzDefinationGenericSignature,
+							clazz.getName(), clazzDefinationGenericSignature
 						);
 					}
 				} else {
 					// 优先的签名实现( 抽象是泛型定义， 实现不是泛型定义 )
-					String realGenericSignature = classSuperGenericSignatureTree.get(hierarchyType.getName());
-					if(realGenericSignature.equals(superDefinationGenericSignature)) {
+					String realGenericSignature = null; //classSuperGenericSignatureTree.get(hierarchyType.getName());
+					if(realGenericSignature.equals(extractClazzDefinationGenericSignature)) {
 						// 如果 泛型接口的定义上的签名 和 从当前被分析类中分离出来的签名相同，则证明泛型
 						//		1. 可能泛型签名不对称
 						//		2. 传递丢失
 						//			（像 有 interface IBasicA<T>{} ,
 						//				又有 interface IBasicB<T> extend IBasicA<T>{}
 						//				在 class BImpl implements IBasicB<String> {} 这样的过程中，就会丢失传递。
-						logger.warn("{} could not mapping to {}, it may be loss GenericType while in multi inheriting!\n\tPlease make sure it is not influence the program!", hierarchyType.getName(), claxx.getName());
+						logger.warn("{} could not mapping to {}, it may be loss GenericType while in multi inheriting!\n\tPlease make sure it is not influence the program!", extractClazz.getName(), clazz.getName());
 						logger.warn("Unmatch GenericSignature: \n\t{}\t\t{}\n\t{}\t\t{}",
-								hierarchyType.getName(), superDefinationGenericSignature,
-								claxx.getName(), "!!!Lost!!!"
+								extractClazz.getName(), extractClazzDefinationGenericSignature,
+								clazz.getName(), "!!!Lost!!!"
 							);
 					} else {
 						if(genericityMapper.signatureImplementations.containsKey(realGenericSignature)) {
 							ImplementationTuple implementationTuple = genericityMapper.signatureImplementations.get(realGenericSignature);
-							implementationTuple.addImplementation(claxx);
-							warningSameGenericSignature(hierarchyType, realGenericSignature, implementationTuple);
+							implementationTuple.addImplementation(clazz);
+							warningSameGenericSignature(extractClazz, realGenericSignature, implementationTuple);
 						}
 						else
-							genericityMapper.signatureImplementations.put(realGenericSignature, new ImplementationTuple().addImplementation(claxx));
+							genericityMapper.signatureImplementations.put(realGenericSignature, new ImplementationTuple().addImplementation(clazz));
 					}
 				}
 				
 			} else {
 				// 父类/接口 非泛型
-				if(whetherClaxxIsGenericOrNot) {
+				if(whetherClazzIsGeneric) {
 					// 实现类型是泛型实现( 抽象不是泛型定义， 实现是泛型定义 )，则抽象与实现之间是不可能做到泛型信息对称的，输出警告
-					logger.warn("Could not make {} to be {}'s signature implementation! Please make sure it is not influence the program!", claxx.getName(), hierarchyType.getName());
+					logger.warn("Could not make {} to be {}'s signature implementation! Please make sure it is not influence the program!", clazz.getName(), extractClazz.getName());
 					logger.warn("Unmatch Generic Defination: \n\t{}\t\t is not Generic type!\n\t{}\t\t is Generic type with signature {}",
-							hierarchyType.getName(),
-							claxx.getName(), claxxDefinationGenericSignature
+							extractClazz.getName(),
+							clazz.getName(), clazzDefinationGenericSignature
 						);
 				} else {
 					// ( 抽象不是泛型定义， 实现不是泛型定义 )
-					if(eJokerTheSupportAbstractDirectInstanceTypeMapper.containsKey(hierarchyType)) {
-						ImplementationTuple implementationTuple = eJokerTheSupportAbstractDirectInstanceTypeMapper.get(hierarchyType);
-						implementationTuple.addImplementation(claxx);
-						warningSameGenericSignature(hierarchyType, "", implementationTuple);
+					if(eJokerTheSupportAbstractDirectInstanceTypeMapper.containsKey(extractClazz)) {
+						ImplementationTuple implementationTuple = eJokerTheSupportAbstractDirectInstanceTypeMapper.get(extractClazz);
+						implementationTuple.addImplementation(clazz);
+						warningSameGenericSignature(extractClazz, "", implementationTuple);
 					} else
 						eJokerTheSupportAbstractDirectInstanceTypeMapper.put(
-								hierarchyType,
-								new ImplementationTuple().addImplementation(claxx)
+								extractClazz,
+								new ImplementationTuple().addImplementation(clazz)
 						);
 				}
 			}
@@ -289,8 +304,7 @@ public class RootMetaRecord {
 		
 		public ImplementationTuple addImplementation(Class<?> implementedType) {
 			Class<?>[] implementations = new Class<?>[this.implementations.length+1];
-			for(int i=0; i<this.implementations.length; i++)
-				implementations[i] = this.implementations[i];
+			System.arraycopy(this.implementations, 0, implementations, 0, this.implementations.length);
 			implementations[this.implementations.length] = implementedType;
 			this.implementations = implementations;
 			return this;

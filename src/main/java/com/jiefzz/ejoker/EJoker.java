@@ -37,7 +37,7 @@ public class EJoker {
 		// regist scanner hook
 		context.registeScanHook(new IEjokerClassScanHook() {
 			@Override
-			public void accept(Class<?> clazz) {
+			public void process(Class<?> clazz) {
 				if(!clazz.getPackage().getName().startsWith(SELF_PACNAGE_NAME)) {
 					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
 					RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);

@@ -130,7 +130,7 @@ public class DefaultEJokerContext implements IEJokerContext {
 			
 			if(null!=hookArray)
 				for(IEjokerClassScanHook hook:hookArray)
-					hook.accept(clazz);
+					hook.process(clazz);
 		}
 	}
 

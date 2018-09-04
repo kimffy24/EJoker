@@ -20,7 +20,7 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
  */
 public final class GenericDefination {
 
-	public final String genericSignature;
+	private final String genericSignature;
 	
 	public final Class<?> genericPrototype;
 	

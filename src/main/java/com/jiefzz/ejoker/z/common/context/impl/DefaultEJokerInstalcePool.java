@@ -51,7 +51,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 
 	@Override
 	public <T> T getInstance(Field field) {
-		String genericSignature = GenericTypeUtil.getGenericSignature(field);
+		String genericSignature = GenericTypeUtil.getDeclaredGenericSignature(field);
 		if(GenericTypeUtil.NO_GENERAL_SIGNATURE.equals(genericSignature))
 			return (T )getInstance(field.getType());
 		else
@@ -80,7 +80,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 	private <T> T createAndRegistInstance(Class<T> clazz, String pSign) {
 		Class<?> resolvedClass = eJokerClassMetaProvider.resolve(clazz, pSign);
 		Object instance = null;
-		if(!GenericTypeUtil.ensureIsGenericType(resolvedClass)) {
+		if(!GenericTypeUtil.ensureClassIsGenericType(resolvedClass)) {
 			// 如果解析类型并不是泛型，怎同时去非泛型容器中查找一次
 			instance=instanceMap.get(resolvedClass);
 		}
@@ -89,7 +89,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 			{ // 注册到泛型对象记录变量 instanceGenericTypeMap
 				instanceGenericTypeMap.get(clazz).put(pSign, instance);
 			}
-			if(!GenericTypeUtil.ensureIsGenericType(resolvedClass)) {
+			if(!GenericTypeUtil.ensureClassIsGenericType(resolvedClass)) {
 				// 如果解析类型并不是泛型，则同时注册到非泛型容器中。
 				instanceMap.putIfAbsent(resolvedClass, instance);
 			}
