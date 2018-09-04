@@ -12,7 +12,7 @@ import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 public class SendReplyService {
 
 	@Dependence
-	IRPCService<String> rpcService;
+	IRPCService rpcService;
 
 	@Dependence
 	IJSONConverter jsonConverter;

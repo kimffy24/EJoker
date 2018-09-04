@@ -31,7 +31,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
 	@Dependence
-	IRPCService<String> rpcService;
+	IRPCService rpcService;
 
 	@Dependence
 	IJSONConverter jsonConverter;
