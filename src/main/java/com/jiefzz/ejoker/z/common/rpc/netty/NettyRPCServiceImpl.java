@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -20,7 +19,6 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -29,7 +27,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 @EService
-public class NettyRPCServiceImpl implements IRPCService<String> {
+public class NettyRPCServiceImpl implements IRPCService {
 
 	private final static Logger logger = LoggerFactory.getLogger(NettyRPCServiceImpl.class);
 
