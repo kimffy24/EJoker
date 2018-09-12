@@ -22,10 +22,10 @@ public class GenericDefinedField {
 		
 		if (genericDefination.isInterface)
 			throw new RuntimeException(String.format("We didn't access any field on an interface!!! defination=%s",
-					genericDefination.genericPrototype.getName()));
-		if(!field.getDeclaringClass().equals(genericDefination.genericPrototype))
+					genericDefination.genericPrototypeClazz.getName()));
+		if(!field.getDeclaringClass().equals(genericDefination.genericPrototypeClazz))
 			throw new RuntimeException(String.format("Wrong relationship!!! genericPrototype=%s, fieldDeclaringClass=%s",
-					genericDefination.genericPrototype.getName(), field.getDeclaringClass().getName()));
+					genericDefination.genericPrototypeClazz.getName(), field.getDeclaringClass().getName()));
 
 		Type fieldType = field.getGenericType();
 		this.isGenericVariable = fieldType instanceof TypeVariable ? true : false;

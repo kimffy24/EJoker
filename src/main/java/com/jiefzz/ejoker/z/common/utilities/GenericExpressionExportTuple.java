@@ -2,22 +2,22 @@ package com.jiefzz.ejoker.z.common.utilities;
 
 public class GenericExpressionExportTuple {
 	
-	private final GenericDefinedMeta refMeta;
+	private final GenericDeclare refDeclare;
 	
 	public final GenericDefinedTypeMeta declarationTypeMeta;
 
-	public GenericExpressionExportTuple(GenericDefinedMeta refMeta, GenericDefinedTypeMeta declarationType) {
+	public GenericExpressionExportTuple(GenericDeclare refDeclare, GenericDefinedTypeMeta declarationType) {
 		super();
-		this.refMeta = refMeta;
+		this.refDeclare = refDeclare;
 		this.declarationTypeMeta = declarationType;
 	}
 	
 	public int getIndex() {
-		return refMeta.index;
+		return refDeclare.index;
 	}
 	
 	public String getName() {
-		return refMeta.name;
+		return refDeclare.name;
 	}
 
 }

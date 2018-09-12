@@ -20,81 +20,99 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
  */
 public final class GenericDefination {
 
-	private final String genericSignature;
+	private final String definationSignature;
 	
-	public final Class<?> genericPrototype;
+	public final Class<?> genericPrototypeClazz;
 	
 	public final boolean isInterface;
 	
-	public final boolean isGenericType;
+	public final boolean hasGenericDeclare;
 	
-	private final GenericDefinedMeta[] exports;
+	private final GenericDeclare[] exportGenericDeclares;
+	
+	private final GenericDefination superDefination;
 	
 	private final Map<String, String> deliveryMapper;
 	
 	private final GenericDefinedTypeMeta[] deliveryTypeMetasTable;
 	
-	private final GenericDefination superDefination;
+	private final Map<Class<?>, GenericDefination> interfaceDefinations;
 	
-	private final Map<Class<?>, Map<String, String>> interfaceDeliveryMappers = new HashMap<>();
+	private final Map<Class<?>, Map<String, String>> interfaceDeliveryMappers;
 	
-	private final Map<Class<?>, GenericDefinedTypeMeta[]> interfaceDeliveryTypeMetasTables = new HashMap<>();
-	
-	private final Map<Class<?>, GenericDefination> interfaceDefinations = new HashMap<>();
+	private final Map<Class<?>, GenericDefinedTypeMeta[]> interfaceDeliveryTypeMetasTables;
 	
 	private final Map<String, GenericDefinedField> fieldDefinations;
 
 	private GenericDefination(Class<?> genericPrototype) {
 		super();
-		this.genericPrototype = genericPrototype;
+		this.genericPrototypeClazz = genericPrototype;
 		this.isInterface = genericPrototype.isInterface();
-		this.genericSignature = genericPrototype.toGenericString();
+		this.definationSignature = genericPrototype.toGenericString();
 		
 		TypeVariable<?>[] typeParameters = genericPrototype.getTypeParameters();
 		if(typeParameters.length != 0) {
-			isGenericType = true;;
-			exports = new GenericDefinedMeta[typeParameters.length];
+			hasGenericDeclare = true;;
+			exportGenericDeclares = new GenericDeclare[typeParameters.length];
 			deliveryMapper = new HashMap<>();
 
 			for(int i = 0; i<typeParameters.length; i++) {
 				TypeVariable<?> typeVar = typeParameters[i];
-				exports[i] = new GenericDefinedMeta(this, i, typeVar.getName());
+				exportGenericDeclares[i] = new GenericDeclare(this, i, typeVar.getName());
 			}
 			
 		} else {
-			isGenericType = false;
-			exports = null;
+			hasGenericDeclare = false;
+			exportGenericDeclares = null;
 			deliveryMapper = null;
 		}
 		
 
-		if(null == genericPrototype.getSuperclass() || Object.class.equals(genericPrototype))
+		if(null == genericPrototype.getSuperclass() || Object.class.equals(genericPrototype.getSuperclass()))
 			superDefination = null;
 		else
 			superDefination = getOrCreateDefination(genericPrototype.getSuperclass());
+		
+		Class<?>[] interfaces = genericPrototype.getInterfaces();
+		if(null == interfaces || 0 == interfaces.length) {
+			interfaceDefinations = null;
+			{
+				interfaceDeliveryMappers = null;
+				interfaceDeliveryTypeMetasTables = null;
+			}
+		} else {
+			interfaceDefinations = new HashMap<>();
+			for(Class<?> iface : interfaces) {
+				interfaceDefinations.put(iface, getOrCreateDefination(iface));
+			}
+			{
+				interfaceDeliveryMappers = new HashMap<>();
+				interfaceDeliveryTypeMetasTables = new HashMap<>();
+			}
+		}
 		
 
 		Type genericSuperclass = genericPrototype.getGenericSuperclass();
 		if (genericSuperclass instanceof ParameterizedType) {
 
-			ParameterizedType pt = (ParameterizedType )genericSuperclass;
-			Type[] actualTypeArguments = pt.getActualTypeArguments();
+			ParameterizedType superPt = (ParameterizedType )genericSuperclass;
+			Type[] actualTypeArguments = superPt.getActualTypeArguments();
 
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
 			
-			superDefination.forEachDefinationMeta((metaTuple, i) -> {
+			ForEachUtil.processForEach(superDefination.exportGenericDeclares, (declareTuple, i) -> {
 
-				Type varType = actualTypeArguments[i];
+				Type typeArgument = actualTypeArguments[i];
 
-				if(varType instanceof TypeVariable<?>) {
+				if(typeArgument instanceof TypeVariable<?>) {
 					// generic!
-					TypeVariable<?> tv = (TypeVariable<?> )varType;
+					TypeVariable<?> tv = (TypeVariable<?> )typeArgument;
 					deliveryMapper.put("" + i, tv.getTypeName());
-					deliveryMapper.put(metaTuple.name, tv.getTypeName());
+					deliveryMapper.put(declareTuple.name, tv.getTypeName());
 					deliveryTypeMetasTable[i] = null;
 				} else {
 					// materialized!
-					deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(varType, this);
+					deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
 				}
 				
 			});
@@ -106,40 +124,55 @@ public final class GenericDefination {
 		Type[] genericInterfaces = genericPrototype.getGenericInterfaces();
 		for(Type genericInterface : genericInterfaces) {
 			if(genericInterface instanceof ParameterizedType) {
-				ParameterizedType ptgi = (ParameterizedType )genericInterface;
-				Type[] ptgiActualTypeArguments = ptgi.getActualTypeArguments();
-				Class<?> interfaceClazz = (Class<?> )ptgi.getRawType();
-				TypeVariable<?>[] interfaceTypeParameters = interfaceClazz.getTypeParameters();
 				
-				GenericDefinedTypeMeta[] passClazz = new GenericDefinedTypeMeta[ptgiActualTypeArguments.length];
-				Map<String, String> passMapper = new HashMap<>();
-				for(int i = 0; i<ptgiActualTypeArguments.length; i++) {
-					Type varType = ptgiActualTypeArguments[i];
-					if(varType instanceof TypeVariable<?>) {
+				ParameterizedType interfacePt = (ParameterizedType )genericInterface;
+				Type[] actualTypeArguments = interfacePt.getActualTypeArguments();
+
+				GenericDefinedTypeMeta[] ifaceDeliveryTypeMetaTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
+				Map<String, String> ifaceDeliveryMapper = new HashMap<>();
+				
+				Class<?> iface = (Class<?> )interfacePt.getRawType();
+				
+				ForEachUtil.processForEach(interfaceDefinations.get(iface).exportGenericDeclares, (declareTuple, i) -> {
+					Type typeArgument = actualTypeArguments[i];
+
+					if(typeArgument instanceof TypeVariable<?>) {
 						// generic!
-						TypeVariable<?> tv = (TypeVariable<?> )varType;
-						passMapper.put("" + i, tv.getTypeName());
-						passMapper.put(interfaceTypeParameters[i].getTypeName(), tv.getTypeName());
-						passClazz[i] = null;
+						TypeVariable<?> tv = (TypeVariable<?> )typeArgument;
+						ifaceDeliveryMapper.put("" + i, tv.getTypeName());
+						ifaceDeliveryMapper.put(declareTuple.name, tv.getTypeName());
+						ifaceDeliveryTypeMetaTable[i] = null;
 					} else {
 						// materialized!
-						passClazz[i] = new GenericDefinedTypeMeta(varType, this);
+						ifaceDeliveryTypeMetaTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
 					}
-				}
-				interfaceDeliveryMappers.put(interfaceClazz, passMapper);
-				interfaceDeliveryTypeMetasTables.put(interfaceClazz, passClazz);
-				interfaceDefinations.put(interfaceClazz, getOrCreateDefination(interfaceClazz));
-			} else if (Class.class.equals(genericInterface.getClass())) {
-				interfaceDefinations.put((Class<?> )genericInterface, getOrCreateDefination((Class<?> )genericInterface));
-			} else {
-				throw new RuntimeException("Unknow type in genericPrototype.getGenericInterfaces()!!!");
+				});
+				
+//				TypeVariable<?>[] interfaceTypeParameters = iface.getTypeParameters();
+//				for(int i = 0; i<actualTypeArguments.length; i++) {
+//					Type varType = actualTypeArguments[i];
+//					if(varType instanceof TypeVariable<?>) {
+//						// generic!
+//						TypeVariable<?> tv = (TypeVariable<?> )varType;
+//						ifaceDeliveryMapper.put("" + i, tv.getTypeName());
+//						ifaceDeliveryMapper.put(interfaceTypeParameters[i].getTypeName(), tv.getTypeName());
+//						ifaceDeliveryTypeMetaTable[i] = null;
+//					} else {
+//						// materialized!
+//						ifaceDeliveryTypeMetaTable[i] = new GenericDefinedTypeMeta(varType, this);
+//					}
+//				}
+
+				interfaceDeliveryMappers.put(iface, ifaceDeliveryMapper);
+				interfaceDeliveryTypeMetasTables.put(iface, ifaceDeliveryTypeMetaTable);
+				
 			}
 		}
 		
 		if(this.isInterface) {
 			fieldDefinations = null;
 		} else {
-			Field[] declaredFields = this.genericPrototype.getDeclaredFields();
+			Field[] declaredFields = this.genericPrototypeClazz.getDeclaredFields();
 			if(null == declaredFields) {
 				fieldDefinations = null;
 			} else {
@@ -195,16 +228,16 @@ public final class GenericDefination {
 //		System.out.println(obj);
 //	}
 	
-	public void forEachDefinationMeta(IVoidFunction1<GenericDefinedMeta> vf) {
-		if(!isGenericType)
+	public void forEachGenericDeclares(IVoidFunction1<GenericDeclare> vf) {
+		if(!hasGenericDeclare)
 			return;
-		ForEachUtil.processForEach(exports, vf);
+		ForEachUtil.processForEach(exportGenericDeclares, vf);
 	}
 	
-	public void forEachDefinationMeta(IVoidFunction2<GenericDefinedMeta, Integer> vf) {
-		if(!isGenericType)
+	public void forEachGenericDeclares(IVoidFunction2<GenericDeclare, Integer> vf) {
+		if(!hasGenericDeclare)
 			return;
-		ForEachUtil.processForEach(exports, vf);
+		ForEachUtil.processForEach(exportGenericDeclares, vf);
 	}
 	
 	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefination> vf) {
@@ -215,8 +248,8 @@ public final class GenericDefination {
 		ForEachUtil.processForEach(fieldDefinations, vf);
 	}
 	
-	public int getGenericTypeAmount() {
-		return isGenericType?exports.length:0;
+	public int getGenericDeclareAmount() {
+		return hasGenericDeclare?exportGenericDeclares.length:0;
 	}
 	
 	public int getInterfacesAmount() {
@@ -224,22 +257,22 @@ public final class GenericDefination {
 	}
 	
 	public String getGenericSignature() {
-		return genericSignature;
+		return definationSignature;
 	}
 
-	public Class<?> getGenericPrototype() {
-		return genericPrototype;
+	public Class<?> getGenericPrototypeClazz() {
+		return genericPrototypeClazz;
 	}
 
-	public boolean isGenericType() {
-		return isGenericType;
+	public boolean checkHasGenericDeclare() {
+		return hasGenericDeclare;
 	}
 
-	public GenericDefination getSuperDefinationMeta() {
+	public GenericDefination getSuperDefination() {
 		return superDefination;
 	}
 
-	public GenericDefinedTypeMeta[] getDeliveryTypeMetasTable() {
+	public GenericDefinedTypeMeta[] getDeliveryTypeMetasTableCopy() {
 		if(null == deliveryTypeMetasTable)
 			return null;
 		GenericDefinedTypeMeta[] newOne = new GenericDefinedTypeMeta[deliveryTypeMetasTable.length];
@@ -247,13 +280,13 @@ public final class GenericDefination {
 		return newOne;
 	}
 
-	public Map<String, String> getDeliveryMapper() {
+	public Map<String, String> getDeliveryMapperCopy() {
 		if(null == deliveryMapper || deliveryMapper.size() == 0)
 			return null;
 		return new HashMap<>(deliveryMapper);
 	}
 	
-	public GenericDefinedTypeMeta[] getInterfaceDeliveryTypeMetasTable(Class<?> interfaceClazz) {
+	public GenericDefinedTypeMeta[] getInterfaceDeliveryTypeMetasTableCopy(Class<?> interfaceClazz) {
 		if(null == interfaceDeliveryTypeMetasTables)
 			return null;
 		GenericDefinedTypeMeta[] interfaceDeliveryTypeMetasTable = interfaceDeliveryTypeMetasTables.get(interfaceClazz);
@@ -265,7 +298,7 @@ public final class GenericDefination {
 		return newOne;
 	}
 
-	public Map<String, String> getInterfaceDeliveryMapper(Class<?> interfaceClazz) {
+	public Map<String, String> getInterfaceDeliveryMapperCopy(Class<?> interfaceClazz) {
 		if(null == interfaceDeliveryMappers || interfaceDeliveryMappers.size() == 0)
 			return null;
 		Map<String, String> interfaceDeliveryMapper = interfaceDeliveryMappers.get(interfaceClazz);

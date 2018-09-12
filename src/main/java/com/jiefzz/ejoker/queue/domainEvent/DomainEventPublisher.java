@@ -31,9 +31,8 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	@Dependence
 	IJSONConverter jsonConverter;
 
-	@SuppressWarnings("rawtypes")
 	@Dependence
-	private ITopicProvider<IDomainEvent> eventTopicProvider;
+	private ITopicProvider<IDomainEvent<?>> eventTopicProvider;
 	
 	@Dependence
 	IEventSerializer eventSerializer;

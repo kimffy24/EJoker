@@ -6,22 +6,27 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 import com.jiefzz.ejoker.z.common.utilities.GenericDefination.GenericDefinationRef;
 
 public class GenericDefinedTypeMeta extends GenericDefinationRef {
+	
+	public final boolean allHasMaterialized;
 
-	public final Type regionTye;
+	public final Type originTye;
 
 	public final String typeName;
 
 	public final int level;
 
-	public final boolean isGeneric;
+	public final boolean hasGenericDeclare;
 
 	public final boolean isArray;
 
-	public final Class<?> rawType;
+	public final Class<?> rawClazz;
 
 	public final GenericDefinedTypeMeta[] deliveryTypeMetasTable;
 
@@ -33,12 +38,13 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 
 	protected GenericDefinedTypeMeta(Type regionTye, GenericDefination referMeta, int level) {
 		super(referMeta);
-		this.regionTye = regionTye;
+		this.originTye = regionTye;
 		this.typeName = regionTye.getTypeName();
 		this.level = level;
+		boolean tmpHasMaterialized = true;
 		
 		if (Class.class.equals(regionTye.getClass())) {
-			isGeneric = false;
+			hasGenericDeclare = false;
 			deliveryTypeMetasTable = null;
 			isWildcardType = false;
 			boundsUpper = null;
@@ -47,24 +53,26 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			if(regionClazz.isArray()) {
 				// TODO case1: type is a common array
 				isArray = true;
-				rawType = regionClazz.getComponentType();
+				rawClazz = regionClazz.getComponentType();
 			} else {
 				// TODO case2: type is a common class
 				isArray = false;
-				rawType = regionClazz;
+				rawClazz = regionClazz;
 			}
 		} else if(regionTye instanceof ParameterizedType) {
-			isGeneric = true;
+			hasGenericDeclare = true;
 			isArray = false;
 			isWildcardType = false;
 			boundsUpper = null;
 			boundsLower = null;
 			ParameterizedType pt = (ParameterizedType )regionTye;
-			rawType = (Class<?> )pt.getRawType();
+			rawClazz = (Class<?> )pt.getRawType();
 			Type[] actualTypeArguments = pt.getActualTypeArguments();
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
 			for(int i = 0; i<actualTypeArguments.length; i++) {
-				deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(actualTypeArguments[i], referMeta, level + 1);
+				GenericDefinedTypeMeta passingTypeMeta = new GenericDefinedTypeMeta(actualTypeArguments[i], referMeta, level + 1);
+				deliveryTypeMetasTable[i] = passingTypeMeta;
+				tmpHasMaterialized &= passingTypeMeta.allHasMaterialized;
 			}
 		} else if(regionTye instanceof GenericArrayType) {
 			isWildcardType = false;
@@ -78,17 +86,21 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			{
 				// TODO check the component type is WildcardType!!!!
 				if(tmpTypeMeta.isWildcardType) {
-					throw new RuntimeException("Do you ensure that this statement will happen???");
+					throw new RuntimeException("Unsupport a wildcard type on array declare!!!");
 				}
 			}
-			isGeneric = tmpTypeMeta.isGeneric;
-			rawType = tmpTypeMeta.rawType;
+			hasGenericDeclare = tmpTypeMeta.hasGenericDeclare;
+			rawClazz = tmpTypeMeta.rawClazz;
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[tmpTypeMeta.deliveryTypeMetasTable.length];
 			System.arraycopy(tmpTypeMeta.deliveryTypeMetasTable, 0, deliveryTypeMetasTable, 0, tmpTypeMeta.deliveryTypeMetasTable.length);
+			for(int i = 0; i<tmpTypeMeta.deliveryTypeMetasTable.length; i++) {
+				GenericDefinedTypeMeta passingTypeMeta = tmpTypeMeta.deliveryTypeMetasTable[i];
+				tmpHasMaterialized &= passingTypeMeta.allHasMaterialized;
+			}
 		} else if(regionTye instanceof WildcardType) {
-			isGeneric = false;
+			hasGenericDeclare = false;
 			isArray = false;
-			rawType = null;
+			rawClazz = null;
 			deliveryTypeMetasTable = null;
 			isWildcardType = true;
 			WildcardType wt = (WildcardType )regionTye;
@@ -99,7 +111,9 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 				} else {
 					boundsUpper = new GenericDefinedTypeMeta[regionUpperBounds.length];
 					for(int i = 0; i<regionUpperBounds.length; i++) {
-						boundsUpper[i] = new GenericDefinedTypeMeta(regionUpperBounds[i], referMeta, level + 1);
+						GenericDefinedTypeMeta passingTypeMeta = new GenericDefinedTypeMeta(regionUpperBounds[i], referMeta, level + 1);
+						boundsUpper[i] = passingTypeMeta;
+						tmpHasMaterialized &= passingTypeMeta.allHasMaterialized;
 					}
 				}
 			}
@@ -110,21 +124,26 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 				} else {
 					boundsLower = new GenericDefinedTypeMeta[regionLowerBounds.length];
 					for(int i = 0; i<regionLowerBounds.length; i++) {
-						boundsLower[i] = new GenericDefinedTypeMeta(regionLowerBounds[i], referMeta, level + 1);
+						GenericDefinedTypeMeta passingTypeMeta = new GenericDefinedTypeMeta(regionLowerBounds[i], referMeta, level + 1);
+						boundsLower[i] = passingTypeMeta;
+						tmpHasMaterialized &= passingTypeMeta.allHasMaterialized;
 					}
 				}
 			}
 		} else if(regionTye instanceof TypeVariable<?>) {
-			isGeneric = false;
+			hasGenericDeclare = false;
 			isArray = false;
-			rawType = null;
+			rawClazz = null;
 			deliveryTypeMetasTable = null;
 			isWildcardType = false;
 			boundsUpper = null;
 			boundsLower = null;
+			tmpHasMaterialized = false;
 		} else {
 			throw new RuntimeException("Do you ensure that this statement will happen???");
 		}
+		
+		allHasMaterialized = tmpHasMaterialized;
 	}
 	
 	public GenericDefinedTypeMeta(Type regionTye, GenericDefination referMeta) {
@@ -135,60 +154,119 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 	 * 复制构造一个GenericDefinedTypeMeta
 	 * @param targetGenericDefinedTypeMeta
 	 */
-	public GenericDefinedTypeMeta(GenericDefinedTypeMeta targetGenericDefinedTypeMeta, Map<String, GenericExpressionExportTuple> exportMapper) {
+	public GenericDefinedTypeMeta(GenericDefinedTypeMeta targetGenericDefinedTypeMeta, Map<String, GenericExpressionExportTuple> materializedMapper) {
 		super(targetGenericDefinedTypeMeta.referDefination);
-		regionTye = targetGenericDefinedTypeMeta.regionTye;
+		originTye = targetGenericDefinedTypeMeta.originTye;
 		level = targetGenericDefinedTypeMeta.level;
-		isGeneric = targetGenericDefinedTypeMeta.isGeneric;
+		hasGenericDeclare = targetGenericDefinedTypeMeta.hasGenericDeclare;
 		isArray = targetGenericDefinedTypeMeta.isArray;
-		rawType = targetGenericDefinedTypeMeta.rawType;
+		rawClazz = targetGenericDefinedTypeMeta.rawClazz;
 		isWildcardType = targetGenericDefinedTypeMeta.isWildcardType;
+		final AtomicInteger unmaterializedCounter = new AtomicInteger(0);
 		
 		if(null != targetGenericDefinedTypeMeta.deliveryTypeMetasTable) {
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length];
-			for(int i=0; i<targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length; i++ ) {
-				String currentTypeName = targetGenericDefinedTypeMeta.deliveryTypeMetasTable[i].typeName;
-				GenericExpressionExportTuple genericExpressionExportTuple = exportMapper.get(currentTypeName);
-				if(null == genericExpressionExportTuple) {
-					deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.deliveryTypeMetasTable[i], exportMapper);
-				} else {
-					deliveryTypeMetasTable[i] = genericExpressionExportTuple.declarationTypeMeta;
-				}
-			}
+			copyTypeMetaAndFillGenericity(
+					materializedMapper,
+					() -> targetGenericDefinedTypeMeta.deliveryTypeMetasTable,
+					(i, newTypeMeta) -> {
+						if(!newTypeMeta.allHasMaterialized)
+							unmaterializedCounter.incrementAndGet();
+						deliveryTypeMetasTable[i] = newTypeMeta;
+					}
+			);
 		} else {
 			deliveryTypeMetasTable = null;
 		}
 
 		if(null != targetGenericDefinedTypeMeta.boundsUpper) {
 			boundsUpper = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.boundsUpper.length];
-			for(int i=0; i<targetGenericDefinedTypeMeta.boundsUpper.length; i++ ) {
-				String currentTypeName = targetGenericDefinedTypeMeta.boundsUpper[i].typeName;
-				GenericExpressionExportTuple genericExpressionExportTuple = exportMapper.get(currentTypeName);
-				if(null == genericExpressionExportTuple) {
-					boundsUpper[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsUpper[i], exportMapper);
-				} else {
-					boundsUpper[i] = genericExpressionExportTuple.declarationTypeMeta;
-				}
-			}
+			copyTypeMetaAndFillGenericity(
+					materializedMapper,
+					() -> targetGenericDefinedTypeMeta.boundsUpper,
+					(i, newTypeMeta) -> {
+						if(!newTypeMeta.allHasMaterialized)
+							unmaterializedCounter.incrementAndGet();
+						boundsUpper[i] = newTypeMeta;
+					}
+			);
 		} else {
 			boundsUpper = null;
 		}
 
 		if(null != targetGenericDefinedTypeMeta.boundsLower) {
 			boundsLower = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.boundsLower.length];
-			for(int i=0; i<targetGenericDefinedTypeMeta.boundsLower.length; i++ ) {
-				String currentTypeName = targetGenericDefinedTypeMeta.boundsLower[i].typeName;
-				GenericExpressionExportTuple genericExpressionExportTuple = exportMapper.get(currentTypeName);
-				if(null == genericExpressionExportTuple) {
-					boundsLower[i] = new GenericDefinedTypeMeta(targetGenericDefinedTypeMeta.boundsLower[i], exportMapper);
-				} else {
-					boundsLower[i] = genericExpressionExportTuple.declarationTypeMeta;
-				}
-			}
+			copyTypeMetaAndFillGenericity(
+					materializedMapper,
+					() -> targetGenericDefinedTypeMeta.boundsLower,
+					(i, newTypeMeta) -> {
+						if(!newTypeMeta.allHasMaterialized)
+							unmaterializedCounter.incrementAndGet();
+						boundsLower[i] = newTypeMeta;
+					}
+			);
 		} else {
 			boundsLower = null;
 		}
 
-		typeName = GenericExpression.getExpressionSignature(targetGenericDefinedTypeMeta.rawType, deliveryTypeMetasTable);
+		String tmpTypeName;
+		if(isWildcardType) {
+			/// this statement is satisfy for WildcardType.
+			if(null != boundsLower && null != boundsUpper)
+				throw new RuntimeException("Do you ensure that the upper bounds and lower bounds will be exist in the same time???");
+			
+			{
+				StringBuilder sb = new StringBuilder();
+				sb.append('?');
+				if( null != boundsUpper ) {
+					if(1 == boundsUpper.length && Object.class.getName().equals(boundsUpper[0].typeName)) {
+						; // eliminate the case  <? extends java.lang.Object>
+					} else {
+						sb.append(" extends ");
+						for(GenericDefinedTypeMeta upperBound : boundsUpper) {
+							sb.append(upperBound.typeName);
+							sb.append(GenericTypeUtil.SEPARATOR);
+						}
+					}
+				} else if( null != boundsLower ) {
+					sb.append("? super ");
+					for(GenericDefinedTypeMeta lowerBound : boundsLower) {
+						sb.append(lowerBound.typeName);
+						sb.append(GenericTypeUtil.SEPARATOR);
+					}
+				}
+				/// Sometime it may be not exist of both upper and lower bounds.
+				/// Please ensure that while the upper bound is Object.class
+				
+				tmpTypeName = sb.toString().replaceFirst(GenericTypeUtil.SEPARATOR + "$", "");
+			}
+		} else if (null == rawClazz) {
+			/// this statement is satisfy for TypeVariable.
+			tmpTypeName = targetGenericDefinedTypeMeta.typeName;
+		} else {
+			tmpTypeName = GenericExpression.getExpressionSignature(targetGenericDefinedTypeMeta.rawClazz, deliveryTypeMetasTable);
+		}
+		
+		typeName = tmpTypeName + (isArray?"[]":"");
+		allHasMaterialized = 0 == unmaterializedCounter.get() ? true : false;
+	}
+	
+	private void copyTypeMetaAndFillGenericity(
+			Map<String, GenericExpressionExportTuple> materializedMapper,
+			IFunction<GenericDefinedTypeMeta[]> deliveryTableGetter,
+			IVoidFunction2<Integer, GenericDefinedTypeMeta> effector) {
+		GenericDefinedTypeMeta[] deliveryTable = deliveryTableGetter.trigger();
+		for(int i=0; i<deliveryTable.length; i++ ) {
+			GenericDefinedTypeMeta originalTypeMeta = deliveryTable[i];
+			GenericDefinedTypeMeta currentTypeMeta;
+			String currentTypeName = originalTypeMeta.typeName;
+			GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(currentTypeName);
+			if(null == genericExpressionExportTuple) {
+				currentTypeMeta = new GenericDefinedTypeMeta(originalTypeMeta, materializedMapper);
+			} else {
+				currentTypeMeta = new GenericDefinedTypeMeta(genericExpressionExportTuple.declarationTypeMeta, materializedMapper);
+			}
+			effector.trigger(i, currentTypeMeta);
+		}
 	}
 }
