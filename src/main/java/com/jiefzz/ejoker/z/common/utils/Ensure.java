@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils;
 
 import com.jiefzz.ejoker.z.common.ArgumentException;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;

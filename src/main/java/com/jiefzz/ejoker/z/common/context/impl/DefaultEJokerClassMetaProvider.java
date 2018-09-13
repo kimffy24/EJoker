@@ -12,7 +12,7 @@ import com.jiefzz.ejoker.z.common.context.IEJokerClassMetaProvidor;
 import com.jiefzz.ejoker.z.common.context.RootMetaRecord;
 import com.jiefzz.ejoker.z.common.context.RootMetaRecord.GenericityMapper;
 import com.jiefzz.ejoker.z.common.context.RootMetaRecord.ImplementationTuple;
-import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 
 public class DefaultEJokerClassMetaProvider implements IEJokerClassMetaProvidor,IEJokerClassMetaAnalyzer {
 	

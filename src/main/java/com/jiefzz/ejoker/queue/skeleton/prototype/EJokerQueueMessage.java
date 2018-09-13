@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.queue.skeleton.prototype;
 import java.io.Serializable;
 
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
-import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class EJokerQueueMessage implements Serializable {
 

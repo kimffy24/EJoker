@@ -1,13 +1,17 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils.genericity;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
+import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 
 public class GenericExpression {
 
@@ -180,21 +184,18 @@ public class GenericExpression {
 			} else {
 				fieldExpressions = new HashMap<>();
 				genericDefination.forEachFieldDefinations((fieldName, genericDefinedField) -> {
+					GenericDefinedField newGenericDefinedField;
 					if(genericDefinedField.isGenericVariable) {
 						GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(genericDefinedField.genericTypeVariableName);
 						if(null == genericExpressionExportTuple) {
-//							if(isComplete) {
-//								throw new RuntimeException("Fuck!!! This statement should not be happen!!!");
-//							} else {
-								fieldExpressions.put(fieldName, new GenericDefinedField(genericDefinedField.genericDefination, genericDefinedField.field));
-//								return;
-//							}
+							newGenericDefinedField = new GenericDefinedField(genericDefinedField.genericDefination, genericDefinedField.field);
 						} else {
-							fieldExpressions.put(fieldName, new GenericDefinedField(genericDefinedField, new GenericDefinedTypeMeta(genericExpressionExportTuple.declarationTypeMeta, lowerGenericExpression.materializedMapper)));
+							newGenericDefinedField = new GenericDefinedField(genericDefinedField, new GenericDefinedTypeMeta(genericExpressionExportTuple.declarationTypeMeta, materializedMapper));
 						}
 					} else {
-						fieldExpressions.put(fieldName, genericDefinedField);
+						newGenericDefinedField = new GenericDefinedField(genericDefinedField, new GenericDefinedTypeMeta(genericDefinedField.genericDefinedTypeMeta, materializedMapper));
 					}
+					fieldExpressions.put(fieldName, newGenericDefinedField);
 				});
 			}
 		}
@@ -308,6 +309,7 @@ public class GenericExpression {
 		
 	}
 	
+	
 	public Class<?> getDeclarePrototype() {
 		return genericDefination.genericPrototypeClazz;
 	}
@@ -349,7 +351,23 @@ public class GenericExpression {
 	
 	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
 		ForEachUtil.processForEach(fieldExpressions, vf);
-		
+	}
+	
+	public void forEachFieldExpressionsDeeply(IVoidFunction2<String, GenericDefinedField> vf) {
+		Set<String> hasProcessedField = new HashSet<>();
+		GenericExpression currentExpression = this;
+		do {
+			if(null == currentExpression.fieldExpressions || 0 == currentExpression.fieldExpressions.size())
+				continue;
+			Set<Entry<String,GenericDefinedField>> entrySet = currentExpression.fieldExpressions.entrySet();
+			for(Entry<String,GenericDefinedField> entry: entrySet) {
+				if(hasProcessedField.contains(entry.getKey()))
+					return;
+				hasProcessedField.add(entry.getKey());
+				vf.trigger(entry.getKey(), entry.getValue());
+			}
+			
+		} while (null != (currentExpression = currentExpression.parent));
 	}
 	
 	private GenericDefinedTypeMeta[] getDCT(IFunction<GenericDefinedTypeMeta[]> originalGenericDefinationDCTGetter,

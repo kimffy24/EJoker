@@ -14,7 +14,10 @@ import org.omg.CORBA.PUBLIC_MEMBER;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
+import com.jiefzz.ejoker.z.common.utils.relationship.RevertRelationshipTreeDisassemblyInterface;
+import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodec;
+import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodecStore;
+import com.jiefzz.ejoker.z.common.utils.relationship.UnsupportTypes;
 
 /**
  * 对象关系还原类

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerInstalcePool;
-import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 
 public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 	

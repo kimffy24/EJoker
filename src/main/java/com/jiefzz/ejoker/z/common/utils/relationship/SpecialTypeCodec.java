@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities.relationship;
+package com.jiefzz.ejoker.z.common.utils.relationship;
 
 /**
  * 解析器接口对象

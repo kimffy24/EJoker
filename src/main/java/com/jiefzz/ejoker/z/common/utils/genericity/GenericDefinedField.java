@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils.genericity;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -41,6 +41,7 @@ public class GenericDefinedField {
 			this.genericTypeVariableName = null;
 		}
 		
+		field.setAccessible(true);
 	}
 	
 	/**

@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.utilities.relationship.AbstractTypeAnalyze;
 import com.jiefzz.ejoker.z.common.utilities.relationship.ParameterizedTypeUtil;
-import com.jiefzz.ejoker.z.common.utilities.relationship.RelationshipTreeUtilCallbackInterface;
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodecStore;
-import com.jiefzz.ejoker.z.common.utilities.relationship.SpecialTypeCodec;
-import com.jiefzz.ejoker.z.common.utilities.relationship.UnsupportTypes;
+import com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtilCallbackInterface;
+import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodec;
+import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodecStore;
+import com.jiefzz.ejoker.z.common.utils.relationship.UnsupportTypes;
 
 /**
  * 实现无限级的装配工具<br>

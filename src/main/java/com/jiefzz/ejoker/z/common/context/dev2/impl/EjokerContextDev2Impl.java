@@ -19,11 +19,11 @@ import com.jiefzz.ejoker.z.common.context.dev2.IEjokerClazzScannerHook;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
-import com.jiefzz.ejoker.z.common.utilities.ForEachUtil;
-import com.jiefzz.ejoker.z.common.utilities.GenericDefinedTypeMeta;
-import com.jiefzz.ejoker.z.common.utilities.GenericExpression;
-import com.jiefzz.ejoker.z.common.utilities.GenericExpressionFactory;
-import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
+import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
 
 public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	

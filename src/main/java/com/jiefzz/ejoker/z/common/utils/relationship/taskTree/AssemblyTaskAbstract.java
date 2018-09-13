@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities.relationship.taskTree;
+package com.jiefzz.ejoker.z.common.utils.relationship.taskTree;
 
 public abstract class AssemblyTaskAbstract {
 	

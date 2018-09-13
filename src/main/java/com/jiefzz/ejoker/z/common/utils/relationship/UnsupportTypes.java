@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities.relationship;
+package com.jiefzz.ejoker.z.common.utils.relationship;
 
 import java.util.HashSet;
 import java.util.Set;

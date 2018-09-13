@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils.genericity;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 /**
  * A Object contain some useful reflect info.<br>
@@ -335,5 +336,8 @@ public final class GenericDefination {
 			this.referDefination = referDefination;
 		}
 		
+		public GenericDefination getGenericDefination() {
+			return referDefination;
+		}
 	}
 }

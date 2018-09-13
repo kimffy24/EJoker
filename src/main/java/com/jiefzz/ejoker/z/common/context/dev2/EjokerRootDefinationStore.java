@@ -20,11 +20,11 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
-import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
-import com.jiefzz.ejoker.z.common.utilities.ForEachUtil;
-import com.jiefzz.ejoker.z.common.utilities.GenericDefinedField;
-import com.jiefzz.ejoker.z.common.utilities.GenericExpression;
-import com.jiefzz.ejoker.z.common.utilities.GenericExpressionFactory;
+import com.jiefzz.ejoker.z.common.utils.ClassNamesScanner;
+import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedField;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
 
 public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	

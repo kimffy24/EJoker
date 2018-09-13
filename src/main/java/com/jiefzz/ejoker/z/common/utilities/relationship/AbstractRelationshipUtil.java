@@ -1,5 +1,8 @@
 package com.jiefzz.ejoker.z.common.utilities.relationship;
 
+import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodec;
+import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodecStore;
+
 public abstract class AbstractRelationshipUtil extends AbstractTypeAnalyze {
 
 	protected final SpecialTypeCodecStore<?> specialTypeCodecStore;

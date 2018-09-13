@@ -22,7 +22,7 @@ import com.jiefzz.ejoker.z.common.context.IEJokerContext;
 import com.jiefzz.ejoker.z.common.context.IEJokerInstalcePool;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.context.IEjokerClassScanHook;
-import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
+import com.jiefzz.ejoker.z.common.utils.ClassNamesScanner;
 
 public class DefaultEJokerContext implements IEJokerContext {
 	

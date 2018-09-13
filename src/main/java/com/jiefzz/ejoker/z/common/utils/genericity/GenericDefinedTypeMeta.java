@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils.genericity;
 
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -10,7 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
-import com.jiefzz.ejoker.z.common.utilities.GenericDefination.GenericDefinationRef;
+import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefination.GenericDefinationRef;
 
 public class GenericDefinedTypeMeta extends GenericDefinationRef {
 	
@@ -35,8 +36,10 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 	public final GenericDefinedTypeMeta[] boundsUpper;
 
 	public final GenericDefinedTypeMeta[] boundsLower;
+	
+	public final GenericDefinedTypeMeta componentTypeMeta;
 
-	protected GenericDefinedTypeMeta(Type regionTye, GenericDefination referMeta, int level) {
+	public GenericDefinedTypeMeta(Type regionTye, GenericDefination referMeta, int level) {
 		super(referMeta);
 		this.originTye = regionTye;
 		this.typeName = regionTye.getTypeName();
@@ -54,10 +57,12 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 				// TODO case1: type is a common array
 				isArray = true;
 				rawClazz = regionClazz.getComponentType();
+				componentTypeMeta = new GenericDefinedTypeMeta(rawClazz, referMeta, level + 1);
 			} else {
 				// TODO case2: type is a common class
 				isArray = false;
 				rawClazz = regionClazz;
+				componentTypeMeta = null;
 			}
 		} else if(regionTye instanceof ParameterizedType) {
 			hasGenericDeclare = true;
@@ -65,6 +70,7 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			isWildcardType = false;
 			boundsUpper = null;
 			boundsLower = null;
+			componentTypeMeta = null;
 			ParameterizedType pt = (ParameterizedType )regionTye;
 			rawClazz = (Class<?> )pt.getRawType();
 			Type[] actualTypeArguments = pt.getActualTypeArguments();
@@ -82,19 +88,20 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			GenericArrayType gat = (GenericArrayType )regionTye;
 			Type genericComponentType = gat.getGenericComponentType();
 			
-			GenericDefinedTypeMeta tmpTypeMeta = new GenericDefinedTypeMeta(genericComponentType, referMeta, level + 1);
+
+			componentTypeMeta = new GenericDefinedTypeMeta(genericComponentType, referMeta, level + 1);
 			{
 				// TODO check the component type is WildcardType!!!!
-				if(tmpTypeMeta.isWildcardType) {
+				if(componentTypeMeta.isWildcardType) {
 					throw new RuntimeException("Unsupport a wildcard type on array declare!!!");
 				}
 			}
-			hasGenericDeclare = tmpTypeMeta.hasGenericDeclare;
-			rawClazz = tmpTypeMeta.rawClazz;
-			deliveryTypeMetasTable = new GenericDefinedTypeMeta[tmpTypeMeta.deliveryTypeMetasTable.length];
-			System.arraycopy(tmpTypeMeta.deliveryTypeMetasTable, 0, deliveryTypeMetasTable, 0, tmpTypeMeta.deliveryTypeMetasTable.length);
-			for(int i = 0; i<tmpTypeMeta.deliveryTypeMetasTable.length; i++) {
-				GenericDefinedTypeMeta passingTypeMeta = tmpTypeMeta.deliveryTypeMetasTable[i];
+			hasGenericDeclare = componentTypeMeta.hasGenericDeclare;
+			rawClazz = componentTypeMeta.rawClazz;
+			deliveryTypeMetasTable = new GenericDefinedTypeMeta[componentTypeMeta.deliveryTypeMetasTable.length];
+			System.arraycopy(componentTypeMeta.deliveryTypeMetasTable, 0, deliveryTypeMetasTable, 0, componentTypeMeta.deliveryTypeMetasTable.length);
+			for(int i = 0; i<componentTypeMeta.deliveryTypeMetasTable.length; i++) {
+				GenericDefinedTypeMeta passingTypeMeta = componentTypeMeta.deliveryTypeMetasTable[i];
 				tmpHasMaterialized &= passingTypeMeta.allHasMaterialized;
 			}
 		} else if(regionTye instanceof WildcardType) {
@@ -102,6 +109,7 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			isArray = false;
 			rawClazz = null;
 			deliveryTypeMetasTable = null;
+			componentTypeMeta = null;
 			isWildcardType = true;
 			WildcardType wt = (WildcardType )regionTye;
 			{
@@ -138,6 +146,7 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			isWildcardType = false;
 			boundsUpper = null;
 			boundsLower = null;
+			componentTypeMeta = null;
 			tmpHasMaterialized = false;
 		} else {
 			throw new RuntimeException("Do you ensure that this statement will happen???");
@@ -163,6 +172,26 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 		rawClazz = targetGenericDefinedTypeMeta.rawClazz;
 		isWildcardType = targetGenericDefinedTypeMeta.isWildcardType;
 		final AtomicInteger unmaterializedCounter = new AtomicInteger(0);
+		
+		// TODO 此控制块没得到测试
+		// TODO 此控制块没得到测试
+		// TODO 此控制块没得到测试
+		if(null != targetGenericDefinedTypeMeta.componentTypeMeta) {
+			
+			GenericDefinedTypeMeta originalTypeMeta = targetGenericDefinedTypeMeta.componentTypeMeta;
+			GenericDefinedTypeMeta currentTypeMeta;
+			String currentTypeName = originalTypeMeta.typeName;
+			GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(currentTypeName);
+			if(null == genericExpressionExportTuple) {
+				currentTypeMeta = new GenericDefinedTypeMeta(originalTypeMeta, materializedMapper);
+			} else {
+				currentTypeMeta = new GenericDefinedTypeMeta(genericExpressionExportTuple.declarationTypeMeta, materializedMapper);
+			}
+			componentTypeMeta = currentTypeMeta;
+			
+		} else {
+			componentTypeMeta = null;
+		}
 		
 		if(null != targetGenericDefinedTypeMeta.deliveryTypeMetasTable) {
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[targetGenericDefinedTypeMeta.deliveryTypeMetasTable.length];
@@ -235,8 +264,6 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 						sb.append(GenericTypeUtil.SEPARATOR);
 					}
 				}
-				/// Sometime it may be not exist of both upper and lower bounds.
-				/// Please ensure that while the upper bound is Object.class
 				
 				tmpTypeName = sb.toString().replaceFirst(GenericTypeUtil.SEPARATOR + "$", "");
 			}

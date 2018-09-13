@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities.relationship.pack;
+package com.jiefzz.ejoker.z.common.utils.relationship.pack;
 
 public class SerializingGhost {
 	

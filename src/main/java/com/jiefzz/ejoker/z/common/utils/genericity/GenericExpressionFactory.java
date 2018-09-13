@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils.genericity;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -25,7 +25,7 @@ public final class GenericExpressionFactory {
 	public final static GenericExpression getGenericExpress(Class<?> prototype, GenericDefinedTypeMeta... genericDefinedTypeMetas) {
 		
 		if(null == genericDefinedTypeMetas || 0 == genericDefinedTypeMetas.length)
-			throw new RuntimeException();
+			return getGenericExpress(prototype);
 		
 		GenericExpression middleStatementGenericExpression = getMiddleStatementGenericExpression(prototype);
 		String parameteriedSignature = GenericExpression.getExpressionSignature(prototype, genericDefinedTypeMetas);

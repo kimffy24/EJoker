@@ -1,6 +1,6 @@
-package com.jiefzz.ejoker.z.common.utilities;
+package com.jiefzz.ejoker.z.common.utils.genericity;
 
-import com.jiefzz.ejoker.z.common.utilities.GenericDefination.GenericDefinationRef;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefination.GenericDefinationRef;
 
 public class GenericDeclare extends GenericDefinationRef {
 	

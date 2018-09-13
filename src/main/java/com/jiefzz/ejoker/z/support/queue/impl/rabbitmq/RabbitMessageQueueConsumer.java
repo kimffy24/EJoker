@@ -13,7 +13,7 @@ import com.jiefzz.ejoker.queue.skeleton.clients.consumer.AbstractConsumer;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
-import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;

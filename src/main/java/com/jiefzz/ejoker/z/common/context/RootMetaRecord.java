@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.utilities.ClassNamesScanner;
-import com.jiefzz.ejoker.z.common.utilities.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.ClassNamesScanner;
+import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 
 public class RootMetaRecord {
 	
