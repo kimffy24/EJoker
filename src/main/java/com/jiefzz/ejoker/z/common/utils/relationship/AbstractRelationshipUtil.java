@@ -1,6 +1,13 @@
 package com.jiefzz.ejoker.z.common.utils.relationship;
 
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
+
 public abstract class AbstractRelationshipUtil {
+
+	protected ThreadLocal<Queue<IVoidFunction>> taskQueueBox = ThreadLocal.withInitial(() -> new LinkedBlockingQueue<>());
 
 	protected final SpecialTypeCodecStore<?> specialTypeCodecStore;
 	
@@ -21,6 +28,13 @@ public abstract class AbstractRelationshipUtil {
 			return fieldTypeCodec.encode(value);
 		
 		return null;
+	}
+	
+	protected SpecialTypeCodec getDeserializeCodec(Class<?> fieldType) {
+		if(null == specialTypeCodecStore)
+			return null;
+		
+		return specialTypeCodecStore.getCodec(fieldType);
 	}
 	
 }

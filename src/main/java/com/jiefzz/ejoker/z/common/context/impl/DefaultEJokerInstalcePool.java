@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.IEJokerInstalcePool;
+import com.jiefzz.ejoker.z.common.utils.InstanceBuilder;
 import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 
 public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
@@ -60,7 +61,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 
 	private <T> T createAndRegistInstance(Class<T> clazz) {
 		Class<?> resolvedClass = eJokerClassMetaProvider.resolve(clazz);
-		Object instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
+		Object instance = (new InstanceBuilder(resolvedClass)).doCreate();
 		{ // 注册到对象记录变量 instanceMap
 			Object prevous = instanceMap.putIfAbsent(clazz, instance);
 			if(null!=prevous) {
@@ -85,7 +86,7 @@ public class DefaultEJokerInstalcePool implements IEJokerInstalcePool {
 			instance=instanceMap.get(resolvedClass);
 		}
 		if(null==instance) {
-			instance = (new EJokerInstanceBuilderImpl(resolvedClass)).doCreate();
+			instance = (new InstanceBuilder(resolvedClass)).doCreate();
 			{ // 注册到泛型对象记录变量 instanceGenericTypeMap
 				instanceGenericTypeMap.get(clazz).put(pSign, instance);
 			}

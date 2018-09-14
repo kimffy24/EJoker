@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +11,10 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
-import com.jiefzz.ejoker.z.common.utilities.relationship.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
+import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
@@ -32,17 +31,15 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
 
-	private final RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval;
+	private final IRelationshipTreeAssemblers<ContainerKVP, ContainerVP> eval;
 	
-	private ThreadLocal<Queue<IVoidFunction>> taskQueueBox = ThreadLocal.withInitial(() -> new LinkedBlockingQueue<>());
-
-	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval,
+	public RelationshipTreeUtil(IRelationshipTreeAssemblers<ContainerKVP, ContainerVP> eval,
 			SpecialTypeCodecStore<?> specialTypeCodecStore) {
 		super(specialTypeCodecStore);
 		this.eval = eval;
 		Ensure.notNull(eval, "RelationshipTreeUtil.eval");
 	}
-	public RelationshipTreeUtil(RelationshipTreeUtilCallbackInterface<ContainerKVP, ContainerVP> eval) {
+	public RelationshipTreeUtil(IRelationshipTreeAssemblers<ContainerKVP, ContainerVP> eval) {
 		this(eval, null);
 	}
 	
@@ -58,7 +55,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		};
 		
 		GenericExpression targetExpression = GenericExpressionFactory.getGenericExpress(targetClazz);
-		ContainerKVP createNode = eval.createNode();
+		ContainerKVP createNode = eval.createKeyValueSet();
 		targetExpression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> join(() -> {
 					Object fieldValue;
@@ -95,14 +92,16 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		final Class<?> definedClazz = targetDefinedTypeMeta.rawClazz;
 		final String key = keyAccesser.trigger();
 		
-		if(!targetDefinedTypeMeta.hasGenericDeclare
-				&& GenericTypeUtil.ensureClassIsGenericType(valueClazz)) {
+		if(!targetDefinedTypeMeta.hasGenericDeclare && GenericTypeUtil.ensureClassIsGenericType(valueClazz)) {
 				throw new RuntimeException("Unmatch genericity signature!!!");
 		}
 		
 		Object node;
 		if (null != (node = processWithUserSpecialCodec(target, definedClazz))) {
-			;
+			if (!ParameterizedTypeUtil.isDirectSerializableType(node.getClass())) {
+				String errmsg = String.format("Get an unexpect type from userSpecialCodec!!! targetClass: %s, resultClass: %s, occur on: %s", definedClazz.getName(), node.getClass().getName(), key);
+				throw new RuntimeException(errmsg);
+			}
 		} else if (ParameterizedTypeUtil.isDirectSerializableType(definedClazz)) {
 			// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
 			node = target;
@@ -138,7 +137,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 									key));
 				
 				GenericDefinedTypeMeta pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
-				ContainerKVP createNode = eval.createNode();
+				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
 				if(((Map )target).size()>0)
 					ForEachUtil.processForEach((Map )target, (k, v) -> {
@@ -185,7 +184,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				}
 			}
 			/// 普通对象类型
-			ContainerKVP createNode = eval.createNode();
+			ContainerKVP createNode = eval.createKeyValueSet();
 			node = createNode;
 			GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(definedClazz,
 					targetDefinedTypeMeta.deliveryTypeMetasTable);

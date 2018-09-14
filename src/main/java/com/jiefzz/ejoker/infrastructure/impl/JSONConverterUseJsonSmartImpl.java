@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,10 +14,10 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.utilities.relationship.RelationshipTreeUtil;
-import com.jiefzz.ejoker.z.common.utilities.relationship.RevertRelationshipTreeUitl;
-import com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtilCallbackInterface;
-import com.jiefzz.ejoker.z.common.utils.relationship.RevertRelationshipTreeDisassemblyInterface;
+import com.jiefzz.ejoker.z.common.utils.relationship.IRelationshipTreeAssemblers;
+import com.jiefzz.ejoker.z.common.utils.relationship.IRelationshipTreeDisassemblers;
+import com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeRevertUtil;
+import com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtil;
 import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodec;
 import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodecStore;
 
@@ -34,7 +36,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	
 	private RelationshipTreeUtil<JSONObject, JSONArray> relationshipTreeUtil;
 
-	private RevertRelationshipTreeUitl<JSONObject, JSONArray> revertRelationshipTreeUitl;
+	private RelationshipTreeRevertUtil<JSONObject, JSONArray> revertRelationshipTreeUitl;
 	
 	@SuppressWarnings("unchecked")
 	public JSONConverterUseJsonSmartImpl() {
@@ -63,6 +65,30 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 						return (char )source.intValue();
 					}
 					
+				}).append(BigDecimal.class, new SpecialTypeCodec<BigDecimal, String>(){
+
+					@Override
+					public String encode(BigDecimal target) {
+						return target.toPlainString();
+					}
+
+					@Override
+					public BigDecimal decode(String source) {
+						return new BigDecimal(source);
+					}
+					
+				}).append(BigInteger.class, new SpecialTypeCodec<BigInteger, String>(){
+
+					@Override
+					public String encode(BigInteger target) {
+						return target.toString();
+					}
+
+					@Override
+					public BigInteger decode(String source) {
+						return new BigInteger(source);
+					}
+					
 				}).append(char.class, new SpecialTypeCodec<Character, Integer>(){
 
 					@Override
@@ -77,9 +103,9 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 					
 				});
 		
-		relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new RelationshipTreeUtilCallbackInterface<JSONObject, JSONArray>() {
+		relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new IRelationshipTreeAssemblers<JSONObject, JSONArray>() {
 					@Override
-					public JSONObject createNode() {
+					public JSONObject createKeyValueSet() {
 						return new JSONObject();
 					}
 
@@ -103,38 +129,9 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 						keyValueSet.put(key, child);
 					}
 
-//					@Override
-//					public void merge(JSONObject targetNode, JSONObject tempNode) {
-//						targetNode.putAll(tempNode);
-//					}
-//
-//					@Override
-//					public Object getOne(JSONObject targetNode, String key) {
-//						return targetNode.get(key);
-//					}
 				}, specialTypeHandler);
 		
-		revertRelationshipTreeUitl = new RevertRelationshipTreeUitl<JSONObject, JSONArray>(new RevertRelationshipTreeDisassemblyInterface<JSONObject, JSONArray>() {
-
-					@Override
-					public JSONObject getChildKVP(JSONObject source, String key) {
-						return (JSONObject )source.get(key);
-					}
-
-					@Override
-					public JSONObject getChildKVP(JSONArray source, int index) {
-						return (JSONObject )source.get(index);
-					}
-
-					@Override
-					public JSONArray getChildVP(JSONObject source, String key) {
-						return (JSONArray )source.get(key);
-					}
-
-					@Override
-					public JSONArray getChildVP(JSONArray source, int index) {
-						return (JSONArray )source.get(index);
-					}
+		revertRelationshipTreeUitl = new RelationshipTreeRevertUtil<JSONObject, JSONArray>(new IRelationshipTreeDisassemblers<JSONObject, JSONArray>() {
 
 					@Override
 					public Object getValue(JSONObject source, Object key) {
@@ -152,21 +149,10 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 					}
 
 					@Override
-					public Map convertNodeAsMap(JSONObject source) {
-						return (Map )source;
+					public Set getKeySet(JSONObject source) {
+						return source.keySet();
 					}
-
-					@Override
-					public Set convertNodeAsSet(JSONArray source) {
-						Set resultSet = new HashSet();
-						resultSet.addAll(source);
-						return resultSet;
-					}
-
-					@Override
-					public List convertNodeAsList(JSONArray source) {
-						return (List )source;
-					}
+					
 				}, specialTypeHandler);
 	}
 	
@@ -174,7 +160,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	public <T> String convert(T object) {
 		JSONObject result;
 		try {
-			result = relationshipTreeUtil.getTreeStructureMap(object);
+			result = relationshipTreeUtil.getTreeStructure(object);
 		} catch (Exception e) {
 			String format = String.format("Could not convert {%s} to JsonString", object.getClass().getName());
 			logger.error(format);
@@ -186,7 +172,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	@Override
 	public <T> T revert(String jsonString, Class<T> clazz) {
 		try {
-			return revertRelationshipTreeUitl.revert(clazz, (JSONObject )JSONValue.parseStrict(jsonString));
+			return revertRelationshipTreeUitl.revert((JSONObject )JSONValue.parseStrict(jsonString), clazz);
 		} catch (ParseException e) {
 			throw new InfrastructureRuntimeException("revert JsonObject failed!!!", e);
 		}
