@@ -10,7 +10,7 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.producer.Defaul
 import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.AbstractProducer;
 import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
-import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
+import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 
 public class MQProducer extends AbstractProducer {

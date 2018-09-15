@@ -19,7 +19,7 @@ import com.jiefzz.ejoker.queue.skeleton.QueueRuntimeException;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.AbstractConsumer;
 import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
-import com.jiefzz.ejoker.z.common.context.IEJokerSimpleContext;
+import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 
 public class MQConsumer extends AbstractConsumer {

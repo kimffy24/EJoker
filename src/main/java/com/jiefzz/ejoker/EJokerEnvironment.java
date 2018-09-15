@@ -23,7 +23,7 @@ public final class EJokerEnvironment {
 
 	public final static int REPLY_PORT = 65056;
 
-	public final static int THREAD_POOL_SIZE = 512;
+	public final static int THREAD_POOL_SIZE = 8;
 	
 	public final static int MAX_BATCH_COMMANDS = 5;
 	
