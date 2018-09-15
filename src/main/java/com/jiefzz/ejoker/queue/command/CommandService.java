@@ -1,10 +1,8 @@
 package com.jiefzz.ejoker.queue.command;
 
 import java.nio.charset.Charset;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +23,10 @@ import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 /**
@@ -41,31 +36,36 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
 @EService
 public class CommandService implements ICommandService, IQueueProducerWokerService {
 
-	final static Logger logger = LoggerFactory.getLogger(CommandService.class);
-	
-	/**
-	 * TODO 辅助实现 async/await 调用
-	 */
-//	private AsyncPool asyncPool = ThreadPoolMaster.getPoolInstance(CommandService.class);
+	private final static Logger logger = LoggerFactory.getLogger(CommandService.class);
 	
 	/**
 	 * all command will send by this object.
 	 */
 	@Dependence
 	private SendQueueMessageService sendQueueMessageService;
+	
 	@Dependence
 	private IJSONConverter jsonConverter;
+	
 	@Dependence
 	private ITopicProvider<ICommand> commandTopicProvider;
+	
 	@Dependence
 	private ICommandRoutingKeyProvider commandRouteKeyProvider;
+	
 	@Dependence
 	private CommandResultProcessor commandResultProcessor;
 
 	private IProducer producer;
 
-	public CommandService useProducer(IProducer producer) { this.producer = producer; return this;}
-	public IProducer getProducer() { return producer; }
+	public CommandService useProducer(IProducer producer) {
+		this.producer = producer;
+		return this;
+	}
+	
+	public IProducer getProducer() {
+		return producer;
+	}
 
 	@Override
 	public CommandService start() {
@@ -86,7 +86,7 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 		} catch ( Exception e ) {
 			e.printStackTrace();
 			AsyncTaskResultBase taskResult = new AsyncTaskResultBase(AsyncTaskStatus.Failed, e.getMessage());
-			RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<AsyncTaskResultBase>();
+			RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<>();
 			ripenFuture.trySetResult(taskResult);
 			return ripenFuture;
 		}
@@ -128,26 +128,27 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 	public Future<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
 
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
-		final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new FutureTaskCompletionSource<AsyncTaskResult<CommandResult>>();
+		final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new FutureTaskCompletionSource<>();
 		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
-		final RipenFuture<AsyncTaskResult<CommandResult>> localTask = new RipenFuture<AsyncTaskResult<CommandResult>>();
+		final RipenFuture<AsyncTaskResult<CommandResult>> localTask = new RipenFuture<>();
 		
-		new Thread(new Runnable(){
-			@Override
-			public void run() {
+		/// 如果这里能用协程，会更好，netty有吗？
+		/// TODO 一个优化点
+		new Thread(() -> {
 				try {
 					AsyncTaskResultBase result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
 					if(AsyncTaskStatus.Success == result.getStatus()) {
 						localTask.trySetResult(remoteTaskCompletionSource.task.get());
 					} else {
 						commandResultProcessor.processFailedSendingCommand(command);
-						localTask.trySetResult(new AsyncTaskResult<CommandResult>(result.getStatus(), result.getErrorMessage()));
+						localTask.trySetResult(new AsyncTaskResult<>(result.getStatus(), result.getErrorMessage()));
 					}
 				} catch ( Exception e ) {
-					localTask.trySetResult(new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Failed, e.getMessage()));
+					localTask.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage()));
 				}
 			}
-		}).start();
+		).start();
+		
 		return localTask;
 		
 	}

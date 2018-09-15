@@ -13,17 +13,20 @@ import com.jiefzz.ejoker.z.common.action.Action;
  */
 public interface IRPCService {
 	
-	final static Map<Integer, RPCTuple> portMap = new HashMap<Integer, RPCTuple>();
+	final static Map<Integer, RPCTuple> portMap = new HashMap<>();
 	
 	final static Lock rpcRegistLock = new ReentrantLock();
 
-	public void export(Action<String> action, final int port);
+	public void export(Action<String> action, int port);
 	
-	public void remoteInvoke(String data, final String host, final int port);
+	public void remoteInvoke(String data, String host, int port);
 
 	public static class RPCTuple {
+		
 		public final Thread ioThread;
+		
 		public final Action action;
+		
 		public RPCTuple(Action action, Thread ioThread) {
 			this.ioThread = ioThread;
 			this.action = action;

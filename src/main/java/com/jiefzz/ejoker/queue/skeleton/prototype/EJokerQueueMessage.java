@@ -11,12 +11,18 @@ public class EJokerQueueMessage implements Serializable {
 	private static final long serialVersionUID = 8472364779319333477L;
 	
 	public String topic;
+	
 	public int code;
+	
 	public byte[] body;
+	
 	public long createdTime;
+	
 	public String tag;
 	
-	public EJokerQueueMessage() { }
+	public EJokerQueueMessage() {
+		
+	}
 	public EJokerQueueMessage(String topic, int code, byte[] body) {
 		this(topic, code, body, System.currentTimeMillis(), null);
 	}
@@ -38,6 +44,6 @@ public class EJokerQueueMessage implements Serializable {
 	}
 
 	public String toString() {
-		return String.format("[Topic=%s,Code=%d,Tag=%s,CreatedTime=%d,BodyLength=%d]", topic, code, tag, createdTime, body.length);
+		return String.format("[ Topic=%s, Code=%d, Tag=%s, CreatedTime=%d, BodyLength=%d ]", topic, code, tag, createdTime, body.length);
 	}
 }

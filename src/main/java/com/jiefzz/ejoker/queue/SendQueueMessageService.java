@@ -11,11 +11,10 @@ import com.jiefzz.ejoker.queue.skeleton.clients.producer.SendResult;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.SendStatus;
 import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 @EService
@@ -43,11 +42,8 @@ public class SendQueueMessageService {
 
 	}
 
-	public Future<AsyncTaskResultBase> sendMessageAsync(final IProducer producer, final EJokerQueueMessage message,
-			final String routingKey) {
-		Future<AsyncTaskResultBase> execute = asyncPool.execute(new IAsyncTask<AsyncTaskResultBase>() {
-			@Override
-			public AsyncTaskResultBase call() throws Exception {
+	public Future<AsyncTaskResultBase> sendMessageAsync(IProducer producer, EJokerQueueMessage message, String routingKey) {
+		Future<AsyncTaskResultBase> execute = asyncPool.execute(() -> {
 				try {
 					Future<SendResult> future = producer.sendMessageAsync(message, routingKey);
 					SendResult sendResult = future.get();
@@ -60,8 +56,6 @@ public class SendQueueMessageService {
 					logger.error("EJoker message async send has exception.", e);
 					return new AsyncTaskResultBase(AsyncTaskStatus.IOException, e.getMessage());
 				}
-			}
-
 		});
 		return execute;
 	}

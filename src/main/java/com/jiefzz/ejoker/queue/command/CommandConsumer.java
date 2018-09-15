@@ -35,30 +35,42 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
 @EService
 public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueueMessageHandler {
 
-	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
 	private SendReplyService sendReplyService;
+	
 	@Dependence
 	private IJSONConverter jsonSerializer;
+	
 	@Dependence
 	private ICommandProcessor processor;
+	
 	@Dependence
 	private IRepository repository;
+	
 	@Dependence
 	private IAggregateStorage aggregateRootStorage;
 	
 	private IConsumer consumer;
 	
-	public IConsumer getConsumer() { return consumer; }
-	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
+	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<>();
+	
+	public IConsumer getConsumer() {
+		return consumer;
+	}
+	
+	public CommandConsumer useConsumer(IConsumer consumer) {
+		this.consumer = consumer;
+		return this;
+	}
 
 	@Override
 	public void handle(EJokerQueueMessage message, IEJokerQueueMessageContext context) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
-		HashMap<String, String> commandItems = new HashMap<String, String>();
+		HashMap<String, String> commandItems = new HashMap<>();
 		String messageBody = new String(message.body, Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
 		Class<? extends ICommand> commandType = getCommandPrototype(message.tag);
@@ -86,7 +98,6 @@ public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueue
 		return this;
 	}
 	
-	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<String, Class<? extends ICommand>>();
 	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
 		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
 		Class<? extends ICommand> commandType = commandTypeDict.getOrDefault(commandTypeString, null);
@@ -112,12 +123,19 @@ public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueue
 	class CommandExecuteContext implements ICommandExecuteContext {
 		
 		private String result;
-		private final ConcurrentHashMap<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<String, IAggregateRoot>();;
+		
+		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<>();
+		
 		private final IRepository repository;
+		
 		private final IAggregateStorage aggregateRootStorage;
+		
 		private final SendReplyService sendReplyService;
+		
 		private final EJokerQueueMessage message;
+		
 		private final IEJokerQueueMessageContext messageContext;
+		
 		private final CommandMessage commandMessage;
 
 		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {

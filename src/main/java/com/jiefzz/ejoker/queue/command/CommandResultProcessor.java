@@ -31,12 +31,12 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
 	@Dependence
-	IRPCService rpcService;
+	private IRPCService rpcService;
 
 	@Dependence
-	IJSONConverter jsonConverter;
+	private IJSONConverter jsonConverter;
 	
-	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<String, CommandTaskCompletionSource>();
+	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
 
@@ -46,15 +46,12 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			logger.warn("{} has started!", this.getClass().getName());
 		} else {
 			
-			rpcService.export(new Action<String>() {
-				@Override
-				public void trigger(String parameter) {
+			rpcService.export((parameter) -> {
 					ReplyMessage revert = jsonConverter.revert(parameter, ReplyMessage.class);
 					if(null!=revert.c)
 						CommandResultProcessor.this.handlerResult(revert.t, revert.c);
 					else if(null!=revert.d)
 						CommandResultProcessor.this.handlerResult(revert.t, revert.d);
-				}
 			}, EJokerEnvironment.REPLY_PORT);
 			
 		}
@@ -63,11 +60,13 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	@Override
 	public CommandResultProcessor shutdown() {
+		/// TODO some unfinished job!!!
 		logger.error("Actually, we could not shutdown the CommandResultProcessor!!!");
 		return this;
 	}
 
 	public String getBindingAddress() {
+		/// TODO some unfinished job!!!
 		//return "10.1.2.2";
 		
 		return "127.0.0.1";
@@ -100,7 +99,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			CommandResult commandResult = new CommandResult(CommandStatus.Failed, command.getId(),
 					command.getAggregateRootId(), "Failed to send the command.", String.class.getName());
 
-			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success,
+			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(AsyncTaskStatus.Success,
 					commandResult);
 			commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult);
 		}
@@ -114,7 +113,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 			if (CommandReturnType.CommandExecuted == commandTaskCompletionSource.getCommandReturnType()) {
 				commandTaskMap.remove(commandResult.getCommandId());
-				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(
+				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
 						AsyncTaskStatus.Success, commandResult);
 				if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 					logger.debug("Command result return, {}", commandResult);
@@ -122,7 +121,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 				if (CommandStatus.Failed == commandResult.getStatus()
 						|| CommandStatus.NothingChanged == commandResult.getStatus()) {
 					commandTaskMap.remove(commandResult.getCommandId());
-					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<CommandResult>(
+					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
 							AsyncTaskStatus.Success, commandResult);
 					if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 						logger.debug("Command result return, {}", commandResult);
@@ -142,7 +141,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 					message.getAggregateRootId(), message.getCommandResult(),
 					message.getCommandResult() != null ? message.getCommandResult().getClass().getName() : null);
 			if (commandTaskCompletionSource.taskCompletionSource.task
-					.trySetResult(new AsyncTaskResult<CommandResult>(AsyncTaskStatus.Success, commandResult)))
+					.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, commandResult)))
 				logger.debug("Command result return, {}", commandResult.toString());
 		}
 	}
@@ -150,6 +149,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	class CommandTaskCompletionSource {
 
 		private final CommandReturnType commandReturnType;
+		
 		private final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource;
 
 		public CommandTaskCompletionSource(CommandReturnType commandReturnType,
