@@ -10,6 +10,7 @@ public class CommandMessage implements Serializable {
 	private static final long serialVersionUID = -9171574720716598328L;
 	
 	protected String commandData;
+	
 	protected String replyAddress;
 	
 	public CommandMessage(){}
@@ -21,13 +22,17 @@ public class CommandMessage implements Serializable {
 	public String getCommandData() {
 		return commandData;
 	}
+	
 	public void setCommandData(String commandData) {
 		this.commandData = commandData;
 	}
+	
 	public String getReplyAddress() {
 		return replyAddress;
 	}
+	
 	public void setReplyAddress(String replyAddress) {
 		this.replyAddress = replyAddress;
 	}
+	
 }

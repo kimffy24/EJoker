@@ -1,11 +1,11 @@
 package com.jiefzz.ejoker.queue.command;
 
 import java.nio.charset.Charset;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,19 +19,16 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
-import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
+import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
 import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
 import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 /**
@@ -39,7 +36,7 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
  *
  */
 @EService
-public class CommandService implements ICommandService, IQueueProducerWokerService {
+public class CommandService implements ICommandService {
 
 	final static Logger logger = LoggerFactory.getLogger(CommandService.class);
 	
@@ -62,18 +59,22 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 	@Dependence
 	private CommandResultProcessor commandResultProcessor;
 
-	private IProducer producer;
+	private DefaultMQProducer producer;
 
-	public CommandService useProducer(IProducer producer) { this.producer = producer; return this;}
-	public IProducer getProducer() { return producer; }
+	public CommandService useProducer(DefaultMQProducer producer) {
+		this.producer = producer;
+		return this;
+	}
+	
+	public DefaultMQProducer getProducer() {
+		return producer;
+	}
 
-	@Override
-	public CommandService start() {
+	public CommandService start() throws Exception {
 		producer.start();
 		return this;
 	}
 
-	@Override
 	public CommandService shutdown() {
 		producer.shutdown();
 		return this;
@@ -94,7 +95,8 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 
 	@Override
 	public void send(final ICommand command) {
-		sendQueueMessageService.sendMessage(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
+//		sendQueueMessageService.sendMessage(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
+		sendAsync(command);
 	}
 
 	@Override
@@ -152,20 +154,27 @@ public class CommandService implements ICommandService, IQueueProducerWokerServi
 		
 	}
 
-	private EJokerQueueMessage buildCommandMessage(ICommand command){
+	private Message buildCommandMessage(ICommand command){
 		return buildCommandMessage(command, false);
 	}
 
-	private EJokerQueueMessage buildCommandMessage(ICommand command, boolean needReply){
+	private Message buildCommandMessage(ICommand command, boolean needReply){
 		Ensure.notNull(command.getAggregateRootId(), "aggregateRootId");
         String commandData = jsonConverter.convert(command);
         String topic = commandTopicProvider.getTopic(command);
         String replyAddress = needReply && (null!=commandResultProcessor) ? commandResultProcessor.getBindingAddress() : null;
         String messageData = jsonConverter.convert(new CommandMessage(commandData, replyAddress));
-        return new EJokerQueueMessage(
-            topic,
-            QueueMessageTypeCode.CommandMessage.ordinal(),
-            messageData.getBytes(Charset.forName("UTF-8")),
-            command.getClass().getName());
+//        return new Message(
+//            topic,
+//            QueueMessageTypeCode.CommandMessage.ordinal(),
+//            messageData.getBytes(Charset.forName("UTF-8")),
+//            command.getClass().getName());
+        return new Message(
+              topic,
+              command.getClass().getName(),
+              "",
+              messageData.getBytes(Charset.forName("UTF-8"))
+        		);
+              
 	}
 }
