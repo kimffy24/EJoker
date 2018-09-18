@@ -3,9 +3,16 @@ package com.jiefzz.ejoker.queue.command;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,71 +29,88 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
-import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IConsumer;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageHandler;
-import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
+import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 @EService
-public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueueMessageHandler {
+public class CommandConsumer implements IWorkerService {
 
-	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
 	private SendReplyService sendReplyService;
+	
 	@Dependence
 	private IJSONConverter jsonSerializer;
+	
 	@Dependence
 	private ICommandProcessor processor;
+	
 	@Dependence
 	private IRepository repository;
+	
 	@Dependence
 	private IAggregateStorage aggregateRootStorage;
 	
-	private IConsumer consumer;
+	private DefaultMQConsumer consumer;
 	
-	public IConsumer getConsumer() { return consumer; }
-	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
+	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<>();
+	
+	public DefaultMQConsumer getConsumer() {
+		return consumer;
+	}
+	
+	public CommandConsumer useConsumer(DefaultMQConsumer consumer) {
+		this.consumer = consumer;
+		return this;
+	}
 
-	@Override
-	public void handle(EJokerQueueMessage message, IEJokerQueueMessageContext context) {
+	public void handle(EJokerQueueMessage queueMessage/*, IEJokerQueueMessageContext context*/) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
-		HashMap<String, String> commandItems = new HashMap<String, String>();
-		String messageBody = new String(message.body, Charset.forName("UTF-8"));
+		HashMap<String, String> commandItems = new HashMap<>();
+		String messageBody = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType = getCommandPrototype(message.tag);
+		Class<? extends ICommand> commandType = getCommandPrototype(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
-		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(repository, aggregateRootStorage, message, context, commandMessage, sendReplyService);
+		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(
+				repository,
+				aggregateRootStorage,
+				queueMessage,
+//				context,
+				commandMessage,
+				sendReplyService);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
 	
-	@Override
-	public CommandConsumer start() {
-		consumer.setMessageHandler(this).start();
+	public CommandConsumer start(){
+		consumer.registerEJokerCallback((eJokerMsg) -> handle(eJokerMsg));
+		try {
+			consumer.start();
+		} catch (MQClientException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 		return this;
 	}
 
-	@Override
-	public CommandConsumer subscribe(String topic) {
-		consumer.subscribe(topic);
+	public CommandConsumer subscribe(String topic) throws Exception {
+		consumer.subscribe(topic, "*");
 		return this;
 	}
 
-	@Override
 	public CommandConsumer shutdown() {
 		consumer.shutdown();
 		return this;
 	}
 	
-	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<String, Class<? extends ICommand>>();
 	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
 		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
 		Class<? extends ICommand> commandType = commandTypeDict.getOrDefault(commandTypeString, null);
@@ -112,28 +136,35 @@ public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueue
 	class CommandExecuteContext implements ICommandExecuteContext {
 		
 		private String result;
-		private final ConcurrentHashMap<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<String, IAggregateRoot>();;
+		
+		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<>();
+		
 		private final IRepository repository;
+		
 		private final IAggregateStorage aggregateRootStorage;
+		
 		private final SendReplyService sendReplyService;
+		
 		private final EJokerQueueMessage message;
-		private final IEJokerQueueMessageContext messageContext;
+		
+		//private final IEJokerQueueMessageContext messageContext;
+		
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
+		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, /*IEJokerQueueMessageContext messageContext, */CommandMessage commandMessage, SendReplyService sendReplyService) {
 			this.repository = repository;
 			this.aggregateRootStorage = aggregateRootStorage;
 			this.sendReplyService = sendReplyService;
 			this.message = message;
 			this.commandMessage = commandMessage;
-			this.messageContext = messageContext;
+			//this.messageContext = messageContext;
 		}
 
 		@Override
 		public void onCommandExecuted(CommandResult commandResult) {
-			messageContext.onMessageHandled(message);
+			//messageContext.onMessageHandled(message);
 
-			if (commandMessage.replyAddress == null || "".equals(commandMessage.replyAddress))
+			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return;
 			
 			sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);

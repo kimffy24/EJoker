@@ -13,7 +13,8 @@ public class CommandMessage implements Serializable {
 	
 	protected String replyAddress;
 	
-	public CommandMessage(){}
+	public CommandMessage(){
+	}
 	public CommandMessage(String commandData, String replyAddress) {
 		this.commandData = commandData;
 		this.replyAddress = replyAddress;

@@ -33,7 +33,7 @@ public class MessageHandlerPool {
 	private final static Lock lock4addNewTupleContainer = new ReentrantLock();
 
 	private final static Map<Class<? extends IMessage>, List<MessageHandlerReflectionTuple>> handlerMapper =
-			new ConcurrentHashMap<Class<? extends IMessage>, List<MessageHandlerReflectionTuple>>();
+			new ConcurrentHashMap<>();
 
 	public final static void regist(Class<? extends IMessageHandler> implementationHandlerClass) {
 		final Method[] declaredMethods = implementationHandlerClass.getDeclaredMethods();

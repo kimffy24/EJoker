@@ -11,12 +11,19 @@ public class EventStreamMessage implements Serializable {
 	private static final long serialVersionUID = 6011654562204030691L;
 
 	private String id;
+	
 	private String aggregateRootId;
+	
 	private String aggregateRootTypeName;
+	
 	private long version;
+	
 	private long timestamp;
+	
 	private String commandId;
+	
 	private Map<String, String> events;
+	
 	private Map<String, String> items;
 	
 	public String getId() {

@@ -1,7 +1,13 @@
 package com.jiefzz.ejoker.queue.domainEvent;
 
 import java.nio.charset.Charset;
+import java.util.List;
 
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,67 +19,69 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.varieties.domainEventStreamMessage.ProcessingDomainEventStreamMessage;
 import com.jiefzz.ejoker.queue.QueueProcessingContext;
 import com.jiefzz.ejoker.queue.SendReplyService;
-import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IConsumer;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageHandler;
-import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
+import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 
 @EService
-public class DomainEventConsumer implements IQueueComsumerWokerService, IEJokerQueueMessageHandler {
+public class DomainEventConsumer implements IWorkerService {
 
-	final static Logger logger = LoggerFactory.getLogger(DomainEventConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(DomainEventConsumer.class);
 
 	@Dependence
 	private SendReplyService sendReplyService;
+	
 	@Dependence
 	private IJSONConverter jsonSerializer;
+	
 	@Dependence
 	private IEventSerializer eventSerializer;
+	
 	@Dependence
     private AbstractMessageProcessor<ProcessingDomainEventStreamMessage, DomainEventStreamMessage> processor;
 
 	private final boolean sendEventHandledMessage = true;
 
-	private IConsumer consumer;
+	private DefaultMQConsumer consumer;
 
-	public IConsumer getConsumer() {
+	public DefaultMQConsumer getConsumer() {
 		return consumer;
 	}
 
-	public DomainEventConsumer useConsumer(IConsumer consumer) {
+	public DomainEventConsumer useConsumer(DefaultMQConsumer consumer) {
 		this.consumer = consumer;
 		return this;
 	}
 
-	@Override
-	public IWorkerService start() {
-		consumer.setMessageHandler(this).start();
+	public DomainEventConsumer start() {
+		consumer.registerEJokerCallback((eJokerMsg) -> handle(eJokerMsg));
+		try {
+			consumer.start();
+		} catch (MQClientException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 		return this;
 	}
 
-	@Override
-	public IQueueComsumerWokerService subscribe(String topic) {
-		consumer.subscribe(topic);
+	public DomainEventConsumer subscribe(String topic) throws Exception {
+		consumer.subscribe(topic, "*");
 		return this;
 	}
 
-	@Override
-	public IWorkerService shutdown() {
+	public DomainEventConsumer shutdown() {
 		consumer.shutdown();
 		return this;
 	}
 
-	@Override
-	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
+	public void handle(EJokerQueueMessage queueMessage/*, IEJokerQueueMessageContext context*/) {
 		String messageBody = new String(queueMessage.body, Charset.forName("UTF-8"));
 		EventStreamMessage message = jsonSerializer.revert(messageBody, EventStreamMessage.class);
 		DomainEventStreamMessage domainEventStreamMessage = convertToDomainEventStream(message);
-		DomainEventStreamProcessContext processContext = new DomainEventStreamProcessContext(this, domainEventStreamMessage, queueMessage, context);
+		DomainEventStreamProcessContext processContext = new DomainEventStreamProcessContext(this, domainEventStreamMessage, queueMessage/*, context*/);
 		ProcessingDomainEventStreamMessage processingMessage = new ProcessingDomainEventStreamMessage(domainEventStreamMessage, processContext);
 		logger.info(
 				"EJoker event message received, messageId: {}, aggregateRootId: {}, aggregateRootType: {}, version: {}",
@@ -96,12 +104,13 @@ public class DomainEventConsumer implements IQueueComsumerWokerService, IEJokerQ
 	public final class DomainEventStreamProcessContext extends QueueProcessingContext {
 
 		private final DomainEventConsumer eventConsumer;
+		
 		private final DomainEventStreamMessage domainEventStreamMessage;
 
 		public DomainEventStreamProcessContext(DomainEventConsumer eventConsumer,
-				DomainEventStreamMessage domainEventStreamMessage, EJokerQueueMessage queueMessage,
-				IEJokerQueueMessageContext messageContext) {
-			super(queueMessage, messageContext);
+				DomainEventStreamMessage domainEventStreamMessage, EJokerQueueMessage queueMessage/*,
+				IEJokerQueueMessageContext messageContext*/) {
+			super(queueMessage/*, messageContext*/);
 			this.eventConsumer = eventConsumer;
 			this.domainEventStreamMessage = domainEventStreamMessage;
 		}
