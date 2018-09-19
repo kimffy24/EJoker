@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.concurrent.Future;
 
 import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

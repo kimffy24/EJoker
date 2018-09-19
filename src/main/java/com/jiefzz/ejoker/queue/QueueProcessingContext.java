@@ -1,18 +1,18 @@
 package com.jiefzz.ejoker.queue;
 
-import java.util.concurrent.CountDownLatch;
-
 import com.jiefzz.ejoker.infrastructure.IMessageProcessContext;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
 
 public class QueueProcessingContext implements IMessageProcessContext {
 
 	protected final EJokerQueueMessage queueMessage;
 	
-	protected final CountDownLatch cdl = new CountDownLatch(1);
+	protected final IEJokerQueueMessageContext messageContext;
 	
-	public QueueProcessingContext(EJokerQueueMessage queueMessage) {
+	public QueueProcessingContext(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext messageContext) {
 		this.queueMessage = queueMessage;
+		this.messageContext = messageContext;
 	}
 	
 	/**
@@ -20,10 +20,7 @@ public class QueueProcessingContext implements IMessageProcessContext {
 	 */
 	@Override
 	public void notifyMessageProcessed() {
-		
-		cdl.countDown();
-		
-//		messageContext.onMessageHandled(queueMessage);
+		messageContext.onMessageHandled(queueMessage);
 	}
 
 }

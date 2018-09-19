@@ -3,16 +3,10 @@ package com.jiefzz.ejoker.queue.command;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
-import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +25,7 @@ import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -70,7 +65,7 @@ public class CommandConsumer implements IWorkerService {
 		return this;
 	}
 
-	public void handle(EJokerQueueMessage queueMessage/*, IEJokerQueueMessageContext context*/) {
+	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
@@ -83,7 +78,7 @@ public class CommandConsumer implements IWorkerService {
 				repository,
 				aggregateRootStorage,
 				queueMessage,
-//				context,
+				context,
 				commandMessage,
 				sendReplyService);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
@@ -91,7 +86,7 @@ public class CommandConsumer implements IWorkerService {
 	}
 	
 	public CommandConsumer start(){
-		consumer.registerEJokerCallback((eJokerMsg) -> handle(eJokerMsg));
+		consumer.registerEJokerCallback((eJokerMsg, context) -> handle(eJokerMsg, context));
 		try {
 			consumer.start();
 		} catch (MQClientException e) {
@@ -147,22 +142,22 @@ public class CommandConsumer implements IWorkerService {
 		
 		private final EJokerQueueMessage message;
 		
-		//private final IEJokerQueueMessageContext messageContext;
+		private final IEJokerQueueMessageContext messageContext;
 		
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, /*IEJokerQueueMessageContext messageContext, */CommandMessage commandMessage, SendReplyService sendReplyService) {
+		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
 			this.repository = repository;
 			this.aggregateRootStorage = aggregateRootStorage;
 			this.sendReplyService = sendReplyService;
 			this.message = message;
 			this.commandMessage = commandMessage;
-			//this.messageContext = messageContext;
+			this.messageContext = messageContext;
 		}
 
 		@Override
 		public void onCommandExecuted(CommandResult commandResult) {
-			//messageContext.onMessageHandled(message);
+			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return;

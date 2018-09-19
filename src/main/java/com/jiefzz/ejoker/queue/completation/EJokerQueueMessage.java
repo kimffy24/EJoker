@@ -35,7 +35,7 @@ public class EJokerQueueMessage implements Serializable {
 
 	public EJokerQueueMessage(String topic, int code, byte[] body, long createdTime, String tag) {
 		Ensure.notNull(topic, "topic");
-		Ensure.positive(code, "code");
+		Ensure.nonnegative(code, "code");
 		Ensure.notNull(body, "body");
 		this.topic = topic;
 		this.code = code;

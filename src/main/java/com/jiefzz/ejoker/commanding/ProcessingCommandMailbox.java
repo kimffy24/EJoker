@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.commanding;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,11 +52,11 @@ public class ProcessingCommandMailbox implements Runnable {
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		lastActiveTime = System.currentTimeMillis();
 		long genericSequence = nextSequence.getAndIncrement();
 		message.setSequence(genericSequence);
 		message.setMailbox(this);
 		messageDict.put(genericSequence, message);
+		lastActiveTime = System.currentTimeMillis();
 		tryRun();
 	}
 
@@ -288,17 +289,10 @@ public class ProcessingCommandMailbox implements Runnable {
 	
 	
 	// =================== thread strategy
-    
-    private IAsyncTask<Boolean> tryRunTask = new IAsyncTask<Boolean>(){
-		@Override
-		public Boolean call() throws Exception {
-			ProcessingCommandMailbox.this.run();
-			return true;
-		}
-    	
-    };
+	
     private final static AsyncPool poolInstance = ThreadPoolMaster.getPoolInstance(ProcessingCommandMailbox.class);
+    
     private static void threadStrategyExecute(ProcessingCommandMailbox box) {
-    	poolInstance.execute(box.tryRunTask);
+    	poolInstance.execute(() -> { box.run(); return null; });
     }
 }
