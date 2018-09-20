@@ -1,13 +1,12 @@
 package com.jiefzz.ejoker.z.common.context.dev2.impl;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +18,12 @@ import com.jiefzz.ejoker.z.common.context.dev2.IEjokerClazzScannerHook;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
-import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
-import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
+import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedField;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
+import com.jiefzz.ejoker.z.common.utils.genericity.XTypeTest;
 
 public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
@@ -151,29 +151,41 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	private void refreshContextRecord() {
 		
 		defaultRootDefinationStore.forEachEServiceExpressions((clazz, genericExpression) -> {
+			
 			Set<Class<?>> currentRecord = new HashSet<>();
 			String originalExpressSignature = genericExpression.expressSignature;
-			GenericExpression current = genericExpression;
 			boolean eServiceIsGenericType = genericExpression.genericDefination.hasGenericDeclare;
-			while (null != current && !Object.class.equals(current.getDeclarePrototype())) {
-				final GenericExpression target = current;
-				if (eServiceIsGenericType) {
-					// 实现的EService对象是个泛型对象
-					int parameterizedTypeAmount = genericExpression.getExportAmount();
+
+			if (eServiceIsGenericType) {
+				// 实现的EService对象是个泛型对象
+				GenericExpression current;
+				int parameterizedTypeAmount = genericExpression.genericDefination.getGenericDeclareAmount();
+				
+				Type[] testTypeTable = XTypeTest.getTestTypeTable(parameterizedTypeAmount);
+				GenericExpression testGenericExpress = GenericExpressionFactory.getGenericExpress(clazz, testTypeTable);
+				
+				current = testGenericExpress;
+
+				// 通过测试表达式确定其有完全相同的传递表达。
+				// 不然在通过上转型加泛型声明时，无法推断子类具体泛型声明情况
+				String testGenericSignature = testGenericExpress.expressSignature.substring(testGenericExpress.expressSignature.indexOf('<'));
+				while (null != current && !Object.class.equals(current.getDeclarePrototype())) {
+					final GenericExpression target = current;
+				
 					refreshContextRecordSkeleton(
-							() -> target.genericDefination.hasGenericDeclare && 0 == parameterizedTypeAmount - target.getExportAmount(),
+							() -> testGenericSignature.equals(target.expressSignature.substring(target.expressSignature.indexOf('<'))),
 							() -> currentRecord.add(target.getDeclarePrototype()),
 							originalExpressSignature,
 							target);
-
+	
 					current.forEachImplementationsExpressionsDeeply(interfaceExpression -> {
 						refreshContextRecordSkeleton(
-								() -> interfaceExpression.genericDefination.hasGenericDeclare && 0 == parameterizedTypeAmount - target.getExportAmount(),
+								() -> testGenericSignature.equals(interfaceExpression.expressSignature.substring(interfaceExpression.expressSignature.indexOf('<'))),
 								() -> currentRecord.add(interfaceExpression.getDeclarePrototype()),
 								originalExpressSignature,
 								interfaceExpression);
 					});
-
+	
 					{
 						/// 为推演模式准备数据
 						if (speculateMode) {
@@ -183,8 +195,13 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 							});
 						}
 					}
-				} else {
-					// 实现的EService对象是个普通对象
+					current = current.getParent();
+				}
+			} else {
+				// 实现的EService对象是个普通对象
+				GenericExpression current = genericExpression;
+				while (null != current && !Object.class.equals(current.getDeclarePrototype())) {
+					final GenericExpression target = current;
 					refreshContextRecordSkeleton(
 							() -> !target.genericDefination.hasGenericDeclare,
 							() -> currentRecord.add(target.getDeclarePrototype()),
@@ -214,8 +231,8 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 							});
 						}
 					}
+					current = current.getParent();
 				}
-				current = current.getParent();
 			}
 			
 			for(Class<?> upperClazz : currentRecord ) {
@@ -283,52 +300,79 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		defaultRootDefinationStore.forEachEServiceExpressions((clazz, genericExpression) -> {
 			/// TODO 预加载
-			if(!genericExpression.isComplete())
+			if(!genericExpression.isComplete()) {
+				// throw new RuntimeException(String.format("Expect handle a complete state expression, but not!!! [ class: %s ]", clazz.getName()));
 				return;
+			}
 
 			Object instance = instanceMap.get(clazz.getName());
 			
-			ForEachUtil.processForEach(defaultRootDefinationStore.getEDependenceRecord(clazz), (fieldName, genericDefinedField) -> {
-				Object dependence = null;
-				
-				String instanceTypeName = genericDefinedField.genericDefinedTypeMeta.typeName;
-				
-				Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedTypeMeta.rawClazz);
-				
-				if(instanceMap.containsKey(instanceTypeName)) {
-					/// upper无泛型 eService无泛型
-					dependence = instanceMap.get(instanceTypeName);
-				} else if(null != eServiceClazz) {
-					/// upper泛型 eService泛型
-					/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
-					if(defaultInstance.equals(dependence = instanceGenericTypeMap.getOrDefault(instanceTypeName, defaultInstance))) {
-						instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = (new EJokerInstanceBuilder(eServiceClazz)).doCreate());
-					};
-				} else if(speculateMode && !instanceCandidateDisable.contains(instanceTypeName)) {
-					/// upper泛型 eService无泛型
-					eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
-					dependence = instanceMap.get(eServiceClazz.getName());
-					
-				} 
-				
-				if(null == dependence)
-					throw new ContextRuntimeException(
-							String.format(
-									"No implementations or extensions found! \n\t field: %s#%s\n\t type: %s!!!",
-									genericDefinedField.genericDefinedTypeMeta.rawClazz.getName(),
-									fieldName,
-									instanceTypeName
-									));
-				
-				try {
-					genericDefinedField.field.setAccessible(true);
-					genericDefinedField.field.set(instance, dependence);
-				} catch (Exception e) {
-					throw new ContextRuntimeException(String.format("Cannot find any dependence for field: %s !!!", genericDefinedField.field.getName()), e);
-				}
-			});
+			ForEachUtil.processForEach(
+					defaultRootDefinationStore.getEDependenceRecord(clazz),
+					(fieldName, genericDefinedField) -> injectDependence(
+							fieldName,
+							genericDefinedField,
+							dependence -> setField(genericDefinedField.field, instance, dependence)
+						)
+			);
 			
 		});
 	}
 	
+	private void injectDependence(String fieldName, GenericDefinedField genericDefinedField, IVoidFunction1<Object> effector) {
+		
+		Object dependence = null;
+		String instanceTypeName = genericDefinedField.genericDefinedTypeMeta.typeName;
+		
+		Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedTypeMeta.rawClazz);
+		
+		if(instanceMap.containsKey(instanceTypeName)) {
+			/// upper无泛型 eService无泛型
+			dependence = instanceMap.get(instanceTypeName);
+		} else if(null != eServiceClazz) {
+			/// upper泛型 eService泛型
+			/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
+			if(defaultInstance.equals(dependence = instanceGenericTypeMap.getOrDefault(instanceTypeName, defaultInstance))) {
+				instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = (new EJokerInstanceBuilder(eServiceClazz)).doCreate());
+				
+				{
+					// 对新创建的EService对象注入依赖
+					final Object passInstance = dependence;
+					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpress(eServiceClazz, genericDefinedField.genericDefinedTypeMeta.deliveryTypeMetasTable);
+					fieldTypeExpression.forEachFieldExpressionsDeeply(
+							(subFieldName, subGenericDefinedField) -> injectDependence(
+									subFieldName,
+									subGenericDefinedField,
+									subDependence -> setField(subGenericDefinedField.field, passInstance, subDependence)
+								)
+					);
+				}
+				
+			};
+		} else if(speculateMode && !instanceCandidateDisable.contains(instanceTypeName)) {
+			/// upper泛型 eService无泛型
+			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
+			dependence = instanceMap.get(eServiceClazz.getName());
+			
+		} 
+		
+		if(null == dependence)
+			throw new ContextRuntimeException(
+					String.format(
+							"No implementations or extensions found! \n\t field: %s#%s\n\t type: %s!!!",
+							genericDefinedField.genericDefinedTypeMeta.rawClazz.getName(),
+							fieldName,
+							instanceTypeName
+							));
+		
+		effector.trigger(dependence);
+	}
+	
+	private void setField(Field field, Object instance, Object dependence) {
+		try {
+			field.set(instance, dependence);
+		} catch (Exception e) {
+			throw new ContextRuntimeException(String.format("Cannot find any dependence for field: %s !!!", field.getName()), e);
+		}
+	}
 }

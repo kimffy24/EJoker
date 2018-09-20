@@ -147,7 +147,7 @@ public class GenericTypeUtil {
 	/**
 	 * 允许接受的最大长度泛型签名数量
 	 */
-	public final static int patametersAmountLimit = 15;
+	public final static int patametersAmountLimit = 16;
 	
 	static {
 		String unsetType = Object.class.getName();
