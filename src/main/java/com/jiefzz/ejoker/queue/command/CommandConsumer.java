@@ -26,9 +26,11 @@ import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.domainEvent.DomainEventConsumer;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
@@ -51,6 +53,15 @@ public class CommandConsumer implements IWorkerService {
 	
 	@Dependence
 	private IAggregateStorage aggregateRootStorage;
+	
+	/// #fix 180920 register sync offset task
+	@Dependence
+	private IScheduleService scheduleService;
+	
+	private static long taskIndex = 0;
+	
+	private final long tx = ++taskIndex;
+	///
 	
 	private DefaultMQConsumer consumer;
 	
@@ -93,6 +104,15 @@ public class CommandConsumer implements IWorkerService {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
+		
+		/// #fix 180920 register sync offset task
+		{
+			scheduleService.StartTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
+				consumer.syncOffsetToBroker();
+			}, 2000, 2000);
+		}
+		///
+		
 		return this;
 	}
 
@@ -103,6 +123,13 @@ public class CommandConsumer implements IWorkerService {
 
 	public CommandConsumer shutdown() {
 		consumer.shutdown();
+
+		/// #fix 180920 register sync offset task
+		{
+			scheduleService.StopTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx);
+		}
+		///
+		
 		return this;
 	}
 	

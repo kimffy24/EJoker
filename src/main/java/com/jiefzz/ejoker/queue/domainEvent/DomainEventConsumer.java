@@ -73,7 +73,9 @@ public class DomainEventConsumer implements IWorkerService {
 		
 		/// #fix 180920 register sync offset task
 		{
-			scheduleService.StartTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx, () -> {}, 2000, 2000);
+			scheduleService.StartTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
+				consumer.syncOffsetToBroker();
+			}, 2000, 2000);
 		}
 		///
 		
