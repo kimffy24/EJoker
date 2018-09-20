@@ -19,6 +19,7 @@ import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 
@@ -38,6 +39,15 @@ public class DomainEventConsumer implements IWorkerService {
 	
 	@Dependence
     private AbstractMessageProcessor<ProcessingDomainEventStreamMessage, DomainEventStreamMessage> processor;
+
+	/// #fix 180920 register sync offset task
+	@Dependence
+	private IScheduleService scheduleService;
+	
+	private static long taskIndex = 0;
+	
+	private final long tx = ++taskIndex;
+	///
 
 	private final boolean sendEventHandledMessage = true;
 
@@ -60,6 +70,13 @@ public class DomainEventConsumer implements IWorkerService {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
+		
+		/// #fix 180920 register sync offset task
+		{
+			scheduleService.StartTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx, () -> {}, 2000, 2000);
+		}
+		///
+		
 		return this;
 	}
 
@@ -70,6 +87,13 @@ public class DomainEventConsumer implements IWorkerService {
 
 	public DomainEventConsumer shutdown() {
 		consumer.shutdown();
+
+		/// #fix 180920 register sync offset task
+		{
+			scheduleService.StopTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx);
+		}
+		///
+		
 		return this;
 	}
 
