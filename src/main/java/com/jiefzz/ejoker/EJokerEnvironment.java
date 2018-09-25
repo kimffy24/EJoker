@@ -23,9 +23,9 @@ public final class EJokerEnvironment {
 
 	public final static int REPLY_PORT = 65056;
 
-	public final static int THREAD_POOL_SIZE = 8;
+	public final static int THREAD_POOL_SIZE = 4;
 	
-	public final static int MAX_BATCH_COMMANDS = 5;
+	public final static int MAX_BATCH_COMMANDS = 32;
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 

@@ -58,8 +58,11 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	@Override
 	public CommandResultProcessor shutdown() {
-		/// TODO some unfinished job!!!
-		logger.error("Actually, we could not shutdown the CommandResultProcessor!!!");
+		if (!start.compareAndSet(false, true)) {
+			logger.warn("{} has been shutdown!", this.getClass().getName());
+		} else {
+			rpcService.removeExport(EJokerEnvironment.REPLY_PORT);
+		}
 		return this;
 	}
 
@@ -67,7 +70,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 		/// TODO some unfinished job!!!
 		//return "10.1.2.2";
 		
-		return "127.0.0.1";
+		return "192.168.199.123";
 		
 //		try {
 //			return InetAddress.getLocalHost().getHostAddress();

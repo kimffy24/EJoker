@@ -17,6 +17,7 @@ import org.apache.rocketmq.remoting.RPCHook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -25,9 +26,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
 
-	private final static int maxBatch = 32;
+	private final static int maxBatch = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	
 	private String focusTopic = "";
+	
+	private int maxBatchSize = maxBatch;
 	
 	private final AtomicBoolean boot = new AtomicBoolean(false);
 
@@ -79,17 +82,25 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		loadSubcribeInfo();
 		doWork();
 	}
+	
+	public void setMaxBatchSize(int maxBatchSize) {
+		this.maxBatchSize = maxBatchSize;
+	}
+	
+	public int getMaxBatchSize() {
+		return this.maxBatchSize;
+	}
 
 	private void doWork() {
 		for (MessageQueue mq : matchQueue) {
 			
 			final AtomicLong maxOffset;
 			long minOffset;
-			long consumerOffset;
+			long consumedOffset;
 			try {
 				maxOffset = new AtomicLong(maxOffset(mq));
 				minOffset = minOffset(mq);
-				consumerOffset = fetchConsumeOffset(mq, true);
+				consumedOffset = fetchConsumeOffset(mq, true);
 			} catch (MQClientException e3) {
 				throw new RuntimeException(e3);
 			}
@@ -97,15 +108,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			logger.debug("Consume from the queue: {}", mq);
 			logger.debug("consumer.maxOffset(mq) = {}", maxOffset.get());
 			logger.debug("consumer.minOffset(mq) = {}", minOffset);
-			logger.debug("consumer.fetchConsumeOffset(mq, true) = {}" + consumerOffset);
-			// long offset = consumer.fetchConsumeOffset(mq, true);
-			// PullResultExt pullResult =(PullResultExt)consumer.pull(mq, null,
-			// getMessageQueueOffset(mq), 32);
-			// 消息未到达默认是阻塞10秒，private long consumerPullTimeoutMillis = 1000 * 10;
+			logger.debug("consumer.fetchConsumeOffset(mq, true) = {}", consumedOffset);
 			
 			new Thread(() -> {
 				
-				final AtomicLong offset = new AtomicLong(consumerOffset);
+				final AtomicLong offset = new AtomicLong(consumedOffset);
 				
 				for( ; !hasException.get(); ) {
 
@@ -126,20 +133,20 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						
 						logger.debug("current offset = {}", currentOffset);
 						
-						PullResult pullResult = pull(mq, null, currentOffset, maxBatch);
+						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
+						PullResult pullResult = pullBlockIfNotFound(mq, null, currentOffset, maxBatchSize);
 						
 						switch (pullResult.getPullStatus()) {
 						case FOUND:
 							List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 							for (int i = 0; i<messageExtList.size(); i++) {
-								final long consumingOffset = currentOffset + i;
+								final long consumingOffset = currentOffset + i + 1;
 								MessageExt rmqMsg = messageExtList.get(i);
 								EJokerQueueMessage queueMessage = new EJokerQueueMessage(
 										rmqMsg.getTopic(),
 										rmqMsg.getFlag(),
 										rmqMsg.getBody(),
 										rmqMsg.getTags());
-								
 								messageProcessor.trigger(queueMessage, message -> tryMarkCompletion(mq, consumingOffset));
 							}
 							offset.getAndSet(pullResult.getNextBeginOffset());
@@ -156,6 +163,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							hasException.set(true);
 							lastException = new RuntimeException("OFFSET_ILLEGAL");
 							break;
+						default:
+							assert false;
 						}
 						
 					} catch (Exception e) {
@@ -163,8 +172,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							lastException = e;
 						else
 							e.printStackTrace();
+						
+						break;
 					}
 				}
+				
+				if(hasException.get())
+					throw new RuntimeException(lastException);
+				
 			}).start();
 		}
 
@@ -191,6 +206,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			{
 				aheadCompletion.put(mq, new HashMap<>());
 				offsetConsumedDict.put(mq, new AtomicLong(0));
+				
+				try {
+					offsetConsumedDict.put(mq, new AtomicLong(fetchConsumeOffset(mq, true)));
+				} catch (MQClientException e3) {
+					throw new RuntimeException(e3);
+				}
+				
 			}
 		}
 		
@@ -200,8 +222,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	private void tryMarkCompletion(MessageQueue mq, long comsumedOffset) {
+		logger.info("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 		AtomicLong currentComsumedOffset = offsetConsumedDict.get(mq);
 		Map<Long, String> aheadOffsetDict = aheadCompletion.get(mq);
+		
 		if(!currentComsumedOffset.compareAndSet(comsumedOffset - 1, comsumedOffset)) {
 			aheadOffsetDict.put(comsumedOffset, "");
 			/// TODO 
@@ -210,13 +234,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			}
 		} else {
 			int delta = 1;
-			for( ; null != aheadOffsetDict.get(comsumedOffset + delta); delta++);
+			for( ; null != aheadOffsetDict.remove(comsumedOffset + delta); delta++);
 			delta --;
 			if(delta > 0) {
 				currentComsumedOffset.compareAndSet(comsumedOffset, comsumedOffset + delta);
 			}
-			
 		}
+		
 	}
 	
 	public void syncOffsetToBroker() {
@@ -228,12 +252,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			}
 		/// TODO Should we check whether the cursor is changed or not?
 		// Maybe we shouldn't take it into consideration.
-		// Mandatory sync to broker!
+		// Mandatory sync to broker! 
 		getOffsetStore().persistAll(matchQueue);
-	}
-	
-	public void showOffsetInfo() {
-		for(MessageQueue mq : matchQueue)
-			System.err.println(String.format("offsetConsumedDict.get(%s).get() = %d", mq, offsetConsumedDict.get(mq).get()));
+		
+//		logger.debug("show offset info: ");
+//		showOffsetInfo()
+//	}
+//	
+//	public void showOffsetInfo() {
+//		for(MessageQueue mq : matchQueue)
+//			logger.debug("offsetConsumedDict.get({}).get() = {}", mq, offsetConsumedDict.get(mq).get());
 	}
 }

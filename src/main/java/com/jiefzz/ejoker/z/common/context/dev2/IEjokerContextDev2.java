@@ -4,4 +4,6 @@ public interface IEjokerContextDev2 extends IEJokerSimpleContext, IEJokerClazzSc
 
 	public void refresh();
 	
+	public void discard();
+	
 }

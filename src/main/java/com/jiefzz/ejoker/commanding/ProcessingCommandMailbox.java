@@ -3,7 +3,6 @@ package com.jiefzz.ejoker.commanding;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,9 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 public class ProcessingCommandMailbox implements Runnable {
 	
@@ -154,8 +150,7 @@ public class ProcessingCommandMailbox implements Runnable {
 
     private void tryRun() {
         if (tryEnter()) {
-            // new Thread(this).run();
-        	threadStrategyExecute(this);
+             new Thread(this).run();
         }
     }
     
@@ -286,13 +281,4 @@ public class ProcessingCommandMailbox implements Runnable {
 			Node next = null;
 		}
 	}
-	
-	
-	// =================== thread strategy
-	
-    private final static AsyncPool poolInstance = ThreadPoolMaster.getPoolInstance(ProcessingCommandMailbox.class);
-    
-    private static void threadStrategyExecute(ProcessingCommandMailbox box) {
-    	poolInstance.execute(() -> { box.run(); return null; });
-    }
 }

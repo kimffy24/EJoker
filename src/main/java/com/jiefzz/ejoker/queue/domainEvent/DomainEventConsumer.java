@@ -73,7 +73,7 @@ public class DomainEventConsumer implements IWorkerService {
 		
 		/// #fix 180920 register sync offset task
 		{
-			scheduleService.StartTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
+			scheduleService.startTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
 				consumer.syncOffsetToBroker();
 			}, 2000, 2000);
 		}
@@ -92,7 +92,7 @@ public class DomainEventConsumer implements IWorkerService {
 
 		/// #fix 180920 register sync offset task
 		{
-			scheduleService.StopTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx);
+			scheduleService.stopTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx);
 		}
 		///
 		

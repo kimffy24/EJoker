@@ -20,14 +20,16 @@ public interface IRPCService {
 	public void export(Action<String> action, int port);
 	
 	public void remoteInvoke(String data, String host, int port);
+	
+	public void removeExport(int port);
 
 	public static class RPCTuple {
 		
 		public final Thread ioThread;
 		
-		public final Action action;
+		public final Action<?> action;
 		
-		public RPCTuple(Action action, Thread ioThread) {
+		public RPCTuple(Action<?> action, Thread ioThread) {
 			this.ioThread = ioThread;
 			this.action = action;
 		}

@@ -18,6 +18,7 @@ import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
+import com.jiefzz.ejoker.z.common.rpc.IRPCService.RPCTuple;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -33,7 +34,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	@Dependence
 	IOHelper ioHelper;
-
+	
 	@Override
 	public void export(final Action<String> action, final int port) {
 		if (portMap.containsKey(port)) {
@@ -70,6 +71,14 @@ public class NettyRPCServiceImpl implements IRPCService {
 			portMap.put(port, new RPCTuple(action, ioThread));
 		} finally {
 			rpcRegistLock.unlock();
+		}
+	}
+
+	@Override
+	public void removeExport(int port) {
+		RPCTuple rpcTuple;
+		if (null != (rpcTuple = portMap.remove(port))) {
+			rpcTuple.ioThread.interrupt();
 		}
 	}
 

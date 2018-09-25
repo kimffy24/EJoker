@@ -5,17 +5,22 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.dev2.EJokerInstanceBuilder;
 import com.jiefzz.ejoker.z.common.context.dev2.EjokerRootDefinationStore;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerClazzScannerHook;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
@@ -81,15 +86,26 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	 */
 	private final Set<String> instanceCandidateDisable = new HashSet<>();
 	
+	private final Queue<IVoidFunction> initTask = new LinkedBlockingQueue<>();
+	
+	private final AtomicBoolean onService = new AtomicBoolean(false);
+	
 	private final static Object defaultInstance = new Object();
 	
 	@Override
 	public <T> T get(Class<T> clazz) {
+		
+		if(!onService.get())
+			throw new ContextRuntimeException("context is not on service!!!");
+		
 		return (T )instanceMap.get(clazz.getName());
 	}
 
 	@Override
 	public <T> T get(Class<T> clazz, Type... types) {
+		
+		if(!onService.get())
+			throw new ContextRuntimeException("context is not on service!!!");
 		
 		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz, types);
 		
@@ -134,6 +150,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 
 	@Override
 	public void refresh() {
+		
+		assert !onService.get();
+		
 		refreshContextRecord();
 		
 		ForEachUtil.processForEach(conflictMapperRecord, (clazz, conflictSet) -> {
@@ -146,6 +165,28 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		});
 		
 		preparePreviouslyLoad();
+		completeInstanceInitMethod();
+		onService.compareAndSet(false, true);
+	}
+	
+	@Override
+	public void discard() {
+		if(!onService.get())
+			return;
+		
+		Scavenger scavenger = this.get(Scavenger.class);
+		
+		markLoad.clear();
+		superMapperRecord.clear();
+		conflictMapperRecord.clear();
+		
+		instanceMap.clear();
+		instanceGenericTypeMap.clear();
+		instanceCandidateGenericTypeMap.clear();
+		instanceCandidateFaildMap.clear();
+		instanceCandidateDisable.clear();
+		
+		scavenger.cleanUp();
 	}
 	
 	private void refreshContextRecord() {
@@ -173,14 +214,14 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 					final GenericExpression target = current;
 				
 					refreshContextRecordSkeleton(
-							() -> testGenericSignature.equals(target.expressSignature.substring(target.expressSignature.indexOf('<'))),
+							() -> target.genericDefination.hasGenericDeclare && testGenericSignature.equals(target.expressSignature.substring(target.expressSignature.indexOf('<'))),
 							() -> currentRecord.add(target.getDeclarePrototype()),
 							originalExpressSignature,
 							target);
 	
 					current.forEachImplementationsExpressionsDeeply(interfaceExpression -> {
 						refreshContextRecordSkeleton(
-								() -> testGenericSignature.equals(interfaceExpression.expressSignature.substring(interfaceExpression.expressSignature.indexOf('<'))),
+								() -> interfaceExpression.genericDefination.hasGenericDeclare && testGenericSignature.equals(interfaceExpression.expressSignature.substring(interfaceExpression.expressSignature.indexOf('<'))),
 								() -> currentRecord.add(interfaceExpression.getDeclarePrototype()),
 								originalExpressSignature,
 								interfaceExpression);
@@ -289,11 +330,17 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				return;
 			Object instance;
 			if(null == (instance = instanceMap.get(eServiceClazz.getName()))) {
-				instance = (new EJokerInstanceBuilder(eServiceClazz)).doCreate();
+				instance = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(
+						newInstance -> enqueueInitMethod(newInstance)
+				);
 				if(null != instanceMap.putIfAbsent(eServiceClazz.getName(), instance)) {
 					instance = instanceMap.get(eServiceClazz.getName());
 				}
+				
+				final Object targetInstance = instance;
+				;
 			}
+			
 			instanceMap.put(upperClazz.getName(), instance);
 			
 		});
@@ -316,10 +363,16 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 						)
 			);
 			
+			
+			
 		});
 	}
 	
 	private void injectDependence(String fieldName, GenericDefinedField genericDefinedField, IVoidFunction1<Object> effector) {
+		
+		if(!genericDefinedField.field.isAnnotationPresent(Dependence.class)) {
+			return;
+		}
 		
 		Object dependence = null;
 		String instanceTypeName = genericDefinedField.genericDefinedTypeMeta.typeName;
@@ -333,7 +386,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			/// upper泛型 eService泛型
 			/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
 			if(defaultInstance.equals(dependence = instanceGenericTypeMap.getOrDefault(instanceTypeName, defaultInstance))) {
-				instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = (new EJokerInstanceBuilder(eServiceClazz)).doCreate());
+				instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(
+						newInstance -> enqueueInitMethod(newInstance)
+						));
 				
 				{
 					// 对新创建的EService对象注入依赖
@@ -375,4 +430,26 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			throw new ContextRuntimeException(String.format("Cannot find any dependence for field: %s !!!", field.getName()), e);
 		}
 	}
+	
+	private void enqueueInitMethod(Object instance) {
+		final Class<?> instanceClazz = instance.getClass();
+		ForEachUtil.processForEach(
+				defaultRootDefinationStore.getEInitializeRecord(instanceClazz),
+				(methodName, method) -> initTask.offer(
+						() -> {
+							try {
+								method.invoke(instance);
+							} catch (Exception e) {
+								throw new ContextRuntimeException(String.format("Faild on invoke init method!!! target: %s, method: %s", instanceClazz.getName(), methodName), e);
+							}
+						}
+					)
+			);
+	}
+	
+	private void completeInstanceInitMethod() {
+		while(null != initTask.peek())
+			initTask.poll().trigger();
+	}
+
 }

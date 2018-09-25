@@ -151,6 +151,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 								clazz.getName(), method.getName());
 						throw new ContextRuntimeException("Unsupport pass parameters to @Initialize method now!!!");
 					}
+					method.setAccessible(true);
 					reflectInitializeMethodStore.put(method.getName(), method);
 				}
 			}
