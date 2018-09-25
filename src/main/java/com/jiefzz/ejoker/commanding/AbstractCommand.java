@@ -2,12 +2,8 @@ package com.jiefzz.ejoker.commanding;
 
 import com.jiefzz.ejoker.infrastructure.AbstractMessage;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
-import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
 public class AbstractCommand extends AbstractMessage implements ICommand {
-	
-	@PersistentIgnore
-	private static final long serialVersionUID = 8151751740813634355L;
 	
 	private String aggregateRootId;
 

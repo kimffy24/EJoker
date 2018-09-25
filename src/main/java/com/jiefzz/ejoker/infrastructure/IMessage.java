@@ -1,8 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import java.io.Serializable;
-
-public interface IMessage extends Serializable{
+public interface IMessage {
 
 	public String getRoutingKey();
     public String getTypeName();
