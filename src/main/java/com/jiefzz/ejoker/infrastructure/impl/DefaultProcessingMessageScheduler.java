@@ -1,6 +1,5 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
 import com.jiefzz.ejoker.infrastructure.IProcessingMessage;
@@ -8,12 +7,11 @@ import com.jiefzz.ejoker.infrastructure.IProcessingMessageScheduler;
 import com.jiefzz.ejoker.infrastructure.ProcessingMessageMailbox;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
+import com.jiefzz.ejoker.z.common.task.AbstractThreadPoolService;
 import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 @EService
-public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IProcessingMessageScheduler<X, Y> {
+public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y>, Y extends IMessage> extends AbstractThreadPoolService implements IProcessingMessageScheduler<X, Y> {
 
 	@Dependence
 	IMessageDispatcher messageDispatcher;
@@ -26,7 +24,7 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 //				messageDispatcher.dispatchMessageAsync(processingMessage.getMessage());
 //			}
 //		})).start();
-		poolInstance.execute(new IAsyncTask<Boolean>(){
+		execute(new IAsyncTask<Boolean>(){
 			public Boolean call() throws Exception {
 				messageDispatcher.dispatchMessageAsync(processingMessage.getMessage());
 				return null;
@@ -37,7 +35,7 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 	@Override
 	public void scheduleMailbox(final ProcessingMessageMailbox<X, Y> mailbox) {
 //		(new Thread(mailbox)).start();
-		poolInstance.execute(new IAsyncTask<Boolean>(){
+		execute(new IAsyncTask<Boolean>(){
 			public Boolean call() throws Exception {
 				mailbox.run();
 				return null;
@@ -47,7 +45,9 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 
 
 	// =================== thread strategy
-    
-    private final static AsyncPool poolInstance = ThreadPoolMaster.getPoolInstance(DefaultProcessingMessageScheduler.class, EJokerEnvironment.THREAD_POOL_SIZE);
+	
+	private void execute(IAsyncTask<?> task) {
+		asyncPool.execute(task);
+	}
 	
 }

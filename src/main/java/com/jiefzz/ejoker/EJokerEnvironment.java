@@ -9,7 +9,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 /**
  * 在ejoker.properties中封装一些跟执行环境相关的变量
@@ -23,9 +23,9 @@ public final class EJokerEnvironment {
 
 	public final static int REPLY_PORT = 65056;
 
-	public final static int THREAD_POOL_SIZE = 512;
+	public final static int THREAD_POOL_SIZE = 4;
 	
-	public final static int MAX_BATCH_COMMANDS = 5;
+	public final static int MAX_BATCH_COMMANDS = 32;
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 

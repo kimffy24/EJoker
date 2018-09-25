@@ -10,19 +10,33 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 
+@EService
 public class ThreadPoolMaster {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ThreadPoolMaster.class);
 	
-	private static Map<Class<?>, AsyncPool> poolHolder = new HashMap<Class<?>, AsyncPool>();
+	private Map<Class<?>, AsyncPool> poolHolder = new HashMap<Class<?>, AsyncPool>();
+
+	@Dependence
+	private Scavenger scavenger;
 	
-	public static AsyncPool getPoolInstance(Class<?> typeOfCaller) {
+	@EInitialize
+	private void init() {
+		scavenger.addFianllyJob(() -> {
+				closeAll();
+		});
+	}
+	
+	public AsyncPool getPoolInstance(Class<?> typeOfCaller) {
 		return getPoolInstance(typeOfCaller, EJokerEnvironment.THREAD_POOL_SIZE);
 	}
 	
-	public static AsyncPool getPoolInstance(Class<?> typeOfCaller, int poolSize) {
+	public AsyncPool getPoolInstance(Class<?> typeOfCaller, int poolSize) {
 		AsyncPool asyncPool;
 		if(null!=(asyncPool = poolHolder.getOrDefault(typeOfCaller, null)))
 			return asyncPool;
@@ -31,21 +45,12 @@ public class ThreadPoolMaster {
 		return asyncPool;
 	}
 	
-	public static void closeAll(){
+	public void closeAll(){
 		Set<Entry<Class<?>, AsyncPool>> entrySet = poolHolder.entrySet();
 		for(Entry<Class<?>, AsyncPool> entry : entrySet) {
 			logger.debug("Shutdowning the ThreadPool[{}] for {}.", AsyncPool.class.getName(), entry.getKey().getName());
 			AsyncPool value = entry.getValue();
 			value.shutdown();
 		}
-	}
-	
-	static {
-		Scavenger.addFianllyJob(new Runnable() {
-			@Override
-			public void run() {
-				ThreadPoolMaster.closeAll();
-			}
-		});
 	}
 }

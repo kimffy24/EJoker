@@ -13,9 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 public class ProcessingCommandMailbox implements Runnable {
 	
@@ -51,11 +48,11 @@ public class ProcessingCommandMailbox implements Runnable {
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		lastActiveTime = System.currentTimeMillis();
 		long genericSequence = nextSequence.getAndIncrement();
 		message.setSequence(genericSequence);
 		message.setMailbox(this);
 		messageDict.put(genericSequence, message);
+		lastActiveTime = System.currentTimeMillis();
 		tryRun();
 	}
 
@@ -153,8 +150,7 @@ public class ProcessingCommandMailbox implements Runnable {
 
     private void tryRun() {
         if (tryEnter()) {
-            // new Thread(this).run();
-        	threadStrategyExecute(this);
+             new Thread(this).run();
         }
     }
     
@@ -285,20 +281,4 @@ public class ProcessingCommandMailbox implements Runnable {
 			Node next = null;
 		}
 	}
-	
-	
-	// =================== thread strategy
-    
-    private IAsyncTask<Boolean> tryRunTask = new IAsyncTask<Boolean>(){
-		@Override
-		public Boolean call() throws Exception {
-			ProcessingCommandMailbox.this.run();
-			return true;
-		}
-    	
-    };
-    private final static AsyncPool poolInstance = ThreadPoolMaster.getPoolInstance(ProcessingCommandMailbox.class);
-    private static void threadStrategyExecute(ProcessingCommandMailbox box) {
-    	poolInstance.execute(box.tryRunTask);
-    }
 }

@@ -17,7 +17,7 @@ import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 public class CommandHandlerPool {
 	
 	public final static Map<Class<? extends ICommand>, HandlerReflectionMapper> handlerMapper =
-			new HashMap<Class<? extends ICommand>, HandlerReflectionMapper>();
+			new HashMap<>();
 	
 	public final static void regist(Class<? extends AbstractCommandHandler> implementationHandlerClass) {
 		final Method[] declaredMethods = implementationHandlerClass.getDeclaredMethods();
@@ -50,12 +50,6 @@ public class CommandHandlerPool {
 		
 		private AbstractCommandHandler handler = null;
 
-		/**
-		 * EJoker context是严格禁止同事获取对象的
-		 * <br>用于在判断handler为空需要从上下中获取Handler的时候排他执行。
-		 */
-		private final static Lock lock4getHandler = new ReentrantLock();
-		
 		private HandlerReflectionMapper(Method handleReflectionMethod) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends AbstractCommandHandler> )handleReflectionMethod.getDeclaringClass();
@@ -66,16 +60,8 @@ public class CommandHandlerPool {
 		@Override
 		public AbstractCommandHandler getInnerObject() {
 			if (null == handler) {
-				lock4getHandler.lock();
-				try {
-					if (null == handler) {
-						handler = EJoker.getInstance().getEJokerContext().get(handlerClass);
-						return handler;
-					} else
-						return handler;
-				} finally {
-					lock4getHandler.unlock();
-				}
+				handler = EJoker.getInstance().getEJokerContext().get(handlerClass);
+				return handler;
 			} else
 				return handler;
 		}

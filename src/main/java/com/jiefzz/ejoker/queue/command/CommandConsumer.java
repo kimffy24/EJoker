@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,71 +23,116 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
-import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IConsumer;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageContext;
-import com.jiefzz.ejoker.queue.skeleton.clients.consumer.IEJokerQueueMessageHandler;
-import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
+import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.domainEvent.DomainEventConsumer;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.utilities.Ensure;
+import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
+import com.jiefzz.ejoker.z.common.service.IWorkerService;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 @EService
-public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueueMessageHandler {
+public class CommandConsumer implements IWorkerService {
 
-	final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
 	private SendReplyService sendReplyService;
+	
 	@Dependence
 	private IJSONConverter jsonSerializer;
+	
 	@Dependence
 	private ICommandProcessor processor;
+	
 	@Dependence
 	private IRepository repository;
+	
 	@Dependence
 	private IAggregateStorage aggregateRootStorage;
 	
-	private IConsumer consumer;
+	/// #fix 180920 register sync offset task
+	@Dependence
+	private IScheduleService scheduleService;
 	
-	public IConsumer getConsumer() { return consumer; }
-	public CommandConsumer useConsumer(IConsumer consumer) { this.consumer = consumer; return this;}
+	private static long taskIndex = 0;
+	
+	private final long tx = ++taskIndex;
+	///
+	
+	private DefaultMQConsumer consumer;
+	
+	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<>();
+	
+	public DefaultMQConsumer getConsumer() {
+		return consumer;
+	}
+	
+	public CommandConsumer useConsumer(DefaultMQConsumer consumer) {
+		this.consumer = consumer;
+		return this;
+	}
 
-	@Override
-	public void handle(EJokerQueueMessage message, IEJokerQueueMessageContext context) {
+	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		
 		// Here QueueMessage is a carrier of Command
 		// separate it from  QueueMessage；
-		HashMap<String, String> commandItems = new HashMap<String, String>();
-		String messageBody = new String(message.body, Charset.forName("UTF-8"));
+		HashMap<String, String> commandItems = new HashMap<>();
+		String messageBody = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType = getCommandPrototype(message.tag);
+		Class<? extends ICommand> commandType = getCommandPrototype(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
-		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(repository, aggregateRootStorage, message, context, commandMessage, sendReplyService);
+		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(
+				repository,
+				aggregateRootStorage,
+				queueMessage,
+				context,
+				commandMessage,
+				sendReplyService);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
 	
-	@Override
-	public CommandConsumer start() {
-		consumer.setMessageHandler(this).start();
+	public CommandConsumer start(){
+		consumer.registerEJokerCallback((eJokerMsg, context) -> handle(eJokerMsg, context));
+		try {
+			consumer.start();
+		} catch (MQClientException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		
+		/// #fix 180920 register sync offset task
+		{
+			scheduleService.startTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
+				consumer.syncOffsetToBroker();
+			}, 2000, 2000);
+		}
+		///
+		
 		return this;
 	}
 
-	@Override
-	public CommandConsumer subscribe(String topic) {
-		consumer.subscribe(topic);
+	public CommandConsumer subscribe(String topic) throws Exception {
+		consumer.subscribe(topic, "*");
 		return this;
 	}
 
-	@Override
 	public CommandConsumer shutdown() {
 		consumer.shutdown();
+
+		/// #fix 180920 register sync offset task
+		{
+			scheduleService.stopTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx);
+		}
+		///
+		
 		return this;
 	}
 	
-	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<String, Class<? extends ICommand>>();
 	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
 		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
 		Class<? extends ICommand> commandType = commandTypeDict.getOrDefault(commandTypeString, null);
@@ -112,12 +158,19 @@ public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueue
 	class CommandExecuteContext implements ICommandExecuteContext {
 		
 		private String result;
-		private final ConcurrentHashMap<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<String, IAggregateRoot>();;
+		
+		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<>();
+		
 		private final IRepository repository;
+		
 		private final IAggregateStorage aggregateRootStorage;
+		
 		private final SendReplyService sendReplyService;
+		
 		private final EJokerQueueMessage message;
+		
 		private final IEJokerQueueMessageContext messageContext;
+		
 		private final CommandMessage commandMessage;
 
 		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
@@ -133,7 +186,7 @@ public class CommandConsumer implements IQueueComsumerWokerService, IEJokerQueue
 		public void onCommandExecuted(CommandResult commandResult) {
 			messageContext.onMessageHandled(message);
 
-			if (commandMessage.replyAddress == null || "".equals(commandMessage.replyAddress))
+			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return;
 			
 			sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);

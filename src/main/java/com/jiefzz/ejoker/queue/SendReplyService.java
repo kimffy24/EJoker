@@ -12,10 +12,10 @@ import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 public class SendReplyService {
 
 	@Dependence
-	IRPCService<String> rpcService;
+	private IRPCService rpcService;
 
 	@Dependence
-	IJSONConverter jsonConverter;
+	private IJSONConverter jsonConverter;
 	
 	public void sendReply(int replyType, CommandResult commandResult, String replyAddress) {
 		ReplyMessage rm = new ReplyMessage();
@@ -42,8 +42,12 @@ public class SendReplyService {
 	 *
 	 */
 	public static class ReplyMessage {
+		
 		public int t = 0;
+		
 		public CommandResult c = null;
+		
 		public DomainEventHandledMessage d = null;
+		
 	}
 }

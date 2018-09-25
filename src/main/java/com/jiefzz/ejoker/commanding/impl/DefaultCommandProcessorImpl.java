@@ -41,16 +41,15 @@ public final class DefaultCommandProcessorImpl implements ICommandProcessor {
         if (aggregateRootId==null || "".equals(aggregateRootId))
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());
 
-        ProcessingCommandMailbox mailbox;
+        ProcessingCommandMailbox mailbox, prevousMailbox;
         
         if(null==(mailbox = mailboxDict.getOrDefault(aggregateRootId, null))) {
         	lock4tryCreateMailbox.lock();
         	try {
-        		if(!mailboxDict.containsKey(aggregateRootId)){
+        		if(null == (prevousMailbox = mailboxDict.putIfAbsent(aggregateRootId, mailbox = new ProcessingCommandMailbox(aggregateRootId, handler)))){
         			logger.debug("Creating mailbox for aggregateRoot[aggregateRootId={}].", aggregateRootId);
-                	mailboxDict.put(aggregateRootId, mailbox = new ProcessingCommandMailbox(aggregateRootId, handler));
         		} else
-        			mailbox = mailboxDict.get(aggregateRootId);
+        			mailbox = prevousMailbox;
         	} finally {
         		lock4tryCreateMailbox.unlock();
         	}

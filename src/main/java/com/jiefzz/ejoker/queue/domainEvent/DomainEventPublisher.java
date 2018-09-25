@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.Future;
 
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,72 +16,77 @@ import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
-import com.jiefzz.ejoker.queue.skeleton.IQueueComsumerWokerService;
-import com.jiefzz.ejoker.queue.skeleton.IQueueProducerWokerService;
-import com.jiefzz.ejoker.queue.skeleton.clients.producer.IProducer;
-import com.jiefzz.ejoker.queue.skeleton.prototype.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
+import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.service.IWorkerService;
 
 @EService
-public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IQueueProducerWokerService {
+public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IWorkerService {
 
-	final static Logger logger = LoggerFactory.getLogger(DomainEventPublisher.class);
+	private final static Logger logger = LoggerFactory.getLogger(DomainEventPublisher.class);
 
 	@Dependence
-	IJSONConverter jsonConverter;
+	private IJSONConverter jsonConverter;
 
-	@SuppressWarnings("rawtypes")
 	@Dependence
-	private ITopicProvider<IDomainEvent> eventTopicProvider;
-	
-	@Dependence
-	IEventSerializer eventSerializer;
+	private ITopicProvider<IDomainEvent<?>> eventTopicProvider;
 	
 	@Dependence
-	SendQueueMessageService sendQueueMessageService;
+	private IEventSerializer eventSerializer;
 	
-	private IProducer producer;
+	@Dependence
+	private SendQueueMessageService sendQueueMessageService;
 	
-	public IProducer getProducer() { return producer; }
-	public DomainEventPublisher useProducer(IProducer producer) { this.producer = producer; return this;}
-
-	@Override
-	public IQueueProducerWokerService start() {
-		producer.start();
-		return null;
+	private DefaultMQProducer producer;
+	
+	public DefaultMQProducer getProducer() {
+		return producer;
+	}
+	
+	public DomainEventPublisher useProducer(DefaultMQProducer producer) {
+		this.producer = producer;
+		return this;
 	}
 
-	@Override
-	public IQueueProducerWokerService shutdown() {
-		logger.error("The method: {}.subscribe(String topic) should not be use! Please fix it.", this.getClass().getName());
-		return null;
+	public DomainEventPublisher start() {
+		try {
+			producer.start();
+		} catch (MQClientException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		return this;
+	}
+
+	public DomainEventPublisher shutdown() {
+		producer.shutdown();
+		return this;
 	}
 
 	@Override
 	public Future<AsyncTaskResultBase> publishAsync(DomainEventStreamMessage eventStream) {
 		EJokerQueueMessage queueMessage = createQueueMessage(eventStream);
 		return sendQueueMessageService.sendMessageAsync(
-				producer,
-				queueMessage,
-				queueMessage.topic!=null?queueMessage.topic:eventStream.getAggregateRootStringId()
+			producer,
+			queueMessage,
+			null != queueMessage.getTopic()?queueMessage.getTopic():eventStream.getAggregateRootStringId()
 		);
 	}
 
-	public EJokerQueueMessage createQueueMessage(DomainEventStreamMessage eventStream){
-		EventStreamMessage eventMessage = CreateEventMessage(eventStream);
+	public EJokerQueueMessage createQueueMessage(DomainEventStreamMessage eventStream) {
+		EventStreamMessage eventMessage = createEventMessage(eventStream);
 		Collection<IDomainEvent<?>> events = eventStream.getEvents();
 		Iterator<IDomainEvent<?>> iterator = events.iterator();
-//		IDomainEvent<?>[] eventArray = (IDomainEvent<?>[] )events.toArray();
 		String topic = eventTopicProvider.getTopic(iterator.next());
 		String data = jsonConverter.convert(eventMessage);
 		EJokerQueueMessage queueMessage = new EJokerQueueMessage(topic, QueueMessageTypeCode.DomainEventStreamMessage.ordinal(), data.getBytes());
 		return queueMessage;
 	}
 	
-    private EventStreamMessage CreateEventMessage(DomainEventStreamMessage eventStream)
-    {
+    private EventStreamMessage createEventMessage(DomainEventStreamMessage eventStream) {
     	EventStreamMessage message = new EventStreamMessage();
 
         message.setId(eventStream.getId());

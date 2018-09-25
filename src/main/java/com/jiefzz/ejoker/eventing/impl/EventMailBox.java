@@ -9,11 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 public class EventMailBox implements Runnable {
 
@@ -58,8 +54,7 @@ public class EventMailBox implements Runnable {
         if (exitFirst)
             exit();
         if (tryEnter()) {
-			//new Thread(this).start();
-        	threadStrategyExecute(this);
+			new Thread(this).start();
         }
     }
     
@@ -122,20 +117,4 @@ public class EventMailBox implements Runnable {
 		public void handleMessage(TTarget target);
 		
 	}
-	
-
-	// =================== thread strategy
-    
-    private IAsyncTask<Boolean> tryRunTask = new IAsyncTask<Boolean>(){
-		@Override
-		public Boolean call() throws Exception {
-			EventMailBox.this.run();
-			return true;
-		}
-    	
-    };
-    private final static AsyncPool poolInstance = ThreadPoolMaster.getPoolInstance(EventMailBox.class, EJokerEnvironment.THREAD_POOL_SIZE);
-    private static void threadStrategyExecute(EventMailBox box) {
-    	poolInstance.execute(box.tryRunTask);
-    }
 }

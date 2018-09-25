@@ -1,5 +1,10 @@
 package com.jiefzz.ejoker.commanding;
 
+/**
+ * * Please do not change its order!
+ * @author Administrator
+ *
+ */
 public enum CommandReturnType {
 	
 	/**
