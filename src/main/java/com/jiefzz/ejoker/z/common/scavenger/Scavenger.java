@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.z.common.scavenger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ public class Scavenger {
 		int totalJob = amountOfJob.get();
 		for(IVoidFunction cleanJob : waitingCleanJobs)
 			try {
+//				TimeUnit.SECONDS.sleep(2);
 				cleanJob.trigger();
 				amountOfJob.decrementAndGet();
 			} catch (Exception e) {

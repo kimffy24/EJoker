@@ -100,7 +100,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			try {
 				maxOffset = new AtomicLong(maxOffset(mq));
 				minOffset = minOffset(mq);
-				consumedOffset = fetchConsumeOffset(mq, true);
+				consumedOffset = fetchConsumeOffset(mq, false);
 			} catch (MQClientException e3) {
 				throw new RuntimeException(e3);
 			}
@@ -205,10 +205,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			
 			{
 				aheadCompletion.put(mq, new HashMap<>());
-				offsetConsumedDict.put(mq, new AtomicLong(0));
-				
 				try {
-					offsetConsumedDict.put(mq, new AtomicLong(fetchConsumeOffset(mq, true)));
+					offsetConsumedDict.put(mq, new AtomicLong(fetchConsumeOffset(mq, false)));
 				} catch (MQClientException e3) {
 					throw new RuntimeException(e3);
 				}
