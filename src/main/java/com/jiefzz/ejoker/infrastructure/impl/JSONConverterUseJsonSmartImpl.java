@@ -2,12 +2,8 @@ package com.jiefzz.ejoker.infrastructure.impl;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,31 +37,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	@SuppressWarnings("unchecked")
 	public JSONConverterUseJsonSmartImpl() {
 		specialTypeHandler = new SpecialTypeCodecStore<String>()
-				.append(ObjectId.class, new SpecialTypeCodec<ObjectId, String>(){
-
-					@Override
-					public String encode(ObjectId target) {
-						return target.toHexString();
-					}
-
-					@Override
-					public ObjectId decode(String source) {
-						return new ObjectId(source);
-					}
-					
-				}).append(Character.class, new SpecialTypeCodec<Character, Integer>(){
-
-					@Override
-					public Integer encode(Character target) {
-						return (int )target.charValue();
-					}
-
-					@Override
-					public Character decode(Integer source) {
-						return (char )source.intValue();
-					}
-					
-				}).append(BigDecimal.class, new SpecialTypeCodec<BigDecimal, String>(){
+				.append(BigDecimal.class, new SpecialTypeCodec<BigDecimal, String>(){
 
 					@Override
 					public String encode(BigDecimal target) {
@@ -77,7 +49,8 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 						return new BigDecimal(source);
 					}
 					
-				}).append(BigInteger.class, new SpecialTypeCodec<BigInteger, String>(){
+				})
+				.append(BigInteger.class, new SpecialTypeCodec<BigInteger, String>(){
 
 					@Override
 					public String encode(BigInteger target) {
@@ -89,19 +62,34 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 						return new BigInteger(source);
 					}
 					
-				}).append(char.class, new SpecialTypeCodec<Character, Integer>(){
+				})
+				.append(char.class, new SpecialTypeCodec<Character, String>(){
 
 					@Override
-					public Integer encode(Character target) {
-						return (int )target.charValue();
+					public String encode(Character target) {
+						return "" + (int )target.charValue();
 					}
 
 					@Override
-					public Character decode(Integer source) {
-						return (char )source.intValue();
+					public Character decode(String source) {
+						return (char )Integer.parseInt(source);
 					}
 					
-				});
+				})
+				.append(Character.class, new SpecialTypeCodec<Character, String>(){
+
+					@Override
+					public String encode(Character target) {
+						return "" + (int )target.charValue();
+					}
+
+					@Override
+					public Character decode(String source) {
+						return (char )Integer.parseInt(source);
+					}
+					
+				})
+				;
 		
 		relationshipTreeUtil = new RelationshipTreeUtil<JSONObject, JSONArray>(new IRelationshipTreeAssemblers<JSONObject, JSONArray>() {
 					@Override
