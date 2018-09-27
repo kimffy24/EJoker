@@ -18,7 +18,6 @@ import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
-import com.jiefzz.ejoker.z.common.rpc.IRPCService.RPCTuple;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -43,9 +42,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 		rpcRegistLock.lock();
 		try {
-			Thread ioThread = new Thread(new Runnable() {
-				@Override
-				public void run() {
+			Thread ioThread = new Thread(() -> {
 					EventLoopGroup bossGroup = new NioEventLoopGroup();
 					EventLoopGroup workerGroup = new NioEventLoopGroup();
 					try {
@@ -66,7 +63,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 						workerGroup.shutdownGracefully();
 					}
 				}
-			});
+			);
 			ioThread.start();
 			portMap.put(port, new RPCTuple(action, ioThread));
 		} finally {

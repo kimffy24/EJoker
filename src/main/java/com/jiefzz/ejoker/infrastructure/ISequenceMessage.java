@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.infrastructure;
 
 public interface ISequenceMessage extends IMessage {
 
-//	public void setAggregateRootStringId(String aggregateRootStringId);
+	public void setAggregateRootStringId(String aggregateRootStringId);
 	public String getAggregateRootStringId();
 	
 	public void setAggregateRootTypeName(String aggregateRootTypeName);

@@ -4,32 +4,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
+import com.jiefzz.ejoker.z.common.task.ReactWorker;
 
 public class EventMailBox implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger(EventMailBox.class);
 	
 	private final String aggregateRootId;
-	private final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<EventCommittingContext>();
+	
+	private final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<>();
+	
 	private final EventMailBoxHandler<List<EventCommittingContext>> handleMessageAction;
-	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	
+//	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	
 	private int batchSize;
+	
 	private long lastActiveTime;
+	
+	private ReactWorker internalWorker = new ReactWorker(() -> run());
 
 	public String getAggregateRootId() {
 		return aggregateRootId;
 	}
+	
 	public long getLastActiveTime(){
 		return lastActiveTime;
 	}
+	
 	public boolean isRunning(){
-		return runningOrNot.get();
+//		return runningOrNot.get();
+		return internalWorker.resumeState();
 	}
 	
 	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<List<EventCommittingContext>> handleMessageAction) {
@@ -37,6 +48,8 @@ public class EventMailBox implements Runnable {
 		this.batchSize = batchSize;
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
+		
+		internalWorker.start();
 	}
 	
 	public void enqueueMessage(EventCommittingContext message) {
@@ -51,28 +64,32 @@ public class EventMailBox implements Runnable {
     	tryRun(false);
     }
     public void tryRun(boolean exitFirst) {
-        if (exitFirst)
-            exit();
-        if (tryEnter()) {
-			new Thread(this).start();
-        }
+//        if (exitFirst)
+//            exit();
+//        if (tryEnter()) {
+//			new Thread(this).start();
+//        }
+
+    	internalWorker.resume();
+        
     }
     
     public void exit() {
-    	runningOrNot.compareAndSet(true, false);
+//    	runningOrNot.compareAndSet(true, false);
+    	internalWorker.pasue();
     }
 	
 	public void clear() {
-		while(null!=messageQueue.poll()) { }
+		while(null!=messageQueue.poll());
 	}
 	
     public boolean isInactive(long timeoutSeconds) {
         return (long )((System.currentTimeMillis() - lastActiveTime)/1000) >= timeoutSeconds;
     }
 
-    private boolean tryEnter() {
-		return runningOrNot.compareAndSet(false, true);
-    }
+//    private boolean tryEnter() {
+//		return runningOrNot.compareAndSet(false, true);
+//    }
 	
 	@Override
 	public void run() {
@@ -94,12 +111,13 @@ public class EventMailBox implements Runnable {
 		} catch(Exception e) {
 			logger.error(String.format("Event mailbox run has unknown exception, aggregateRootId: %s", aggregateRootId), e);
 			e.printStackTrace();
-			try { Thread.sleep(1l); } catch (InterruptedException e1) { }
+			try { TimeUnit.SECONDS.sleep(1l); } catch (InterruptedException e1) { }
 		} finally {
 			if( null==contextList || contextList.size()==0 ) {
 				exit();
 				if(null!=messageQueue.peek())
-					tryEnter();
+//					tryEnter();
+					tryRun();
 			}
 		}
 		

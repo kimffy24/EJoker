@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
@@ -35,7 +34,6 @@ import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
-import com.jiefzz.ejoker.z.common.action.Action;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
@@ -43,7 +41,6 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
 
 @EService
 public class DefaultEventService implements IEventService {
@@ -52,7 +49,7 @@ public class DefaultEventService implements IEventService {
 
 	private final Lock lock4tryCreateEventMailbox = new ReentrantLock();
 
-	private final Map<String, EventMailBox> eventMailboxDict = new ConcurrentHashMap<String, EventMailBox>();
+	private final Map<String, EventMailBox> eventMailboxDict = new ConcurrentHashMap<>();
 
 	@Dependence
 	IProcessingCommandHandler processingCommandHandler;

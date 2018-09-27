@@ -1,32 +1,32 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
-
 public abstract class AbstractSequenceMessage<TAggregateRootId> extends AbstractMessage implements ISequenceMessage {
 
-	@PersistentIgnore
-	private static final long serialVersionUID = -677162607422924283L;
+	private TAggregateRootId aggregateRootId;
+	
 	private String aggregateRootStringId;
+	
 	private String aggregateRootTypeName;
+	
 	private long version;
-	
-	public abstract void setAggregateRootId(TAggregateRootId aggregateRootId);
-	
-	public abstract TAggregateRootId getAggregateRootId();
-	
-//	@Override
-//	public void setAggregateRootStringId(String aggregateRootStringId) {
-//		this.aggregateRootStringId = aggregateRootStringId;
-//	}
+
+	public void setAggregateRootId(TAggregateRootId aggregateRootId) {
+		this.aggregateRootId = aggregateRootId;
+		this.aggregateRootStringId = aggregateRootId.toString();
+	}
+
+	public TAggregateRootId getAggregateRootId() {
+		return this.aggregateRootId;
+	}
+
+	@Override
+	public void setAggregateRootStringId(String aggregateRootStringId) {
+		this.aggregateRootStringId = aggregateRootStringId;
+	}
 
 	@Override
 	public String getAggregateRootStringId() {
-		TAggregateRootId aggergateRootId;
-		if(null != (aggergateRootId = getAggregateRootId())) {
-			aggregateRootStringId = aggergateRootId.toString();
-			return aggregateRootStringId;
-		} else 
-			return null;
+		return aggregateRootStringId;
 	}
 
 	@Override

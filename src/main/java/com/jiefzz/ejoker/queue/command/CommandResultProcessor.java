@@ -20,6 +20,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.rpc.IClientNodeIPAddressProvider;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
@@ -31,6 +32,9 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	@Dependence
 	private IRPCService rpcService;
+
+	@Dependence
+	private IClientNodeIPAddressProvider clientNodeIPAddressProvider;
 
 	@Dependence
 	private IJSONConverter jsonConverter;
@@ -67,17 +71,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	}
 
 	public String getBindingAddress() {
-		/// TODO some unfinished job!!!
-		//return "10.1.2.2";
-		
-		return "192.168.199.123";
-		
-//		try {
-//			return InetAddress.getLocalHost().getHostAddress();
-//		} catch (UnknownHostException e) {
-//			e.printStackTrace();
-//			return null;
-//		}
+		return clientNodeIPAddressProvider.getClientNodeIPAddress();
 	}
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,

@@ -44,9 +44,7 @@ public class RPCFramework {
         for(;;) {
             try {  
                 final Socket socket = server.accept();  
-                new Thread(new Runnable() {  
-                    @Override  
-                    public void run() {  
+                new Thread(() -> {  
                         try {  
                             try {  
                                 ObjectInputStream input = new ObjectInputStream(socket.getInputStream());  
@@ -78,7 +76,7 @@ public class RPCFramework {
                             e.printStackTrace();  
                         }  
                     }  
-                }).start();  
+                ).start();  
             } catch (Exception e) {  
                 e.printStackTrace();  
             }  

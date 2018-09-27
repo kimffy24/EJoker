@@ -3,8 +3,6 @@ package com.jiefzz.ejoker.commanding.impl;
 import java.util.Collection;
 import java.util.List;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +20,7 @@ import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.infrastructure.IJSONConverter;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 
@@ -30,12 +29,14 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultProcessingCommandHandlerImpl.class);
 
-	@Resource
-	IJSONConverter jsonSerializer;
-	@Resource
-	ICommandHandlerPrivider commandHandlerPrivider;
-	@Resource
-	IEventService eventService;
+	@Dependence
+	private IJSONConverter jsonSerializer;
+	
+	@Dependence
+	private ICommandHandlerPrivider commandHandlerPrivider;
+	
+	@Dependence
+	private IEventService eventService;
 	
 	@Override
 	public void handle(ProcessingCommand processingCommand) {

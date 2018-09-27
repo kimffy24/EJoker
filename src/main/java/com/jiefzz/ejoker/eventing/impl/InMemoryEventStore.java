@@ -30,10 +30,11 @@ public class InMemoryEventStore implements IEventStore {
 
 	private final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);
 
-	@Resource
-	IJSONConverter jsonConverter;
 	@Dependence
-	IEventSerializer eventSerializer;
+	private IJSONConverter jsonConverter;
+	
+	@Dependence
+	private IEventSerializer eventSerializer;
 
 	public Map<String, Object> mStorage = new ConcurrentHashMap<String, Object>();
 

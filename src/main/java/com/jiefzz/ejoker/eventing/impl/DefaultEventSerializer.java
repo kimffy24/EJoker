@@ -24,7 +24,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 	public Map<String, String> serializer(List<IDomainEvent<?>> events) {
 		Map<String, String> dict = new LinkedHashMap<String, String>();
 		for(IDomainEvent<?> event:events)
-			dict.put(event.getClass().getName(), jsonSerializer.convert(events));
+			dict.put(event.getClass().getName(), jsonSerializer.convert(event));
 		return dict;
 	}
 

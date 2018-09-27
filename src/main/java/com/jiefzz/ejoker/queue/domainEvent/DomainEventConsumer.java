@@ -108,7 +108,7 @@ public class DomainEventConsumer implements IWorkerService {
 		logger.info(
 				"EJoker event message received, messageId: {}, aggregateRootId: {}, aggregateRootType: {}, version: {}",
 				domainEventStreamMessage.getId(),
-				domainEventStreamMessage.getAggregateRootStringId(),
+				domainEventStreamMessage.getAggregateRootId(),
 				domainEventStreamMessage.getAggregateRootTypeName(),
 				domainEventStreamMessage.getVersion());
 		processor.process(processingMessage);
