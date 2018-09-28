@@ -39,7 +39,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
+import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
 
 @EService
@@ -172,7 +172,7 @@ public class DefaultEventService implements IEventService {
 
 	private void persistEventAsync(final EventCommittingContext context) {
 		
-		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -186,7 +186,7 @@ public class DefaultEventService implements IEventService {
 
 			@Override
 			public void faildLoopAction() {
-				ioHelper.tryAsyncActionRecursively(this);
+				ioHelper.tryAsyncAction(this);
 			}
 
 			@Override
@@ -217,6 +217,7 @@ public class DefaultEventService implements IEventService {
 				case DuplicateCommand:
 					break;
 				default:
+					assert false;
 					break;
 				}
 			}
@@ -243,7 +244,7 @@ public class DefaultEventService implements IEventService {
 		
 		final DomainEventStream eventStream = context.eventStream;
 		
-		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext(){
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<DomainEventStream>>(){
 
 			@Override
 			public String getAsyncActionName() {
@@ -251,17 +252,17 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
-				return (Future )eventStore.findAsync(eventStream.getAggregateRootId(), 1);
+			public Future<AsyncTaskResult<DomainEventStream>> asyncAction() throws IOException {
+				return eventStore.findAsync(eventStream.getAggregateRootId(), 1);
 			}
 
 			@Override
 			public void faildLoopAction() {
-				ioHelper.tryAsyncActionRecursively(this);
+				ioHelper.tryAsyncAction(this);
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResultBase result) {
+			public void finishAction(AsyncTaskResult<DomainEventStream> result) {
 				AsyncTaskResult<DomainEventStream> realResult = (AsyncTaskResult<DomainEventStream> )result;
 				DomainEventStream firstEventStream = realResult.getData();
 				if(null != firstEventStream) {
@@ -321,7 +322,7 @@ public class DefaultEventService implements IEventService {
 	private void publishDomainEventAsync(final ProcessingCommand processingCommand,
 			final DomainEventStreamMessage eventStream) {
 
-		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -335,7 +336,7 @@ public class DefaultEventService implements IEventService {
 
 			@Override
 			public void faildLoopAction() {
-				ioHelper.tryAsyncActionRecursively(this);
+				ioHelper.tryAsyncAction(this);
 //				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, nextRetryTimes);
 			}
 

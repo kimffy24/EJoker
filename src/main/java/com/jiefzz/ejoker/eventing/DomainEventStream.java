@@ -32,7 +32,7 @@ public class DomainEventStream implements Serializable {
         this.setItems(items);
         
         long sequence = 1;
-        for (IDomainEvent evnt : this.events) {
+        for (IDomainEvent<?> evnt : this.events) {
             if (evnt.getVersion() != getVersion()) {
                 throw new UnmatchEventVersionException("Invalid domain event version, aggregateRootTypeName: "
                                 +aggregateRootTypeName
@@ -47,6 +47,7 @@ public class DomainEventStream implements Serializable {
             evnt.setSequence(sequence++);
         }
     }
+	
 	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, List<IDomainEvent<?>> events) {
         this(commandId, aggregateRootId, aggregateRootTypeName, version, timestamp, events, null);
     }

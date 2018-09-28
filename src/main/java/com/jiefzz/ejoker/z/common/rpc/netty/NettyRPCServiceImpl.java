@@ -16,7 +16,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.io.IOHelper.AsyncIOHelperExecutionContext;
+import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
@@ -82,13 +82,20 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void remoteInvoke(final String data, final String host, final int port) {
 		
-		ioHelper.tryAsyncActionRecursively(new AsyncIOHelperExecutionContext() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
 
+			private String actName = String.format("remoteInvoke[target: %s:%d]", host, port);
+			
 			@Override
 			public String getAsyncActionName() {
-				return "remoteInvoke";
+				return actName;
 			}
 
+			/**
+			 * 
+			 * TODO 1. 此处目前还是java原生实现，有空记得改为netty
+			 * TODO 2. 此处本质上是同步执行然后返回一个异步任务读取资源的结构对象给调用者，并非真正的异步
+			 */
 			@Override
 			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
 				Socket socket = null;
@@ -123,7 +130,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 			@Override
 			public void faildLoopAction() {
-				ioHelper.tryAsyncActionRecursively(this);
+				ioHelper.tryAsyncAction(this);
 			}
 
 			@Override

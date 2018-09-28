@@ -2,11 +2,16 @@ package com.jiefzz.ejoker.z.common.io;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.task.AsyncPool;
+import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 /**
  * 模拟IOHelper的实现
@@ -19,8 +24,18 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
+	
+	@Dependence
+	private ThreadPoolMaster poolMaster;
+	
+	private AsyncPool retryTaskPool = null;
+	
+	@EInitialize
+	private void init() {
+		retryTaskPool = poolMaster.getPoolInstance(IOHelper.class, 1024);
+	}
 
-	public void tryAsyncActionRecursively(AsyncIOHelperExecutionContext externalContext) {
+	public void tryAsyncAction(IOActionExecutionContext<?> externalContext) {
 
 		if (!externalContext.hasInitialized) {
 			externalContext.init();
@@ -35,15 +50,15 @@ public class IOHelper {
 
 	}
 
-	private <TAsyncResult extends AsyncTaskResultBase> void taskContinueAction(
-			AsyncIOHelperExecutionContext externalContext) throws IOException {
-		Future<AsyncTaskResultBase> task = externalContext.asyncAction();
+	private void taskContinueAction(
+			IOActionExecutionContext<? extends AsyncTaskResultBase> externalContext) throws IOException {
+		Future<AsyncTaskResultBase> task = (Future<AsyncTaskResultBase> )externalContext.asyncAction();
 		try {
-			TAsyncResult result = null;
+			AsyncTaskResultBase result = null;
 			try {
-				result = (TAsyncResult) task.get();
+				result = task.get();
 			} catch (Exception e) {
-				Exception cause = (Exception) e.getCause();
+				Exception cause = (Exception )e.getCause();
 				processTaskException(externalContext, cause);
 				return;
 			}
@@ -51,7 +66,7 @@ public class IOHelper {
 				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.",
 						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
 						externalContext.currentRetryTimes);
-				externalContext.faildAction(new Exception(
+				executeFailedAction(externalContext, new Exception(
 						String.format("Async task '%s' was cancelled.", externalContext.getAsyncActionName())));
 				return;
 			}
@@ -62,13 +77,15 @@ public class IOHelper {
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					externalContext.faildAction(new Exception("task result is null!!!"));
+					executeFailedAction(externalContext, new Exception("task result is null!!!"));
 				}
 				return;
 			}
 			switch (result.status) {
 			case Success:
-				externalContext.finishAction(result);
+				// TODO while use wildcard type on genericity parameters, we couldn't delivery any parameters
+				// so ...
+				((IOActionExecutionContext )externalContext).finishAction(result);
 				break;
 			case IOException:
 				logger.error(
@@ -84,21 +101,19 @@ public class IOHelper {
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					externalContext.faildAction(new Exception(result.errorMessage));
+					executeFailedAction(externalContext, new Exception(result.errorMessage));
 				}
 				break;
 			default:
-				throw new RuntimeException(
-						String.format("Async task '%s', context info: %s ", externalContext.getAsyncActionName(),
-								externalContext.getContextInfo()) + " result.status=" + result.status);
+				assert false;
 			}
 		} catch (Exception ex) {
-			logger.error(String.format("Failed to execute the taskContinueAction, asyncActionName: '%s'",
-					externalContext.getAsyncActionName()), ex);
+			logger.error(String.format("Failed to execute the taskContinueAction, asyncActionName: %s, contextInfo: %s",
+					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
 		}
 	}
 
-	private void processTaskException(AsyncIOHelperExecutionContext externalContext, Exception exception) {
+	private void processTaskException(IOActionExecutionContext<?> externalContext, Exception exception) {
 		if (exception instanceof IOException || exception instanceof IOExceptionOnRuntime) {
 			logger.error(String.format(
 					"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
@@ -114,22 +129,20 @@ public class IOHelper {
 			if (externalContext.retryWhenFailed) {
 				executeRetryAction(externalContext);
 			} else {
-				externalContext.faildAction(exception);
+				executeFailedAction(externalContext, exception);
 			}
 		}
 	}
 
-	private void executeRetryAction(final AsyncIOHelperExecutionContext externalContext) {
+	private void executeRetryAction(final IOActionExecutionContext<?> externalContext) {
 		externalContext.currentRetryTimes++;
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
-				Thread.sleep(externalContext.retryInterval);
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						externalContext.faildLoopAction();
-					}
-				}).start();
+				retryTaskPool.execute(() -> {
+					TimeUnit.MILLISECONDS.sleep(externalContext.retryInterval);
+					externalContext.faildLoopAction();
+					return true;
+					});
 			} else {
 				externalContext.faildLoopAction();
 			}
@@ -138,6 +151,18 @@ public class IOHelper {
 					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
 		}
 	}
+	
+	private void executeFailedAction(final IOActionExecutionContext<?> externalContext, Exception exception) {
+		try {
+			externalContext.faildAction(exception);
+	    } catch (Exception ex) {
+	        logger.error(
+	        		String.format(
+	        				"Failed to execute the failedAction of asyncAction: %s, contextInfo: %s",
+	        				externalContext.getAsyncActionName(),
+	        				externalContext.getContextInfo()), ex);
+	    }
+	}
 
 	/**
 	 * ioHelper连接实际执行环境的上下文
@@ -145,7 +170,9 @@ public class IOHelper {
 	 * @author JiefzzLon
 	 *
 	 */
-	public static abstract class AsyncIOHelperExecutionContext {
+	public static abstract class IOActionExecutionContext<TAsyncResult extends AsyncTaskResultBase> {
+
+		private boolean hasInitialized = false;
 
 		/**
 		 * 当前重试次数
@@ -178,12 +205,11 @@ public class IOHelper {
 		 * 
 		 * @return
 		 */
-		abstract public Future<AsyncTaskResultBase> asyncAction() throws IOException;
+		abstract public Future<TAsyncResult> asyncAction() throws IOException;
 
 		/**
 		 * 重试执行的方法
 		 * 
-		 * @param nextRetryTimes
 		 */
 		abstract public void faildLoopAction();
 
@@ -193,7 +219,7 @@ public class IOHelper {
 		 * 
 		 * @param result
 		 */
-		abstract public void finishAction(AsyncTaskResultBase result);
+		abstract public void finishAction(TAsyncResult result);
 
 		/**
 		 * 异步执行失败后执行的处理方法
@@ -234,7 +260,6 @@ public class IOHelper {
 		protected int getCurrentRetryTimes() {
 			return currentRetryTimes;
 		}
-
-		private boolean hasInitialized = false;
+		
 	}
 }
