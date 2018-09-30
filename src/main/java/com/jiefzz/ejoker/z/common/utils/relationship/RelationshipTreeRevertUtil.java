@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.z.common.utils.relationship;
 
+import static com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtil.checkIgnoreField;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -64,11 +66,15 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression) { 
 		Object instance = (new InstanceBuilder(expression.getDeclarePrototype())).doCreate();
 		expression.forEachFieldExpressionsDeeply(
-				(fieldName, genericDefinedField) -> disassemblyStructure(
-						genericDefinedField.genericDefinedTypeMeta,
-						disassemblyEval.getValue(kvDataSet, fieldName),
-						result -> setField(genericDefinedField.field, instance, result)
-						)
+				(fieldName, genericDefinedField) -> { 
+						if(checkIgnoreField(genericDefinedField.field))
+							return;
+						disassemblyStructure(
+							genericDefinedField.genericDefinedTypeMeta,
+							disassemblyEval.getValue(kvDataSet, fieldName),
+							result -> setField(genericDefinedField.field, instance, result)
+						);
+				}
 		);
 		return instance;
 	}

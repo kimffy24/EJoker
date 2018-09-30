@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.z.common.utils.relationship;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
@@ -58,6 +60,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		ContainerKVP createNode = eval.createKeyValueSet();
 		targetExpression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> join(() -> {
+					
+					if(checkIgnoreField(genericDefinedField.field))
+						return;
+					
 					Object fieldValue;
 					try {
 						fieldValue = genericDefinedField.field.get(target);
@@ -98,10 +104,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		
 		Object node;
 		if (null != (node = processWithUserSpecialCodec(target, definedClazz))) {
-			if (!ParameterizedTypeUtil.isDirectSerializableType(node.getClass())) {
-				String errmsg = String.format("Get an unexpect type from userSpecialCodec!!! targetClass: %s, resultClass: %s, occur on: %s", definedClazz.getName(), node.getClass().getName(), key);
-				throw new RuntimeException(errmsg);
-			}
+//			if (!ParameterizedTypeUtil.isDirectSerializableType(node.getClass())) {
+//				String errmsg = String.format("Get an unexpect type from userSpecialCodec!!! targetClass: %s, resultClass: %s, occur on: %s", definedClazz.getName(), node.getClass().getName(), key);
+//				throw new RuntimeException(errmsg);
+//			}
 		} else if (ParameterizedTypeUtil.isDirectSerializableType(definedClazz)) {
 			// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
 			node = target;
@@ -190,6 +196,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 					targetDefinedTypeMeta.deliveryTypeMetasTable);
 			genericExpress.forEachFieldExpressionsDeeply(
 					(fieldName, genericDefinedField) -> join(() -> {
+						
+						if(checkIgnoreField(genericDefinedField.field))
+							return;
+						
 						Object fieldValue;
 						try {
 							fieldValue = genericDefinedField.field.get(target);
@@ -268,5 +278,12 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			// this should never happen!!!
 			throw new RuntimeException();
 		}
+	}
+	
+	public static boolean checkIgnoreField(Field field) {
+		return (
+				false ||
+				field.isAnnotationPresent(PersistentIgnore.class)
+		);
 	}
 }

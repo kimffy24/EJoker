@@ -1,21 +1,19 @@
 package com.jiefzz.ejoker.eventing;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
+import com.jiefzz.ejoker.infrastructure.SequenceMessageAbstract;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
-public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
+public class DomainEventStreamMessage extends SequenceMessageAbstract<String> {
 
 	@PersistentIgnore
 	private static final long serialVersionUID = -721576949011677756L;
 	
 	private String commandId;
-	private String aggregateRootId;
 	private Map<String, String> items;
 	private List<IDomainEvent<?>> events;
 	
@@ -29,6 +27,7 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
         this.setAggregateRootTypeName(aggregateRootTypeName);
         this.setEvents(events);
         this.setItems(items);
+        
     }
 	
 	@Override
@@ -79,16 +78,5 @@ public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 
 	public void setEvents(List<IDomainEvent<?>> events) {
 		this.events = events;
-	}
-
-	@Override
-	public void setAggregateRootId(String aggregateRootId) {
-		this.aggregateRootId = aggregateRootId;
-		getAggregateRootStringId();
-	}
-
-	@Override
-	public String getAggregateRootId() {
-		return aggregateRootId;
 	}
 }

@@ -2,13 +2,13 @@ package com.jiefzz.ejoker.infrastructure;
 
 import com.jiefzz.ejoker.utils.EObjectId;
 
-public abstract class AbstractMessage implements  IMessage {
+public abstract class MessageAbstract implements  IMessage {
 
 	private String id;
 	private long sequence;
 	private long timestamp;
 	
-	public AbstractMessage() {
+	public MessageAbstract() {
 		id=EObjectId.generateHexStringId();
 		timestamp=System.currentTimeMillis();
 		sequence=1l;

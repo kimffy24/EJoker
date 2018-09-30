@@ -9,6 +9,8 @@ public class AsyncTaskResultBase {
 
 	public final static AsyncTaskResultBase Success = new AsyncTaskResultBase(AsyncTaskStatus.Success);
 
+	public final static AsyncTaskResultBase Faild = new AsyncTaskResultBase(AsyncTaskStatus.Failed);
+
 	protected final AsyncTaskStatus status;
 	protected final String errorMessage;
 

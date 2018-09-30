@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,8 +35,10 @@ public class InMemoryEventStore implements IEventStore {
 	@Dependence
 	private IEventSerializer eventSerializer;
 
-	public Map<String, Object> mStorage = new ConcurrentHashMap<String, Object>();
+	private Map<String, Map<String, String>> mStorage = new ConcurrentHashMap<>();
 
+	private AtomicLong atLong = new AtomicLong(0);
+	
 	@Override
 	public boolean isSupportBatchAppendEvent() {
 		// TODO 暂时不支持批量持久化
@@ -53,51 +56,103 @@ public class InMemoryEventStore implements IEventStore {
 			appendAsync(iterator.next());
 	}
 
-	private AtomicLong atLong = new AtomicLong(0);
-
 	@Override
 	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream) {
 		logger.debug("模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), eventStream.toString());
-		EventAppendResult eventAppendResult = appendsync(eventStream);
-		RipenFuture<AsyncTaskResultBase> future = new RipenFuture<AsyncTaskResultBase>();
+		EventAppendResult eventAppendResult = appendSync(eventStream);
+		RipenFuture<AsyncTaskResultBase> future = new RipenFuture<>();
 		future.trySetResult(new AsyncTaskResult<EventAppendResult>(AsyncTaskStatus.Success, eventAppendResult));
 		return future;
 	}
 
 	@Override
 	public Future<AsyncTaskResult<DomainEventStream>> findAsync(final String aggregateRootId, final int version) {
-		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<AsyncTaskResult<DomainEventStream>>();
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				Object prevous = InMemoryEventStore.this.mStorage.getOrDefault(aggregateRootId +"." +version, null);
-				future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, revertFromStorageFormat((String )prevous)));
-			}
-		}).start();
+		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<>();
+//		new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+
+				Map<String, String> aggregateEventStore;
+				while(null == (aggregateEventStore = mStorage.get(aggregateRootId))) {
+					mStorage.putIfAbsent(aggregateRootId, new ConcurrentHashMap<>());
+				}
+				
+				Object previous = aggregateEventStore.getOrDefault("" +version, null);
+				future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, revertFromStorageFormat((String )previous)));
+//			}
+//		}).start();
 		return future;
 	}
 
 	@Override
 	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
-		return null;
+		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<>();
+//		new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+
+				Map<String, String> aggregateEventStore;
+				while(null == (aggregateEventStore = mStorage.get(aggregateRootId))) {
+					mStorage.putIfAbsent(aggregateRootId, new ConcurrentHashMap<>());
+				}
+				
+				Object previous = aggregateEventStore.getOrDefault(commandId, null);
+				future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, revertFromStorageFormat((String )previous)));
+//			}
+//		}).start();
+		return future;
 	}
 
 	@Override
 	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
 			long minVersion, long maxVersion) {
-		return null;
+		
+		Set<DomainEventStream> resultSet = new LinkedHashSet<>();
+		
+		Map<String, String> aggregateEventStore;
+		while(null == (aggregateEventStore = mStorage.get(aggregateRootId))) {
+			mStorage.putIfAbsent(aggregateRootId, new ConcurrentHashMap<>());
+		}
+		
+		for(long cursor = minVersion; cursor <= maxVersion; cursor++) {
+			Object previous = aggregateEventStore.get("" + cursor);
+			if(null == previous) {
+				throw new RuntimeException(String.format("Event[aggregateId=%s, version=%d] is not exist!!!", aggregateRootId, cursor));
+			}
+			DomainEventStream revertFromStorageFormat = revertFromStorageFormat((String )previous);
+			resultSet.add(revertFromStorageFormat);
+		}
+		
+		return resultSet;
 	}
 
 	@Override
-	public void queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
+	public Future<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
 			long maxVersion) {
+		final RipenFuture<AsyncTaskResult<Collection<DomainEventStream>>> future = new RipenFuture<>();
+//		new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+				future.trySetResult(new AsyncTaskResult<Collection<DomainEventStream>>(AsyncTaskStatus.Success, queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion)));
+//			}
+//		}).start();
+		return future;
 	}
 
-	private EventAppendResult appendsync(DomainEventStream eventStream) {
+	private EventAppendResult appendSync(DomainEventStream eventStream) {
 		try {
-			Object prevous = mStorage.putIfAbsent(eventStream.getAggregateRootId() + "." + eventStream.getVersion(),
-					convertToStorageFormat(eventStream));
-			if (null != prevous)
+			String aggregateRootId = eventStream.getAggregateRootId();
+			Map<String, String> aggregateEventStore;
+			while(null == (aggregateEventStore = mStorage.get(aggregateRootId))) {
+				mStorage.putIfAbsent(aggregateRootId, new ConcurrentHashMap<>());
+			}
+			
+			String saveData = convertToStorageFormat(eventStream);
+			boolean hasPrevous = false;
+			hasPrevous &= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), saveData);
+			hasPrevous &= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), saveData);
+			
+			if (hasPrevous)
 				return EventAppendResult.DuplicateEvent;
 			else
 				return EventAppendResult.Success;

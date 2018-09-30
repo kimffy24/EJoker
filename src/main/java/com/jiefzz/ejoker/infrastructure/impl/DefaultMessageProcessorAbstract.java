@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.infrastructure;
+package com.jiefzz.ejoker.infrastructure.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,60 +6,68 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.infrastructure.IMessage;
+import com.jiefzz.ejoker.infrastructure.IMessageProcessor;
+import com.jiefzz.ejoker.infrastructure.IProcessingMessage;
+import com.jiefzz.ejoker.infrastructure.IProcessingMessageHandler;
+import com.jiefzz.ejoker.infrastructure.IProcessingMessageScheduler;
+import com.jiefzz.ejoker.infrastructure.ProcessingMessageMailbox;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 
-public abstract class AbstractMessageProcessor<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IMessageProcessor<X, Y> {
+public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IMessageProcessor<X, Y> {
 
-	private final static Logger logger = LoggerFactory.getLogger(AbstractMessageProcessor.class);
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
-	private final Lock lock4tryCreateMailbox = new ReentrantLock();
-
-	private final Map<String, ProcessingMessageMailbox<X, Y>> mailboxDict = new ConcurrentHashMap<String, ProcessingMessageMailbox<X, Y>>();
+	private final Map<String, ProcessingMessageMailbox<X, Y>> mailboxDict = new ConcurrentHashMap<>();
 
 	@Dependence
-	IScheduleService scheduleService;
+	private IScheduleService scheduleService;
+
+	@Dependence
+	private Scavenger scavenger;
+
+	@Dependence
+	private IProcessingMessageScheduler<X, Y> processingMessageScheduler;
 	
-	protected abstract IProcessingMessageScheduler<X, Y> getProcessingMessageScheduler();
-	protected abstract IProcessingMessageHandler<X, Y> getProcessingMessageHandler();
+	@Dependence
+	private IProcessingMessageHandler<X, Y> processingMessageHandler;
 
 	public abstract String getMessageName();
-
+	
+	@EInitialize
+	private void init() {
+		scheduleService.startTask(
+				this.getClass().getName() + "#cleanInactiveMailbox()",
+				() -> DefaultMessageProcessorAbstract.this.cleanInactiveMailbox(),
+				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
+				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
+		
+		scavenger.addFianllyJob(() -> scheduleService.stopTask(this.getClass().getName() + "#cleanInactiveMailbox()"));
+	}
+	
 	public void process(X processingMessage) {
 		String routingKey = processingMessage.getMessage().getRoutingKey();
 		if (!StringHelper.isNullOrWhiteSpace(routingKey)) {
-			ProcessingMessageMailbox<X, Y> mailbox;
-			if (null == (mailbox = mailboxDict.getOrDefault(routingKey, null))) {
-				// ah, here use a dangerous minds.
-				lock4tryCreateMailbox.lock();
-				try {
-					if (!mailboxDict.containsKey(routingKey)) {
-						mailboxDict.put(routingKey, mailbox = new ProcessingMessageMailbox<X, Y>(routingKey,
-								getProcessingMessageScheduler(), getProcessingMessageHandler()));
-					} else
-						mailbox = mailboxDict.get(routingKey);
-				} finally {
-					lock4tryCreateMailbox.unlock();
-				}
-			}
+			ProcessingMessageMailbox<X, Y> mailbox = MapHelper.getOrAddConcurrent(mailboxDict, routingKey, () -> new ProcessingMessageMailbox<X, Y>(routingKey,
+					processingMessageScheduler, processingMessageHandler));
 			mailbox.enqueueMessage(processingMessage);
 		} else {
-			getProcessingMessageScheduler().scheduleMessage(processingMessage);
+			processingMessageScheduler.scheduleMessage(processingMessage);
 		}
 	}
 	
-	// clean long time idle mailbox
-	
 	/**
+	 * clean long time idle mailbox
 	 * 清理超时mailbox的函数。<br>
 	 */
 	private void cleanInactiveMailbox() {
@@ -81,16 +89,6 @@ public abstract class AbstractMessageProcessor<X extends IProcessingMessage<X, Y
 			mailboxDict.remove(mailboxKey);
 			logger.info("Removed inactive {} mailbox, aggregateRootId: {}", getMessageName(), mailboxKey);
 		}
-	}
-	
-	@EInitialize
-	private void init() {
-		scheduleService.startTask(this.getClass().getName() +"#cleanInactiveMailbox()", new Runnable() {
-			@Override
-			public void run() {
-				AbstractMessageProcessor.this.cleanInactiveMailbox();
-			}
-		}, EJokerEnvironment.MAILBOX_IDLE_TIMEOUT, EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
 	}
 	
 }

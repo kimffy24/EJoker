@@ -40,6 +40,7 @@ public class EJoker {
 					RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
 					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 				}
+//				RegistProcessingMessageHandlerHelper.checkAndRegistProcessingMessageHandler(clazz);
 				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
 		});
 		

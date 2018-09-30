@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-public abstract class AbstractSequenceMessage<TAggregateRootId> extends AbstractMessage implements ISequenceMessage {
+public abstract class SequenceMessageAbstract<TAggregateRootId> extends MessageAbstract implements ISequenceMessage {
 
 	private TAggregateRootId aggregateRootId;
 	
@@ -51,6 +51,6 @@ public abstract class AbstractSequenceMessage<TAggregateRootId> extends Abstract
 
 	@Override
 	public String getRoutingKey() {
-		return getAggregateRootStringId();
+		return aggregateRootStringId;
 	}
 }

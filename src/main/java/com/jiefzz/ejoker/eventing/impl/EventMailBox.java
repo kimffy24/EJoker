@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.task.ReactWorker;
 
 public class EventMailBox implements Runnable {
@@ -20,7 +21,7 @@ public class EventMailBox implements Runnable {
 	
 	private final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<>();
 	
-	private final EventMailBoxHandler<List<EventCommittingContext>> handleMessageAction;
+	private final IVoidFunction1<List<EventCommittingContext>> handleMessageAction;
 	
 //	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
 	
@@ -43,7 +44,7 @@ public class EventMailBox implements Runnable {
 		return internalWorker.resumeState();
 	}
 	
-	public EventMailBox(String aggregateRootId, int batchSize, EventMailBoxHandler<List<EventCommittingContext>> handleMessageAction) {
+	public EventMailBox(String aggregateRootId, int batchSize, IVoidFunction1<List<EventCommittingContext>> handleMessageAction) {
 		this.aggregateRootId = aggregateRootId;
 		this.batchSize = batchSize;
 		this.handleMessageAction = handleMessageAction;
@@ -107,7 +108,7 @@ public class EventMailBox implements Runnable {
 					break;
 			}
 			if( null!=contextList && contextList.size()>0 )
-				handleMessageAction.handleMessage(contextList);
+				handleMessageAction.trigger(contextList);
 		} catch(Exception e) {
 			logger.error(String.format("Event mailbox run has unknown exception, aggregateRootId: %s", aggregateRootId), e);
 			e.printStackTrace();
@@ -120,19 +121,6 @@ public class EventMailBox implements Runnable {
 					tryRun();
 			}
 		}
-		
-	}
-
-	/**
-	 * 监于Java不使用对象代理技术的时候，无法实现委托。。。。。<br>
-	 * 使用接口来实现
-	 * @author jiefzz
-	 *
-	 * @param <TTarget>
-	 */
-	public static interface EventMailBoxHandler<TTarget> {
-		
-		public void handleMessage(TTarget target);
 		
 	}
 }

@@ -7,11 +7,10 @@ import com.jiefzz.ejoker.infrastructure.IProcessingMessageScheduler;
 import com.jiefzz.ejoker.infrastructure.ProcessingMessageMailbox;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.task.AbstractThreadPoolService;
-import com.jiefzz.ejoker.z.common.task.IAsyncTask;
+import com.jiefzz.ejoker.z.common.task.AbstractReactThreadGroupService;
 
 @EService
-public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y>, Y extends IMessage> extends AbstractThreadPoolService implements IProcessingMessageScheduler<X, Y> {
+public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y>, Y extends IMessage> extends AbstractReactThreadGroupService implements IProcessingMessageScheduler<X, Y> {
 
 	@Dependence
 	IMessageDispatcher messageDispatcher;
@@ -24,30 +23,13 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 //				messageDispatcher.dispatchMessageAsync(processingMessage.getMessage());
 //			}
 //		})).start();
-		execute(new IAsyncTask<Boolean>(){
-			public Boolean call() throws Exception {
-				messageDispatcher.dispatchMessageAsync(processingMessage.getMessage());
-				return null;
-			}
-		});
+		submit(() -> messageDispatcher.dispatchMessageAsync(processingMessage.getMessage()));
 	}
 
 	@Override
 	public void scheduleMailbox(final ProcessingMessageMailbox<X, Y> mailbox) {
-//		(new Thread(mailbox)).start();
-		execute(new IAsyncTask<Boolean>(){
-			public Boolean call() throws Exception {
-				mailbox.run();
-				return null;
-			}
-		});
+		submit(() -> mailbox.run());
 	}
 
-
-	// =================== thread strategy
-	
-	private void execute(IAsyncTask<?> task) {
-		asyncPool.execute(task);
-	}
 	
 }

@@ -13,17 +13,17 @@ import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.task.AbstractThreadPoolService;
+import com.jiefzz.ejoker.z.common.task.AbstractReactThreadGroupService;
 
 @EService
-public class SendQueueMessageService extends AbstractThreadPoolService {
+public class SendQueueMessageService extends AbstractReactThreadGroupService {
 
 	private final static Logger logger = LoggerFactory.getLogger(SendQueueMessageService.class);
 
 	public Future<AsyncTaskResultBase> sendMessageAsync(final DefaultMQProducer producer, final EJokerQueueMessage message,
 			final String routingKey) {
 		
-		Future<AsyncTaskResultBase> execute = asyncPool.execute(() -> {
+		Future<AsyncTaskResultBase> execute = submit(() -> {
 				try {
 					SendResult sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
 //					SendResult sendResult = future.get();

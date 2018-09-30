@@ -7,11 +7,9 @@ import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
 import com.jiefzz.ejoker.infrastructure.IProcessingMessage;
 import com.jiefzz.ejoker.infrastructure.IProcessingMessageHandler;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 
-@EService
-public class DefaultProcessingMessageHandler<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IProcessingMessageHandler<X, Y> {
+public abstract class DefaultProcessingMessageHandlerAbstract<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IProcessingMessageHandler<X, Y> {
 
 	@Dependence
 	IMessageDispatcher messageDispatcher;

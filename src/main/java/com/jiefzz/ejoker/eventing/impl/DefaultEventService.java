@@ -9,8 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,14 +38,13 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
 
 @EService
 public class DefaultEventService implements IEventService {
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultEventService.class);
-
-	private final Lock lock4tryCreateEventMailbox = new ReentrantLock();
 
 	private final Map<String, EventMailBox> eventMailboxDict = new ConcurrentHashMap<>();
 
@@ -73,30 +70,15 @@ public class DefaultEventService implements IEventService {
 	@Override
 	public void commitDomainEventAsync(EventCommittingContext context) {
 		String uniqueId = context.aggregateRoot.getUniqueId();
-		EventMailBox eventMailbox;
-		if (null == (eventMailbox = eventMailboxDict.getOrDefault(uniqueId, null))) {
-			lock4tryCreateEventMailbox.lock();
-			try {
-				if (!eventMailboxDict.containsKey(uniqueId)) {
-					eventMailboxDict.put(uniqueId, eventMailbox = new EventMailBox(uniqueId, batchSize,
-							new EventMailBox.EventMailBoxHandler<List<EventCommittingContext>>() {
-								// 暂不使用lambda表达式。。。。
-								@Override
-								public void handleMessage(List<EventCommittingContext> committingContexts) {
-									if (committingContexts == null || committingContexts.size() == 0)
-										return;
-									if (eventStore.isSupportBatchAppendEvent())
-										DefaultEventService.this.batchPersistEventAsync(committingContexts, 0);
-									else
-										DefaultEventService.this.persistEventOneByOne(committingContexts);
-								}
-							}));
-				} else
-					eventMailbox = eventMailboxDict.get(uniqueId);
-			} finally {
-				lock4tryCreateEventMailbox.unlock();
-			}
-		}
+		EventMailBox eventMailbox = MapHelper.getOrAddConcurrent(eventMailboxDict, uniqueId, () -> new EventMailBox(uniqueId, batchSize,
+				committingContexts -> {
+					if (committingContexts == null || committingContexts.size() == 0)
+						return;
+					if (eventStore.isSupportBatchAppendEvent())
+						batchPersistEventAsync(committingContexts, 0);
+					else
+						persistEventOneByOne(committingContexts);
+			}));
 		eventMailbox.enqueueMessage(context);
 		refreshAggregateMemoryCache(context);
 
@@ -114,8 +96,12 @@ public class DefaultEventService implements IEventService {
 		if (null == eventStream.getItems() || 0 == eventStream.getItems().size())
 			eventStream.setItems(processingCommand.getItems());
 		DomainEventStreamMessage domainEventStreamMessage = new DomainEventStreamMessage(
-				processingCommand.getMessage().getId(), eventStream.getAggregateRootId(), eventStream.getVersion(),
-				eventStream.getAggregateRootTypeName(), eventStream.getEvents(), eventStream.getItems());
+				processingCommand.getMessage().getId(),
+				eventStream.getAggregateRootId(),
+				eventStream.getVersion(),
+				eventStream.getAggregateRootTypeName(),
+				eventStream.getEvents(),
+				eventStream.getItems());
 		publishDomainEventAsync(processingCommand, domainEventStreamMessage);
 	}
 
@@ -181,7 +167,7 @@ public class DefaultEventService implements IEventService {
 
 			@Override
 			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
-				return DefaultEventService.this.eventStore.appendAsync(context.eventStream);
+				return eventStore.appendAsync(context.eventStream);
 			}
 
 			@Override
@@ -198,7 +184,7 @@ public class DefaultEventService implements IEventService {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							DefaultEventService.this.publishDomainEventAsync(context.processingCommand,
+							publishDomainEventAsync(context.processingCommand,
 									context.eventStream);
 						}
 					}).start();
@@ -326,18 +312,17 @@ public class DefaultEventService implements IEventService {
 
 			@Override
 			public String getAsyncActionName() {
-				return "publishDomainEventAsync";
+				return "publishEventAsync";
 			}
 
 			@Override
 			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
-				return DefaultEventService.this.domainEventPublisher.publishAsync(eventStream);
+				return domainEventPublisher.publishAsync(eventStream);
 			}
 
 			@Override
 			public void faildLoopAction() {
 				ioHelper.tryAsyncAction(this);
-//				DefaultEventService.this.publishDomainEventAsync(processingCommand, eventStream, nextRetryTimes);
 			}
 
 			@Override
@@ -345,8 +330,11 @@ public class DefaultEventService implements IEventService {
 				logger.debug("Publish event success, {}", eventStream.toString());
 
 				String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();
-				CommandResult commandResult = new CommandResult(CommandStatus.Success,
-						processingCommand.getMessage().getId(), eventStream.getAggregateRootId(), commandHandleResult,
+				CommandResult commandResult = new CommandResult(
+						CommandStatus.Success,
+						processingCommand.getMessage().getId(),
+						eventStream.getAggregateRootId(),
+						commandHandleResult,
 						String.class.getName());
 				completeCommand(processingCommand, commandResult);
 			}

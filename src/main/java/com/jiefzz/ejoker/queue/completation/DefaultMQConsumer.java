@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
@@ -37,10 +38,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	private final AtomicBoolean boot = new AtomicBoolean(false);
 
 	private final AtomicBoolean pasue = new AtomicBoolean(false);
-
-	private final AtomicBoolean hasException = new AtomicBoolean(false);
 	
-	private Throwable lastException = null;
+	private final IVoidFunction1<Exception> exHandler= e -> logger.error("Some exception occur!!!", e);
 
 	private IFunction1<Boolean, MessageQueue> queueMatcher = null;
 
@@ -95,9 +94,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	public void start() throws MQClientException {
 		super.start();
 		
+		boot.compareAndSet(false, true);
+		turn.compareAndSet(false, true);
 		loadSubcribeInfo();
 		doWork();
-		turn.compareAndSet(false, true);
 		enrollbserveLocalOffset();
 	}
 	
@@ -105,6 +105,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		super.shutdown();
 
 		turn.compareAndSet(true, false);
+		boot.compareAndSet(true, false);
 	}
 	
 	public void setMaxBatchSize(int maxBatchSize) {
@@ -138,7 +139,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				
 				final AtomicLong offset = new AtomicLong(consumedOffset);
 				
-				for( ; !hasException.get(); ) {
+				while(boot.get()) {
 
 					try {
 						
@@ -182,25 +183,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							break;
 						case OFFSET_ILLEGAL:
 							logger.debug("OFFSET_ILLEGAL");
-							hasException.set(true);
-							lastException = new RuntimeException("OFFSET_ILLEGAL");
-							break;
+							throw new RuntimeException("OFFSET_ILLEGAL");
 						default:
 							assert false;
 						}
 						
 					} catch (Exception e) {
-						if(hasException.compareAndSet(false, true))
-							lastException = e;
-						else
-							e.printStackTrace();
-						
-						break;
+						exHandler.trigger(e);
 					}
 				}
-				
-				if(hasException.get())
-					throw new RuntimeException(lastException);
 				
 			}).start();
 		}

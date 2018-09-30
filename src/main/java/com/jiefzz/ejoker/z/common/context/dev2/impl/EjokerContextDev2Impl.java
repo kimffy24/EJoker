@@ -265,9 +265,13 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 								instanceCandidateFaildMap.put(current.expressSignature, "");
 							}
 							current.forEachImplementationsExpressionsDeeply(interfaceExpression -> {
-								if (interfaceExpression.genericDefination.hasGenericDeclare && null != instanceCandidateGenericTypeMap
-										.putIfAbsent(interfaceExpression.expressSignature, clazz)) {
-									instanceCandidateFaildMap.put(interfaceExpression.expressSignature, "");
+								/// fix #180930
+								/// 存在同一个类继承多次接口的情况，如果不做前后值判断，就会自己把自己排除掉。
+								Class<?> previousClazz;
+								if (interfaceExpression.genericDefination.hasGenericDeclare && null != (previousClazz = instanceCandidateGenericTypeMap
+										.putIfAbsent(interfaceExpression.expressSignature, clazz))) {
+									if(!previousClazz.equals(clazz))
+										instanceCandidateFaildMap.put(interfaceExpression.expressSignature, "");
 								}
 							});
 						}

@@ -78,9 +78,7 @@ public class ReactWorker {
 	
 	private void doWork(IVoidFunction vf) {
 		while(onRunning.get()) {
-			logger.debug("onRunning.get() ={}", onRunning.get());
 			while(onPasue.get()) {
-				logger.debug("onPasue.get() ={}", onRunning.get());
 				LockSupport.park(workerThread);
 			}
 			
