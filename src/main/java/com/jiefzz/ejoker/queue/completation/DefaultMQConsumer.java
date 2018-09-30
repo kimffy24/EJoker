@@ -96,23 +96,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		super.start();
 		
 		onRunning.compareAndSet(false, true);
-//		turn.compareAndSet(false, true);
 		loadSubcribeInfo();
 		doWork();
-//		enrollbserveLocalOffset();
 		
 		new Thread(() -> {
 			try {
 				TimeUnit.SECONDS.sleep(1);
 			} catch (InterruptedException e) { }
 			onPasue.set(false);
+			ForEachUtil.processForEach(channleHandlingDashboard, (mq, worker) -> worker.resume());
 		}).start();
+		
 	}
 	
 	public void shutdown() {
 		super.shutdown();
 
-//		turn.compareAndSet(true, false);
 		onRunning.compareAndSet(true, false);
 		ForEachUtil.processForEach(channleHandlingDashboard, (mq, worker) -> worker.stop());
 	}
@@ -129,20 +128,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		for (MessageQueue mq : matchQueue) {
 			
 			final AtomicLong maxOffset;
-			long minOffset;
 			long consumedOffset;
 			try {
 				maxOffset = new AtomicLong(maxOffset(mq));
-				minOffset = minOffset(mq);
 				consumedOffset = fetchConsumeOffset(mq, false);
 			} catch (MQClientException e3) {
 				throw new RuntimeException(e3);
 			}
 			
-			logger.debug("Consume from the queue: {}", mq);
-			logger.debug("consumer.maxOffset(mq) = {}", maxOffset.get());
-			logger.debug("consumer.minOffset(mq) = {}", minOffset);
-			logger.debug("consumer.fetchConsumeOffset(mq, true) = {}", consumedOffset);
 			
 			new Thread(() -> {
 				
@@ -154,18 +147,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						
 						while(onPasue.get()) {
 							logger.debug("The consumer has been pasue! Waiting!");
-							TimeUnit.MILLISECONDS.sleep(600);
+							TimeUnit.MILLISECONDS.sleep(100);
 							if(!onRunning.get())
 								return;
 						}
 					
 						long currentOffset = offset.get();
-//						if( maxOffset.get() <= currentOffset ) {
-////							logger.debug("The queue has no more message! Waiting!");
-//							TimeUnit.MILLISECONDS.sleep(600);
-//							maxOffset.getAndSet(maxOffset(mq));
-//							continue;
-//						}
 						
 						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 						PullResult pullResult = pullBlockIfNotFound(mq, null, currentOffset, maxBatchSize);
@@ -187,13 +174,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							maxOffset.getAndSet(pullResult.getMaxOffset());
 							break;
 						case NO_MATCHED_MSG:
-							logger.debug("NO_MATCHED_MSG");
+							logger.debug("[state: NO_MATCHED_MSG, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
 							break;
 						case NO_NEW_MSG:
-							logger.debug("NO_NEW_MSG");
+							logger.debug("[state: NO_NEW_MSG, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
 							break;
 						case OFFSET_ILLEGAL:
-							logger.debug("OFFSET_ILLEGAL");
+							logger.debug("[state: OFFSET_ILLEGAL, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
 							throw new RuntimeException("OFFSET_ILLEGAL");
 						default:
 							assert false;
@@ -260,51 +247,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private void tryMarkCompletion(MessageQueue mq, long comsumedOffset) {
 		aheadCompletion.get(mq).put(comsumedOffset, "");
-		logger.info("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
+		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 	}
-	
-//	private void enrollbserveLocalOffset() {
-//		new Thread(() -> {
-//			for( ;; ) {
-//				try {
-//					TimeUnit.SECONDS.sleep(10);
-//					observeLocalOffset();
-//				} catch (Exception e) {
-//					;
-//				}
-//				if(!turn.get())
-//					break;
-//			}
-//		}).start();
-//	}
-//	
-//	private void observeLocalOffset() {
-//		ForEachUtil.processForEach(channleHandlingDashboard, (mq, dashboard) -> {
-//			if (dashboard.compareAndSet(false, true)) {
-//				new Thread(() -> {
-//					try {
-//						AtomicLong currentComsumedOffsetaAL = offsetConsumedDict.get(mq);
-//						Map<Long, String> aheadOffsetDict = aheadCompletion.get(mq);
-//						if(null == aheadOffsetDict || 0 == aheadOffsetDict.size()) {
-//							return;
-//						}
-//						
-//						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
-//						int delta = 1;
-//						for (; null != aheadOffsetDict.remove(currentComsumedOffsetL + delta); delta++)
-//							;
-//						delta--;
-//						if (delta > 0) {
-//							currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta);
-//						}
-//					}
-//					finally {
-//						dashboard.set(false);
-//					}
-//				}).start();
-//			}
-//		});
-//	}
 	
 	public void syncOffsetToBroker() {
 		for(MessageQueue mq : matchQueue)
@@ -313,18 +257,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
 			}
-		/// TODO Should we check whether the cursor is changed or not?
-		// Maybe we shouldn't take it into consideration.
-		// Mandatory sync to broker! 
 		getOffsetStore().persistAll(matchQueue);
 		
-//		logger.debug("show offset info: ");
-//		showOffsetInfo()
-//	}
-//	
-//	public void showOffsetInfo() {
-//		for(MessageQueue mq : matchQueue)
-//			logger.debug("offsetConsumedDict.get({}).get() = {}", mq, offsetConsumedDict.get(mq).get());
 	}
 	
 }

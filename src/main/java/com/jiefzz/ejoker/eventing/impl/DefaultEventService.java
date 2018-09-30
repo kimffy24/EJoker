@@ -144,7 +144,7 @@ public class DefaultEventService
 				continue;
 			}
 			if (null != eventMailboxDict.remove(pair.getKey())) {
-				logger.info("Removed inactive event mailbox, aggregateRootId: {}", pair.getKey());
+				logger.debug("Removed inactive event mailbox, aggregateRootId: {}", pair.getKey());
 			}
 		}
 	}
@@ -302,7 +302,7 @@ public class DefaultEventService
 			commandMailBox.resetConsumingSequence(consumingSequence);
 			eventMailBox.clear();
 			eventMailBox.exit();
-			logger.info(
+			logger.debug(
 					"ResetCommandMailBoxConsumingSequence success, commandId: {}, aggregateRootId: {}, consumingSequence: {}",
 					command.getId(), command.getAggregateRootId(), consumingSequence);
 		} catch (Exception ex) {
@@ -340,6 +340,7 @@ public class DefaultEventService
 
 			@Override
 			public void finishAction(AsyncTaskResultBase result) {
+				
 				logger.debug("Publish event success, {}", eventStream.toString());
 
 				String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();
@@ -350,6 +351,7 @@ public class DefaultEventService
 						commandHandleResult,
 						String.class.getName());
 				completeCommand(processingCommand, commandResult);
+				
 			}
 
 			@Override

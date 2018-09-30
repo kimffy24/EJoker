@@ -58,7 +58,9 @@ public class InMemoryEventStore implements IEventStore {
 
 	@Override
 	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream) {
-		logger.debug("模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), eventStream.toString());
+		
+		logger.debug(" -> 模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), eventStream.toString());
+		
 		EventAppendResult eventAppendResult = appendSync(eventStream);
 		RipenFuture<AsyncTaskResultBase> future = new RipenFuture<>();
 		future.trySetResult(new AsyncTaskResult<EventAppendResult>(AsyncTaskStatus.Success, eventAppendResult));

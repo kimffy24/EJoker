@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
-import com.jiefzz.ejoker.z.common.task.context.ReactWorker;
 
 public class EventMailBox implements Runnable {
 
@@ -24,13 +24,11 @@ public class EventMailBox implements Runnable {
 	
 	private final IVoidFunction1<List<EventCommittingContext>> handleMessageAction;
 	
-//	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
 	
 	private int batchSize;
 	
 	private long lastActiveTime;
-	
-	private ReactWorker internalWorker = new ReactWorker(() -> run());
 	
 	private EJokerReactThreadScheduler reactThreadScheduler;
 	
@@ -43,8 +41,7 @@ public class EventMailBox implements Runnable {
 	}
 	
 	public boolean isRunning(){
-//		return runningOrNot.get();
-		return internalWorker.resumeState();
+		return runningOrNot.get();
 	}
 	
 	public EventMailBox(String aggregateRootId, int batchSize, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerReactThreadScheduler reactThreadScheduler) {
@@ -53,7 +50,6 @@ public class EventMailBox implements Runnable {
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
 		
-		internalWorker.start();
 		this.reactThreadScheduler = reactThreadScheduler;
 	}
 	
@@ -69,19 +65,16 @@ public class EventMailBox implements Runnable {
     	tryRun(false);
     }
     public void tryRun(boolean exitFirst) {
-//        if (exitFirst)
-//            exit();
-//        if (tryEnter()) {
-//			new Thread(this).start();
-//        }
-
-    	internalWorker.resume();
+        if (exitFirst)
+            exit();
+        if (tryEnter()) {
+        	reactThreadScheduler.submit(() -> run());
+        }
         
     }
     
     public void exit() {
-//    	runningOrNot.compareAndSet(true, false);
-    	internalWorker.pasue();
+    	runningOrNot.compareAndSet(true, false);
     }
 	
 	public void clear() {
@@ -92,9 +85,9 @@ public class EventMailBox implements Runnable {
         return (long )((System.currentTimeMillis() - lastActiveTime)/1000) >= timeoutSeconds;
     }
 
-//    private boolean tryEnter() {
-//		return runningOrNot.compareAndSet(false, true);
-//    }
+    private boolean tryEnter() {
+		return runningOrNot.compareAndSet(false, true);
+    }
 	
 	@Override
 	public void run() {
@@ -121,7 +114,7 @@ public class EventMailBox implements Runnable {
 			if( null==contextList || contextList.size()==0 ) {
 				exit();
 				if(null!=messageQueue.peek())
-//					tryEnter();
+					tryEnter();
 					tryRun();
 			}
 		}

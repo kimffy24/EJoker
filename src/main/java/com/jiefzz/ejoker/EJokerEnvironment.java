@@ -16,6 +16,10 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
  * @author JiefzzLon
 */
 public final class EJokerEnvironment {
+
+	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE = 128;	
+	
+	public final static int ASYNC_IO_RETRY_THREADPOLL_SIZE = 256;
 	
 	public final static String ENVIROMMENT_FILE="ejoker.properties";
 	
@@ -23,7 +27,10 @@ public final class EJokerEnvironment {
 
 	public final static int REPLY_PORT = 65056;
 
-	public final static int THREAD_POOL_SIZE = 4;
+	/**
+	 * 处理器数量
+	 */
+	public final static int NUMBER_OF_PROCESSOR = 4;
 	
 	public final static int MAX_BATCH_COMMANDS = 32;
 	

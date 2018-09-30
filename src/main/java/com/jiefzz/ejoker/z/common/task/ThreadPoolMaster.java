@@ -20,7 +20,7 @@ public class ThreadPoolMaster {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ThreadPoolMaster.class);
 	
-	private Map<Class<?>, AsyncPool> poolHolder = new HashMap<Class<?>, AsyncPool>();
+	private Map<Object, AsyncPool> poolHolder = new HashMap<>();
 
 	@Dependence
 	private Scavenger scavenger;
@@ -32,23 +32,31 @@ public class ThreadPoolMaster {
 		});
 	}
 	
-	public AsyncPool getPoolInstance(Class<?> typeOfCaller) {
-		return getPoolInstance(typeOfCaller, EJokerEnvironment.THREAD_POOL_SIZE);
+	public AsyncPool getPoolInstance(Object typeOfCaller) {
+		return getPoolInstance(typeOfCaller, EJokerEnvironment.NUMBER_OF_PROCESSOR, false);
 	}
 	
-	public AsyncPool getPoolInstance(Class<?> typeOfCaller, int poolSize) {
+	public AsyncPool getPoolInstance(Object typeOfCaller, int poolSize) {
+		return getPoolInstance(typeOfCaller, poolSize, false);
+	}
+	
+	public AsyncPool getPoolInstance(Object typeOfCaller, boolean prestartAllThread) {
+		return getPoolInstance(typeOfCaller, EJokerEnvironment.NUMBER_OF_PROCESSOR, prestartAllThread);
+	}
+	
+	public AsyncPool getPoolInstance(Object typeOfCaller, int poolSize, boolean prestartAllThread) {
 		AsyncPool asyncPool;
 		if(null!=(asyncPool = poolHolder.getOrDefault(typeOfCaller, null)))
 			return asyncPool;
-		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(poolSize)));
-		logger.debug("Create a new ThreadPool[{}] for {}.", AsyncPool.class.getName(), typeOfCaller.getName());
+		poolHolder.put(typeOfCaller, (asyncPool = new AsyncPool(poolSize, prestartAllThread)));
+		logger.debug("Create a new ThreadPool[{}] for {}.", AsyncPool.class.getName(), typeOfCaller.getClass().getName());
 		return asyncPool;
 	}
 	
 	public void closeAll(){
-		Set<Entry<Class<?>, AsyncPool>> entrySet = poolHolder.entrySet();
-		for(Entry<Class<?>, AsyncPool> entry : entrySet) {
-			logger.debug("Shutdowning the ThreadPool[{}] for {}.", AsyncPool.class.getName(), entry.getKey().getName());
+		Set<Entry<Object, AsyncPool>> entrySet = poolHolder.entrySet();
+		for(Entry<Object, AsyncPool> entry : entrySet) {
+			logger.debug("Shutdowning the ThreadPool[{}] for {}.", AsyncPool.class.getName(), entry.getKey().getClass().getName());
 			AsyncPool value = entry.getValue();
 			value.shutdown();
 		}

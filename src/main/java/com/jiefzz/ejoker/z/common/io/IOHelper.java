@@ -7,11 +7,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.task.AsyncPool;
-import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
+import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
 
 /**
  * 模拟IOHelper的实现
@@ -21,18 +19,13 @@ import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
  *
  */
 @EService
-public class IOHelper {
+public class IOHelper extends AbstractNormalWorkerGroupService {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
-	
-	@Dependence
-	private ThreadPoolMaster poolMaster;
-	
-	private AsyncPool retryTaskPool = null;
-	
-	@EInitialize
-	private void init() {
-		retryTaskPool = poolMaster.getPoolInstance(IOHelper.class, 1024);
+
+	@Override
+	protected int usePoolSize() {
+		return EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE;
 	}
 
 	public void tryAsyncAction(IOActionExecutionContext<?> externalContext) {
@@ -138,11 +131,17 @@ public class IOHelper {
 		externalContext.currentRetryTimes++;
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
-				retryTaskPool.execute(() -> {
-					TimeUnit.MILLISECONDS.sleep(externalContext.retryInterval);
+				submitInternal(() -> {
+					try {
+						TimeUnit.MILLISECONDS.sleep(externalContext.retryInterval);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
 					externalContext.faildLoopAction();
 					return true;
 					});
+				
 			} else {
 				externalContext.faildLoopAction();
 			}

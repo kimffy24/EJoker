@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.rocketmq.common.protocol.MQProtosHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 @EService
@@ -94,17 +96,9 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 	private void setInternal(IAggregateRoot aggregateRoot) {
 		Ensure.notNull(aggregateRoot, "aggregateRoot");
-		// TODO ENode.Domain.Impl.DefaultMemoryCache.SetInternal()
-		// C# use aggregateRootInfoDict.AddOrUpdate() here
-		String uniqueId = aggregateRoot.getUniqueId();
-		AggregateCacheInfo previous;
-		if (null!=(previous = aggregateRootInfoDict.getOrDefault(uniqueId, null))) {
-			previous.aggregateRoot = aggregateRoot;
-			previous.lastUpdateTime = System.currentTimeMillis();
-		}else{
-			aggregateRootInfoDict.put(uniqueId, new AggregateCacheInfo(aggregateRoot));
-		};
-		if(logger.isDebugEnabled())
-			logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), uniqueId, aggregateRoot.getVersion());
+		AggregateCacheInfo previous = MapHelper.getOrAddConcurrent(aggregateRootInfoDict, aggregateRoot.getUniqueId(), () -> new AggregateCacheInfo(aggregateRoot));
+		previous.aggregateRoot = aggregateRoot;
+		previous.lastUpdateTime = System.currentTimeMillis();
+		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
 	}
 }

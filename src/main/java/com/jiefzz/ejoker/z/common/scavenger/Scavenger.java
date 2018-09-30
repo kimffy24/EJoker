@@ -34,7 +34,7 @@ public class Scavenger {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		logger.info("In the end of Invoking Scavenger.cleanUp(), execute {} jobs, there {} jobs faild.", totalJob, amountOfJob.get());
+		logger.debug("In the end of Invoking Scavenger.cleanUp(), execute {} jobs, there {} jobs faild.", totalJob, amountOfJob.get());
 		System.gc();
 	}
 }

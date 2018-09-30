@@ -106,15 +106,15 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 		CommandTaskCompletionSource commandTaskCompletionSource;
 		if (null != (commandTaskCompletionSource = commandTaskMap.getOrDefault(commandResult.getCommandId(), null))) {
 
-			if (CommandReturnType.CommandExecuted == commandTaskCompletionSource.getCommandReturnType()) {
+			if (CommandReturnType.CommandExecuted.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				commandTaskMap.remove(commandResult.getCommandId());
 				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
 						AsyncTaskStatus.Success, commandResult);
 				if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
 					logger.debug("Command result return, {}", commandResult);
-			} else if (CommandReturnType.EventHandled == commandTaskCompletionSource.getCommandReturnType()) {
-				if (CommandStatus.Failed == commandResult.getStatus()
-						|| CommandStatus.NothingChanged == commandResult.getStatus()) {
+			} else if (CommandReturnType.EventHandled.equals(commandTaskCompletionSource.getCommandReturnType())) {
+				if (CommandStatus.Failed.equals(commandResult.getStatus())
+						|| CommandStatus.NothingChanged.equals(commandResult.getStatus())) {
 					commandTaskMap.remove(commandResult.getCommandId());
 					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
 							AsyncTaskStatus.Success, commandResult);

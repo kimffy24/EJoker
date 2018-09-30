@@ -70,7 +70,7 @@ public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProces
 				if (publishedVersion + 1 == currentEventVersion) {
 					dispatchProcessingMessageAsyncInternal(processingMessage);
 				} else if (publishedVersion + 1 < currentEventVersion) {
-					logger.info(
+					logger.debug(
 							"The sequence message cannot be process now as the version is not the next version, it will be handle later. contextInfo [aggregateRootId={},lastPublishedVersion={},messageVersion={}]",
 							message.getAggregateRootStringId(), publishedVersion, currentEventVersion);
 					processingMessage.addToWaitingList();

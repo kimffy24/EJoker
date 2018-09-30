@@ -12,7 +12,12 @@ public class AbstractReactThreadGroupService extends AbstractNormalWorkerGroupSe
 
 	@Override
 	public int usePoolSize() {
-		return (EJokerEnvironment.THREAD_POOL_SIZE) * 2 + 1;
+		return 1 + (2 * EJokerEnvironment.NUMBER_OF_PROCESSOR);
 	}
+
+	@Override
+	protected boolean prestartAll() {
+		return true;
+	};
 	
 }

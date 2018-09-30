@@ -8,6 +8,7 @@ public abstract class AbstractMessageHandler implements IMessageHandler {
 
 	@Override
 	public Future<AsyncTaskResultBase> handleAsync(IMessage message) {
+		assert false;
 		return null;
 	}
 

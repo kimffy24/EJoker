@@ -87,7 +87,7 @@ public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessa
 				continue;
 			}
 			mailboxDict.remove(mailboxKey);
-			logger.info("Removed inactive {} mailbox, aggregateRootId: {}", getMessageName(), mailboxKey);
+			logger.debug("Removed inactive {} mailbox, aggregateRootId: {}", getMessageName(), mailboxKey);
 		}
 	}
 	

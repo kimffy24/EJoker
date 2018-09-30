@@ -18,7 +18,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	
 	@EInitialize
 	private void init() {
-		asyncPool = ejokerThreadPoolMaster.getPoolInstance(this.getClass(), usePoolSize());
+		asyncPool = ejokerThreadPoolMaster.getPoolInstance(this, usePoolSize(), prestartAll());
 	}
 	
 	protected <T> Future<T> submitInternal(IFunction<T> vf) {
@@ -30,5 +30,9 @@ public abstract class AbstractNormalWorkerGroupService {
 	}
 	
 	protected abstract int usePoolSize();
+	
+	protected boolean prestartAll() {
+		return false;
+	};
 	
 }
