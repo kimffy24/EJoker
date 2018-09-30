@@ -11,7 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
-import com.jiefzz.ejoker.z.common.task.ReactWorker;
+import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.task.context.ReactWorker;
 
 public class EventMailBox implements Runnable {
 
@@ -30,7 +31,9 @@ public class EventMailBox implements Runnable {
 	private long lastActiveTime;
 	
 	private ReactWorker internalWorker = new ReactWorker(() -> run());
-
+	
+	private EJokerReactThreadScheduler reactThreadScheduler;
+	
 	public String getAggregateRootId() {
 		return aggregateRootId;
 	}
@@ -44,13 +47,14 @@ public class EventMailBox implements Runnable {
 		return internalWorker.resumeState();
 	}
 	
-	public EventMailBox(String aggregateRootId, int batchSize, IVoidFunction1<List<EventCommittingContext>> handleMessageAction) {
+	public EventMailBox(String aggregateRootId, int batchSize, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerReactThreadScheduler reactThreadScheduler) {
 		this.aggregateRootId = aggregateRootId;
 		this.batchSize = batchSize;
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
 		
 		internalWorker.start();
+		this.reactThreadScheduler = reactThreadScheduler;
 	}
 	
 	public void enqueueMessage(EventCommittingContext message) {

@@ -260,17 +260,22 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 					{
 						/// 为推演模式准备数据
 						if (speculateMode) {
-							if (current.genericDefination.hasGenericDeclare && null != instanceCandidateGenericTypeMap
-									.putIfAbsent(current.expressSignature, clazz)) {
-								instanceCandidateFaildMap.put(current.expressSignature, "");
+
+							/// fix #180930
+							/// 1. 存在同一个类继承多次接口的情况，如果不做前后值判断，就会自己把自己排除掉。
+							Class<?> previousClazz;
+							if (current.genericDefination.hasGenericDeclare && null != (previousClazz = instanceCandidateGenericTypeMap
+									.putIfAbsent(current.expressSignature, clazz))) {
+								if(!previousClazz.equals(clazz))
+									instanceCandidateFaildMap.put(current.expressSignature, "");
 							}
 							current.forEachImplementationsExpressionsDeeply(interfaceExpression -> {
 								/// fix #180930
-								/// 存在同一个类继承多次接口的情况，如果不做前后值判断，就会自己把自己排除掉。
-								Class<?> previousClazz;
-								if (interfaceExpression.genericDefination.hasGenericDeclare && null != (previousClazz = instanceCandidateGenericTypeMap
+								/// 1. 存在同一个类继承多次接口的情况，如果不做前后值判断，就会自己把自己排除掉。
+								Class<?> previousClazzx;
+								if (interfaceExpression.genericDefination.hasGenericDeclare && null != (previousClazzx = instanceCandidateGenericTypeMap
 										.putIfAbsent(interfaceExpression.expressSignature, clazz))) {
-									if(!previousClazz.equals(clazz))
+									if(!previousClazzx.equals(clazz))
 										instanceCandidateFaildMap.put(interfaceExpression.expressSignature, "");
 								}
 							});

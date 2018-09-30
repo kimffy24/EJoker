@@ -16,10 +16,9 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
-import com.jiefzz.ejoker.z.common.task.AbstractNormalWorkerGroupService;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
-		extends AbstractNormalWorkerGroupService
 		implements IProcessingMessageHandler<X, Y> {
 
 	protected final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -30,15 +29,13 @@ public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProces
 	@Dependence
 	private IOHelper ioHelper;
 	
-	@Override
-	protected int usePoolSize() {
-		// TODO 可配置化
-		return 1024;
-	}
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
 
 	@Override
 	public void handleAsync(X processingMessage) {
-		submit(() -> handleMessageAsync(processingMessage));
+		systemAsyncHelper.submit(() -> handleMessageAsync(processingMessage));
+		processingMessage.complete();
 	}
 	
 	public abstract String getName();

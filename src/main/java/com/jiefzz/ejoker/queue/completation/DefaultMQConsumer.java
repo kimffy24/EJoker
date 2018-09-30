@@ -22,6 +22,7 @@ import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.task.context.ReactWorker;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
@@ -35,9 +36,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private int maxBatchSize = maxBatch;
 	
-	private final AtomicBoolean boot = new AtomicBoolean(false);
+	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 
-	private final AtomicBoolean pasue = new AtomicBoolean(false);
+	private final AtomicBoolean onPasue = new AtomicBoolean(true);
 	
 	private final IVoidFunction1<Exception> exHandler= e -> logger.error("Some exception occur!!!", e);
 
@@ -61,9 +62,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	 * 用于控制offset检查线程唯一，当AtomicBoolean.get()为true时，可执行offset检查线程，
 	 * 此线程退出时会将AtomicBoolean的值置为false
 	 */
-	private Map<MessageQueue, AtomicBoolean> channleHandlingDashboard = new HashMap<>();
+	private Map<MessageQueue, ReactWorker> channleHandlingDashboard = new HashMap<>();
 	
-	private AtomicBoolean turn = new AtomicBoolean(false);
+//	private AtomicBoolean turn = new AtomicBoolean(false);
 	
 	public DefaultMQConsumer() {
 		super();
@@ -82,30 +83,38 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
-		Ensure.equal(false, boot.get(), "DefaultMQConsumer.start");
+		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.start");
 		this.messageProcessor = vf;
 	}
 
 	public void subscribe(String topic, String subExpression) {
-		Ensure.equal(false, boot.get(), "DefaultMQConsumer.start");
+		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.start");
 		this.focusTopic = topic;
 	}
 	
 	public void start() throws MQClientException {
 		super.start();
 		
-		boot.compareAndSet(false, true);
-		turn.compareAndSet(false, true);
+		onRunning.compareAndSet(false, true);
+//		turn.compareAndSet(false, true);
 		loadSubcribeInfo();
 		doWork();
-		enrollbserveLocalOffset();
+//		enrollbserveLocalOffset();
+		
+		new Thread(() -> {
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e) { }
+			onPasue.set(false);
+		}).start();
 	}
 	
 	public void shutdown() {
 		super.shutdown();
 
-		turn.compareAndSet(true, false);
-		boot.compareAndSet(true, false);
+//		turn.compareAndSet(true, false);
+		onRunning.compareAndSet(true, false);
+		ForEachUtil.processForEach(channleHandlingDashboard, (mq, worker) -> worker.stop());
 	}
 	
 	public void setMaxBatchSize(int maxBatchSize) {
@@ -139,22 +148,24 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				
 				final AtomicLong offset = new AtomicLong(consumedOffset);
 				
-				while(boot.get()) {
+				while(onRunning.get()) {
 
 					try {
 						
-						while(pasue.get()) {
+						while(onPasue.get()) {
 							logger.debug("The consumer has been pasue! Waiting!");
 							TimeUnit.MILLISECONDS.sleep(600);
+							if(!onRunning.get())
+								return;
 						}
 					
 						long currentOffset = offset.get();
-						if( maxOffset.get() <= currentOffset ) {
-//							logger.debug("The queue has no more message! Waiting!");
-							TimeUnit.MILLISECONDS.sleep(600);
-							maxOffset.getAndSet(maxOffset(mq));
-							continue;
-						}
+//						if( maxOffset.get() <= currentOffset ) {
+////							logger.debug("The queue has no more message! Waiting!");
+//							TimeUnit.MILLISECONDS.sleep(600);
+//							maxOffset.getAndSet(maxOffset(mq));
+//							continue;
+//						}
 						
 						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 						PullResult pullResult = pullBlockIfNotFound(mq, null, currentOffset, maxBatchSize);
@@ -218,7 +229,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			
 			{
 				aheadCompletion.put(mq, new ConcurrentHashMap<>());
-				channleHandlingDashboard.put(mq, new AtomicBoolean(false));
+				channleHandlingDashboard.put(mq, new ReactWorker(onPasue, () -> {
+						AtomicLong currentComsumedOffsetaAL = offsetConsumedDict.get(mq);
+						Map<Long, String> aheadOffsetDict = aheadCompletion.get(mq);
+						if(null == aheadOffsetDict || 0 == aheadOffsetDict.size()) {
+							return;
+						}
+						
+						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
+						int delta = 1;
+						for (; null != aheadOffsetDict.remove(currentComsumedOffsetL + delta); delta++)
+							;
+						delta--;
+						if (delta > 0) {
+							currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta);
+						}
+				}));
 				try {
 					offsetConsumedDict.put(mq, new AtomicLong(fetchConsumeOffset(mq, false)));
 				} catch (MQClientException e3) {
@@ -237,48 +263,48 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		logger.info("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 	}
 	
-	private void enrollbserveLocalOffset() {
-		new Thread(() -> {
-			for( ;; ) {
-				try {
-					TimeUnit.SECONDS.sleep(10);
-					observeLocalOffset();
-				} catch (Exception e) {
-					;
-				}
-				if(!turn.get())
-					break;
-			}
-		}).start();
-	}
-	
-	private void observeLocalOffset() {
-		ForEachUtil.processForEach(channleHandlingDashboard, (mq, dashboard) -> {
-			if (dashboard.compareAndSet(false, true)) {
-				new Thread(() -> {
-					try {
-						AtomicLong currentComsumedOffsetaAL = offsetConsumedDict.get(mq);
-						Map<Long, String> aheadOffsetDict = aheadCompletion.get(mq);
-						if(null == aheadOffsetDict || 0 == aheadOffsetDict.size()) {
-							return;
-						}
-						
-						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
-						int delta = 1;
-						for (; null != aheadOffsetDict.remove(currentComsumedOffsetL + delta); delta++)
-							;
-						delta--;
-						if (delta > 0) {
-							currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta);
-						}
-					}
-					finally {
-						dashboard.set(false);
-					}
-				}).start();
-			}
-		});
-	}
+//	private void enrollbserveLocalOffset() {
+//		new Thread(() -> {
+//			for( ;; ) {
+//				try {
+//					TimeUnit.SECONDS.sleep(10);
+//					observeLocalOffset();
+//				} catch (Exception e) {
+//					;
+//				}
+//				if(!turn.get())
+//					break;
+//			}
+//		}).start();
+//	}
+//	
+//	private void observeLocalOffset() {
+//		ForEachUtil.processForEach(channleHandlingDashboard, (mq, dashboard) -> {
+//			if (dashboard.compareAndSet(false, true)) {
+//				new Thread(() -> {
+//					try {
+//						AtomicLong currentComsumedOffsetaAL = offsetConsumedDict.get(mq);
+//						Map<Long, String> aheadOffsetDict = aheadCompletion.get(mq);
+//						if(null == aheadOffsetDict || 0 == aheadOffsetDict.size()) {
+//							return;
+//						}
+//						
+//						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
+//						int delta = 1;
+//						for (; null != aheadOffsetDict.remove(currentComsumedOffsetL + delta); delta++)
+//							;
+//						delta--;
+//						if (delta > 0) {
+//							currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta);
+//						}
+//					}
+//					finally {
+//						dashboard.set(false);
+//					}
+//				}).start();
+//			}
+//		});
+//	}
 	
 	public void syncOffsetToBroker() {
 		for(MessageQueue mq : matchQueue)
@@ -300,4 +326,5 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 //		for(MessageQueue mq : matchQueue)
 //			logger.debug("offsetConsumedDict.get({}).get() = {}", mq, offsetConsumedDict.get(mq).get());
 	}
+	
 }

@@ -9,22 +9,20 @@ import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
 import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
-import com.jiefzz.ejoker.z.common.task.AbstractNormalWorkerGroupService;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 @EService
-public class DefaultMessageDispatcher extends AbstractNormalWorkerGroupService implements IMessageDispatcher {
-	
-	// 可配置化
-	@Override
-	protected int usePoolSize() {
-		return 2048;
-	}
+public class DefaultMessageDispatcher implements IMessageDispatcher {
 
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+	
 	@Override
 	public Future<AsyncTaskResultBase> dispatchMessageAsync(IMessage message) {
 
@@ -32,10 +30,10 @@ public class DefaultMessageDispatcher extends AbstractNormalWorkerGroupService i
 		List<Future<Future<AsyncTaskResultBase>>> futures = new ArrayList<>();
 		List<? extends IMessageHandlerProxy> handlers = MessageHandlerPool.getProxyAsyncHandlers(message.getClass());
 		for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
-			futures.add(submit(() -> proxyAsyncHandler.handleAsync(message)));
+			futures.add(systemAsyncHelper.submit(() -> proxyAsyncHandler.handleAsync(message)));
 		}
 		
-		return submit(() -> {
+		return systemAsyncHelper.submit(() -> {
 			final AtomicInteger faildAmount = new AtomicInteger(0);
 			ForEachUtil.processForEach(futures, f -> {
 				try {

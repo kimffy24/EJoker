@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.task;
+package com.jiefzz.ejoker.z.common.task.context;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -10,6 +10,12 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 
+/**
+ * 不要用着频繁创建的对象上<br>
+ * * 否则频繁创建和频繁start()调用会带来很多开销
+ * @author kimffy
+ *
+ */
 public class ReactWorker {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ReactWorker.class);
@@ -20,17 +26,26 @@ public class ReactWorker {
 
 	private volatile Thread workerThread = null;
 	
-	private AtomicBoolean onRunning = new AtomicBoolean(false);
+	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 	
-	private AtomicBoolean onPasue = new AtomicBoolean(true);
+	private final AtomicBoolean onPasue;
 	
 	public ReactWorker(IVoidFunction vf, IVoidFunction1<Throwable> exceptionHandler) {
-		job = () -> doWork(vf);
-		this.exceptionHandler = exceptionHandler;
+		this(new AtomicBoolean(true), vf, exceptionHandler);
 	}
 	
 	public ReactWorker(IVoidFunction vf) {
-		this(vf, e -> logger.error("Uncauhgt exception!!!", e));
+		this(new AtomicBoolean(true), vf, e -> logger.error("Uncauhgt exception!!!", e));
+	}
+	
+	public ReactWorker(AtomicBoolean onPasue, IVoidFunction vf) {
+		this(onPasue, vf, e -> logger.error("Uncauhgt exception!!!", e));
+	}
+
+	public ReactWorker(AtomicBoolean onPasue, IVoidFunction vf, IVoidFunction1<Throwable> exceptionHandler) {
+		this.onPasue = onPasue;
+		this.job = () -> doWork(vf);
+		this.exceptionHandler = exceptionHandler;
 	}
 	
 	public void start() {
@@ -58,8 +73,7 @@ public class ReactWorker {
 	}
 	
 	public void pasue() {
-		if(onRunning.get())
-			onPasue.compareAndSet(false, true);
+		onPasue.compareAndSet(false, true);
 	}
 	
 	public void resume() {

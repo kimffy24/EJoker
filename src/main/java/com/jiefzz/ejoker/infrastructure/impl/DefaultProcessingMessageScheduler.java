@@ -7,14 +7,18 @@ import com.jiefzz.ejoker.infrastructure.IProcessingMessageScheduler;
 import com.jiefzz.ejoker.infrastructure.ProcessingMessageMailbox;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.task.AbstractReactThreadGroupService;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
-public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y>, Y extends IMessage> extends AbstractReactThreadGroupService implements IProcessingMessageScheduler<X, Y> {
+public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y>, Y extends IMessage>
+		implements IProcessingMessageScheduler<X, Y> {
 
 	@Dependence
 	IMessageDispatcher messageDispatcher;
-	
+
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+
 	@Override
 	public void scheduleMessage(final X processingMessage) {
 //		(new Thread(new Runnable() {
@@ -23,13 +27,12 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 //				messageDispatcher.dispatchMessageAsync(processingMessage.getMessage());
 //			}
 //		})).start();
-		submit(() -> messageDispatcher.dispatchMessageAsync(processingMessage.getMessage()));
+		systemAsyncHelper.submit(() -> messageDispatcher.dispatchMessageAsync(processingMessage.getMessage()));
 	}
 
 	@Override
 	public void scheduleMailbox(final ProcessingMessageMailbox<X, Y> mailbox) {
-		submit(() -> mailbox.run());
+		systemAsyncHelper.submit(() -> mailbox.run());
 	}
 
-	
 }

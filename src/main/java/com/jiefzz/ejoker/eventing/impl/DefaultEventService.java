@@ -40,9 +40,12 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
+import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
-public class DefaultEventService implements IEventService {
+public class DefaultEventService
+		implements IEventService {
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultEventService.class);
 
@@ -65,6 +68,12 @@ public class DefaultEventService implements IEventService {
 	@Dependence
 	IOHelper ioHelper;
 
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+	
+	@Dependence
+	private EJokerReactThreadScheduler reactThreadScheduler;
+
 	private final int batchSize = 1;
 
 	@Override
@@ -78,7 +87,7 @@ public class DefaultEventService implements IEventService {
 						batchPersistEventAsync(committingContexts, 0);
 					else
 						persistEventOneByOne(committingContexts);
-			}));
+			}, reactThreadScheduler));
 		eventMailbox.enqueueMessage(context);
 		refreshAggregateMemoryCache(context);
 
@@ -181,13 +190,17 @@ public class DefaultEventService implements IEventService {
 				switch (realrResult.getData()) {
 				case Success:
 					logger.debug("Persist event success, {}", context.eventStream);
-					new Thread(new Runnable() {
-						@Override
-						public void run() {
-							publishDomainEventAsync(context.processingCommand,
-									context.eventStream);
-						}
-					}).start();
+					
+//					new Thread(new Runnable() {
+//						@Override
+//						public void run() {
+//							publishDomainEventAsync(context.processingCommand,
+//									context.eventStream);
+//						}
+//					}).start();
+					systemAsyncHelper.submit(() -> publishDomainEventAsync(context.processingCommand,
+							context.eventStream));
+					
 					if (null != context.next)
 						persistEventAsync(context.next);
 					else

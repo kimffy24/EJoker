@@ -5,6 +5,7 @@ import java.util.concurrent.Future;
 
 import org.apache.rocketmq.client.exception.MQClientException;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.ICommand;
@@ -24,6 +25,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 /**
@@ -32,6 +34,9 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
  */
 @EService
 public class CommandService implements ICommandService, IWorkerService {
+
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
 	
 	/**
 	 * all command will send by this object.
@@ -109,7 +114,7 @@ public class CommandService implements ICommandService, IWorkerService {
 		
 		/// 如果这里能用协程，会更好，netty有吗？
 		/// TODO 一个优化点
-		new Thread(() -> {
+		systemAsyncHelper.submit(() -> {
 				try {
 					AsyncTaskResultBase result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
 					if(AsyncTaskStatus.Success == result.getStatus()) {
@@ -122,7 +127,7 @@ public class CommandService implements ICommandService, IWorkerService {
 					localTask.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage()));
 				}
 			}
-		).start();
+		);
 		
 		return localTask;
 		

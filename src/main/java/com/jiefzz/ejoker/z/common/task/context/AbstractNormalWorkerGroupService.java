@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.task;
+package com.jiefzz.ejoker.z.common.task.context;
 
 import java.util.concurrent.Future;
 
@@ -6,6 +6,8 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
+import com.jiefzz.ejoker.z.common.task.AsyncPool;
+import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 public abstract class AbstractNormalWorkerGroupService {
 
@@ -19,11 +21,11 @@ public abstract class AbstractNormalWorkerGroupService {
 		asyncPool = ejokerThreadPoolMaster.getPoolInstance(this.getClass(), usePoolSize());
 	}
 	
-	public <T> Future<T> submit(IFunction<T> vf) {
+	protected <T> Future<T> submitInternal(IFunction<T> vf) {
 		return asyncPool.execute(() -> vf.trigger());
 	}
 
-	public Future<Boolean> submit(IVoidFunction vf) {
+	protected Future<Boolean> submitInternal(IVoidFunction vf) {
 		return asyncPool.execute(() -> { vf.trigger(); return true; });
 	}
 	

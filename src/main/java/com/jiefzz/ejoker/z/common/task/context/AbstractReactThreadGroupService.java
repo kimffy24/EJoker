@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.task;
+package com.jiefzz.ejoker.z.common.task.context;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 
@@ -12,7 +12,7 @@ public class AbstractReactThreadGroupService extends AbstractNormalWorkerGroupSe
 
 	@Override
 	public int usePoolSize() {
-		return EJokerEnvironment.THREAD_POOL_SIZE + 1;
+		return (EJokerEnvironment.THREAD_POOL_SIZE) * 2 + 1;
 	}
 	
 }

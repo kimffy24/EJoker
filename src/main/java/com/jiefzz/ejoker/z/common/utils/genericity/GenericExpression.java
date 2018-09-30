@@ -362,7 +362,7 @@ public class GenericExpression {
 			Set<Entry<String,GenericDefinedField>> entrySet = currentExpression.fieldExpressions.entrySet();
 			for(Entry<String,GenericDefinedField> entry: entrySet) {
 				if(hasProcessedField.contains(entry.getKey()))
-					return;
+					continue;
 				hasProcessedField.add(entry.getKey());
 				vf.trigger(entry.getKey(), entry.getValue());
 			}

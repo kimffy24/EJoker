@@ -10,20 +10,24 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.task.AbstractReactThreadGroupService;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
-public class SendQueueMessageService extends AbstractReactThreadGroupService {
+public class SendQueueMessageService {
 
 	private final static Logger logger = LoggerFactory.getLogger(SendQueueMessageService.class);
 
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+	
 	public Future<AsyncTaskResultBase> sendMessageAsync(final DefaultMQProducer producer, final EJokerQueueMessage message,
 			final String routingKey) {
 		
-		Future<AsyncTaskResultBase> execute = submit(() -> {
+		return systemAsyncHelper.submit(() -> {
 				try {
 					SendResult sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
 //					SendResult sendResult = future.get();
@@ -40,6 +44,6 @@ public class SendQueueMessageService extends AbstractReactThreadGroupService {
 			}
 
 		);
-		return execute;
 	}
+
 }
