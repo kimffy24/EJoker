@@ -1,9 +1,9 @@
 package com.jiefzz.ejoker.infrastructure;
 
 import java.util.List;
-import java.util.concurrent.Future;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public interface IMessageDispatcher {
 
@@ -12,13 +12,13 @@ public interface IMessageDispatcher {
 	 * @param message
 	 * @return
 	 */
-	Future<AsyncTaskResultBase> dispatchMessageAsync(IMessage message);
+	SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message);
 	
 	/**
 	 * Dispatch the given messages async.
 	 * @param messages
 	 * @return
 	 */
-	Future<AsyncTaskResultBase> dispatchMessagesAsync(List<? extends IMessage> messages);
+	SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(List<? extends IMessage> messages);
     
 }

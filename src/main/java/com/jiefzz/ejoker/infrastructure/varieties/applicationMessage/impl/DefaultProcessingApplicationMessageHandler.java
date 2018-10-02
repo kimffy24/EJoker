@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.impl;
 
-import com.jiefzz.ejoker.infrastructure.impl.DefaultProcessingMessageHandlerAbstract;
+import com.jiefzz.ejoker.infrastructure.impl.DefaultProcessingMessageHandlerA;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.ProcessingApplicationMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -13,6 +13,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
  *
  */
 @EService
-public class DefaultProcessingApplicationMessageHandler extends DefaultProcessingMessageHandlerAbstract<ProcessingApplicationMessage, IApplicationMessage> {
+public class DefaultProcessingApplicationMessageHandler extends DefaultProcessingMessageHandlerA<ProcessingApplicationMessage, IApplicationMessage> {
 
 }

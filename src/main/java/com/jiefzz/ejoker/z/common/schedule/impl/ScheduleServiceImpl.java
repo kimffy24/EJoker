@@ -16,7 +16,7 @@ import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 @EService
 public class ScheduleServiceImpl implements IScheduleService {
 
-	private Map<String, Timer> timerTaskList = new ConcurrentHashMap<String, Timer>();
+	private Map<String, Timer> timerTaskList = new ConcurrentHashMap<>();
 	
 	@Dependence
 	private Scavenger scavenger;
@@ -29,7 +29,8 @@ public class ScheduleServiceImpl implements IScheduleService {
 	@Override
 	public void startTask(String name, Runnable action, long dueTime, long period) {
 		Timer timer;
-		timerTaskList.put(name, (timer = new Timer()));
+		if(null != timerTaskList.putIfAbsent(name, (timer = new Timer())))
+			throw new RuntimeException(String.format("Task name of [%s] is exists before!!!", name));
         timer.schedule(new RemindTask(action), dueTime, period);
 	}
 

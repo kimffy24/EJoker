@@ -1,15 +1,17 @@
 package com.jiefzz.ejoker.z.common.io;
 
 import java.io.IOException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
 /**
  * 模拟IOHelper的实现
@@ -27,12 +29,21 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	protected int usePoolSize() {
 		return EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE;
 	}
+	
+	/**
+	 * ioHelper自身继承了线程组服务，但是主要目的还是为了IO重试<br>
+	 * 其余异步委托还是使用系统异步助手
+	 */
+	@Dependence
+	private EJokerAsyncHelper eJokerAsyncHelper;
 
-	public void tryAsyncAction(IOActionExecutionContext<?> externalContext) {
+	public <T> void tryAsyncAction(IOActionExecutionContext<T> externalContext) {
 
 		if (!externalContext.hasInitialized) {
 			externalContext.init();
 			externalContext.hasInitialized = true;
+			
+			externalContext.ioHelper = this;
 		}
 
 		try {
@@ -43,11 +54,12 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 
 	}
 
-	private void taskContinueAction(
-			IOActionExecutionContext<? extends AsyncTaskResultBase> externalContext) throws IOException {
-		Future<AsyncTaskResultBase> task = (Future<AsyncTaskResultBase> )externalContext.asyncAction();
+	private <T> void taskContinueAction(IOActionExecutionContext<T> externalContext) throws IOException {
+		
+		SystemFutureWrapper<AsyncTaskResult<T>> task = eJokerAsyncHelper.submit(() -> externalContext.asyncAction());
+		
 		try {
-			AsyncTaskResultBase result = null;
+			AsyncTaskResult<T> result = null;
 			try {
 				result = task.get();
 			} catch (Exception e) {
@@ -76,9 +88,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			}
 			switch (result.status) {
 			case Success:
-				// TODO while use wildcard type on genericity parameters, we couldn't delivery any parameters
-				// so ...
-				((IOActionExecutionContext )externalContext).finishAction(result);
+				externalContext.finishAction(result.getData());
 				break;
 			case IOException:
 				logger.error(
@@ -169,7 +179,9 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	 * @author JiefzzLon
 	 *
 	 */
-	public static abstract class IOActionExecutionContext<TAsyncResult extends AsyncTaskResultBase> {
+	public static abstract class IOActionExecutionContext<TAsyncResult> {
+		
+		private IOHelper ioHelper = null;
 
 		private boolean hasInitialized = false;
 
@@ -204,14 +216,17 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		 * 
 		 * @return
 		 */
-		abstract public Future<TAsyncResult> asyncAction() throws IOException;
+		abstract public TAsyncResult asyncAction() throws Exception;
 
 		/**
 		 * 重试执行的方法
 		 * 
 		 */
-		abstract public void faildLoopAction();
-
+//		abstract public void faildLoopAction();
+		public void faildLoopAction() {
+			ioHelper.tryAsyncAction(this);
+		}
+		
 		/**
 		 * 异步执行完成后对结果的处理的方法<br>
 		 * !!! 异步执行完成不代表 异步任务正确并完成 需要对结果返回信息确认。

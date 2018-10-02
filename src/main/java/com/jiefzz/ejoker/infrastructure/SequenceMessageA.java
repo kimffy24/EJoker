@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-public abstract class SequenceMessageAbstract<TAggregateRootId> extends MessageAbstract implements ISequenceMessage {
+public abstract class SequenceMessageA<TAggregateRootId> extends MessageA implements ISequenceMessage {
 
 	private TAggregateRootId aggregateRootId;
 	

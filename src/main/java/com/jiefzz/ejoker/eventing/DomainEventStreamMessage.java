@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.jiefzz.ejoker.infrastructure.SequenceMessageAbstract;
+import com.jiefzz.ejoker.infrastructure.SequenceMessageA;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
-public class DomainEventStreamMessage extends SequenceMessageAbstract<String> {
+public class DomainEventStreamMessage extends SequenceMessageA<String> {
 
 	@PersistentIgnore
 	private static final long serialVersionUID = -721576949011677756L;

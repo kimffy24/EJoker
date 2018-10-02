@@ -1,18 +1,22 @@
-package com.jiefzz.ejoker.infrastructure;
+package com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage;
 
 import com.jiefzz.ejoker.utils.EObjectId;
 
-public abstract class MessageAbstract implements  IMessage {
+public abstract class PublishableExceptionA extends RuntimeException implements IPublishableException {
+
+	private static final long serialVersionUID = 4037848789314871750L;
 
 	private String id;
-	private long sequence;
+	
 	private long timestamp;
 	
-	public MessageAbstract() {
-		id=EObjectId.generateHexStringId();
-		timestamp=System.currentTimeMillis();
-		sequence=1l;
-	}
+	private long sequence;
+	
+	public PublishableExceptionA() {
+        id = EObjectId.generateHexStringId();
+        timestamp = System.currentTimeMillis();
+        sequence = 1;
+    }
 	
 	@Override
 	public String getRoutingKey() {
@@ -27,11 +31,11 @@ public abstract class MessageAbstract implements  IMessage {
 	@Override
 	public void setId(String id) {
 		this.id = id;
-	};
+	}
 
 	@Override
 	public String getId() {
-		return this.id;
+		return id;
 	}
 
 	@Override

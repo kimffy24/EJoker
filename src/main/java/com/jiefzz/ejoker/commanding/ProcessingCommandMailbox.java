@@ -5,26 +5,40 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-public class ProcessingCommandMailbox implements Runnable {
+public class ProcessingCommandMailbox {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
 	
-	private final String aggregateRootId;
+	private final EJokerReactThreadScheduler threadScheduler;
+	
+	private final EJokerAsyncHelper eJokerAsyncHelper;
+	
+	private final Lock asyncLock = new ReentrantLock();
+	
+	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
+
+	private final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<>();
 	
 	private final IProcessingCommandHandler messageHandler;
 	
-	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<Long, ProcessingCommand>();
-
-	private final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<Long, CommandResult>();
+	private final int _batchSize = 16;
 	
 	private AtomicLong nextSequence = new AtomicLong(0l);
 	
@@ -32,102 +46,59 @@ public class ProcessingCommandMailbox implements Runnable {
 	
 	private AtomicLong consumedSequence = new AtomicLong(-1l);
 	
-	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	private AtomicBoolean onRunning = new AtomicBoolean(false);
+
+	private AtomicBoolean onPaused = new AtomicBoolean(false);
+	
+	private AtomicBoolean isProcessingCommand = new AtomicBoolean(false);
+	
+	private final String aggregateRootId;
 	
 	private long lastActiveTime = System.currentTimeMillis();
-
-	private InversionToken processingOrPausedSign = new InversionToken();
+	
+	public boolean onRunning() {
+		return onRunning.get();
+	}
 	
 	public String getAggregateRootId() {
 		return aggregateRootId;
 	}
+	
+	public long getLastActiveTime() {
+		return lastActiveTime;
+	}
 
-	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler) {
+	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler, EJokerReactThreadScheduler scheduler, EJokerAsyncHelper eJokerAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.messageHandler = messageHandler;
+		
+		Ensure.notNull(scheduler, "scheduler");
+		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
+		this.threadScheduler = scheduler;
+		this.eJokerAsyncHelper = eJokerAsyncHelper;
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		long genericSequence = nextSequence.getAndIncrement();
-		message.setSequence(genericSequence);
+		long acquireSequence = nextSequence.getAndIncrement();
+		message.setSequence(acquireSequence);
 		message.setMailbox(this);
-		messageDict.put(genericSequence, message);
+		messageDict.put(acquireSequence, message);
 		lastActiveTime = System.currentTimeMillis();
 		tryRun();
 	}
-
-	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
-		long sequence = processingCommand.getSequence();
-		messageDict.remove(sequence);
-		completeCommand(processingCommand, commandResult);
-	}
-
-	@Override
-    public void run() {
-		// TODO 通过调度器发起线程处理新的命令 
-		// TODO 此处为调度器发起新线程的起点
-
+	
+	public void pause() {
 		lastActiveTime = System.currentTimeMillis();
-		
-		if (processingOrPausedSign.isPaused()) {
-			processingOrPausedSign.waitingRelease();
-		}
-		
-		if(!processingOrPausedSign.turnToProcessing()) {
-			try { TimeUnit.MILLISECONDS.sleep(1); } catch (InterruptedException e) { }
-			run();
-			return;
-		}
-
-		ProcessingCommand processingCommand = null;
-		int count = 0;
-		try {
-			while (consumingSequence.get() < nextSequence.get() && count < EJokerEnvironment.MAX_BATCH_COMMANDS) {
-				processingCommand = messageDict.get(consumingSequence.getAndIncrement());
-				if (processingCommand != null)
-					messageHandler.handle(processingCommand);
-            	count++;
-        	}
-        } catch (Exception ex) {
-            // TODO 触发错误后，还需要处理残留的命令
-            ex.printStackTrace();
-            logger.error(String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}", aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""), ex);
-            try { TimeUnit.MILLISECONDS.sleep(1); } catch (InterruptedException e) { }
-        } finally {
-        	processingOrPausedSign.releaseProcessing();
-        	exit();
-            if (consumingSequence.get() < nextSequence.get()) {
-            	tryRun();
-            }
-        }
-    }
-    
-	public void pause(){
-		lastActiveTime = System.currentTimeMillis();
-		// 如果当前状态位为 非暂停 状态
-		switch(processingOrPausedSign.get()) {
-		case 0:
-			if(!processingOrPausedSign.turnToPaused()) {
-				pause();
-				return ;
-			}
-			break;
-		case 1:
-			processingOrPausedSign.waitingRelease();
-			pause();
-		case 2:
-		default :
-			break;
-		}
+		if (onPaused.compareAndSet(false, true))
+			AcquireHelper.waitAcquire(isProcessingCommand, 1000l, () -> logger.info(
+					"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
+					aggregateRootId));
 	}
 	
-	public void resume(){
+	public void resume() {
 		lastActiveTime = System.currentTimeMillis();
-		// 如果当前状态位为 暂停 状态
-		if(processingOrPausedSign.isPaused()) {
-			processingOrPausedSign.releasePaused();
-			tryRun();
-		}
+		onPaused.compareAndSet(false, true);
+		tryRun();
 	}
 	
 	public void resetConsumingSequence(long consumingSequence){
@@ -135,150 +106,143 @@ public class ProcessingCommandMailbox implements Runnable {
         this.consumingSequence.set(consumingSequence);
         requestToCompleteCommandDict.clear();
 	}
+
+	/// 重点检查异步语义对不对！
+	public SystemFutureWrapper<AsyncTaskResult<Void>> completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
+		return eJokerAsyncHelper.submit(() -> {
+			asyncLock.lock();
+			try {
+		        lastActiveTime = System.currentTimeMillis();
+		        long processingSequence = processingCommand.getSequence();
+		        long expectSequence = consumedSequence.get() + 1;
+				if (processingSequence == expectSequence)
+	            {
+	                messageDict.remove(processingSequence);
+	                // TODO @await
+//	              completeCommand(processingCommand, commandResult);
+	                SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandTask = completeCommand(processingCommand, commandResult);
+	                completeCommandTask.get();
+	                consumedSequence.set(processNextCompletedCommands(processingSequence));
+	            }
+	            else if (processingSequence > expectSequence)
+	            {
+	                requestToCompleteCommandDict.put(processingSequence, commandResult);
+	            }
+	            else if (processingSequence < expectSequence)
+	            {
+	                messageDict.remove(processingSequence);
+	                // TODO @await
+//	              completeCommand(processingCommand, commandResult);
+	                SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandTask = completeCommand(processingCommand, commandResult);
+	                completeCommandTask.get();
+	                requestToCompleteCommandDict.remove(processingSequence);
+	            } else {
+	            	assert false;
+	            }
+			} catch (Exception ex) {
+	            logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
+	            throw new AsyncWrapperException(ex);
+			} finally {
+				asyncLock.unlock();
+			}
+		});
+	}
+
+    public void run() {
+		// TODO 通过调度器发起线程处理新的命令 
+		// TODO 此处为调度器发起新线程的起点
+
+		lastActiveTime = System.currentTimeMillis();
+		AcquireHelper.waitAcquire(onPaused, 1000l,
+				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}",
+						aggregateRootId));
+		
+		ProcessingCommand processingCommand = null;
+
+		try {
+			isProcessingCommand.set(true);
+			int count = 0;
+			while (consumingSequence.get() < nextSequence.get() && count < EJokerEnvironment.MAX_BATCH_COMMANDS) {
+				processingCommand = messageDict.get(consumingSequence.get());
+				if (null != processingCommand)
+					// TODO @await
+					messageHandler.handle(processingCommand).get();
+            	count++;
+            	/// 不要再messageDict.get()过程中使用getAndIncrement(),
+            	/// 因为如果messageHandler.handle(processingCommand)出现异常，将难以回退consumingSequence
+            	/// 而完成后自增更符合语义
+            	consumingSequence.getAndIncrement();
+        	}
+        } catch (Exception ex) {
+			logger.error(
+					String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}",
+							aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""),
+					ex);
+			try {
+				TimeUnit.MILLISECONDS.sleep(1);
+			} catch (InterruptedException e) {
+			}
+		} finally {
+			isProcessingCommand.set(false);
+        	exit();
+            if (consumingSequence.get() < nextSequence.get()) {
+            	tryRun();
+            }
+        }
+    }
+    
+	/**
+	 * 单位：毫秒
+	 */
+	public boolean isInactive(long timeoutMilliseconds) {
+		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+	}
 	
 	/* ========================== */
 
-	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+	private ProcessingCommand getProcessingCommand(long sequence) {
+		return messageDict.get(sequence);
+	}
+	
+    private long processNextCompletedCommands(long baseSequence)
+    {
+    	long returnSequence = baseSequence;
+    	long nextSequence = baseSequence + 1;
+        while (requestToCompleteCommandDict.containsKey(nextSequence))
+        {
+        	ProcessingCommand processingCommand;
+            if (null != (processingCommand = messageDict.remove(nextSequence)))
+            {
+            	CommandResult commandResult = requestToCompleteCommandDict.get(nextSequence);
+                completeCommand(processingCommand, commandResult);
+            }
+            requestToCompleteCommandDict.remove(nextSequence);
+            returnSequence = nextSequence;
+            nextSequence++;
+        }
+        return returnSequence;
+    }
+    
+	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		try {
-			processingCommand.complete(commandResult);
+			return processingCommand.complete(commandResult);
 		} catch (Exception ex) {
-			// TODO log here !!!
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
-			ex.printStackTrace();
+			return new SystemFutureWrapper<>(FutureUtil.completeTask());
 		}
 	}
 
     private void tryRun() {
         if (tryEnter()) {
-             new Thread(this).run();
+        	threadScheduler.submit(() -> run());
         }
     }
     
     private boolean tryEnter() {
-        return runningOrNot.compareAndSet(false, true);
+        return onRunning.compareAndSet(false, true);
     }
     
     private void exit() {
-    	runningOrNot.compareAndSet(true, false);
+    	onRunning.set(false);
     }
-
-	public boolean isInactive(long timeoutSeconds) {
-		return (System.currentTimeMillis() - lastActiveTime) >= timeoutSeconds;
-	}
-	
-	// 互异流程控制
-
-	private static class InversionToken {
-		
-		/**
-		 * 初始状态为0<br>
-		 * 0 free可抢占的<br>
-		 * 1 processing处理过程中<br>
-		 * 2 paused暂停状态<br>
-		 */
-		private AtomicInteger processingOrPaused = new AtomicInteger(0);
-		
-		public int get() {
-			return processingOrPaused.get();
-		}
-
-		public boolean isRelease() {
-			return 0 == processingOrPaused.get();
-		}
-
-		public boolean isProcessing() {
-			return 1 == processingOrPaused.get();
-		}
-
-		public boolean isPaused() {
-			return 2 == processingOrPaused.get();
-		}
-		
-		public boolean turnToProcessing() {
-			if(processingOrPaused.get() == 1)
-				return true;
-			else if(processingOrPaused.compareAndSet(0, 1)) {
-					// 从free进入状态processing
-					unparkAll();
-					return true;
-			}
-			return false;
-		}
-		
-		public boolean turnToPaused() {
-			if(processingOrPaused.get() == 2)
-				return true;
-			else if(processingOrPaused.compareAndSet(0, 2)) {
-				// 从free进入paused状态
-				unparkAll();
-				return true;
-			}
-			return false;
-		}
-
-		public void releaseProcessing() {
-			if(processingOrPaused.compareAndSet(1, 0)) {
-				// 从processing进入状态free
-				unparkAll();
-			}
-		}
-		
-		public void releasePaused() {
-			if(processingOrPaused.compareAndSet(2, 0)) {
-				// 从paused进入状态free
-				unparkAll();
-			}
-		}
-		
-		public void waitingProcessing() {
-			// 状态不是processing
-			waitingState(1);
-		}
-		
-		public void waitingPaused() {
-			// 状态不是paused
-			waitingState(2);
-		}
-		
-		public void waitingRelease() {
-			// 状态不是free
-			waitingState(0);
-		}
-		
-		private void waitingState(int state) {
-			if(processingOrPaused.get() == state) {
-				park(state);
-			}
-		}
-		
-		private void park(int state) {
-			if(state < 0 || state > 2)
-				throw new RuntimeException("unexcept state!!! state=" +state);
-			Node newOne = new Node();
-			newOne.waitingThread = Thread.currentThread();
-			if(head[state] == null) {
-				head[state] = (tail[state] = newOne);
-			} else {
-				tail[state].next = newOne;
-				tail[state] = newOne;
-			}
-			LockSupport.park();
-		}
-		
-		private void unparkAll() {
-			int state = processingOrPaused.get();
-			while(head[state] != null) {
-				LockSupport.unpark(head[state].waitingThread);
-				head[state] = head[state].next;
-			}
-			tail[state] = null;
-		}
-		
-		private Node[] head = { null, null, null }, tail = { null, null, null };
-		
-		private static class Node {
-			Thread waitingThread = null;
-			Node next = null;
-		}
-	}
 }

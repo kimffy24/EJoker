@@ -7,16 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.EJoker;
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageHandler;
 import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 
 /**
  * 由于message类型可以有多个handler，
@@ -75,7 +79,7 @@ public class MessageHandlerPool {
 		public final Method handleReflectionMethod;
 		
 		public final String identification;
-
+		
 		public MessageHandlerReflectionTuple(Method handleReflectionMethod) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
@@ -90,14 +94,34 @@ public class MessageHandlerPool {
 		}
 
 		@Override
-		public Future<AsyncTaskResultBase> handleAsync(IMessage message) {
-			try {
-				return (Future<AsyncTaskResultBase> )handleReflectionMethod.invoke(getInnerObject(), message);
-			} catch (Exception e) {
-				RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<AsyncTaskResultBase>();
-				ripenFuture.trySetException(e);
-				return ripenFuture;
-			}
+		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message) {
+			/// 使用默认的异步任务执行器，就是创建新线程
+			return handleAsync(message, (c) -> {
+				RipenFuture<AsyncTaskResult<Void>> ripenFuture = new RipenFuture<>();
+				new Thread(() -> {
+						try {
+							c.trigger();
+							ripenFuture.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, "", null));
+						}catch (Exception e) {
+							ripenFuture.trySetException(e);
+						}
+					}) .start();
+				return new SystemFutureWrapper<>(ripenFuture);
+			});
+		}
+
+		/**
+		 * submitter为异步任务执行器的调度封装方法
+		 */
+		@Override
+		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, IVoidFunction> submitter) {
+			return submitter.trigger(()-> {
+				try {
+					handleReflectionMethod.invoke(getInnerObject(), message);
+				} catch (Exception e) {
+					throw new AsyncWrapperException(e);
+				}
+			});
 		}
 
 		@Override

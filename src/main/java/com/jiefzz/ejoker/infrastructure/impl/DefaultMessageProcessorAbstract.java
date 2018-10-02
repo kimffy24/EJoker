@@ -19,7 +19,6 @@ import com.jiefzz.ejoker.infrastructure.IProcessingMessageScheduler;
 import com.jiefzz.ejoker.infrastructure.ProcessingMessageMailbox;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
-import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
@@ -34,9 +33,6 @@ public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessa
 	private IScheduleService scheduleService;
 
 	@Dependence
-	private Scavenger scavenger;
-
-	@Dependence
 	private IProcessingMessageScheduler<X, Y> processingMessageScheduler;
 	
 	@Dependence
@@ -47,14 +43,13 @@ public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessa
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
-				this.getClass().getName() + "#cleanInactiveMailbox()",
-				() -> DefaultMessageProcessorAbstract.this.cleanInactiveMailbox(),
+				String.format("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				() -> cleanInactiveMailbox(),
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
-		
-		scavenger.addFianllyJob(() -> scheduleService.stopTask(this.getClass().getName() + "#cleanInactiveMailbox()"));
 	}
 	
+	// react调度
 	public void process(X processingMessage) {
 		String routingKey = processingMessage.getMessage().getRoutingKey();
 		if (!StringHelper.isNullOrWhiteSpace(routingKey)) {
@@ -71,11 +66,11 @@ public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessa
 	 * 清理超时mailbox的函数。<br>
 	 */
 	private void cleanInactiveMailbox() {
-		List<String> idelMailboxKeyList = new ArrayList<String>();
+		List<String> idelMailboxKeyList = new ArrayList<>();
 		Set<Entry<String,ProcessingMessageMailbox<X,Y>>> entrySet = mailboxDict.entrySet();
 		for(Entry<String,ProcessingMessageMailbox<X,Y>> entry:entrySet) {
 			ProcessingMessageMailbox<X,Y> processingMailbox = entry.getValue();
-			if(!processingMailbox.isRunning() && processingMailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT))
+			if(!processingMailbox.onRunning() && processingMailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT))
 				idelMailboxKeyList.add(entry.getKey());
 		}
 		

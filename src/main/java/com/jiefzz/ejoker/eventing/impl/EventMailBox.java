@@ -80,10 +80,13 @@ public class EventMailBox implements Runnable {
 	public void clear() {
 		while(null!=messageQueue.poll());
 	}
-	
-    public boolean isInactive(long timeoutSeconds) {
-        return (long )((System.currentTimeMillis() - lastActiveTime)/1000) >= timeoutSeconds;
-    }
+
+	/**
+	 * 单位：毫秒
+	 */
+	public boolean isInactive(long timeoutMilliseconds) {
+		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+	}
 
     private boolean tryEnter() {
 		return runningOrNot.compareAndSet(false, true);

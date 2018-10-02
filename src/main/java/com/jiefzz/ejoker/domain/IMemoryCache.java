@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.domain;
 
-import java.util.Collection;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public interface IMemoryCache {
 	
@@ -10,16 +10,7 @@ public interface IMemoryCache {
          * @param aggregateRootType
          * @return
          */
-        public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType);
-        
-        /**
-         * Get a strong type aggregate from memory cache.<br>
-         * Java Could not get &lt;T&gt; real type in runtime!!!
-         * @deprecated Java Could not get &lt;T&gt; real type in runtime!!!
-         * @param aggregateRootId
-         * @return
-         */
-        public <T extends IAggregateRoot> T get(Object aggregateRootId);
+        public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType);
         
         /**
          * Set an aggregate to memory cache.
@@ -32,19 +23,6 @@ public interface IMemoryCache {
          * @param aggregateRootTypeName
          * @param aggregateRootId
          */
-        public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId);
+        public SystemFutureWrapper<Void> refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId);
         
-        /**
-         * Remove an aggregate from memory.
-         * @param aggregateRootId
-         * @return
-         */
-        public boolean remove(Object aggregateRootId);
-        
-        /**
-         * Get all the aggregates from memory cache.
-         * @return
-         */
-        public Collection<AggregateCacheInfo> getAll();
-	
 }

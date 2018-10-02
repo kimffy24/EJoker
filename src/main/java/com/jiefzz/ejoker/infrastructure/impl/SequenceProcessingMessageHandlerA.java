@@ -1,8 +1,5 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
-import java.io.IOException;
-import java.util.concurrent.Future;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +13,10 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
-import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
-public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
+public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
 		implements IProcessingMessageHandler<X, Y> {
 
 	protected final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -30,18 +28,17 @@ public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProces
 	private IOHelper ioHelper;
 	
 	@Dependence
-	private SystemAsyncHelper systemAsyncHelper;
-
-	@Override
-	public void handleAsync(X processingMessage) {
-		systemAsyncHelper.submit(() -> handleMessageAsync(processingMessage));
-		processingMessage.complete();
-	}
+	private EJokerAsyncHelper eJokerAsyncHelper;
 	
 	public abstract String getName();
 
-    protected abstract Future<AsyncTaskResultBase> dispatchProcessingMessageAsync(X processingMessage);
-    
+    protected abstract SystemFutureWrapper<AsyncTaskResult<Void>> dispatchProcessingMessageAsync(X processingMessage);
+
+	@Override
+	public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage) {
+		return eJokerAsyncHelper.submit(() -> handleMessageAsync(processingMessage));
+	}
+	
     private void handleMessageAsync(X processingMessage) {
     	
         Y message = processingMessage.getMessage();
@@ -54,13 +51,8 @@ public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProces
 			}
 
 			@Override
-			public Future<AsyncTaskResult<Long>> asyncAction() throws IOException {
-				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId());
-			}
-
-			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
+			public AsyncTaskResult<Long> asyncAction() throws Exception {
+				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId()).get();
 			}
 
 			@Override
@@ -107,13 +99,8 @@ public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProces
 			}
 
 			@Override
-			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
-				return dispatchProcessingMessageAsync(processingMessage);
-			}
-
-			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
+			public AsyncTaskResultBase asyncAction() throws Exception {
+				return dispatchProcessingMessageAsync(processingMessage).get();
 			}
 
 			@Override
@@ -151,14 +138,9 @@ public abstract class SequenceProcessingMessageHandlerAbstract<X extends IProces
 			}
 
 			@Override
-			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
+			public AsyncTaskResultBase asyncAction() throws Exception {
 				Y message = processingMessage.getMessage();
-				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion());
-			}
-
-			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
+				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion()).get();
 			}
 
 			@Override

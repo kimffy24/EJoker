@@ -21,17 +21,12 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 
 	@Override
 	public void scheduleMessage(final X processingMessage) {
-//		(new Thread(new Runnable() {
-//			@Override
-//			public void run() {
-//				messageDispatcher.dispatchMessageAsync(processingMessage.getMessage());
-//			}
-//		})).start();
 		systemAsyncHelper.submit(() -> messageDispatcher.dispatchMessageAsync(processingMessage.getMessage()));
 	}
 
 	@Override
 	public void scheduleMailbox(final ProcessingMessageMailbox<X, Y> mailbox) {
+		// 异步线程会等待到任务退出为止，期间会一只占用一条线程
 		systemAsyncHelper.submit(() -> mailbox.run());
 	}
 

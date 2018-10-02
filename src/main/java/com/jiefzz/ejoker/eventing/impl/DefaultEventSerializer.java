@@ -10,9 +10,9 @@ import java.util.Set;
 
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 
 @EService
 public class DefaultEventSerializer implements IEventSerializer {

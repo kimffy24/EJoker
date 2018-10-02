@@ -1,8 +1,7 @@
 package com.jiefzz.ejoker.z.common.task.context;
 
-import java.util.concurrent.Future;
-
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 
@@ -15,8 +14,8 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 @EService
 public class EJokerReactThreadScheduler extends AbstractReactThreadGroupService {
 	
-	public <T> Future<T> schedule(IFunction<T> f) {
-		return submitInternal(f);
+	public <T> SystemFutureWrapper<T> schedule(IFunction<T> f) {
+		return new SystemFutureWrapper<>(submitInternal(f));
 	}
 
 	public void submit(IVoidFunction f) {

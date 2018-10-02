@@ -5,7 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public interface IEventStore {
 	
@@ -13,14 +13,13 @@ public interface IEventStore {
 	
 	public void setSupportBatchAppendEvent(boolean supportBatchAppendEvent);
 	
-	public void batchAppendAsync(LinkedHashSet<DomainEventStream> eventStreams);
+	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> batchAppendAsync(LinkedHashSet<DomainEventStream> eventStreams);
 	
-	/**
-	 * 异步保存事件
-	 * @param event
-	 */
-	public Future<AsyncTaskResultBase> appendAsync(DomainEventStream eventStream);
+	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync(DomainEventStream eventStream);
 	
+	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, int version);
+	
+	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId);
 	
 	/**
 	 * 为保证返回顺序请使用LinkedHashSet
@@ -33,10 +32,7 @@ public interface IEventStore {
 	 */
 	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
     
-	public Future<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
+	public SystemFutureWrapper<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
 
-	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, int version);
-	
-	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId);
 	
 }

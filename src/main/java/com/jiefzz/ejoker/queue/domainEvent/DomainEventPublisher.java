@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.queue.domainEvent;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.concurrent.Future;
 
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
@@ -20,12 +18,15 @@ import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 @EService
 public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IWorkerService {
 
+	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(DomainEventPublisher.class);
 
 	@Dependence
@@ -67,7 +68,7 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	}
 
 	@Override
-	public Future<AsyncTaskResultBase> publishAsync(DomainEventStreamMessage eventStream) {
+	public SystemFutureWrapper<AsyncTaskResult<Void>> publishAsync(DomainEventStreamMessage eventStream) {
 		EJokerQueueMessage queueMessage = createQueueMessage(eventStream);
 		return sendQueueMessageService.sendMessageAsync(
 			producer,

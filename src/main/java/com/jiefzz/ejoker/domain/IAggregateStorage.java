@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.domain;
 
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+
 public interface IAggregateStorage {
 
 	/**
@@ -8,6 +10,6 @@ public interface IAggregateStorage {
 	 * @param String aggregateRootId
 	 * @return
 	 */
-	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, String aggregateRootId);
+	public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, String aggregateRootId);
 	
 }

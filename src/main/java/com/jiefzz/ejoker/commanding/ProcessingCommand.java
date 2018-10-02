@@ -3,22 +3,29 @@ package com.jiefzz.ejoker.commanding;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+
 public class ProcessingCommand {
 
-	private ProcessingCommandMailbox mailbox; // { get; set; }
-	private long sequence; //{ get; set; }
-	private ICommand message; //{ get; private set; }
-	private ICommandExecuteContext commandExecuteContext; // { get; private set; }
-    private Map<String, String> items; // { get; private set; }
+	private ProcessingCommandMailbox mailbox;
+	
+	private long sequence;
+	
+	private ICommand message;
+	
+	private ICommandExecuteContext commandExecuteContext;
+	
+    private Map<String, String> items;
 
     public ProcessingCommand(ICommand command, ICommandExecuteContext commandExecuteContext, Map<String, String> items) {
     	setMessage(command);
     	setCommandExecuteContext(commandExecuteContext);
-    	setItems(items!=null ? items : new HashMap<String, String>());
+    	setItems(null != items ? items : new HashMap<>());
     }
 
-    public void complete(CommandResult commandResult) {
-    	commandExecuteContext.onCommandExecuted(commandResult);
+    public SystemFutureWrapper<AsyncTaskResult<Void>> complete(CommandResult commandResult) {
+    	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }
     
     /* =========================== */

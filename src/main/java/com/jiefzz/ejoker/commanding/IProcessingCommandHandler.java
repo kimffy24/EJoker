@@ -1,7 +1,9 @@
 package com.jiefzz.ejoker.commanding;
 
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+
 public interface IProcessingCommandHandler {
 
-	public void handle(ProcessingCommand processingCommand);
+	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand);
 	
 }

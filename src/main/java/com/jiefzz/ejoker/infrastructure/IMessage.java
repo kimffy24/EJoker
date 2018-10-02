@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.infrastructure;
 public interface IMessage {
 
 	public String getRoutingKey();
+	
     public String getTypeName();
     
     public void setId(String id);

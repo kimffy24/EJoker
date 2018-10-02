@@ -1,10 +1,22 @@
 package com.jiefzz.ejoker.commanding;
 
 import com.jiefzz.ejoker.domain.IAggregateRoot;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public interface ICommandContext {
 
+	/**
+	 * Add a new aggregate into the current command context.
+	 * @param aggregateRoot
+	 */
     public void add(IAggregateRoot aggregateRoot);
+
+	/**
+	 * Add a new aggregate into the current command context.
+	 * @param aggregateRoot
+	 */
+    public SystemFutureWrapper<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot);
     
     /**
      * Because Java's generic type is pseudo generic type, not real generic.
@@ -15,7 +27,7 @@ public interface ICommandContext {
      * @param tryFromCache
      * @return
      */
-    public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache);
+    public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz, boolean tryFromCache);
     
     /**
      * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
@@ -23,35 +35,16 @@ public interface ICommandContext {
      * @param clazz
      * @return
      */
-    public <T extends IAggregateRoot> T get(Object id, Class<T> clazz);
-    
-    /**
-     * Not like C#, T will lost while program running. Please use get(Object, Class, boolean).<br>
-     * C#中使用泛型的动态信息中提取类型，而java无法提供此功能。。。请使用 get(Object, Class, boolean)。
-     * @deprecated
-     * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
-     * @param id
-     * @param tryFromCache
-     * @return
-     */
-//    public <T extends IAggregateRoot> T get(Object id, boolean tryFromCache);
-    
-    /**
-     * Not like C#, T will lost while program running.. Please use get(Object, Class).<br>
-     * C#中使用泛型的动态信息中提取类型，而java无法提供此功能。。。请使用 get(Object, Class)。
-     * @deprecated
-     * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class)
-     * @param id
-     * @return
-     */
-//    public <T extends IAggregateRoot> T get(Object id);
-    /**/
+    default public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz) {
+    	return getAsync(id, clazz, true);
+    }
     
     /**
      * 
      * @param result
      */
     public void setResult(String result);
+    
     public String getResult();
     
 }

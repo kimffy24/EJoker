@@ -7,6 +7,7 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 public interface ITrackingContext {
 
 	public Collection<IAggregateRoot> getTrackedAggregateRoots();
-    void clear();
+	
+	public void clear();
     
 }

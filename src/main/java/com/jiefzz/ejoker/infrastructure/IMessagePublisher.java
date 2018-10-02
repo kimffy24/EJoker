@@ -1,11 +1,10 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import java.util.concurrent.Future;
-
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public interface IMessagePublisher<TMessage extends IMessage> {
 
-	public Future<AsyncTaskResultBase> publishAsync(TMessage message);
+	public SystemFutureWrapper<AsyncTaskResult<Void>> publishAsync(TMessage message);
 	
 }

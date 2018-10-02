@@ -12,7 +12,6 @@ import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.CommandStatus;
 import com.jiefzz.ejoker.commanding.ICommand;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.IReplyHandler;
 import com.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
@@ -22,6 +21,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.rpc.IClientNodeIPAddressProvider;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
 

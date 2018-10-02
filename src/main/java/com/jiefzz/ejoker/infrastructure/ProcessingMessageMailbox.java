@@ -21,8 +21,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	private final String routingKey;
 
 	private Map<Long, X> waitingMessageDict = null;
-	
-	private Lock lock = new ReentrantLock();
 
 	private Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
 
@@ -30,7 +28,9 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 
 	private final IProcessingMessageHandler<X, Y> messageHandler;
 
-	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	private AtomicBoolean onRunning = new AtomicBoolean(false);
+	
+	private Lock lock = new ReentrantLock();
 	
 	private long lastActiveTime = System.currentTimeMillis();
 	
@@ -45,8 +45,8 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		return routingKey;
 	}
 	
-	public boolean isRunning(){
-		return runningOrNot.get();
+	public boolean onRunning(){
+		return onRunning.get();
 	}
 
 	public void enqueueMessage(X processingMessage) {
@@ -91,7 +91,12 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		X processingMessage = null;
 		try {
 			if (null != (processingMessage = messageQueue.poll())) {
-				messageHandler.handleAsync(processingMessage);
+				
+				/// TODO @await
+				/// assert 当前会处于多线程任务调度上下文中,
+				/// 所以这里直接同步化处理
+				messageHandler.handleAsync(processingMessage).get();
+				
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Message mailbox run has unknown exception, routingKey: %s, commandId: %s",
@@ -107,8 +112,11 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		}
 	}
 
-	public boolean isInactive(long timeoutSeconds) {
-		return (System.currentTimeMillis() - lastActiveTime) >= timeoutSeconds;
+	/**
+	 * 单位：毫秒
+	 */
+	public boolean isInactive(long timeoutMilliseconds) {
+		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
 	}
 	
     private boolean tryExecuteWaitingMessage(X currentCompletedMessage) {
@@ -132,12 +140,11 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	}
 
 	private boolean tryEnter() {
-		return runningOrNot.compareAndSet(false, true);
+		return onRunning.compareAndSet(false, true);
 	}
 
 	private void exit() {
-//		runningOrNot.compareAndSet(true, false);
-		runningOrNot.set(false);
+		onRunning.set(false);
 	}
 
 }

@@ -1,14 +1,10 @@
 package com.jiefzz.ejoker.eventing.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,28 +25,32 @@ import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
+import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.system.util.extension.KeyValuePair;
 import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
+import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 @EService
-public class DefaultEventService
-		implements IEventService {
+public class DefaultEventService implements IEventService {
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultEventService.class);
 
 	private final Map<String, EventMailBox> eventMailboxDict = new ConcurrentHashMap<>();
 
+	private final int batchSize = 1;
+	
 	@Dependence
 	IProcessingCommandHandler processingCommandHandler;
 	@Dependence
@@ -69,12 +69,22 @@ public class DefaultEventService
 	IOHelper ioHelper;
 
 	@Dependence
-	private SystemAsyncHelper systemAsyncHelper;
-	
+	private IScheduleService scheduleService;
+
 	@Dependence
 	private EJokerReactThreadScheduler reactThreadScheduler;
 
-	private final int batchSize = 1;
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+
+	@EInitialize
+	private void init() {
+		scheduleService.startTask(
+				String.format("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				() -> cleanInactiveMailbox(),
+				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
+				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
+	}
 
 	@Override
 	public void commitDomainEventAsync(EventCommittingContext context) {
@@ -125,34 +135,6 @@ public class DefaultEventService
 		}
 	}
 
-	private void cleanInactiveMailbox() {
-		// TODO 这个位置注意性能。。。。
-		List<KeyValuePair<String, EventMailBox>> inactiveList = new ArrayList<KeyValuePair<String, EventMailBox>>();
-
-		Set<Entry<String, EventMailBox>> entrySet = eventMailboxDict.entrySet();
-		for (KeyValuePair<String, EventMailBox> pair : inactiveList) {
-			EventMailBox mailbox = pair.getValue();
-			if (mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT) && !mailbox.isRunning())
-				inactiveList.add(new KeyValuePair<String, EventMailBox>(pair.getKey(), mailbox));
-		}
-
-		for (KeyValuePair<String, EventMailBox> pair : inactiveList) {
-			EventMailBox mailbox = pair.getValue();
-			if(!mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
-				// 在上面判断其达到空闲条件后，又被重新使能（临界情况）
-				// 放弃本次操作
-				continue;
-			}
-			if (null != eventMailboxDict.remove(pair.getKey())) {
-				logger.debug("Removed inactive event mailbox, aggregateRootId: {}", pair.getKey());
-			}
-		}
-	}
-
-	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
-		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
-	}
-
 	private void batchPersistEventAsync(List<EventCommittingContext> committingContexts, int retryTimes) {
 		// 异步批量持久化
 		throw new InfrastructureRuntimeException("批量持久化没完成！");
@@ -167,7 +149,7 @@ public class DefaultEventService
 
 	private void persistEventAsync(final EventCommittingContext context) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<EventAppendResult>>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -175,18 +157,12 @@ public class DefaultEventService
 			}
 
 			@Override
-			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
-				return eventStore.appendAsync(context.eventStream);
+			public AsyncTaskResult<EventAppendResult> asyncAction() throws Exception {
+				return eventStore.appendAsync(context.eventStream).get();
 			}
 
 			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
-			}
-
-			@Override
-			public void finishAction(AsyncTaskResultBase result) {
-				AsyncTaskResult<EventAppendResult> realrResult = (AsyncTaskResult<EventAppendResult> )result;
+			public void finishAction(AsyncTaskResult<EventAppendResult> realrResult) {
 				switch (realrResult.getData()) {
 				case Success:
 					logger.debug("Persist event success, {}", context.eventStream);
@@ -251,13 +227,8 @@ public class DefaultEventService
 			}
 
 			@Override
-			public Future<AsyncTaskResult<DomainEventStream>> asyncAction() throws IOException {
-				return eventStore.findAsync(eventStream.getAggregateRootId(), 1);
-			}
-
-			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
+			public AsyncTaskResult<DomainEventStream> asyncAction() throws Exception {
+				return eventStore.findAsync(eventStream.getAggregateRootId(), 1).get();
 			}
 
 			@Override
@@ -325,17 +296,12 @@ public class DefaultEventService
 
 			@Override
 			public String getAsyncActionName() {
-				return "publishEventAsync";
+				return "PublishEventAsync";
 			}
 
 			@Override
-			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
-				return domainEventPublisher.publishAsync(eventStream);
-			}
-
-			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
+			public AsyncTaskResultBase asyncAction() throws Exception {
+				return domainEventPublisher.publishAsync(eventStream).get();
 			}
 
 			@Override
@@ -362,8 +328,7 @@ public class DefaultEventService
 			@Override
 			public void faildAction(Exception ex) {
 				logger.error(
-						"Publish event has unknown exception, the code should not be run to here, errorMessage: {}",
-						ex.getMessage());
+						String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex);
 			}});
 		
 	}
@@ -382,6 +347,29 @@ public class DefaultEventService
 			EventCommittingContext current = iterator.next();
 			previous.next = current;
 			previous = current;
+		}
+	}
+
+	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+		return processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
+	}
+
+	private void cleanInactiveMailbox() {
+		List<String> idelMailboxKeyList = new ArrayList<>();
+		ForEachUtil.processForEach(eventMailboxDict, (aggregateId, mailbox) -> {
+			if(!mailbox.isRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT))
+				idelMailboxKeyList.add(aggregateId);
+		});
+		
+		for(String mailboxKey:idelMailboxKeyList) {
+			EventMailBox eventMailBox = eventMailboxDict.get(mailboxKey);
+			if(!eventMailBox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
+				// 在上面判断其达到空闲条件后，又被重新使能（临界情况）
+				// 放弃本次操作
+				continue;
+			}
+			eventMailboxDict.remove(mailboxKey);
+			logger.debug("Removed inactive event mailbox, aggregateRootId: {}", mailboxKey);
 		}
 	}
 }

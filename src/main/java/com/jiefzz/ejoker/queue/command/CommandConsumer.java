@@ -21,7 +21,6 @@ import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
@@ -30,8 +29,17 @@ import com.jiefzz.ejoker.queue.domainEvent.DomainEventConsumer;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 @EService
@@ -53,6 +61,12 @@ public class CommandConsumer implements IWorkerService {
 	
 	@Dependence
 	private IAggregateStorage aggregateRootStorage;
+	
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+
+	@Dependence
+	private EJokerAsyncHelper eJokerAsyncHelper;
 	
 	/// #fix 180920 register sync offset task
 	@Dependence
@@ -86,12 +100,9 @@ public class CommandConsumer implements IWorkerService {
 		Class<? extends ICommand> commandType = getCommandPrototype(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
 		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(
-				repository,
-				aggregateRootStorage,
 				queueMessage,
 				context,
-				commandMessage,
-				sendReplyService);
+				commandMessage);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
@@ -135,18 +146,17 @@ public class CommandConsumer implements IWorkerService {
 	
 	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
 		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
-		Class<? extends ICommand> commandType = commandTypeDict.getOrDefault(commandTypeString, null);
-		if(null!=commandType)
-			return commandType;
-		try {
-			commandType = (Class<? extends ICommand> )Class.forName(commandTypeString);
-			commandTypeDict.put(commandTypeString, commandType);
-			return commandType;
-		} catch (ClassNotFoundException e) {
-			String format = String.format("Defination of [%s] is not found!!!", commandTypeString);
-			logger.error(format);
-			throw new CommandRuntimeException(format);
-		}
+		return MapHelper.getOrAdd(commandTypeDict, commandTypeString, () -> {
+			Class<? extends ICommand> clazz;
+			try {
+				clazz = (Class<? extends ICommand> )Class.forName(commandTypeString);
+			} catch (ClassNotFoundException e) {
+				String format = String.format("Defination of [%s] is not found!!!", commandTypeString);
+				logger.error(format);
+				throw new CommandRuntimeException(format);
+			}
+			return clazz;
+		});
 	}
 
 	/**
@@ -161,35 +171,28 @@ public class CommandConsumer implements IWorkerService {
 		
 		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<>();
 		
-		private final IRepository repository;
-		
-		private final IAggregateStorage aggregateRootStorage;
-		
-		private final SendReplyService sendReplyService;
-		
 		private final EJokerQueueMessage message;
 		
 		private final IEJokerQueueMessageContext messageContext;
 		
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(IRepository repository, IAggregateStorage aggregateRootStorage, EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage, SendReplyService sendReplyService) {
-			this.repository = repository;
-			this.aggregateRootStorage = aggregateRootStorage;
-			this.sendReplyService = sendReplyService;
+		public CommandExecuteContext(EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage) {
 			this.message = message;
 			this.commandMessage = commandMessage;
 			this.messageContext = messageContext;
 		}
 
 		@Override
-		public void onCommandExecuted(CommandResult commandResult) {
+		public SystemFutureWrapper<AsyncTaskResult<Void>> onCommandExecutedAsync(CommandResult commandResult) {
+			
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return;
+				return new SystemFutureWrapper<>(FutureUtil.completeTask());
 			
-			sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);
+			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);
+		
 		}
 
 		@Override
@@ -197,38 +200,50 @@ public class CommandConsumer implements IWorkerService {
 			if (aggregateRoot == null)
 				throw new ArgumentNullException("aggregateRoot");
 			String uniqueId = aggregateRoot.getUniqueId();
-			if(null!=trackingAggregateRootDict.putIfAbsent(uniqueId, aggregateRoot))
+			if(null != trackingAggregateRootDict.putIfAbsent(uniqueId, aggregateRoot))
 				throw new AggregateRootAlreadyExistException(uniqueId, aggregateRoot.getClass());
 		}
-
+		
 		@Override
-		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean firstFromCache) {
-			if (id == null)
-				throw new ArgumentNullException("id");
-
-			String aggregateRootId = id.toString();
-			IAggregateRoot aggregateRoot = null;
-			
-			//try get aggregate root from the last execute context.
-			if (null!=(aggregateRoot = trackingAggregateRootDict.getOrDefault(aggregateRootId, null)))
-				return (T )aggregateRoot;
-
-			if (firstFromCache)
-				aggregateRoot = repository.get((Class<IAggregateRoot> )clazz, id);
-			else
-				aggregateRoot = aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
-
-			if (aggregateRoot != null) {
-				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
-				return (T )aggregateRoot;
-			}
-
-			return null;
+		public SystemFutureWrapper<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot) {
+			return eJokerAsyncHelper.submit(() -> add(aggregateRoot));
 		}
 
 		@Override
-		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz) {
-			return get(id, clazz, true);
+		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz,
+				boolean tryFromCache) {
+
+			RipenFuture<T> ripenFuture = new RipenFuture<>();
+			if (id == null) {
+				ripenFuture.trySetException(new ArgumentNullException("id"));
+				return new SystemFutureWrapper<>(ripenFuture);
+			}
+			
+			return systemAsyncHelper.submit(() -> {
+
+				String aggregateRootId = id.toString();
+				IAggregateRoot aggregateRoot = null;
+
+				//try get aggregate root from the last execute context.
+				if (null != (aggregateRoot = trackingAggregateRootDict.get(aggregateRootId)))
+					return (T )aggregateRoot;
+
+				if (tryFromCache)
+					// await
+					aggregateRoot = repository.getAsync((Class<IAggregateRoot> )clazz, id).get();
+				else
+					// await
+					aggregateRoot = aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get();
+
+				if (aggregateRoot != null) {
+					trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
+					return (T )aggregateRoot;
+				}
+				
+				return null;
+				
+			});
+
 		}
 
 		@Override
@@ -251,6 +266,7 @@ public class CommandConsumer implements IWorkerService {
 		public String getResult() {
 			return result;
 		}
+
 	}
 
 }

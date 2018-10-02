@@ -9,9 +9,8 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
-import com.jiefzz.ejoker.eventing.impl.domainEventStreamMessage.ProcessingDomainEventStreamMessage;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.infrastructure.IMessageProcessor;
+import com.jiefzz.ejoker.infrastructure.varieties.domainEventStreamMessage.ProcessingDomainEventStreamMessage;
 import com.jiefzz.ejoker.queue.QueueProcessingContext;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
@@ -20,6 +19,7 @@ import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 

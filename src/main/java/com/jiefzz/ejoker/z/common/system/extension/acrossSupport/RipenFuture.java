@@ -19,14 +19,20 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	private CountDownLatch countDownLatch = new CountDownLatch(1);
 	
 	private boolean hasException = false;
+	
 	private boolean hasCanceled = false;
+	
 	private Throwable exception = null;
+	
 	private TResult result = null;
 	
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		if(mayInterruptIfRunning)
+		if(mayInterruptIfRunning) {
+			/// TODO 未完成！
+			/// 实现取消线程的语义
 			return false;
+		}
 		countDownLatch.countDown();
 		return true;
 	}

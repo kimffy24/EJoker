@@ -2,45 +2,35 @@ package com.jiefzz.ejoker.infrastructure.impl;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.infrastructure.IPublishedVersionStore;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 @EService
 public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 
-	private final Future<AsyncTaskResultBase> successTask;
+	private final SystemFutureWrapper<AsyncTaskResult<Void>> successTask
+		= new SystemFutureWrapper<>(FutureUtil.completeTask());
 
 	private final Map<String, Long> versionDict = new ConcurrentHashMap<>();
 
-	public InMemoryPublishedVersionStore() {
-		successTask = new RipenFuture<AsyncTaskResultBase>();
-		((RipenFuture<AsyncTaskResultBase>) successTask).trySetResult(AsyncTaskResultBase.Success);
-	}
-
 	@Override
-	public Future<AsyncTaskResultBase> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName,
+	public SystemFutureWrapper<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId, long publishedVersion) {
 		versionDict.put(buildKey(processorName, aggregateRootId), publishedVersion);
 		return successTask;
 	}
 
 	@Override
-	public Future<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
+	public SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId) {
+		
 		Long version = versionDict.getOrDefault(buildKey(processorName, aggregateRootId), 0l);
-
-		AsyncTaskResult<Long> taskResult = new AsyncTaskResult<>(AsyncTaskStatus.Success, version);
-
-		RipenFuture<AsyncTaskResult<Long>> result = new RipenFuture<>();
-		result.trySetResult(taskResult);
-
-		return result;
+		return new SystemFutureWrapper<>(FutureUtil.createFutureDirectly(version));
+		
 	}
 
 	private String buildKey(String eventProcessorName, String aggregateRootId) {

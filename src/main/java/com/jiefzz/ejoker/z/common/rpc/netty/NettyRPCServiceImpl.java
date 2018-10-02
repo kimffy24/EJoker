@@ -97,7 +97,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			 * TODO 2. 此处本质上是同步执行然后返回一个异步任务读取资源的结构对象给调用者，并非真正的异步
 			 */
 			@Override
-			public Future<AsyncTaskResultBase> asyncAction() throws IOException {
+			public AsyncTaskResultBase asyncAction() throws Exception {
 				Socket socket = null;
 				try {
 					socket = new Socket(host, port);// 创建一个客户端连接
@@ -113,6 +113,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 					out.close();
 					bufw = null;
 					out = null;
+					
+					return AsyncTaskResultBase.Success;
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw IOExceptionOnRuntime.encapsulation(e);
@@ -122,10 +124,6 @@ public class NettyRPCServiceImpl implements IRPCService {
 						socket = null;
 					}
 				}
-
-				RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<AsyncTaskResultBase>();
-				ripenFuture.trySetResult(new AsyncTaskResultBase(AsyncTaskStatus.Success));
-				return ripenFuture;
 			}
 
 			@Override

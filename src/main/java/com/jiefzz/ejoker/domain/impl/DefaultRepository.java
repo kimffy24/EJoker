@@ -5,31 +5,32 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
-import com.jiefzz.ejoker.z.common.UnimplementException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
 public class DefaultRepository implements IRepository {
 
 	@Dependence
 	IMemoryCache memoryCache;
+	
 	@Dependence
 	IAggregateStorage aggregateRootStorage;
+	
+	@Dependence
+	SystemAsyncHelper systemAsyncHelper;
 
 	@Override
-	public <T extends IAggregateRoot> T get(Object aggregateRootId) {
-		throw new UnimplementException(DefaultRepository.class.getName()+"Get(Object)");
-	}
-
-	@Override
-	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
+	public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
 		if (aggregateRootType == null)
 			throw new ArgumentNullException("aggregateRootType");
 		if (aggregateRootId == null)
 			throw new ArgumentNullException("aggregateRootId");
-		IAggregateRoot aggregateRoot = memoryCache.get(aggregateRootId, aggregateRootType);
-		return aggregateRoot!=null?aggregateRoot:aggregateRootStorage.get(aggregateRootType, aggregateRootId.toString());
+		
+		return memoryCache.getAsync(aggregateRootId, aggregateRootType);
+		
 	}
 
 }

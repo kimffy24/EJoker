@@ -11,9 +11,10 @@ import com.jiefzz.ejoker.domain.IAggregateSnapshotter;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IEventStore;
-import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.UnimplementException;
+import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 /**
  * 未完成
@@ -23,33 +24,35 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 @EService
 public class EventSourcingAggregateStorage implements IAggregateStorage {
 
+	@SuppressWarnings("unused")
 	private final static  Logger logger = LoggerFactory.getLogger(EventSourcingAggregateStorage.class);
 	
 	private int minVersion = 1;
+	
 	private int maxVersion = Integer.MAX_VALUE;
 	
 	//@Dependence
 	IAggregateRootFactory aggregateRootFactory;
 
-	//@Dependence
+	@Dependence
 	IEventStore eventStore;
 	
 	//@Dependence
 	IAggregateSnapshotter aggregateSnapshotter;
 	
 	@Override
-	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
-		if( null==aggregateRootType ) throw new ArgumentNullException("aggregateRootType");
-		if( null==aggregateRootId ) throw new ArgumentNullException("aggregateRootId");
-		
-		IAggregateRoot aggregateRoot;
-		
-		if( null!=(aggregateRoot = tryGetFromSnapshot(aggregateRootId, aggregateRootType)))
-			return aggregateRoot;
-		
-		String aggregateRootTypeName = aggregateRootType.getName();
-		
-		logger.warn("Invoke [{}.get()] with [Class<IAggregateRoot>:{}, String:{}]", this.getClass().getName(), aggregateRootType.getName(), aggregateRootId);
+	public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
+//		if( null==aggregateRootType ) throw new ArgumentNullException("aggregateRootType");
+//		if( null==aggregateRootId ) throw new ArgumentNullException("aggregateRootId");
+//		
+//		IAggregateRoot aggregateRoot;
+//		
+//		if( null!=(aggregateRoot = tryGetFromSnapshot(aggregateRootId, aggregateRootType)))
+//			return aggregateRoot;
+//		
+//		String aggregateRootTypeName = aggregateRootType.getName();
+//		
+//		logger.warn("Invoke [{}.get()] with [Class<IAggregateRoot>:{}, String:{}]", this.getClass().getName(), aggregateRootType.getName(), aggregateRootId);
 		throw new UnimplementException(EventSourcingAggregateStorage.class.getName());
 	}
 	

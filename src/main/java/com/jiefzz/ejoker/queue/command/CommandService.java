@@ -1,17 +1,14 @@
 package com.jiefzz.ejoker.queue.command;
 
 import java.nio.charset.Charset;
-import java.util.concurrent.Future;
 
 import org.apache.rocketmq.client.exception.MQClientException;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandRoutingKeyProvider;
 import com.jiefzz.ejoker.commanding.ICommandService;
-import com.jiefzz.ejoker.infrastructure.IJSONConverter;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
@@ -22,9 +19,10 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
@@ -83,20 +81,12 @@ public class CommandService implements ICommandService, IWorkerService {
 	}
 	
 	@Override
-	public Future<AsyncTaskResultBase> sendAsync(final ICommand command) {
-		try {
-			return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
-		} catch ( Exception e ) {
-			e.printStackTrace();
-			AsyncTaskResultBase taskResult = new AsyncTaskResultBase(AsyncTaskStatus.Failed, e.getMessage());
-			RipenFuture<AsyncTaskResultBase> ripenFuture = new RipenFuture<>();
-			ripenFuture.trySetResult(taskResult);
-			return ripenFuture;
-		}
+	public SystemFutureWrapper<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
+		return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
 	}
 
 	@Override
-	public Future<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command) {
+	public SystemFutureWrapper<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command) {
 		return executeAsync(command, CommandReturnType.CommandExecuted);
 	}
 
@@ -105,31 +95,28 @@ public class CommandService implements ICommandService, IWorkerService {
 	 * Java中没有c# 的 async/await 调用，只能用最原始的创建线程任务对象的方法。
 	 */
 	@Override
-	public Future<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
+	public SystemFutureWrapper<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
 
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
-		final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new FutureTaskCompletionSource<>();
+		
+
+		FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new FutureTaskCompletionSource<>();
 		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
-		final RipenFuture<AsyncTaskResult<CommandResult>> localTask = new RipenFuture<>();
+		SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command));
 		
 		/// 如果这里能用协程，会更好，netty有吗？
 		/// TODO 一个优化点
-		systemAsyncHelper.submit(() -> {
-				try {
-					AsyncTaskResultBase result = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command)).get();
-					if(AsyncTaskStatus.Success == result.getStatus()) {
-						localTask.trySetResult(remoteTaskCompletionSource.task.get());
+		return systemAsyncHelper.submit(() -> {
+					AsyncTaskResultBase result = sendMessageAsync.get();
+					if(AsyncTaskStatus.Success.equals(result.getStatus())) {
+						// 此线程会在这了盲等！
+						return remoteTaskCompletionSource.task.get();
 					} else {
 						commandResultProcessor.processFailedSendingCommand(command);
-						localTask.trySetResult(new AsyncTaskResult<>(result.getStatus(), result.getErrorMessage()));
+						throw new RuntimeException(result.getErrorMessage());
 					}
-				} catch ( Exception e ) {
-					localTask.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage()));
-				}
 			}
 		);
-		
-		return localTask;
 		
 	}
 
