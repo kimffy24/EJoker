@@ -10,13 +10,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
 
-public class EventMailBox implements Runnable {
+public class EventMailBox {
 
 	private final static Logger logger = LoggerFactory.getLogger(EventMailBox.class);
+	
+	private final EJokerReactThreadScheduler reactThreadScheduler;
 	
 	private final String aggregateRootId;
 	
@@ -24,13 +27,11 @@ public class EventMailBox implements Runnable {
 	
 	private final IVoidFunction1<List<EventCommittingContext>> handleMessageAction;
 	
-	private AtomicBoolean runningOrNot = new AtomicBoolean(false);
+	private AtomicBoolean onRunning = new AtomicBoolean(false);
 	
-	private int batchSize;
+	private int batchSize = EJokerEnvironment.MAX_BATCH_EVENTS;
 	
 	private long lastActiveTime;
-	
-	private EJokerReactThreadScheduler reactThreadScheduler;
 	
 	public String getAggregateRootId() {
 		return aggregateRootId;
@@ -41,12 +42,11 @@ public class EventMailBox implements Runnable {
 	}
 	
 	public boolean isRunning(){
-		return runningOrNot.get();
+		return onRunning.get();
 	}
 	
-	public EventMailBox(String aggregateRootId, int batchSize, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerReactThreadScheduler reactThreadScheduler) {
+	public EventMailBox(String aggregateRootId, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerReactThreadScheduler reactThreadScheduler) {
 		this.aggregateRootId = aggregateRootId;
-		this.batchSize = batchSize;
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
 		
@@ -64,6 +64,7 @@ public class EventMailBox implements Runnable {
     public void tryRun() {
     	tryRun(false);
     }
+    
     public void tryRun(boolean exitFirst) {
         if (exitFirst)
             exit();
@@ -72,13 +73,49 @@ public class EventMailBox implements Runnable {
         }
         
     }
+	
+	public void run() {
+		
+		lastActiveTime = System.currentTimeMillis();
+		List<EventCommittingContext> contextList = null;
+		
+		try {
+			EventCommittingContext context = null;
+			while(null != (context = messageQueue.poll())) {
+				context.eventMailBox = this;
+				if(null == contextList) {
+					contextList = new ArrayList<EventCommittingContext>();
+				}
+				contextList.add(context);
+				if(batchSize <= contextList.size()) {
+					break;
+				}
+			}
+			if(null != contextList && 0 < contextList.size()) {
+				handleMessageAction.trigger(contextList);
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.error(String.format("Event mailbox run has unknown exception, aggregateRootId: %s", aggregateRootId), e);
+			try { TimeUnit.SECONDS.sleep(1l); } catch (InterruptedException e1) { }
+		} finally {
+			if(null == contextList || 0 == contextList.size()) {
+				exit();
+				if(null != messageQueue.peek())
+					tryEnter();
+					tryRun();
+			}
+		}
+		
+	}
     
     public void exit() {
-    	runningOrNot.compareAndSet(true, false);
+    	onRunning.compareAndSet(true, false);
     }
 	
 	public void clear() {
-		while(null!=messageQueue.poll());
+//		while(null != messageQueue.poll());
+		messageQueue.clear();
 	}
 
 	/**
@@ -89,38 +126,6 @@ public class EventMailBox implements Runnable {
 	}
 
     private boolean tryEnter() {
-		return runningOrNot.compareAndSet(false, true);
+		return onRunning.compareAndSet(false, true);
     }
-	
-	@Override
-	public void run() {
-		
-		lastActiveTime = System.currentTimeMillis();
-		List<EventCommittingContext> contextList = null;
-		try {
-			EventCommittingContext context = null;
-			while(null!=(context = messageQueue.poll())) {
-				context.eventMailBox = this;
-				if( null==contextList )
-					contextList = new ArrayList<EventCommittingContext>();
-				contextList.add(context);
-				if(contextList.size()==batchSize)
-					break;
-			}
-			if( null!=contextList && contextList.size()>0 )
-				handleMessageAction.trigger(contextList);
-		} catch(Exception e) {
-			logger.error(String.format("Event mailbox run has unknown exception, aggregateRootId: %s", aggregateRootId), e);
-			e.printStackTrace();
-			try { TimeUnit.SECONDS.sleep(1l); } catch (InterruptedException e1) { }
-		} finally {
-			if( null==contextList || contextList.size()==0 ) {
-				exit();
-				if(null!=messageQueue.peek())
-					tryEnter();
-					tryRun();
-			}
-		}
-		
-	}
 }

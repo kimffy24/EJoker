@@ -13,6 +13,7 @@ import com.jiefzz.ejoker.eventing.IEventSerializer;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 
 @EService
 public class DefaultEventSerializer implements IEventSerializer {
@@ -40,37 +41,16 @@ public class DefaultEventSerializer implements IEventSerializer {
 		return list;
 	}
 
-//	private String encodeTypeInternal(String data, Class<?> eventClazz) {
-//		StringBuilder sb = new StringBuilder();
-//		sb.append(data.substring(0, data.lastIndexOf('}')));
-//		sb.append(" ,\"__class\": \"");
-//		sb.append(eventClazz.getName());
-//		sb.append('"');
-//		sb.append('}');
-//		return sb.toString();
-//	}
-//	
-//	private Class<?> decodeTypeInternal(String ps) {
-//		int lastIndexOf = ps.lastIndexOf("__class\": \"");
-//		if(0>=lastIndexOf)
-//			throw new RuntimeException("Event type lose!!! Original event content: " + ps);
-//		String eventTypeString = ps.substring(lastIndexOf, ps.length()-2);
-//		return getType(eventTypeString);
-//	}
-	
 	private Class<?> getType(String eventTypeString) {
-		Class<?> targetType = cacheTypeMap.get(eventTypeString);
-		if(null != targetType)
-			return targetType;
-		try {
-			targetType = Class.forName(eventTypeString);
-			cacheTypeMap.put(eventTypeString, targetType);
-		} catch (Exception e) {
-			throw new RuntimeException("Event type lose!!! Original type string: " + eventTypeString);
-		}
-		return targetType;
+		return MapHelper.getOrAdd(CacheTypeMap, eventTypeString, () -> {
+			try {
+				return Class.forName(eventTypeString);
+			} catch (Exception e) {
+				throw new RuntimeException("Event type lose!!! Original type string: " + eventTypeString);
+			}
+		});
 	}
 	
-	private Map<String, Class<?>> cacheTypeMap = new HashMap<>();
+	private static Map<String, Class<?>> CacheTypeMap = new HashMap<>();
 	
 }

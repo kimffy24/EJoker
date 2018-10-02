@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.eventing;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;

@@ -6,16 +6,32 @@ import com.jiefzz.ejoker.eventing.impl.EventMailBox;
 
 public class EventCommittingContext {
 	
-	public IAggregateRoot aggregateRoot;
-	public DomainEventStream eventStream;
-	public ProcessingCommand processingCommand;
+	private IAggregateRoot aggregateRoot;
+	
+	private DomainEventStream eventStream;
+	
+	private ProcessingCommand processingCommand;
+	
 	public EventMailBox eventMailBox = null;
+	
 	public EventCommittingContext next = null;
 
 	public EventCommittingContext(IAggregateRoot aggregateRoot, DomainEventStream eventSteam, ProcessingCommand processingCommand) {
 		this.aggregateRoot = aggregateRoot;
 		this.eventStream = eventSteam;
 		this.processingCommand = processingCommand;
+	}
+
+	public IAggregateRoot getAggregateRoot() {
+		return aggregateRoot;
+	}
+
+	public DomainEventStream getEventStream() {
+		return eventStream;
+	}
+
+	public ProcessingCommand getProcessingCommand() {
+		return processingCommand;
 	}
 	
 }

@@ -16,6 +16,8 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
  * @author JiefzzLon
 */
 public final class EJokerEnvironment {
+	
+	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 
 	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE = 128;	
 	
@@ -34,7 +36,7 @@ public final class EJokerEnvironment {
 	
 	public final static int MAX_BATCH_COMMANDS = 32;
 	
-	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
+	public final static int MAX_BATCH_EVENTS = 16;
 
 	private final static Map<String, String> topicQueueMapper = new HashMap<String, String>();
 	

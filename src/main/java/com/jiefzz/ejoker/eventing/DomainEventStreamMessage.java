@@ -6,39 +6,37 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.jiefzz.ejoker.infrastructure.SequenceMessageA;
-import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 
 public class DomainEventStreamMessage extends SequenceMessageA<String> {
 
-	@PersistentIgnore
-	private static final long serialVersionUID = -721576949011677756L;
-	
 	private String commandId;
+	
 	private Map<String, String> items;
+	
 	private List<IDomainEvent<?>> events;
 	
 	public DomainEventStreamMessage() {}
 	
 	public DomainEventStreamMessage(String commandId, String aggregateRootId, long version, String aggregateRootTypeName, List<IDomainEvent<?>> events, Map<String, String> items)
     {
-        this.setCommandId(commandId);
+        this.commandId = commandId;
         this.setAggregateRootId(aggregateRootId);
         this.setVersion(version);
         this.setAggregateRootTypeName(aggregateRootTypeName);
-        this.setEvents(events);
-        this.setItems(items);
+        this.events = events;
+        this.items = items;
         
     }
 	
 	@Override
 	public String toString(){
 		String eventString = "";
-		if(null!=events && 0<events.size()) {
+		if(null != events && 0 < events.size()) {
 			for(IDomainEvent<?> event:events)
 				eventString += event.getClass().getName() +"|";
 		}
 		String itemString = "";
-		if(null!=items && 0<items.size()) {
+		if(null != items && 0 < items.size()) {
 			Set<Entry<String,String>> entrySet = items.entrySet();
 			for(Entry<String,String> entry:entrySet)
 				itemString += entry.getKey() +":" +entry.getValue() +"|";

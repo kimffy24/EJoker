@@ -72,12 +72,8 @@ public class InMemoryEventStore implements IEventStore {
 		return new SystemFutureWrapper<>(future);
 	}
 
-	private AtomicLong atLong = new AtomicLong(0);
-	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync(DomainEventStream eventStream) {
-		
-		logger.debug(" -> 模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), convertToStorageFormat(eventStream));
 		
 		EventAppendResult eventAppendResult = appendSync(eventStream);
 		
@@ -158,14 +154,20 @@ public class InMemoryEventStore implements IEventStore {
 			
 			if (hasPrevous)
 				return EventAppendResult.DuplicateEvent;
-			else
+			else {
+
+				logger.debug(" -> 模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), convertToStorageFormat(eventStream));
+				
 				return EventAppendResult.Success;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return EventAppendResult.Failed;
 		}
 
 	}
+
+	private AtomicLong atLong = new AtomicLong(0);
 	
 	private String convertToStorageFormat(DomainEventStream eventStream) {
 		return jsonConverter.convert(eventStream);
