@@ -4,14 +4,14 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jiefzz.ejoker.domain.AbstractAggregateRoot;
+import com.jiefzz.ejoker.domain.AggregateRootA;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 
 public class AggregateRootHandlerPool {
 	
 	private final static Map<Class<? extends IDomainEvent<?>>, HandlerReflectionMapper> handlerMapper = new HashMap<>();
 	
-	public final static void regist(Class<? extends AbstractAggregateRoot<?>> aggregateRootClass) {
+	public final static void regist(Class<? extends AggregateRootA<?>> aggregateRootClass) {
 		final Method[] declaredMethods = aggregateRootClass.getDeclaredMethods();
 		for( int i=0; i<declaredMethods.length; i++ ) {
 			Method method = declaredMethods[i];
@@ -32,7 +32,7 @@ public class AggregateRootHandlerPool {
 		}
 	}
 	
-	public final static void invokeInternalHandler(AbstractAggregateRoot<?> agr, IDomainEvent<?> evnt){
+	public final static void invokeInternalHandler(AggregateRootA<?> agr, IDomainEvent<?> evnt){
 		HandlerReflectionMapper hrm = handlerMapper.getOrDefault(evnt.getClass(), null);
 		if(null==hrm)
 			throw new RuntimeException(String.format("Handler for DomainEvent[type=%s] is not found!!!", evnt.getClass().getName()));
@@ -54,7 +54,7 @@ public class AggregateRootHandlerPool {
 					parameterTypes[0].getName());
 		}
 		
-		public void handle(AbstractAggregateRoot<?> aggregateRoot, IDomainEvent<?> domainEvent) {
+		public void handle(AggregateRootA<?> aggregateRoot, IDomainEvent<?> domainEvent) {
 			try {
 				handleReflectionMethod.invoke(aggregateRoot, domainEvent);
 			} catch (Exception e) {

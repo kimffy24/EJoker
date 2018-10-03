@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.domain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,44 +14,41 @@ import com.jiefzz.ejoker.z.common.ArgumentException;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.InvalidOperationException;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot {
+public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot {
 
-	@PersistentIgnore
-	private static final long serialVersionUID = -1803833835739801207L;
-
-	private long version=0;
+	private long version = 0;
 	
 	private Lock lock4ApplyEvent = new ReentrantLock();
 
 	@PersistentIgnore
-	private List<IDomainEvent<?>> uncommittedEvents = new ArrayList<IDomainEvent<?>>();
+	private Queue<IDomainEvent<?>> uncommittedEvents = null;
 	
-	protected TAggregateRootId id=null;
-	
-	protected AbstractAggregateRoot(){
+	private TAggregateRootId id = null;
+
+	public TAggregateRootId getId(){
+		return id;
 	}
 
-	protected AbstractAggregateRoot(TAggregateRootId id) {
+	protected void setId(TAggregateRootId id) {
+		this.id = id;
+	}
+	
+	protected AggregateRootA(){ }
+
+	protected AggregateRootA(TAggregateRootId id) {
 		this();
 		if (id == null)
 			throw new ArgumentNullException("id");
 		this.id = id;
 	}
 
-	protected AbstractAggregateRoot(TAggregateRootId id, long version) {
+	protected AggregateRootA(TAggregateRootId id, long version) {
 		this(id);
 		if (version < 0)
 			throw new ArgumentException(String.format("Version can not small than 0, aggregateRootId=%s version=%s", id, version));
 		this.version = version;
-	}
-
-	public TAggregateRootId getId(){
-		return id;
-	}
-
-	public void setId(TAggregateRootId id) {
-		this.id = id;
 	}
 
 	@Override
@@ -63,31 +61,25 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		return version;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public <TRole> TRole actAs(Class<TRole> clazz) {
-		if ( !clazz.isInterface() )
-			throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
-		if ( !clazz.isAssignableFrom(this.getClass()))
-			throw new RuntimeException("This class could not act as ["+clazz.getName()+"]");
-		return (TRole )this;
-	}
-
 	protected void applyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
-		try {
-			lock4ApplyEvent.lock();
-			internalApplyEvent(domainEvent);
-		} finally {
-			lock4ApplyEvent.unlock();
-		}
+		
+		Ensure.notNull(domainEvent, "domainEvent");
+		if (null == this.id) {
+            throw new RuntimeException("Aggregate root id cannot be null.");
+        }
+		
+		domainEvent.setAggregateRootId(this.id);
+		domainEvent.setVersion(this.version + 1);
+
+		// 聚合根响应事件
+		handleEvent(domainEvent);
+		// 提交事件(同时包含持久化事件和发布到q端)
+		appendUncommittedEvent(domainEvent);
 	}
+	
 	protected void applyEvents(IDomainEvent<TAggregateRootId>[] domainEvents) {
-		try {
-			lock4ApplyEvent.lock();
-			for (IDomainEvent<TAggregateRootId> domainEvent : domainEvents)
-				internalApplyEvent(domainEvent);
-		} finally {
-			lock4ApplyEvent.unlock();
-		}
+		for(IDomainEvent<TAggregateRootId> event : domainEvents)
+			applyEvent(event);
 	}
 
 	private void handleEvent(IDomainEvent<TAggregateRootId> domainEvent){
@@ -141,7 +133,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 				if(prevousDomainEvent.getClass().equals(domainEvent.getClass()))
 					throw new InvalidOperationException(String.format(
 							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
-							domainEvent.getClass().getName(), AbstractAggregateRoot.this.getClass().getName(), id
+							domainEvent.getClass().getName(), AggregateRootA.this.getClass().getName(), id
 					));
 		uncommittedEvents.add(domainEvent);
 	}
@@ -166,23 +158,5 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 					+", id:"
 					+current.getUniqueId());
 		}
-	}
-	
-	/**
-	 * 由applyEvent和applyEvents带锁调用，请勿私自调用。
-	 * @param domainEvent
-	 */
-	private void internalApplyEvent(IDomainEvent<TAggregateRootId> domainEvent) {
-		if( null == domainEvent )
-			throw new ArgumentNullException("domainEvent");
-		
-		if ( id == null )
-			throw new RuntimeException("Aggregate Root Id can not be null!!!");
-		domainEvent.setAggregateRootId( id );
-		domainEvent.setVersion(version+1);
-		// 聚合根响应事件
-		handleEvent(domainEvent);
-		// 提交事件(同时包含持久化事件和发布到q端)
-		appendUncommittedEvent(domainEvent);
 	}
 }

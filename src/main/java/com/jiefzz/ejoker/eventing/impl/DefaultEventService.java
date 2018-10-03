@@ -68,7 +68,6 @@ public class DefaultEventService implements IEventService {
 	@Dependence
 	private IOHelper ioHelper;
 
-
 	@Dependence
 	private EJokerReactThreadScheduler reactThreadScheduler;
 
