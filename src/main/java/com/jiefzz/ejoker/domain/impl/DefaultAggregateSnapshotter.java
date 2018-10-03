@@ -6,19 +6,29 @@ import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateSnapshotter;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
 public class DefaultAggregateSnapshotter implements IAggregateSnapshotter {
 
 	@Dependence
-	IAggregateRepositoryProvider aggregateRepositoryProvider;
+	private IAggregateRepositoryProvider aggregateRepositoryProvider;
+	
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
 
 	@Override
-	public IAggregateRoot restoreFromSnapshot(Class<?> aggregateRootType, String aggregateRootId) {
-		IAggregateRepositoryProxy aggregateRepository = aggregateRepositoryProvider.GetRepository(aggregateRootType);
-		if( null!=aggregateRepository )
-			aggregateRepository.get(aggregateRootId);
-		return null;
+	public SystemFutureWrapper<IAggregateRoot> restoreFromSnapshot(Class<?> aggregateRootType, String aggregateRootId) {
+		return systemAsyncHelper.submit(() -> {
+			IAggregateRepositoryProxy aggregateRepository = aggregateRepositoryProvider.getRepository(aggregateRootType);
+			if(null != aggregateRepository) {
+				// TODO @await
+				aggregateRepository.getAsync(aggregateRootId).get();
+			}
+			return null;
+		});
+		
 	}
 
 }

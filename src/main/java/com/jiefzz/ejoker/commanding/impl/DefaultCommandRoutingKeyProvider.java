@@ -7,13 +7,11 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 @EService
 public class DefaultCommandRoutingKeyProvider implements ICommandRoutingKeyProvider {
 
-	private final static String DEFAULT_ROUTING_KEY_PREFIX = "command.";
-	
 	@Override
 	public String getRoutingKey(ICommand command) {
 		if(null==command.getAggregateRootId() || "".equals(command.getAggregateRootId()))
-			return DEFAULT_ROUTING_KEY_PREFIX +command.getAggregateRootId();
-		return DEFAULT_ROUTING_KEY_PREFIX +command.getId();
+			return command.getAggregateRootId();
+		return command.getId();
 	}
 
 }

@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author jiefzz
  *
  */
-public abstract class AbstractValueObject implements Serializable {
+public abstract class ValueObjectA implements Serializable {
 
 	private static final long serialVersionUID = 1142105907868383134L;
 

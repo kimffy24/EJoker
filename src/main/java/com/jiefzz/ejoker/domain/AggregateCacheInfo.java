@@ -10,9 +10,9 @@ public class AggregateCacheInfo {
         this.lastUpdateTime = System.currentTimeMillis();
     }
 
-    public boolean isExpired(int timeoutSeconds) {
+    public boolean isExpired(long timeoutMilliseconds) {
     	//取秒数？？
-        return (System.currentTimeMillis() - lastUpdateTime)%1000 >= timeoutSeconds;
+        return 0 < (System.currentTimeMillis() - lastUpdateTime - timeoutMilliseconds);
     }
     
 }

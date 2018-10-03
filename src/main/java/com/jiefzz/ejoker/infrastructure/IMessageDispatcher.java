@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import java.util.List;
+import java.util.Collection;
 
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
@@ -19,6 +19,6 @@ public interface IMessageDispatcher {
 	 * @param messages
 	 * @return
 	 */
-	SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(List<? extends IMessage> messages);
+	SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages);
     
 }

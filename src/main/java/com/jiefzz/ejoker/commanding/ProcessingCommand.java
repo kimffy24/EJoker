@@ -19,9 +19,9 @@ public class ProcessingCommand {
     private Map<String, String> items;
 
     public ProcessingCommand(ICommand command, ICommandExecuteContext commandExecuteContext, Map<String, String> items) {
-    	setMessage(command);
-    	setCommandExecuteContext(commandExecuteContext);
-    	setItems(null != items ? items : new HashMap<>());
+    	this.message = command;
+    	this.commandExecuteContext = commandExecuteContext;
+    	this.items = (null != items ? items : new HashMap<>());
     }
 
     public SystemFutureWrapper<AsyncTaskResult<Void>> complete(CommandResult commandResult) {
@@ -56,18 +56,6 @@ public class ProcessingCommand {
 
 	public void setSequence(long sequence) {
 		this.sequence = sequence;
-	}
-
-	private void setMessage(ICommand message) {
-		this.message = message;
-	}
-
-	private void setCommandExecuteContext(ICommandExecuteContext commandExecuteContext) {
-		this.commandExecuteContext = commandExecuteContext;
-	}
-
-	private void setItems(Map<String, String> items) {
-		this.items = items;
 	}
 
 }

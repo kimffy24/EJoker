@@ -30,15 +30,17 @@ public class ProcessingCommandMailbox {
 	
 	private final EJokerAsyncHelper eJokerAsyncHelper;
 	
+	private final IProcessingCommandHandler messageHandler;
+
+	private final Lock enqueueLock = new ReentrantLock();
+	
 	private final Lock asyncLock = new ReentrantLock();
 	
 	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
 	private final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<>();
 	
-	private final IProcessingCommandHandler messageHandler;
-	
-	private final int _batchSize = 16;
+	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	
 	private AtomicLong nextSequence = new AtomicLong(0l);
 	
@@ -79,10 +81,16 @@ public class ProcessingCommandMailbox {
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		long acquireSequence = nextSequence.getAndIncrement();
-		message.setSequence(acquireSequence);
-		message.setMailbox(this);
-		messageDict.put(acquireSequence, message);
+		enqueueLock.lock();
+		try {
+			long acquireSequence = nextSequence.get();
+			message.setSequence(acquireSequence);
+			message.setMailbox(this);
+			if(null == messageDict.putIfAbsent(acquireSequence, message))
+				nextSequence.getAndIncrement();
+		} finally {
+			enqueueLock.unlock();
+		}
 		lastActiveTime = System.currentTimeMillis();
 		tryRun();
 	}
@@ -119,9 +127,7 @@ public class ProcessingCommandMailbox {
 	            {
 	                messageDict.remove(processingSequence);
 	                // TODO @await
-//	              completeCommand(processingCommand, commandResult);
-	                SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandTask = completeCommand(processingCommand, commandResult);
-	                completeCommandTask.get();
+	                completeCommand(processingCommand, commandResult).get();
 	                consumedSequence.set(processNextCompletedCommands(processingSequence));
 	            }
 	            else if (processingSequence > expectSequence)
@@ -132,9 +138,7 @@ public class ProcessingCommandMailbox {
 	            {
 	                messageDict.remove(processingSequence);
 	                // TODO @await
-//	              completeCommand(processingCommand, commandResult);
-	                SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandTask = completeCommand(processingCommand, commandResult);
-	                completeCommandTask.get();
+	                completeCommand(processingCommand, commandResult).get();
 	                requestToCompleteCommandDict.remove(processingSequence);
 	            } else {
 	            	assert false;
@@ -149,9 +153,7 @@ public class ProcessingCommandMailbox {
 	}
 
     public void run() {
-		// TODO 通过调度器发起线程处理新的命令 
-		// TODO 此处为调度器发起新线程的起点
-
+    	
 		lastActiveTime = System.currentTimeMillis();
 		AcquireHelper.waitAcquire(onPaused, 1000l,
 				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}",
@@ -162,7 +164,7 @@ public class ProcessingCommandMailbox {
 		try {
 			isProcessingCommand.set(true);
 			int count = 0;
-			while (consumingSequence.get() < nextSequence.get() && count < EJokerEnvironment.MAX_BATCH_COMMANDS) {
+			while (consumingSequence.get() < nextSequence.get() && count < batchSize) {
 				processingCommand = messageDict.get(consumingSequence.get());
 				if (null != processingCommand)
 					// TODO @await
@@ -180,8 +182,7 @@ public class ProcessingCommandMailbox {
 					ex);
 			try {
 				TimeUnit.MILLISECONDS.sleep(1);
-			} catch (InterruptedException e) {
-			}
+			} catch (InterruptedException e) { }
 		} finally {
 			isProcessingCommand.set(false);
         	exit();
@@ -199,10 +200,6 @@ public class ProcessingCommandMailbox {
 	}
 	
 	/* ========================== */
-
-	private ProcessingCommand getProcessingCommand(long sequence) {
-		return messageDict.get(sequence);
-	}
 	
     private long processNextCompletedCommands(long baseSequence)
     {

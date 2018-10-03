@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
@@ -20,8 +19,6 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 
 	private long version = 0;
 	
-	private Lock lock4ApplyEvent = new ReentrantLock();
-
 	@PersistentIgnore
 	private Queue<IDomainEvent<?>> uncommittedEvents = null;
 	
@@ -53,7 +50,7 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 
 	@Override
 	public String getUniqueId() {
-		return null==id?null:id.toString();
+		return null == id ? null : id.toString();
 	}
 
 	@Override
@@ -85,22 +82,64 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 	private void handleEvent(IDomainEvent<TAggregateRootId> domainEvent){
 		
 		// creating new aggregate root.
-		if ( this.id == null && domainEvent.getVersion() == 1 )
-			this.id = domainEvent.getAggregateRootId();
+		if ( this.id == null && domainEvent.getVersion() == 1 ) {
+			// TODO 这里有个由String类型Id转换为实际泛型类型的id的逻辑。
+			// TODO 做个标记，之后马上实现
+//			this.id = domainEvent.getAggregateRootStringId();
+		}
 		
 		AggregateRootHandlerPool.invokeInternalHandler(this, domainEvent);
+	}
+	
+	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
+		
+		if(null == uncommittedEvents) {
+			uncommittedEvents = new LinkedBlockingQueue<>();
+		}
+		
+
+		if(0 < uncommittedEvents.size()) {
+			uncommittedEvents.forEach((x) -> {
+
+				if(x.getClass().equals(domainEvent.getClass())) {
+					throw new InvalidOperationException(String.format(
+							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
+							domainEvent.getClass().getName(),
+							AggregateRootA.this.getClass().getName(),
+							id
+					));
+				}
+				
+			});
+		}
+		
+		uncommittedEvents.offer(domainEvent);
+	}
+
+	private void verifyEvent(DomainEventStream eventStream){
+		if (eventStream.getVersion() > 1 && eventStream.getAggregateRootId() != this.getUniqueId()) {
+			throw new InvalidOperationException(String.format(
+					"Invalid domain event stream, aggregateRootId: %s, expected aggregateRootId: %s, type: %s", 
+					eventStream.getAggregateRootId(),
+					this.getUniqueId(),
+					this.getClass().getName()));
+		}
+		
+		if (eventStream.getVersion() != this.getVersion() + 1l) {
+			throw new InvalidOperationException(String.format(
+					"Invalid domain event stream, version: %d, expected version: %d, current aggregateRoot type: %s, id:%s",
+					eventStream.getVersion(),
+					this.getVersion(),
+					this.getClass().getName(),
+					this.getUniqueId()));
+		}
 	}
 
 	@Override
 	public List<IDomainEvent<?>> getChanges() {
-		ArrayList<IDomainEvent<?>> changes = new ArrayList<IDomainEvent<?>>();
+		List<IDomainEvent<?>> changes = new ArrayList<>();
 		changes.addAll(uncommittedEvents);
 		return changes;
-	}
-
-	@Override
-	public int getChangesAmount() {
-		return uncommittedEvents.size();
 	}
 
 	@Override
@@ -108,7 +147,10 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 		if(version+1 != newVersion)
 			throw new InvalidOperationException(String.format(
 					"Cannot accept invalid version: %d, expect version: %d, current aggregateRoot type: %s, id: %s",
-					newVersion, version+1, this.getClass().getName(), id.toString()
+					newVersion,
+					version+1,
+					this.getClass().getName(),
+					id.toString()
 			));
 		version = newVersion;
 		uncommittedEvents.clear();
@@ -117,46 +159,15 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replayEvents(Collection<DomainEventStream> eventStreams) {
-		if( null==eventStreams || eventStreams.size()==0) return;
+		if(null == eventStreams || 0 == eventStreams.size())
+			return;
+		
 		for(DomainEventStream eventStream:eventStreams) {
 			verifyEvent(eventStream);
 			Collection<IDomainEvent<?>> events = eventStream.getEvents();
 			for(IDomainEvent<?> event:events)
 				handleEvent((IDomainEvent<TAggregateRootId> )event);
 			version = eventStream.getVersion();
-		}
-	}
-	
-	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
-		if(0<uncommittedEvents.size())
-			for(IDomainEvent<?> prevousDomainEvent:uncommittedEvents)
-				if(prevousDomainEvent.getClass().equals(domainEvent.getClass()))
-					throw new InvalidOperationException(String.format(
-							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
-							domainEvent.getClass().getName(), AggregateRootA.this.getClass().getName(), id
-					));
-		uncommittedEvents.add(domainEvent);
-	}
-
-	private void verifyEvent(DomainEventStream eventStream){
-		IAggregateRoot current = (IAggregateRoot )this;
-		if (eventStream.getVersion() > 1 && eventStream.getAggregateRootId() != current.getUniqueId()) {
-			throw new InvalidOperationException("Invalid domain event stream, aggregateRootId:"
-					+eventStream.getAggregateRootId()
-					+", expected aggregateRootId:"
-					+current.getUniqueId()
-					+", type:"
-					+current.getClass().getName());
-		}
-		if (eventStream.getVersion() != current.getVersion() + 1) {
-			throw new InvalidOperationException("Invalid domain event stream, version:"
-					+eventStream.getVersion()
-					+", expected version:"
-					+current.getVersion()
-					+", current aggregateRoot type:"
-					+this.getClass().getName()
-					+", id:"
-					+current.getUniqueId());
 		}
 	}
 }

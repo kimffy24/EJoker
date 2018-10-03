@@ -7,6 +7,6 @@ public interface IAggregateRepositoryProvider {
 	 * @param aggregateRootClazz
 	 * @return
 	 */
-	IAggregateRepositoryProxy GetRepository(Class<?> aggregateRootClazz);
+	IAggregateRepositoryProxy getRepository(Class<?> aggregateRootClazz);
 	
 }

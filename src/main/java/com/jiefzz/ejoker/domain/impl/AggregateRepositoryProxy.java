@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.domain.impl;
 import com.jiefzz.ejoker.domain.IAggregateRepository;
 import com.jiefzz.ejoker.domain.IAggregateRepositoryProxy;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 /**
  * 代理对象，用于获取仓储对象。
@@ -22,8 +23,9 @@ public class AggregateRepositoryProxy implements IAggregateRepositoryProxy {
 	}
 
 	@Override
-	public IAggregateRoot get(String aggregateRootId) {
-		return aggregateRepository.get(aggregateRootId);
+	public SystemFutureWrapper<IAggregateRoot> getAsync(String aggregateRootId) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

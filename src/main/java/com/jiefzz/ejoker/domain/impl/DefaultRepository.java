@@ -14,13 +14,13 @@ import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 public class DefaultRepository implements IRepository {
 
 	@Dependence
-	IMemoryCache memoryCache;
+	private IMemoryCache memoryCache;
 	
 	@Dependence
-	IAggregateStorage aggregateRootStorage;
+	private IAggregateStorage aggregateRootStorage;
 	
 	@Dependence
-	SystemAsyncHelper systemAsyncHelper;
+	private SystemAsyncHelper systemAsyncHelper;
 
 	@Override
 	public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
@@ -29,6 +29,8 @@ public class DefaultRepository implements IRepository {
 		if (aggregateRootId == null)
 			throw new ArgumentNullException("aggregateRootId");
 		
+		// TODO @await
+		/// 此处满足 异步传递
 		return memoryCache.getAsync(aggregateRootId, aggregateRootType);
 		
 	}

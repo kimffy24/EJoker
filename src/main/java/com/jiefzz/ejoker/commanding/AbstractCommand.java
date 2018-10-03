@@ -26,7 +26,6 @@ public class AbstractCommand extends MessageA implements ICommand {
 		return this.aggregateRootId;
 	}
 
-	@Override
 	public void setAggregateRootId(String aggregateRootId) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		this.aggregateRootId = aggregateRootId;

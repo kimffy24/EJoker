@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.eventing;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +11,7 @@ public interface IEventSerializer {
 	 * @param events
 	 * @return
 	 */
-	public Map<String, String> serializer(List<IDomainEvent<?>> events);
+	public Map<String, String> serializer(Collection<IDomainEvent<?>> events);
 	
 	/**
 	 * deserialize the given data to events

@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.jiefzz.ejoker.infrastructure.IMessage;
@@ -50,7 +51,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(List<? extends IMessage> messages) {
+	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
 
 		List<SystemFutureWrapper<AsyncTaskResult<Void>>> futures = new ArrayList<>();
 		

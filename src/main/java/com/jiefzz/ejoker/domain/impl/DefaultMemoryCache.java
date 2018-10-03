@@ -98,6 +98,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			});
 
 			try {
+				// TODO @await
 				@SuppressWarnings("unchecked")
 				IAggregateRoot aggregateRoot = aggregateStorage.getAsync((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString()).get();
 				if (null != aggregateRoot) {

@@ -29,9 +29,9 @@ import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
  *
  */
 @EService
-public final class DefaultCommandProcessorImpl implements ICommandProcessor {
+public final class DefaultCommandProcessor implements ICommandProcessor {
 
-	private final static Logger logger = LoggerFactory.getLogger(DefaultCommandProcessorImpl.class);
+	private final static Logger logger = LoggerFactory.getLogger(DefaultCommandProcessor.class);
 	
 	private final Map<String, ProcessingCommandMailbox> mailboxDict = new ConcurrentHashMap<>();
 	

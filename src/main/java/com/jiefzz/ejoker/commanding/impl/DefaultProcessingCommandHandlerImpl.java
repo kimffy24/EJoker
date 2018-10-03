@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.commanding.impl;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -139,7 +138,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 							logger.error("{} raise when {} handling {}. commandId={}, aggregateId={}", e.getMessage(), commandHandler.toString(), message.getId(), message.getAggregateRootId());
 							try {
 								/// TODO @await
-								AsyncTaskResultBase asyncTaskResultBase = completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(), "Unknow exception caught when committing changes of command.").get();
+								completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(), "Unknow exception caught when committing changes of command.").get();
 							} catch (Exception e1) {
 								e1.printStackTrace();
 							}
@@ -157,11 +156,11 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		Collection<IAggregateRoot> trackedAggregateRoots = context.getTrackedAggregateRoots();
 		int dirtyAggregateRootCount = 0;
 		IAggregateRoot dirtyAggregateRoot = null;
-		List<IDomainEvent<?>> changeEvents = null;
+		Collection<IDomainEvent<?>> changeEvents = null;
 
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
-			List<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
+			Collection<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
 			if(null!=changes && changes.size()>0) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
@@ -198,7 +197,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 	}
 	
-	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, List<IDomainEvent<?>> changeEvents, ProcessingCommand processingCommand) {
+	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, Collection<IDomainEvent<?>> changeEvents, ProcessingCommand processingCommand) {
 		String result = processingCommand.getCommandExecuteContext().getResult();
 		if(null!=result)
 			processingCommand.getItems().put("CommandResult", result);
@@ -249,7 +248,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 			@Override
 			public String getContextInfo() {
-				return super.getContextInfo();
+				return String.format("[commandId: %s]", command.getId());
 			}
 			
     	});
@@ -307,7 +306,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 			@Override
 			public String getContextInfo() {
-				return super.getContextInfo();
+				return String.format("[commandId: %s]", command.getId());
 			}
 			
 		});
@@ -329,11 +328,6 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 
 			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
-			}
-
-			@Override
 			public void finishAction(AsyncTaskResultBase result) {
 				completeCommand(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
 			}
@@ -342,6 +336,13 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			public void faildAction(Exception ex) {
 				logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex);
 			}
+
+			@Override
+			public String getContextInfo() {
+				// TODO 未完成!!! IPublishableException的序列化信息！
+                return String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), "");
+            }
+			
 		});
 		
 	}
@@ -357,70 +358,67 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
         logger.error(errorMessage, exception);
     }
 	
-	private Future<AsyncTaskResultBase> handleCommandAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
+	private SystemFutureWrapper<AsyncTaskResult<Void>> handleCommandAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
+		return eJokerAsyncHelper.submit(() -> {
+			
+			ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
 
-			@Override
-			public String getAsyncActionName() {
-				return "HandleCommandAsync";
-			}
+				@Override
+				public String getAsyncActionName() {
+					return "HandleCommandAsync";
+				}
 
-			@Override
-			public AsyncTaskResultBase asyncAction() throws Exception {
-				try {
-					commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
-					logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
-                            commandHandler.toString(),
-                            command.getClass().getName(),
-                            command.getId(),
-                            command.getAggregateRootId());
-					
-					return AsyncTaskResultBase.Success;
-				} catch (Throwable ex) {
-					
-					if(ex instanceof IOExceptionOnRuntime)
-						ex = ex.getCause();
-					
-                    logger.error(String.format("Handle command async has io exception. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
-                    		commandHandler.toString(),
-                            command.getClass().getName(),
-                            command.getId(),
-                            command.getAggregateRootId()), ex);
-                    return new AsyncTaskResultBase( ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage());
-                }
-			}
+				@Override
+				public AsyncTaskResult<Void> asyncAction() throws Exception {
+					try {
+						commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
+						logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
+	                            commandHandler.toString(),
+	                            command.getClass().getName(),
+	                            command.getId(),
+	                            command.getAggregateRootId());
+						
+						return new AsyncTaskResult<>(AsyncTaskStatus.Success);
+					} catch (Throwable ex) {
+						
+						if(ex instanceof IOExceptionOnRuntime)
+							ex = ex.getCause();
+						
+	                    logger.error(String.format("Handle command async has io exception. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
+	                    		commandHandler.toString(),
+	                            command.getClass().getName(),
+	                            command.getId(),
+	                            command.getAggregateRootId()), ex);
+	                    return new AsyncTaskResult<>( ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage());
+	                }
+				}
 
-			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
-			}
+				@Override
+				public void finishAction(AsyncTaskResult<Void> result) {
+					commitChangesAsync(processingCommand, true, null, null);
+				}
 
-			@Override
-			public void finishAction(AsyncTaskResultBase result) {
-				commitChangesAsync(processingCommand, true, null, null);
-			}
+				@Override
+				public void faildAction(Exception ex) {
+					commitChangesAsync(processingCommand, false, null, ex.getMessage());
+				}
 
-			@Override
-			public void faildAction(Exception ex) {
-				commitChangesAsync(processingCommand, false, null, ex.getMessage());
-			}
-
-			@Override
-			public String getContextInfo() {
-				return String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString());
-			}
+				@Override
+				public String getContextInfo() {
+					return String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString());
+				}
+				
+			});
 			
 		});
-		
-		return FutureUtil.completeTaskBase();
     }
 	
 	private void commitChangesAsync(ProcessingCommand processingCommand, boolean success, IApplicationMessage message,
 			String errorMessage) {
 		if (success) {
-			if (message != null) {
+			if (null != message) {
 				publishMessageAsync(processingCommand, message);
 			} else {
 				completeCommand(processingCommand, CommandStatus.Success, null, null);

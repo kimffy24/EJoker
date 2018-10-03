@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.eventing.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,7 +23,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 	private IJSONConverter jsonSerializer;
 	
 	@Override
-	public Map<String, String> serializer(List<IDomainEvent<?>> events) {
+	public Map<String, String> serializer(Collection<IDomainEvent<?>> events) {
 		Map<String, String> dict = new LinkedHashMap<String, String>();
 		for(IDomainEvent<?> event:events)
 			dict.put(event.getClass().getName(), jsonSerializer.convert(event));

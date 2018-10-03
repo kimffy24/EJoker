@@ -1,16 +1,9 @@
 package com.jiefzz.ejoker.commanding;
 
-import java.io.Serializable;
+public class CommandResult {
 
-import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
-
-public class CommandResult implements Serializable {
-
-	@PersistentIgnore
-	private static final long serialVersionUID = 752016886537166260L;
-	
-	private String commandId;
 	private CommandStatus status;
+	private String commandId;
 	private String aggregateRootId;
 	private String result;
 	private String resultType;
@@ -34,7 +27,11 @@ public class CommandResult implements Serializable {
 	public String toString() {
 		return String.format(
 				"[commandId=%s, status=%s, aggregateRootId=%s, result=%s, resultType=%s]",
-				commandId, status.toString(), aggregateRootId, null==result?"null":result.toString(), null==resultType?"null":resultType.toString()
+				commandId,
+				status.toString(),
+				aggregateRootId,
+				result,
+				resultType
 		);
 	}
 	
@@ -43,15 +40,19 @@ public class CommandResult implements Serializable {
 	public CommandStatus getStatus() {
 		return status;
 	}
+	
 	public String getCommandId() {
 		return commandId;
 	}
+	
 	public String getAggregateRootId() {
 		return aggregateRootId;
 	}
+	
 	public String getResult() {
 		return result;
 	}
+	
 	public String getResultType() {
 		return resultType;
 	}
