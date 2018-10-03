@@ -10,7 +10,6 @@ import com.jiefzz.ejoker.infrastructure.ISequenceMessage;
 import com.jiefzz.ejoker.infrastructure.ISequenceProcessingMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
@@ -91,7 +90,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     
     private void dispatchProcessingMessageAsyncInternal(X processingMessage) {
     	
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -99,12 +98,12 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			}
 
 			@Override
-			public AsyncTaskResultBase asyncAction() throws Exception {
+			public AsyncTaskResult<Void> asyncAction() throws Exception {
 				return dispatchProcessingMessageAsync(processingMessage).get();
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResultBase result) {
+			public void finishAction(AsyncTaskResult<Void> result) {
 				updatePublishedVersionAsync(processingMessage);
 			}
 
@@ -130,7 +129,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     	
     }
     private void updatePublishedVersionAsync(X processingMessage) {
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -138,13 +137,13 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			}
 
 			@Override
-			public AsyncTaskResultBase asyncAction() throws Exception {
+			public AsyncTaskResult<Void> asyncAction() throws Exception {
 				Y message = processingMessage.getMessage();
 				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion()).get();
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResultBase result) {
+			public void finishAction(AsyncTaskResult<Void> result) {
 				processingMessage.complete();
 			}
 

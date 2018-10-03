@@ -1,28 +1,41 @@
 package com.jiefzz.ejoker.z.common.io;
 
-public final class AsyncTaskResult<T> extends AsyncTaskResultBase {
+public final class AsyncTaskResult<T> {
 
+	public final static AsyncTaskResult<Void> Success = new AsyncTaskResult<>(AsyncTaskStatus.Success);
+
+	protected final AsyncTaskStatus status;
+	
+	protected final String errorMessage;
+	
 	private final T data;
 
 	public AsyncTaskResult(AsyncTaskStatus status) {
-		super(status);
-		data = null;
+		this(status, null, null);
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, String errorMessage) {
-		super(status, errorMessage);
-		data = null;
+		this(status, errorMessage, null);
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, T data) {
-		super(status);
-		this.data = data;
+		this(status, null, data);
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, String errorMessage, T data) {
-		super(status, errorMessage);
+		this.status = status;
+		this.errorMessage = errorMessage;
 		this.data = data;
 	}
 
 	/* ========Getter and Setter========= */
 
+	
+	public AsyncTaskStatus getStatus() {
+		return status;
+	}
+
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+	
 	public T getData() {
 		return data;
 	}

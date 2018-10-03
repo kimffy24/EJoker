@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.commanding.impl;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,14 +27,12 @@ import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IP
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
@@ -315,7 +312,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
 	
 	private void publishExceptionAsync(ProcessingCommand processingCommand, IPublishableException exception) {
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -323,12 +320,12 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 
 			@Override
-			public AsyncTaskResultBase asyncAction() throws Exception {
+			public AsyncTaskResult<Void> asyncAction() throws Exception {
 				return exceptionPublisher.publishAsync(exception).get();
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResultBase result) {
+			public void finishAction(AsyncTaskResult<Void> result) {
 				completeCommand(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
 			}
 

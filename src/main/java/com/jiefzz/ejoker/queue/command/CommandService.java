@@ -17,7 +17,6 @@ import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
@@ -107,7 +106,7 @@ public class CommandService implements ICommandService, IWorkerService {
 		/// 如果这里能用协程，会更好，netty有吗？
 		/// TODO 一个优化点
 		return systemAsyncHelper.submit(() -> {
-					AsyncTaskResultBase result = sendMessageAsync.get();
+					AsyncTaskResult<Void> result = sendMessageAsync.get();
 					if(AsyncTaskStatus.Success.equals(result.getStatus())) {
 						// 此线程会在这了盲等！
 						return remoteTaskCompletionSource.task.get();

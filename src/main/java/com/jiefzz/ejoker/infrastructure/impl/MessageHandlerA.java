@@ -1,15 +1,14 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
-import java.util.concurrent.Future;
-
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageHandler;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public abstract class MessageHandlerA implements IMessageHandler {
 
 	@Override
-	public Future<AsyncTaskResultBase> handleAsync(IMessage message) {
+	public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message) {
 		assert false;
 		return null;
 	}

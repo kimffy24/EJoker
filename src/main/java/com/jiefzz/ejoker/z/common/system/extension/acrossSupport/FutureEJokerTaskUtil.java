@@ -3,7 +3,6 @@ package com.jiefzz.ejoker.z.common.system.extension.acrossSupport;
 import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 
 /**
@@ -69,17 +68,17 @@ public final class FutureEJokerTaskUtil {
 		return (Future<AsyncTaskResult<T>> )x;
 	}
 
-	public static Future<AsyncTaskResultBase> completeTaskBase() {
+	public static Future<AsyncTaskResult<Void>> completeTaskBase() {
 		return completeFutureBaseRef;
 	}
 
-	private final static Future<AsyncTaskResultBase> completeFutureBaseRef;
+	private final static Future<AsyncTaskResult<Void>> completeFutureBaseRef;
 	
 	private final static Future<AsyncTaskResult<?>> completeFutureRef;
 	
 	static {
-		RipenFuture<AsyncTaskResultBase> rfBase = new RipenFuture<>();
-		rfBase.trySetResult(new AsyncTaskResultBase(AsyncTaskStatus.Success));
+		RipenFuture<AsyncTaskResult<Void>> rfBase = new RipenFuture<>();
+		rfBase.trySetResult(new AsyncTaskResult<Void>(AsyncTaskStatus.Success));
 		completeFutureBaseRef = rfBase;
 		
 		RipenFuture<AsyncTaskResult<?>> rf = new RipenFuture<>();

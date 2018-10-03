@@ -1,10 +1,8 @@
 package com.jiefzz.ejoker.z.common.rpc.netty;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,13 +10,11 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.action.Action;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -82,7 +78,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void remoteInvoke(final String data, final String host, final int port) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResultBase>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
 
 			private String actName = String.format("remoteInvoke[target: %s:%d]", host, port);
 			
@@ -97,7 +93,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			 * TODO 2. 此处本质上是同步执行然后返回一个异步任务读取资源的结构对象给调用者，并非真正的异步
 			 */
 			@Override
-			public AsyncTaskResultBase asyncAction() throws Exception {
+			public AsyncTaskResult<Void> asyncAction() throws Exception {
 				Socket socket = null;
 				try {
 					socket = new Socket(host, port);// 创建一个客户端连接
@@ -114,7 +110,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 					bufw = null;
 					out = null;
 					
-					return AsyncTaskResultBase.Success;
+					return AsyncTaskResult.Success;
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw IOExceptionOnRuntime.encapsulation(e);
@@ -127,18 +123,14 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public void faildLoopAction() {
-				ioHelper.tryAsyncAction(this);
-			}
-
-			@Override
-			public void finishAction(AsyncTaskResultBase result) {
-				
-			}
-
-			@Override
 			public void faildAction(Exception ex) {
 				logger.error("failedAction invoke! parameter: {}", ex.getMessage());
+			}
+
+			@Override
+			public void finishAction(AsyncTaskResult<Void> result) {
+				// TODO Auto-generated method stub
+				
 			}});
 	}
 }
