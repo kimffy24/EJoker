@@ -30,7 +30,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		if(mayInterruptIfRunning) {
 			/// TODO 未完成！
-			/// 实现取消线程的语义
+			/// TODO 1. 实现取消线程的语义
 			return false;
 		}
 		countDownLatch.countDown();

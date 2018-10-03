@@ -68,20 +68,11 @@ public final class FutureEJokerTaskUtil {
 		return (Future<AsyncTaskResult<T>> )x;
 	}
 
-	public static Future<AsyncTaskResult<Void>> completeTaskBase() {
-		return completeFutureBaseRef;
-	}
-
-	private final static Future<AsyncTaskResult<Void>> completeFutureBaseRef;
-	
-	private final static Future<AsyncTaskResult<?>> completeFutureRef;
+	private final static Future<AsyncTaskResult<Void>> completeFutureRef;
 	
 	static {
-		RipenFuture<AsyncTaskResult<Void>> rfBase = new RipenFuture<>();
-		rfBase.trySetResult(new AsyncTaskResult<Void>(AsyncTaskStatus.Success));
-		completeFutureBaseRef = rfBase;
 		
-		RipenFuture<AsyncTaskResult<?>> rf = new RipenFuture<>();
+		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
 		rf.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success));
 		completeFutureRef = rf;
 	}

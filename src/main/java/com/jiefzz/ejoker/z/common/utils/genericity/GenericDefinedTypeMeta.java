@@ -54,12 +54,12 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 			boundsLower = null;
 			Class<?> regionClazz = (Class<?> )regionTye;
 			if(regionClazz.isArray()) {
-				// TODO case1: type is a common array
+				// case1: type is a common array
 				isArray = true;
 				rawClazz = regionClazz.getComponentType();
 				componentTypeMeta = new GenericDefinedTypeMeta(rawClazz, referMeta, level + 1);
 			} else {
-				// TODO case2: type is a common class
+				// case2: type is a common class
 				isArray = false;
 				rawClazz = regionClazz;
 				componentTypeMeta = null;

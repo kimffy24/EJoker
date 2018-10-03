@@ -15,8 +15,6 @@ public interface IAggregateRoot {
     
 	public void acceptChanges(long newVersion);
 	
-	public int getChangesAmount();
-    
 	public void replayEvents(Collection<DomainEventStream> eventStreams);
 
 }

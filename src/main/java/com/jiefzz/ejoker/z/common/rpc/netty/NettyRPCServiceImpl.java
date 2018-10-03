@@ -129,8 +129,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 			@Override
 			public void finishAction(AsyncTaskResult<Void> result) {
-				// TODO Auto-generated method stub
-				
+				// 暂时不做处理
 			}});
 	}
 }

@@ -22,7 +22,7 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 	@PersistentIgnore
 	private Queue<IDomainEvent<?>> uncommittedEvents = null;
 	
-	private TAggregateRootId id = null;
+	protected TAggregateRootId id = null;
 
 	public TAggregateRootId getId(){
 		return id;

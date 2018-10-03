@@ -23,7 +23,7 @@ public class GenericTypeUtil {
 	
 	/**
 	 * 获取java类属性上声明的对象的泛型签名<br>
-	 * TODO 当泛型不是直接声明时会出错<br>
+	 * ** 当泛型不是直接声明时会出错 ** <br>
 	 * 例如<br>
 	 * class A&lt;PType&gt; {<br>
 	 * public void doSomething(PType param) { ...; }<br>

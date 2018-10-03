@@ -290,10 +290,10 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 					continue;
 				Object prevous = markLoad.putIfAbsent(upperClazz, "");
 				if( null == prevous ) {
-					// TODO 没有任何先前记录
+					/// 没有任何先前记录
 					superMapperRecord.put(upperClazz, genericExpression.getDeclarePrototype());
 				} else {
-					// TODO 存在先前记录
+					/// 存在先前记录
 					Set<Class<?>> conflictSet;
 					if(null == (conflictSet = conflictMapperRecord.get(upperClazz))) {
 						Set<Class<?>> putIfAbsent = conflictMapperRecord.putIfAbsent(upperClazz, conflictSet = new HashSet<>());
@@ -323,7 +323,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		if(checker.trigger()) {
 			effect.trigger();
 		} else {
-			// TODO 抽象类是个泛型，但是eservice类却不是 或者 反过来
+			// TODO_complete 抽象类是个泛型，但是eservice类却不是 或者 反过来
 			// ... 打印出警告信息
 			logger.warn("Not match generic provide on EService and Implementation. \n\t{}\n\t{}", currentExpression.expressSignature, originalExpressSignature);
 		}
@@ -334,7 +334,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		ForEachUtil.processForEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
 			
 			GenericExpression eServiceClazzMiddleStatementGenericExpression = GenericExpressionFactory.getMiddleStatementGenericExpression(eServiceClazz);
-			/// TODO 预加载
+			/// 预加载
 			if(!eServiceClazzMiddleStatementGenericExpression.isComplete())
 				return;
 			Object instance;
@@ -345,9 +345,6 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				if(null != instanceMap.putIfAbsent(eServiceClazz.getName(), instance)) {
 					instance = instanceMap.get(eServiceClazz.getName());
 				}
-				
-				final Object targetInstance = instance;
-				;
 			}
 			
 			instanceMap.put(upperClazz.getName(), instance);
@@ -355,7 +352,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		});
 		
 		defaultRootDefinationStore.forEachEServiceExpressions((clazz, genericExpression) -> {
-			/// TODO 预加载
+			/// 预加载
 			if(!genericExpression.isComplete()) {
 				// throw new RuntimeException(String.format("Expect handle a complete state expression, but not!!! [ class: %s ]", clazz.getName()));
 				return;
