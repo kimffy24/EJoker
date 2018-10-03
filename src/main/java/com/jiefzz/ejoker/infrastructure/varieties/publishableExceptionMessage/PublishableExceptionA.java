@@ -10,7 +10,7 @@ public abstract class PublishableExceptionA extends RuntimeException implements 
 	
 	private long timestamp;
 	
-	private long sequence;
+	private int sequence;
 	
 	public PublishableExceptionA() {
         id = EObjectId.generateHexStringId();
@@ -49,12 +49,12 @@ public abstract class PublishableExceptionA extends RuntimeException implements 
 	}
 
 	@Override
-	public long getSequence() {
+	public int getSequence() {
 		return sequence;
 	}
 
 	@Override
-	public void setSequence(long sequence) {
+	public void setSequence(int sequence) {
 		this.sequence = sequence;
 	}
 

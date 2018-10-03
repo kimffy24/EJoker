@@ -1,6 +1,5 @@
 package com.jiefzz.ejoker.commanding;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 /**
@@ -11,6 +10,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
  */
 public interface ICommandExecuteContext extends ICommandContext, ITrackingContext{
 
-	public SystemFutureWrapper<AsyncTaskResult<Void>> onCommandExecutedAsync(CommandResult commandResult);
+	public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult);
 	
 }

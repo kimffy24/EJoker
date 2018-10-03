@@ -5,13 +5,13 @@ import com.jiefzz.ejoker.utils.EObjectId;
 public abstract class MessageA implements  IMessage {
 
 	private String id;
-	private long sequence;
+	private int sequence;
 	private long timestamp;
 	
 	public MessageA() {
 		id=EObjectId.generateHexStringId();
 		timestamp=System.currentTimeMillis();
-		sequence=1l;
+		sequence=1;
 	}
 	
 	@Override
@@ -45,12 +45,12 @@ public abstract class MessageA implements  IMessage {
 	}
 
 	@Override
-	public long getSequence() {
+	public int getSequence() {
 		return sequence;
 	}
 
 	@Override
-	public void setSequence(long sequence) {
+	public void setSequence(int sequence) {
 		this.sequence = sequence;
 	}
 

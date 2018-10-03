@@ -10,6 +10,7 @@ import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
 public class SendReplyService {
@@ -21,10 +22,10 @@ public class SendReplyService {
 	private IJSONConverter jsonConverter;
 
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private SystemAsyncHelper systemAsyncHelper;
 	
-	public SystemFutureWrapper<AsyncTaskResult<Void>> sendReply(int replyType, CommandResult commandResult, String replyAddress) {
-		return eJokerAsyncHelper.submit(() -> {
+	public SystemFutureWrapper<Void> sendReply(int replyType, CommandResult commandResult, String replyAddress) {
+		return systemAsyncHelper.submit(() -> {
 			ReplyMessage rm = new ReplyMessage();
 			rm.t = replyType;
 			rm.c = commandResult;
@@ -32,8 +33,8 @@ public class SendReplyService {
 		});
 	}
 	
-	public SystemFutureWrapper<AsyncTaskResult<Void>> sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
-		return eJokerAsyncHelper.submit(() -> {
+	public SystemFutureWrapper<Void> sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
+		return systemAsyncHelper.submit(() -> {
 			ReplyMessage rm = new ReplyMessage();
 			rm.t = replyType;
 			rm.d = eomainEventHandledMessage;

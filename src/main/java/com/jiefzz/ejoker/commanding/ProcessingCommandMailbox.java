@@ -15,7 +15,8 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
@@ -220,12 +221,12 @@ public class ProcessingCommandMailbox {
         return returnSequence;
     }
     
-	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+	private SystemFutureWrapper<Void> completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		try {
 			return processingCommand.complete(commandResult);
 		} catch (Exception ex) {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
-			return new SystemFutureWrapper<>(FutureUtil.completeTask());
+			return FutureWrapperUtil.createCompleteFuture(null);
 		}
 	}
 

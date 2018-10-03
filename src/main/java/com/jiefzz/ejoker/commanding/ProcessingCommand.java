@@ -24,7 +24,7 @@ public class ProcessingCommand {
     	this.items = (null != items ? items : new HashMap<>());
     }
 
-    public SystemFutureWrapper<AsyncTaskResult<Void>> complete(CommandResult commandResult) {
+    public SystemFutureWrapper<Void> complete(CommandResult commandResult) {
     	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }
     

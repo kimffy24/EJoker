@@ -35,7 +35,7 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;

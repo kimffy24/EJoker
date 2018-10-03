@@ -12,6 +12,6 @@ public interface IMessage {
     public long getTimestamp();
     public void setTimestamp(long timestamp);
     
-    public long getSequence();
-    public void setSequence(long sequence);
+    public int getSequence();
+    public void setSequence(int sequence);
 }

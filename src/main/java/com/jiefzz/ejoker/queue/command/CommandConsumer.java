@@ -34,7 +34,8 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResultBase;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
@@ -184,12 +185,12 @@ public class CommandConsumer implements IWorkerService {
 		}
 
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> onCommandExecutedAsync(CommandResult commandResult) {
+		public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult) {
 			
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return new SystemFutureWrapper<>(FutureUtil.completeTask());
+				return FutureWrapperUtil.createCompleteFuture(null);
 			
 			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);
 		

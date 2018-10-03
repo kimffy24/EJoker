@@ -12,7 +12,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
  * @author kimffy
  *
  */
-public final class FutureUtil {
+public final class FutureEJokerTaskUtil {
 
 	public static Future<AsyncTaskResult<Void>> createFutureDirectly(AsyncTaskStatus status) {
 

@@ -32,7 +32,7 @@ public class DomainEventStream {
 		this.events = events;
 		this.timestamp = timestamp;
         
-        long sequence = 1;
+		int sequence = 1;
         for (IDomainEvent<?> evnt : this.events) {
             if (evnt.getVersion() != getVersion()) {
                 throw new UnmatchEventVersionException(String.format(
