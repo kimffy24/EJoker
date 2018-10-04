@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.commanding.AggregateRootAlreadyExistException;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
-import com.jiefzz.ejoker.commanding.CommandRuntimeException;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import com.jiefzz.ejoker.commanding.ICommandProcessor;
@@ -21,11 +20,11 @@ import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.queue.SendReplyService;
 import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
-import com.jiefzz.ejoker.queue.domainEvent.DomainEventConsumer;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -36,14 +35,13 @@ import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
-import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 @EService
 public class CommandConsumer implements IWorkerService {
 
+	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
@@ -62,6 +60,9 @@ public class CommandConsumer implements IWorkerService {
 	private IAggregateStorage aggregateRootStorage;
 	
 	@Dependence
+	private ITypeNameProvider typeNameProvider;
+	
+	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Dependence
@@ -77,8 +78,6 @@ public class CommandConsumer implements IWorkerService {
 	///
 	
 	private DefaultMQConsumer consumer;
-	
-	private Map<String, Class<? extends ICommand>> commandTypeDict = new HashMap<>();
 	
 	public DefaultMQConsumer getConsumer() {
 		return consumer;
@@ -96,7 +95,7 @@ public class CommandConsumer implements IWorkerService {
 		HashMap<String, String> commandItems = new HashMap<>();
 		String messageBody = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType = getCommandPrototype(queueMessage.getTag());
+		Class<? extends ICommand> commandType = (Class<? extends ICommand> )typeNameProvider.getType(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
 		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(
 				queueMessage,
@@ -117,7 +116,7 @@ public class CommandConsumer implements IWorkerService {
 		
 		/// #fix 180920 register sync offset task
 		{
-			scheduleService.startTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
+			scheduleService.startTask(this.getClass().getName() + "@" + this.hashCode()+ "#sync offset task", () -> {
 				consumer.syncOffsetToBroker();
 			}, 2000, 2000);
 		}
@@ -134,30 +133,9 @@ public class CommandConsumer implements IWorkerService {
 	public CommandConsumer shutdown() {
 		consumer.shutdown();
 
-		/// #fix 180920 register sync offset task
-		{
-			scheduleService.stopTask(DomainEventConsumer.class.getName() + "#sync offset task" + tx);
-		}
-		///
-		
 		return this;
 	}
 	
-	private Class<? extends ICommand> getCommandPrototype(String commandTypeString) {
-		Ensure.notNullOrEmpty(commandTypeString, commandTypeString);
-		return MapHelper.getOrAdd(commandTypeDict, commandTypeString, () -> {
-			Class<? extends ICommand> clazz;
-			try {
-				clazz = (Class<? extends ICommand> )Class.forName(commandTypeString);
-			} catch (ClassNotFoundException e) {
-				String format = String.format("Defination of [%s] is not found!!!", commandTypeString);
-				logger.error(format);
-				throw new CommandRuntimeException(format);
-			}
-			return clazz;
-		});
-	}
-
 	/**
 	 * commandHandler处理过程中，使用的上下文就是这个上下文。<br>
 	 * 他能新增一个聚合根，取出聚合跟，修改聚合并提交发布，都在次上下文中提供调用
@@ -228,10 +206,10 @@ public class CommandConsumer implements IWorkerService {
 					return (T )aggregateRoot;
 
 				if (tryFromCache)
-					// await
+					// TODO @await
 					aggregateRoot = repository.getAsync((Class<IAggregateRoot> )clazz, id).get();
 				else
-					// await
+					// TODO @await
 					aggregateRoot = aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get();
 
 				if (aggregateRoot != null) {

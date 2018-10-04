@@ -144,7 +144,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 					if ( !method.isAnnotationPresent(EInitialize.class) )
 						continue;
 
-					// TODO 默认规则： 初始化函数不传参
+					// 默认规则： 初始化函数不传参
 					/// * 带上参数后存在大量分析拆解以及上下文匹配工作，参数完全可以通过其他方法传入
 					if (method.getParameterCount() > 0) {
 						logger.error("Unsupport pass parameters to @Initialize method now!!! Found at {}#{}()",

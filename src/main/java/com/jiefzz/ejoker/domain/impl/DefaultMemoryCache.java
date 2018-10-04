@@ -1,6 +1,5 @@
 package com.jiefzz.ejoker.domain.impl;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,6 +11,7 @@ import com.jiefzz.ejoker.domain.AggregateCacheInfo;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -25,12 +25,15 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
 @EService
 public class DefaultMemoryCache implements IMemoryCache {
 
-	private final static  Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
+	private final static Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
 	
 	private final Map<String, AggregateCacheInfo> aggregateRootInfoDict = new ConcurrentHashMap<>();
 	
 	@Dependence
 	private IAggregateStorage aggregateStorage;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 
 	@Dependence
 	private IScheduleService scheduleService;
@@ -87,15 +90,13 @@ public class DefaultMemoryCache implements IMemoryCache {
 		
 		return systemAsyncHelper.submit(() -> {
 			
-			Class<?> aggregateRootType;
-			aggregateRootType = MapHelper.getOrAdd(typeDict, aggregateRootTypeName, () -> {
-				try {
-					return Class.forName(aggregateRootTypeName);
-				} catch (ClassNotFoundException e) {
-					logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
-					throw new AsyncWrapperException(e);
-				}
-			});
+			Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
+			if(null == aggregateRootType) {
+
+				logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
+				return;
+				
+			}
 
 			try {
 				// TODO @await
@@ -104,7 +105,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 				if (null != aggregateRoot) {
 					setInternal(aggregateRoot);
 				}
-				return null;
+				return;
 			} catch (Exception ex) {
 				logger.error(String.format("Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s", aggregateRootTypeName, aggregateRootId), ex);
 				throw new AsyncWrapperException(ex);
@@ -122,6 +123,4 @@ public class DefaultMemoryCache implements IMemoryCache {
 		previous.lastUpdateTime = System.currentTimeMillis();
 		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
 	}
-	
-	private Map<String, Class<?>> typeDict = new HashMap<>();
 }

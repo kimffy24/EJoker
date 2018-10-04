@@ -89,8 +89,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 			/**
 			 * 
-			 * TODO 1. 此处目前还是java原生实现，有空记得改为netty
-			 * TODO 2. 此处本质上是同步执行然后返回一个异步任务读取资源的结构对象给调用者，并非真正的异步
+			 * TODO NettyRPCServiceImpl 1. 此处目前还是java原生实现，有空记得改为netty
+			 * TODO NettyRPCServiceImpl 2. 此处本质上是同步执行然后返回一个异步任务读取资源的结构对象给调用者，并非真正的异步
 			 */
 			@Override
 			public AsyncTaskResult<Void> asyncAction() throws Exception {

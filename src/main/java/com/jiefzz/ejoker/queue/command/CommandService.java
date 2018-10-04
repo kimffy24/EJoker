@@ -81,7 +81,7 @@ public class CommandService implements ICommandService, IWorkerService {
 	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
-		return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command));
+		return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null);
 	}
 
 	@Override
@@ -101,7 +101,7 @@ public class CommandService implements ICommandService, IWorkerService {
 
 		FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new FutureTaskCompletionSource<>();
 		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
-		SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command));
+		SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null);
 		
 		/// 如果这里能用协程，会更好，netty有吗？
 		/// TODO 一个优化点

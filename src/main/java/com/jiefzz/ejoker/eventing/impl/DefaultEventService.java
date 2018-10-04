@@ -408,7 +408,7 @@ public class DefaultEventService implements IEventService {
                     //有可能事件持久化成功了，但那时正好机器断电了，则发布事件都没有做；
 					if(commandId.equals(firstEventStream.getCommandId())) {
 						
-						/// TODO ConfigureAwait(false); await
+						/// TODO .ConfigureAwait(false); @await
 						resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
 							.get();
 						
@@ -424,7 +424,7 @@ public class DefaultEventService implements IEventService {
                             firstEventStream.getAggregateRootTypeName());
                         logger.error(errorMessage);
 
-						/// TODO ConfigureAwait(false); await
+						/// TODO .ConfigureAwait(false); @await
                         resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
                         	.get();
                         
@@ -441,7 +441,7 @@ public class DefaultEventService implements IEventService {
 	                        eventStream.getAggregateRootTypeName());
 					logger.error(errorMessage);
 					
-					/// TODO ConfigureAwait(false); await
+					/// TODO .ConfigureAwait(false); @await
 					resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
 						.get();
 
