@@ -38,7 +38,7 @@ import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
@@ -69,10 +69,10 @@ public class DefaultEventService implements IEventService {
 	private IOHelper ioHelper;
 
 	@Dependence
-	private EJokerReactThreadScheduler reactThreadScheduler;
-
-	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
+	
+	@Dependence
+	private EJokerAsyncHelper eJokerAsyncHelper;
 
 	@EInitialize
 	private void init() {
@@ -89,15 +89,17 @@ public class DefaultEventService implements IEventService {
 		EventMailBox eventMailbox = MapHelper.getOrAddConcurrent(
 				eventMailboxDict,
 				uniqueId,
-				() -> new EventMailBox(uniqueId,
-				committingContexts -> {
-					if (committingContexts == null || committingContexts.size() == 0)
-						return;
-					if (eventStore.isSupportBatchAppendEvent())
-						batchPersistEventAsync(committingContexts, 0);
-					else
-						persistEventOneByOne(committingContexts);
-			}, reactThreadScheduler));
+				() -> new EventMailBox(
+						uniqueId,
+						committingContexts -> {
+							if (committingContexts == null || committingContexts.size() == 0)
+								return;
+							if (eventStore.isSupportBatchAppendEvent())
+								batchPersistEventAsync(committingContexts, 0);
+							else
+								persistEventOneByOne(committingContexts);
+						},
+						eJokerAsyncHelper));
 		eventMailbox.enqueueMessage(context);
 		refreshAggregateMemoryCache(context);
 
@@ -177,7 +179,7 @@ public class DefaultEventService implements IEventService {
                         		"Batch persist event has concurrent version conflict, first eventStream: {}, batchSize: {}",
                         		jsonSerializer.convert(firstEventCommittingContext.getEventStream()),
                         		committingContexts.size());
-                        /// TODO .ConfigureAwait(false) @await
+                        /// TODO .ConfigureAwait(false); @await
                         resetCommandMailBoxConsumingSequence(
                         		firstEventCommittingContext,
                         		firstEventCommittingContext.getProcessingCommand().getSequence())
@@ -249,7 +251,7 @@ public class DefaultEventService implements IEventService {
 					} else {
 						logger.warn("Persist event has concurrent version conflict, eventStream: {}", jsonSerializer.convert(context.getEventStream()));
 						
-						/// TODO .ConfigureAwait(false) @await
+						/// TODO .ConfigureAwait(false); @await
 						resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence())
 							.get();
 					}
@@ -260,7 +262,7 @@ public class DefaultEventService implements IEventService {
                     		"Persist event has duplicate command, eventStream: {}",
                     		jsonSerializer.convert(context.getEventStream()));
 
-					/// TODO .ConfigureAwait(false) @await
+					/// TODO .ConfigureAwait(false); @await
                     resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
                     	.get();
                     tryToRepublishEventAsync(context);

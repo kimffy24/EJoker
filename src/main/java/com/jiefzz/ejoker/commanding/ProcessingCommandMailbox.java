@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
@@ -26,8 +25,6 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
 public class ProcessingCommandMailbox {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
-	
-	private final EJokerReactThreadScheduler threadScheduler;
 	
 	private final EJokerAsyncHelper eJokerAsyncHelper;
 	
@@ -71,13 +68,11 @@ public class ProcessingCommandMailbox {
 		return lastActiveTime;
 	}
 
-	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler, EJokerReactThreadScheduler scheduler, EJokerAsyncHelper eJokerAsyncHelper) {
+	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler, EJokerAsyncHelper eJokerAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.messageHandler = messageHandler;
 		
-		Ensure.notNull(scheduler, "scheduler");
 		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
-		this.threadScheduler = scheduler;
 		this.eJokerAsyncHelper = eJokerAsyncHelper;
 	}
 
@@ -232,7 +227,7 @@ public class ProcessingCommandMailbox {
 
     private void tryRun() {
         if (tryEnter()) {
-        	threadScheduler.submit(() -> run());
+        	eJokerAsyncHelper.submit(() -> run());
         }
     }
     

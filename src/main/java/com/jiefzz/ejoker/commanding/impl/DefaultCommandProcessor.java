@@ -63,7 +63,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         if (aggregateRootId==null || "".equals(aggregateRootId))
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());
 
-        ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, eJokerReactThreadScheduler, eJokerAsyncHelper));
+        ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, eJokerAsyncHelper));
         mailbox.enqueueMessage(processingCommand);
 	}
 

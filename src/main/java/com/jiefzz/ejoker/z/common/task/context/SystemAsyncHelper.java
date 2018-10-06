@@ -21,6 +21,11 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 
 	@Override
+	protected boolean prestartAll() {
+		return true;
+	};
+	
+	@Override
 	protected int usePoolSize() {
 		return EJokerEnvironment.ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;
 	}
@@ -29,57 +34,14 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 		return submitInternalWrapper(() -> { vf.trigger(); return null; });
 	}
 
-//	public SystemFutureWrapper<AsyncTaskResultBase> submit(IVoidFunction vf, boolean waitFinish) {
-//		Thread currentThread = Thread.currentThread();
-//		SystemFutureWrapper<AsyncTaskResultBase> future = submitInternalWrapper(() -> { vf.trigger(); return AsyncTaskResultBase.Success; });
-//		submitInternalWrapper(() -> {
-//			try {
-//				future.get();
-//			} finally {
-//				if(waitFinish)
-//					LockSupport.unpark(currentThread);
-//			}
-//		});
-//		if(waitFinish)
-//			LockSupport.park();
-//		
-//		return future;
-//	}
-
 	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
 		return submitInternalWrapper(vf);
 	}
 	
-//	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf, boolean waitFinish) {
-//		Thread currentThread = Thread.currentThread();
-//		SystemFutureWrapper<T> future = submitInternalWrapper(vf);
-//		submitInternalWrapper(() -> {
-//			try {
-//				future.get();
-//			} finally {
-//				if(waitFinish)
-//					LockSupport.unpark(currentThread);
-//			}
-//		});
-//		if(waitFinish)
-//			LockSupport.park();
-//		
-//		return future;
-//	}
 
 	public <T> void submit(IFunction<T> vf, IVoidFunction1<T> callback) {
-//		Thread currentThread = Thread.currentThread();
 		SystemFutureWrapper<T> futureResult = submitInternalWrapper(vf);
-		submitInternalWrapper(() -> {
-			try {
-				callback.trigger(futureResult.get());
-			} finally {
-//				if(waitFinish)
-//					LockSupport.unpark(currentThread);
-			}
-		});
-//		if(waitFinish)
-//			LockSupport.park();
+		submitInternalWrapper(() -> callback.trigger(futureResult.get()));
 	}
 
 	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback) {

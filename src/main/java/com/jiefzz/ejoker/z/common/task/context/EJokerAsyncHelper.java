@@ -15,7 +15,7 @@ import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction1;
 
 /**
- * 包装一下使异步任务返回AsyncTaskResultBase/AsyncTaskResult&lt;T&gt;结构
+ * 包装一下使异步任务返回AsyncTaskResult&lt;T&gt;结构
  * @author kimffy
  *
  */
@@ -23,7 +23,7 @@ import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction1;
 public class EJokerAsyncHelper {
 
 	@Dependence
-	SystemAsyncHelper systemAsyncHelper;
+	private SystemAsyncHelper systemAsyncHelper;
 
 	public SystemFutureWrapper<AsyncTaskResult<Void>> submit(IVoidFunction vf) {
 		return systemAsyncHelper.submit(() -> {
@@ -34,7 +34,7 @@ public class EJokerAsyncHelper {
 						? new AsyncTaskResult<>(AsyncTaskStatus.IOException, e.getMessage(), null)
 						: new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage(), null);
 			}
-			return new AsyncTaskResult<>(AsyncTaskStatus.Success, null);
+			return new AsyncTaskResult<>(AsyncTaskStatus.Success);
 		});
 	}
 
@@ -50,7 +50,7 @@ public class EJokerAsyncHelper {
 						null
 				);
 			}
-			return new AsyncTaskResult<>(AsyncTaskStatus.Success, r);
+			return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, r);
 		});
 	}
 
@@ -73,7 +73,7 @@ public class EJokerAsyncHelper {
 								null
 						);
 					}
-					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null);
+					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, null);
 				});
 	}
 
@@ -97,11 +97,9 @@ public class EJokerAsyncHelper {
 								null
 						);
 					}
-					return new AsyncTaskResult<>(AsyncTaskStatus.Success, ra);
+					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, ra);
 				},
 				false);
 	}
-	
-	
 
 }

@@ -7,7 +7,7 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 
 /**
  * 任务类型具体逻辑一致，且不是IO或耗时型的任务<br>
- * * 如调度任务，周期性的检查任务等等
+ * * 如调度任务等
  * @author kimffy
  *
  */

@@ -13,13 +13,15 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class EventMailBox {
 
 	private final static Logger logger = LoggerFactory.getLogger(EventMailBox.class);
 	
-	private final EJokerReactThreadScheduler reactThreadScheduler;
+	private final EJokerAsyncHelper eJokerAsyncHelper;
 	
 	private final String aggregateRootId;
 	
@@ -45,12 +47,13 @@ public class EventMailBox {
 		return onRunning.get();
 	}
 	
-	public EventMailBox(String aggregateRootId, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerReactThreadScheduler reactThreadScheduler) {
+	public EventMailBox(String aggregateRootId, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerAsyncHelper eJokerAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
 		
-		this.reactThreadScheduler = reactThreadScheduler;
+		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
+		this.eJokerAsyncHelper = eJokerAsyncHelper;
 	}
 	
 	public void enqueueMessage(EventCommittingContext message) {
@@ -69,7 +72,7 @@ public class EventMailBox {
         if (exitFirst)
             exit();
         if (tryEnter()) {
-        	reactThreadScheduler.submit(() -> run());
+        	eJokerAsyncHelper.submit(() -> run());
         }
         
     }
