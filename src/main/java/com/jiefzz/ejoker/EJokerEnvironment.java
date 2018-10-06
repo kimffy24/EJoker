@@ -1,15 +1,9 @@
 package com.jiefzz.ejoker;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 /**
  * 在ejoker.properties中封装一些跟执行环境相关的变量
@@ -19,27 +13,25 @@ public final class EJokerEnvironment {
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
 
-	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE = 128;	
+	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;	
 	
-	public final static int ASYNC_IO_RETRY_THREADPOLL_SIZE = 256;
+	public final static int ASYNC_IO_RETRY_THREADPOLL_SIZE;
 	
-	public final static String ENVIROMMENT_FILE="ejoker.properties";
-	
-	public final static long MAILBOX_IDLE_TIMEOUT = 1800000l;
+	public final static long MAILBOX_IDLE_TIMEOUT;
 
-	public final static int REPLY_PORT = 65056;
+	public final static int REPLY_PORT;
 
 	/**
 	 * 处理器数量
 	 */
-	public final static int NUMBER_OF_PROCESSOR = 4;
+	public final static int NUMBER_OF_PROCESSOR = Runtime.getRuntime().availableProcessors();
 	
-	public final static int MAX_BATCH_COMMANDS = 32;
+	public final static int MAX_BATCH_COMMANDS;
 	
-	public final static int MAX_BATCH_EVENTS = 16;
+	public final static int MAX_BATCH_EVENTS;
+	
+	public final static String ENVIROMMENT_FILE="ejoker.properties";
 
-	private final static Map<String, String> topicQueueMapper = new HashMap<String, String>();
-	
 	static {
 
 		// ## region start 加载相关公共变量配置
@@ -48,30 +40,28 @@ public final class EJokerEnvironment {
 	 		props.load(EJokerEnvironment.class.getClassLoader().getResourceAsStream(ENVIROMMENT_FILE));
 		}catch(Exception e){
 			logger.warn("Could not load configure information from {}!", ENVIROMMENT_FILE);
+			throw new RuntimeException(e);
 		}
 		// ## region end
 
-		// 提取写在配置文件中的主题队列配对
-		Set<Entry<Object, Object>> entrySet = props.entrySet();
-		for(Entry<Object, Object> entry : entrySet){
-			String key = (String ) entry.getKey();
-			if(key.startsWith("ejoker.topic.queue")){
-				String topic = key.substring(1+"ejoker.topic.queue".length());
-				String queue = (String ) entry.getValue();
-				topicQueueMapper.put(topic, queue);
-			}
-		}
+		ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE =
+				Integer.valueOf(props.getProperty("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE", "256"));
+
+		ASYNC_IO_RETRY_THREADPOLL_SIZE =
+				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "64"));
+
+		MAILBOX_IDLE_TIMEOUT =
+				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "180000l"));
+
+		REPLY_PORT =
+				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
+
+		MAX_BATCH_COMMANDS =
+				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "32"));
+
+		MAX_BATCH_EVENTS =
+				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "16"));
 
 	}
 
-	/**
-	 * 查询主题对应的队列名，以便客户端消费
-	 * @param topic
-	 * @return
-	 */
-	static public String getQueueWhichFocusedTopic(String topic) {
-		String queue = topicQueueMapper.get(topic);
-		Ensure.notNullOrEmpty(queue, "queue");
-		return queue;
-	}
 }

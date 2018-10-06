@@ -61,6 +61,7 @@ public class EJoker {
 	//////  properties:
 	
 	private static EJoker instance;
+	
 	private IEjokerContextDev2 context;
 	
 }

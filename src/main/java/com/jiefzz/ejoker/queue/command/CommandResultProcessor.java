@@ -23,7 +23,7 @@ import com.jiefzz.ejoker.z.common.rpc.IClientNodeIPAddressProvider;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 @EService
 public class CommandResultProcessor implements IReplyHandler, IWorkerService {
@@ -75,7 +75,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	}
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,
-			FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
+			RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
 		if (null != commandTaskMap.putIfAbsent(command.getId(),
 				new CommandTaskCompletionSource(commandReturnType, taskCompletionSource))) {
 			throw new RuntimeException(String.format("Duplicate processing command registion, [type=%s, id=%s]",
@@ -96,7 +96,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(AsyncTaskStatus.Success,
 					commandResult);
-			commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult);
+			commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult);
 		}
 	}
 
@@ -110,7 +110,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 				commandTaskMap.remove(commandResult.getCommandId());
 				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
 						AsyncTaskStatus.Success, commandResult);
-				if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
+				if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
 					logger.debug("Command result return, {}", commandResult);
 			} else if (CommandReturnType.EventHandled.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				if (CommandStatus.Failed.equals(commandResult.getStatus())
@@ -118,7 +118,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 					commandTaskMap.remove(commandResult.getCommandId());
 					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
 							AsyncTaskStatus.Success, commandResult);
-					if (commandTaskCompletionSource.taskCompletionSource.task.trySetResult(asyncTaskResult))
+					if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
 						logger.debug("Command result return, {}", commandResult);
 				}
 			}
@@ -135,7 +135,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			CommandResult commandResult = new CommandResult(CommandStatus.Success, commandId,
 					message.getAggregateRootId(), message.getCommandResult(),
 					message.getCommandResult() != null ? message.getCommandResult().getClass().getName() : null);
-			if (commandTaskCompletionSource.taskCompletionSource.task
+			if (commandTaskCompletionSource.taskCompletionSource
 					.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, commandResult)))
 				logger.debug("Command result return, {}", commandResult.toString());
 		}
@@ -145,10 +145,10 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 		private final CommandReturnType commandReturnType;
 		
-		private final FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource;
+		private final RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource;
 
 		public CommandTaskCompletionSource(CommandReturnType commandReturnType,
-				FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> taskCompletionSource) {
+				RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
 			this.commandReturnType = commandReturnType;
 			this.taskCompletionSource = taskCompletionSource;
 		}
@@ -157,7 +157,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			return commandReturnType;
 		}
 
-		public FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> getTaskCompletionSource() {
+		public RipenFuture<AsyncTaskResult<CommandResult>> getTaskCompletionSource() {
 			return taskCompletionSource;
 		}
 	}

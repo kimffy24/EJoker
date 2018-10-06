@@ -20,7 +20,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.FutureTaskCompletionSource;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -99,7 +99,7 @@ public class CommandService implements ICommandService, IWorkerService {
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
 		
 
-		FutureTaskCompletionSource<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new FutureTaskCompletionSource<>();
+		RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
 		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
 		SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null);
 		
@@ -109,7 +109,7 @@ public class CommandService implements ICommandService, IWorkerService {
 					AsyncTaskResult<Void> result = sendMessageAsync.get();
 					if(AsyncTaskStatus.Success.equals(result.getStatus())) {
 						// 此线程会在这了盲等！
-						return remoteTaskCompletionSource.task.get();
+						return remoteTaskCompletionSource.get();
 					} else {
 						commandResultProcessor.processFailedSendingCommand(command);
 						throw new RuntimeException(result.getErrorMessage());
