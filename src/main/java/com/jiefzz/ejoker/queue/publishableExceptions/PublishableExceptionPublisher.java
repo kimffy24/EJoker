@@ -14,6 +14,7 @@ import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
 import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionHelper;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
@@ -77,11 +78,7 @@ public class PublishableExceptionPublisher implements IMessagePublisher<IPublish
 
 	private EJokerQueueMessage createEQueueMessage(IPublishableException exception) {
 		String topic = messageTopicProvider.getTopic(exception);
-		Map<String, String> serializableInfo = new HashMap<>();
-		{
-			// TODO 尚未定义可发布异常的序列化方法
-			// TODO 由可发布异常到Map<String, String>的结构转换
-		}
+		final Map<String, String> serializableInfo = PublishableExceptionHelper.serialize(exception);
 		String data = jsonConverter.convert(new PublishableExceptionMessage() {{
 			boolean isSequenceMessage = exception instanceof ISequenceMessage;
 			this.setUniqueId(exception.getId());

@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.containers.AggregateRootHandlerPool;
+import com.jiefzz.ejoker.utils.idHelper.IDHelper;
 import com.jiefzz.ejoker.z.common.ArgumentException;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.InvalidOperationException;
@@ -83,9 +84,10 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 		
 		// creating new aggregate root.
 		if ( this.id == null && domainEvent.getVersion() == 1 ) {
-			// TODO 这里有个由String类型Id转换为实际泛型类型的id的逻辑。
-			// TODO 做个标记，之后马上实现
+			// 这里有个由String类型Id转换为实际泛型类型的id的逻辑。
 //			this.id = domainEvent.getAggregateRootStringId();
+			IDHelper.setAggregateRootId(this, domainEvent.getAggregateRootStringId());
+			
 		}
 		
 		AggregateRootHandlerPool.invokeInternalHandler(this, domainEvent);

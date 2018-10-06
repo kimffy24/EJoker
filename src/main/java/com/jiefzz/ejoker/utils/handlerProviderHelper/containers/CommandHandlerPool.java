@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,13 +66,19 @@ public class CommandHandlerPool {
 		}
 		
 		@Override
-		public void handle(ICommandContext context, ICommand command) {
-			try {
-				handleReflectionMethod.invoke(getInnerObject(), context, command);
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
-			}
+		public void handle(ICommandContext context, ICommand command) throws Exception {
+				try {
+					handleReflectionMethod.invoke(getInnerObject(), context, command);
+				} catch (IllegalAccessException|IllegalArgumentException e) {
+					e.printStackTrace();
+					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+					if(null != e.getCause() && e.getCause() instanceof Exception)
+						throw (Exception )e.getCause();
+					else
+						throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
+				}
 		}
 		
 		@Override

@@ -29,8 +29,8 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		if(mayInterruptIfRunning) {
-			/// TODO 未完成！
-			/// TODO 1. 实现取消线程的语义
+			/// TODO RipenFuture 未完成！
+			/// TODO RipenFuture 1. 实现取消线程的语义
 			return false;
 		}
 		countDownLatch.countDown();

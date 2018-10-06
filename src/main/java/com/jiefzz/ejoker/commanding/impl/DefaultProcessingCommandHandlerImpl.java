@@ -24,6 +24,7 @@ import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
+import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionHelper;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
@@ -88,7 +89,8 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 					try {
 						ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
-						return handleCommand(processingCommand, handler);
+//						return handleCommand(processingCommand, handler);
+						return handleCommandAsync(processingCommand, handler);
 					} catch( Exception e ) {
 						logger.error(e.getMessage());
 						e.printStackTrace();
@@ -336,8 +338,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 			@Override
 			public String getContextInfo() {
-				// TODO 未完成!!! IPublishableException的序列化信息！
-                return String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), "");
+                return String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionHelper.serialize(exception));
             }
 			
 		});
@@ -378,10 +379,10 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	                            command.getAggregateRootId());
 						
 						return new AsyncTaskResult<>(AsyncTaskStatus.Success);
-					} catch (Throwable ex) {
+					} catch (Exception ex) {
 						
-						if(ex instanceof IOExceptionOnRuntime)
-							ex = ex.getCause();
+						while(ex instanceof IOExceptionOnRuntime)
+							ex = (Exception )ex.getCause();
 						
 	                    logger.error(String.format("Handle command async has io exception. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
 	                    		commandHandler.toString(),
