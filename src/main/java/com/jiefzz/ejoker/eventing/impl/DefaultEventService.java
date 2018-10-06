@@ -77,7 +77,7 @@ public class DefaultEventService implements IEventService {
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
-				String.format("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
 				() -> cleanInactiveMailbox(),
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);

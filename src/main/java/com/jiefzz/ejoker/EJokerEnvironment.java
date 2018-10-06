@@ -51,7 +51,7 @@ public final class EJokerEnvironment {
 				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "64"));
 
 		MAILBOX_IDLE_TIMEOUT =
-				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "180000l"));
+				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "180000"));
 
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
