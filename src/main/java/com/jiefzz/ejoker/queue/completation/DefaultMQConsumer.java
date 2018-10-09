@@ -266,7 +266,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		controlStruct.aheadCompletion.put(comsumedOffset, "");
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 		
-		submit(() -> controlStruct.completeOffsetHandlingWorker.trigger());
+		submit(controlStruct.completeOffsetHandlingWorker::trigger);
 	}
 	
 	public void syncOffsetToBroker() {
@@ -308,7 +308,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	private void submit(IVoidFunction vf) {
 		if(null == sumbiter) {
 			logger.warn("No submiter is provided, use default Thread strategy!");
-			new Thread(() -> vf.trigger()).start();
+			new Thread(vf::trigger).start();
 		} else {
 			sumbiter.submit(vf);
 		}

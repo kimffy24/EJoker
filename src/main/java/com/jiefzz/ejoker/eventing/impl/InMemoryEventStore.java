@@ -117,7 +117,7 @@ public class InMemoryEventStore implements IEventStore {
 		Set<DomainEventStream> resultSet = new LinkedHashSet<>();
 		
 		Map<String, String> aggregateEventStore
-			= MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, () -> new ConcurrentHashMap<>());
+			= MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		
 		for(long cursor = minVersion; cursor <= maxVersion; cursor++) {
 			Object previous = aggregateEventStore.get("" + cursor);
@@ -157,7 +157,7 @@ public class InMemoryEventStore implements IEventStore {
 				return EventAppendResult.DuplicateEvent;
 			else {
 
-				logger.debug(" -> 模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), convertToStorageFormat(eventStream));
+				logger.debug(" ==> 模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), convertToStorageFormat(eventStream));
 				
 				return EventAppendResult.Success;
 			}

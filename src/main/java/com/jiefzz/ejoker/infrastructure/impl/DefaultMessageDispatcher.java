@@ -32,7 +32,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 		List<SystemFutureWrapper<AsyncTaskResult<Void>>> futures = new ArrayList<>();
 		for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
 			SystemFutureWrapper<AsyncTaskResult<Void>> handleAsyncResult
-				= proxyAsyncHandler.handleAsync(message, c -> eJokerAsyncHelper.submit(c));
+				= proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit);
 			futures.add(handleAsyncResult);
 		}
 		

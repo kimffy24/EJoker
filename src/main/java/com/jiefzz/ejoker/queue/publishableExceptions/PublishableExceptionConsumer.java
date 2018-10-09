@@ -46,7 +46,7 @@ public class PublishableExceptionConsumer {
 
 	public PublishableExceptionConsumer start() {
 		
-		consumer.registerEJokerCallback((eJokerMsg, context) -> handle(eJokerMsg, context));
+		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
 		} catch (MQClientException e) {
@@ -56,9 +56,7 @@ public class PublishableExceptionConsumer {
 		
 		/// #fix 180920 register sync offset task
 		{
-			scheduleService.startTask(this.getClass().getName() + "@" + this.hashCode()+ "#sync offset task", () -> {
-				consumer.syncOffsetToBroker();
-			}, 2000, 2000);
+			scheduleService.startTask(this.getClass().getName() + "@" + this.hashCode()+ "#sync offset task", consumer::syncOffsetToBroker, 2000, 2000);
 		}
 		///
 		

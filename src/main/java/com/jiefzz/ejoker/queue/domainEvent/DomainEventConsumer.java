@@ -63,7 +63,6 @@ public class DomainEventConsumer implements IWorkerService {
 	}
 
 	public DomainEventConsumer start() {
-//		consumer.registerEJokerCallback((eJokerMsg, context) -> handle(eJokerMsg, context));
 		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
@@ -74,9 +73,6 @@ public class DomainEventConsumer implements IWorkerService {
 		
 		/// #fix 180920 register sync offset task
 		{
-//			scheduleService.startTask(this.getClass().getName() + "#sync offset task" + tx, () -> {
-//				consumer.syncOffsetToBroker();
-//			}, 2000, 2000);
 			scheduleService.startTask(this.getClass().getName() + "#sync offset task" + tx, consumer::syncOffsetToBroker, 2000, 2000);
 		}
 		///

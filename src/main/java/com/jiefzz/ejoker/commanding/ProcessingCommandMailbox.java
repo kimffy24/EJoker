@@ -227,7 +227,7 @@ public class ProcessingCommandMailbox {
 
     private void tryRun() {
         if (tryEnter()) {
-        	eJokerAsyncHelper.submit(() -> run());
+        	eJokerAsyncHelper.submit(this::run);
         }
     }
     

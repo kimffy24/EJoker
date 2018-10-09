@@ -131,7 +131,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 					}
 					
 				},
-				(b) -> {
+				b -> {
 					if(b) {
 						try {
 							// TOTO 事件过程的起点

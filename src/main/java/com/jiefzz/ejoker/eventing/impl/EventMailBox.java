@@ -72,7 +72,7 @@ public class EventMailBox {
         if (exitFirst)
             exit();
         if (tryEnter()) {
-        	eJokerAsyncHelper.submit(() -> run());
+        	eJokerAsyncHelper.submit(this::run);
         }
         
     }

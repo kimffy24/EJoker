@@ -61,7 +61,7 @@ public class MessageHandlerPool {
 				coverSet.add(messageType.getName());
 				if (!method.isAccessible())
 					method.setAccessible(true);
-				List<MessageHandlerReflectionTuple> handlerInvokerList = MapHelper.getOrAdd(handlerMapper, messageType, () -> new ArrayList<>());
+				List<MessageHandlerReflectionTuple> handlerInvokerList = MapHelper.getOrAdd(handlerMapper, messageType, ArrayList::new);
 				handlerInvokerList.add(new MessageHandlerReflectionTuple(method));
 			}
 		}
@@ -69,7 +69,7 @@ public class MessageHandlerPool {
 	}
 
 	public final static List<MessageHandlerReflectionTuple> getProxyAsyncHandlers(Class<? extends IMessage> messageType) {
-		return MapHelper.getOrAdd(handlerMapper, messageType, () -> new ArrayList<>());
+		return MapHelper.getOrAdd(handlerMapper, messageType, ArrayList::new);
 	}
 	
 	public static class MessageHandlerReflectionTuple implements IMessageHandlerProxy {

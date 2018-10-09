@@ -45,7 +45,7 @@ public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessa
 	private void init() {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
-				() -> cleanInactiveMailbox(),
+				this::cleanInactiveMailbox,
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
 	}
