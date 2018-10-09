@@ -31,7 +31,7 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 	}
 
 	public SystemFutureWrapper<Void> submit(IVoidFunction vf) {
-		return submitInternalWrapper(() -> { vf.trigger(); return null; });
+		return submitInternalWrapper(vf::trigger);
 	}
 
 	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {

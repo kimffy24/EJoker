@@ -56,8 +56,6 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 
 	private <T> void taskContinueAction(IOActionExecutionContext<T> externalContext) throws IOException {
 		
-//		SystemFutureWrapper<AsyncTaskResult<T>> task = eJokerAsyncHelper.submit(() -> externalContext.asyncAction());
-		
 		SystemFutureWrapper<AsyncTaskResult<T>> task;
 		
 		try {
@@ -152,7 +150,6 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 					}
 					
 					externalContext.faildLoopAction();
-					return true;
 					});
 				
 			} else {

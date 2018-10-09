@@ -86,7 +86,7 @@ public class EJokerAsyncHelper {
 						throw new AsyncWrapperException(e1);
 					}
 				},
-				(r) -> {
+				r -> {
 					TA ra;
 					try {
 						ra = callback.trigger(r);

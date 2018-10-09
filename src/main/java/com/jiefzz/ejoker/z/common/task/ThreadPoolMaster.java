@@ -27,9 +27,7 @@ public class ThreadPoolMaster {
 	
 	@EInitialize
 	private void init() {
-		scavenger.addFianllyJob(() -> {
-				closeAll();
-		});
+		scavenger.addFianllyJob(this::closeAll);
 	}
 	
 	public AsyncPool getPoolInstance(Object typeOfCaller) {

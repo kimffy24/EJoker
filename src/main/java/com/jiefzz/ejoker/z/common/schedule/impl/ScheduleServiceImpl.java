@@ -23,7 +23,7 @@ public class ScheduleServiceImpl implements IScheduleService {
 	
 	@EInitialize
 	private void init() {
-		scavenger.addFianllyJob(() -> cleanAll());
+		scavenger.addFianllyJob(this::cleanAll);
 	}
 	
 	@Override
