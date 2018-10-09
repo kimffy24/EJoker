@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -48,11 +49,28 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	public boolean onRunning(){
 		return onRunning.get();
 	}
+	
+	// TODO debug
+	public AtomicLong al = new AtomicLong(0);
+
+	// TODO debug
+	public Map<Long, X> getWaitingMessageDict() {
+		return waitingMessageDict;
+	}
+	
+	// TODO debug
+	public Queue<X> getMessageQueue() {
+		return messageQueue;
+	}
 
 	public void enqueueMessage(X processingMessage) {
 		lastActiveTime = System.currentTimeMillis();
 		processingMessage.setMailBox(this);
 		messageQueue.offer(processingMessage);
+		{
+			// TODO debug
+			al.incrementAndGet();
+		}
 		tryRun();
 	}
 	

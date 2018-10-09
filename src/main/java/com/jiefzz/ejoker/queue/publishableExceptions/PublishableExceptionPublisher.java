@@ -1,7 +1,6 @@
 package com.jiefzz.ejoker.queue.publishableExceptions;
 
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.rocketmq.client.exception.MQClientException;
