@@ -245,9 +245,12 @@ public class GenericExpression {
 		
 		if(null != target.parent) {
 			GenericExpression upperGe = target.parent;
+//			GenericDefinedTypeMeta[] deliveryClassesTable = getDCT(
+//					() -> genericDefination.getDeliveryTypeMetasTableCopy(),
+//					() -> genericDefination.getDeliveryMapperCopy());
 			GenericDefinedTypeMeta[] deliveryClassesTable = getDCT(
-					() -> genericDefination.getDeliveryTypeMetasTableCopy(),
-					() -> genericDefination.getDeliveryMapperCopy());
+					genericDefination::getDeliveryTypeMetasTableCopy,
+					genericDefination::getDeliveryMapperCopy);
 			this.parent = new GenericExpression(upperGe, this, deliveryClassesTable);
 		} else 
 			this.parent = null;
