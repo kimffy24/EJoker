@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements Runnable {
+public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingMessageMailbox.class);
 
@@ -30,7 +30,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 	
-	private Lock lock = new ReentrantLock();
+	private final Lock lock = new ReentrantLock();
 	
 	private long lastActiveTime = System.currentTimeMillis();
 	
@@ -85,7 +85,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
         }
     }
 
-	@Override
 	public void run() {
 		lastActiveTime = System.currentTimeMillis();
 		X processingMessage = null;
@@ -126,7 +125,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
         	return false;
 
         X nextMessage;
-        if (null != waitingMessageDict && null != (nextMessage = waitingMessageDict.remove(sequenceMessage.getVersion() + 1))) {
+        if (null != waitingMessageDict && null != (nextMessage = waitingMessageDict.remove(sequenceMessage.getVersion() + 1l))) {
             scheduler.scheduleMessage(nextMessage);
             return true;
         }

@@ -15,6 +15,8 @@ import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -29,6 +31,9 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	@Dependence
 	IOHelper ioHelper;
+	
+	@Dependence
+	EJokerAsyncHelper eJokerAsyncHelper;
 	
 	@Override
 	public void export(final Action<String> action, final int port) {
@@ -78,7 +83,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void remoteInvoke(final String data, final String host, final int port) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 			private String actName = String.format("remoteInvoke[target: %s:%d]", host, port);
 			
@@ -93,33 +98,34 @@ public class NettyRPCServiceImpl implements IRPCService {
 			 * TODO NettyRPCServiceImpl 2. 此处本质上是同步执行然后返回一个异步任务读取资源的结构对象给调用者，并非真正的异步
 			 */
 			@Override
-			public AsyncTaskResult<Void> asyncAction() throws Exception {
-				Socket socket = null;
-				try {
-					socket = new Socket(host, port);// 创建一个客户端连接
-					OutputStream out = socket.getOutputStream();// 获取服务端的输出流，为了向服务端输出数据
-					// InputStream in = socket.getInputStream();//
-					// 获取服务端的输入流，为了获取服务端输入的数据
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+				return eJokerAsyncHelper.submit(() -> {
+					Socket socket = null;
+					try {
+						socket = new Socket(host, port);// 创建一个客户端连接
+						OutputStream out = socket.getOutputStream();// 获取服务端的输出流，为了向服务端输出数据
+						// InputStream in = socket.getInputStream();//
+						// 获取服务端的输入流，为了获取服务端输入的数据
 
-					PrintWriter bufw = new PrintWriter(out, true);
-					bufw.println(data);// 发送数据给服务端
-					bufw.flush();
+						PrintWriter bufw = new PrintWriter(out, true);
+						bufw.println(data);// 发送数据给服务端
+						bufw.flush();
 
-					bufw.close();
-					out.close();
-					bufw = null;
-					out = null;
-					
-					return AsyncTaskResult.Success;
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw IOExceptionOnRuntime.encapsulation(e);
-				} finally {
-					if(null!=socket) {
-						socket.close();
-						socket = null;
+						bufw.close();
+						out.close();
+						bufw = null;
+						out = null;
+						
+					} catch (Exception e) {
+						e.printStackTrace();
+						throw IOExceptionOnRuntime.encapsulation(e);
+					} finally {
+						if(null!=socket) {
+							socket.close();
+							socket = null;
+						}
 					}
-				}
+				});
 			}
 
 			@Override
@@ -128,7 +134,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<Void> result) {
+			public void finishAction(Void result) {
 				// 暂时不做处理
 			}});
 	}

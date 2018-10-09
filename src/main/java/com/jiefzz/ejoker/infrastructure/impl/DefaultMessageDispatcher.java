@@ -3,6 +3,7 @@ package com.jiefzz.ejoker.infrastructure.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
@@ -70,8 +71,12 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 			ForEachUtil.processForEach(futures, f -> {
 				try {
 					AsyncTaskResult<Void> future = f.get();
-					if(AsyncTaskStatus.Success.equals(future.getStatus()))
+					if(AsyncTaskStatus.Success.equals(future.getStatus())) {
 						return;
+					} else {
+						// TODO for Debug
+						System.err.println(" ============ faild on message dispatch!!! times: " + al.incrementAndGet());
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new AsyncWrapperException(e);
@@ -80,4 +85,5 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 		});
 	}
 
+	private AtomicLong al = new AtomicLong(0);
 }

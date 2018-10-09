@@ -34,6 +34,9 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
@@ -89,8 +92,8 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 					try {
 						ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
-//						return handleCommand(processingCommand, handler);
-						return handleCommandAsync(processingCommand, handler);
+						return handleCommand(processingCommand, handler);
+//						return handleCommandAsync(processingCommand, handler);
 					} catch( Exception e ) {
 						logger.error(e.getMessage());
 						e.printStackTrace();
@@ -215,7 +218,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
     private void processIfNoEventsOfCommand(ProcessingCommand processingCommand) {
     	ICommand command = processingCommand.getMessage();
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<DomainEventStream>>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -223,13 +226,13 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 
 			@Override
-			public AsyncTaskResult<DomainEventStream> asyncAction() throws Exception {
-				return eventStore.findAsync(command.getAggregateRootId(), command.getId()).get();
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception {
+				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<DomainEventStream> result) {
-				DomainEventStream existingEventStream = result.getData();
+			public void finishAction(DomainEventStream result) {
+				DomainEventStream existingEventStream = result;
                 if (null != existingEventStream) {
                     eventService.publishDomainEventAsync(processingCommand, existingEventStream);
                 } else {
@@ -256,7 +259,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	private void handleExceptionAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler, Exception exception) {
 		ICommand command = processingCommand.getMessage();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<DomainEventStream>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -264,14 +267,14 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 
 			@Override
-			public AsyncTaskResult<DomainEventStream> asyncAction() throws Exception {
-				return eventStore.findAsync(command.getAggregateRootId(), command.getId()).get();
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception {
+				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<DomainEventStream> result) {
+			public void finishAction(DomainEventStream result) {
 				
-				DomainEventStream existingEventStream = result.getData();
+				DomainEventStream existingEventStream = result;
                 if (existingEventStream != null) {
                     //这里，我们需要再重新做一遍发布事件这个操作；
                     //之所以要这样做是因为虽然该command产生的事件已经持久化成功，但并不表示事件已经发布出去了；
@@ -314,7 +317,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
 	
 	private void publishExceptionAsync(ProcessingCommand processingCommand, IPublishableException exception) {
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -322,12 +325,12 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 
 			@Override
-			public AsyncTaskResult<Void> asyncAction() throws Exception {
-				return exceptionPublisher.publishAsync(exception).get();
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+				return exceptionPublisher.publishAsync(exception);
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<Void> result) {
+			public void finishAction(Void result) {
 				completeCommand(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
 			}
 
@@ -361,7 +364,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		
 		return eJokerAsyncHelper.submit(() -> {
 			
-			ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
+			ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 				@Override
 				public String getAsyncActionName() {
@@ -369,7 +372,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 				}
 
 				@Override
-				public AsyncTaskResult<Void> asyncAction() throws Exception {
+				public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
 					try {
 						commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
 						logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
@@ -378,7 +381,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	                            command.getId(),
 	                            command.getAggregateRootId());
 						
-						return new AsyncTaskResult<>(AsyncTaskStatus.Success);
+						return FutureWrapperUtil.createCompleteFuture(null);
 					} catch (Exception ex) {
 						
 						while(ex instanceof IOExceptionOnRuntime)
@@ -389,12 +392,15 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	                            command.getClass().getName(),
 	                            command.getId(),
 	                            command.getAggregateRootId()), ex);
-	                    return new AsyncTaskResult<>( ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage());
+
+	            		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
+	            		rf.trySetResult(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+	                    return new SystemFutureWrapper<>(rf);
 	                }
 				}
 
 				@Override
-				public void finishAction(AsyncTaskResult<Void> result) {
+				public void finishAction(Void result) {
 					commitChangesAsync(processingCommand, true, null, null);
 				}
 
@@ -429,7 +435,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	private void publishMessageAsync(ProcessingCommand processingCommand, IApplicationMessage message) {
 		ICommand command = processingCommand.getMessage();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<SystemFutureWrapper<AsyncTaskResult<Void>>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -442,7 +448,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			}
 
 			@Override
-			public void finishAction(SystemFutureWrapper<AsyncTaskResult<Void>> result) {
+			public void finishAction(Void result) {
 				completeCommand(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message));
 			}
 

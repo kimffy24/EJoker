@@ -17,7 +17,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	@Dependence
 	private ThreadPoolMaster ejokerThreadPoolMaster;
 	
-	@EInitialize
+	@EInitialize(priority = 5)
 	private void init() {
 		asyncPool = ejokerThreadPoolMaster.getPoolInstance(this, usePoolSize(), prestartAll());
 	}

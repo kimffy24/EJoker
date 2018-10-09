@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
@@ -41,7 +42,7 @@ public class InMemoryEventStore implements IEventStore {
 	@Dependence
 	private EJokerAsyncHelper eJokerAsyncHelper;
 	
-	private boolean supportBatchAppendEvent = true;
+	private boolean supportBatchAppendEvent = EJokerEnvironment.SUPPORT_BATCH_APPEND_EVENT;
 	
 	@Override
 	public boolean isSupportBatchAppendEvent() {
@@ -63,7 +64,7 @@ public class InMemoryEventStore implements IEventStore {
 		while (iterator.hasNext()) {
 			DomainEventStream currentEventStream = iterator.next();
 			SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync = appendAsync(currentEventStream);
-			if(EventAppendResult.Success.equals(appendAsync.get().getData()))
+			if(!EventAppendResult.Success.equals(appendAsync.get().getData()))
 				return appendAsync;
 		}
 

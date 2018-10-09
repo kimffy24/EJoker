@@ -2,11 +2,14 @@ package com.jiefzz.ejoker.z.common.context.dev2.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.context.ContextRuntimeException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.dev2.EJokerInstanceBuilder;
 import com.jiefzz.ejoker.z.common.context.dev2.EjokerRootDefinationStore;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerClazzScannerHook;
@@ -24,6 +28,7 @@ import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedField;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
@@ -86,7 +91,11 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	 */
 	private final Set<String> instanceCandidateDisable = new HashSet<>();
 	
-	private final Queue<IVoidFunction> initTask = new LinkedBlockingQueue<>();
+	Map<Integer, Queue<IVoidFunction>> initTasks = new TreeMap<>(new Comparator<Integer>() {
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			return o1.intValue() - o2.intValue();
+		}});
 	
 	private final AtomicBoolean onService = new AtomicBoolean(false);
 	
@@ -441,21 +450,29 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		final Class<?> instanceClazz = instance.getClass();
 		ForEachUtil.processForEach(
 				defaultRootDefinationStore.getEInitializeRecord(instanceClazz),
-				(methodName, method) -> initTask.offer(
-						() -> {
+				(methodName, method) -> {
+					EInitialize annotation = method.getAnnotation(EInitialize.class);
+					int priority = annotation.priority();
+					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
+					initTaskQueue.offer(() -> {
 							try {
 								method.invoke(instance);
 							} catch (Exception e) {
 								throw new ContextRuntimeException(String.format("Faild on invoke init method!!! target: %s, method: %s", instanceClazz.getName(), methodName), e);
 							}
 						}
-					)
+					);
+				}
 			);
 	}
 	
 	private void completeInstanceInitMethod() {
-		while(null != initTask.peek())
-			initTask.poll().trigger();
+		Set<Entry<Integer, Queue<IVoidFunction>>> entrySet = initTasks.entrySet();
+		for(Entry<Integer, Queue<IVoidFunction>> entry : entrySet) {
+			Queue<IVoidFunction> initTask = entry.getValue();
+			while(null != initTask.peek())
+				initTask.poll().trigger();
+		}
 	}
 
 }

@@ -56,9 +56,12 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 
 	private <T> void taskContinueAction(IOActionExecutionContext<T> externalContext) throws IOException {
 		
-		SystemFutureWrapper<AsyncTaskResult<T>> task = eJokerAsyncHelper.submit(() -> externalContext.asyncAction());
+//		SystemFutureWrapper<AsyncTaskResult<T>> task = eJokerAsyncHelper.submit(() -> externalContext.asyncAction());
+		
+		SystemFutureWrapper<AsyncTaskResult<T>> task;
 		
 		try {
+			task = externalContext.asyncAction();
 			AsyncTaskResult<T> result = null;
 			try {
 				result = task.get();
@@ -216,7 +219,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		 * 
 		 * @return
 		 */
-		abstract public TAsyncResult asyncAction() throws Exception;
+		abstract public SystemFutureWrapper<AsyncTaskResult<TAsyncResult>> asyncAction() throws Exception;
 
 		/**
 		 * 重试执行的方法

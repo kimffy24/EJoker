@@ -84,11 +84,6 @@ public class CommandService implements ICommandService, IWorkerService {
 		return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null);
 	}
 
-	@Override
-	public SystemFutureWrapper<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command) {
-		return executeAsync(command, CommandReturnType.CommandExecuted);
-	}
-
 	/**
 	 * 此方法实现起来比较绕，援引自C# ENode.EQueue.CommandService.executeAsync<br>
 	 * Java中没有c# 的 async/await 调用，只能用最原始的创建线程任务对象的方法。

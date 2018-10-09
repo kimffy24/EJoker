@@ -7,8 +7,7 @@ import com.jiefzz.ejoker.infrastructure.ISequenceProcessingMessage;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingDomainEventStreamMessage
-		extends ProcessingMessageA<ProcessingDomainEventStreamMessage, DomainEventStreamMessage>
-		implements ISequenceProcessingMessage {
+		extends ProcessingMessageA<ProcessingDomainEventStreamMessage, DomainEventStreamMessage> implements ISequenceProcessingMessage {
 
 	public ProcessingDomainEventStreamMessage(DomainEventStreamMessage message, IMessageProcessContext processContext) {
 		super(message, processContext);

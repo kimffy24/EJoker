@@ -132,7 +132,7 @@ public class DefaultEventService implements IEventService {
 		LinkedHashSet<DomainEventStream> domainEventStreams = new LinkedHashSet<>();
 		ForEachUtil.processForEach(committingContexts, (item) -> domainEventStreams.add(item.getEventStream()));
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<EventAppendResult>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<EventAppendResult>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -140,16 +140,16 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public AsyncTaskResult<EventAppendResult> asyncAction() throws Exception {
-				return eventStore.batchAppendAsync(domainEventStreams).get();
+			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws Exception {
+				return eventStore.batchAppendAsync(domainEventStreams);
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<EventAppendResult> result) {
+			public void finishAction(EventAppendResult result) {
 
 				EventCommittingContext firstEventCommittingContext = committingContexts.get(0);
 				EventMailBox eventMailBox = firstEventCommittingContext.eventMailBox;
-				EventAppendResult appendResult = result.getData();
+				EventAppendResult appendResult = result;
 				
 				if(EventAppendResult.Success.equals(appendResult)) {
 					
@@ -217,7 +217,7 @@ public class DefaultEventService implements IEventService {
 
 	private void persistEventAsync(final EventCommittingContext context) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<EventAppendResult>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<EventAppendResult>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -225,13 +225,13 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public AsyncTaskResult<EventAppendResult> asyncAction() throws Exception {
-				return eventStore.appendAsync(context.getEventStream()).get();
+			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws Exception {
+				return eventStore.appendAsync(context.getEventStream());
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<EventAppendResult> realrResult) {
-				switch (realrResult.getData()) {
+			public void finishAction(EventAppendResult realrResult) {
+				switch (realrResult) {
 				case Success:
 					logger.debug("Persist event success, {}", jsonSerializer.convert(context.getEventStream()));
 					
@@ -323,7 +323,7 @@ public class DefaultEventService implements IEventService {
 
         ICommand command = context.getProcessingCommand().getMessage();
 		
-        ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<DomainEventStream>>() {
+        ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -331,14 +331,14 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public AsyncTaskResult<DomainEventStream> asyncAction() throws Exception {
-				return eventStore.findAsync(command.getAggregateRootId(), command.getId()).get();
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception {
+				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<DomainEventStream> result) {
+			public void finishAction(DomainEventStream result) {
 
-				DomainEventStream existingEventStream = result.getData();
+				DomainEventStream existingEventStream = result;
                 if (null != existingEventStream)
                 {
                     //这里，我们需要再重新做一遍发布事件这个操作；
@@ -384,7 +384,7 @@ public class DefaultEventService implements IEventService {
 		
 		DomainEventStream eventStream = context.getEventStream();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<DomainEventStream>>(){
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(){
 
 			@Override
 			public String getAsyncActionName() {
@@ -392,15 +392,14 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public AsyncTaskResult<DomainEventStream> asyncAction() throws Exception {
-				return eventStore.findAsync(eventStream.getAggregateRootId(), 1).get();
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception {
+				return eventStore.findAsync(eventStream.getAggregateRootId(), 1);
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<DomainEventStream> result) {
+			public void finishAction(DomainEventStream result) {
 				
-				AsyncTaskResult<DomainEventStream> realResult = (AsyncTaskResult<DomainEventStream> )result;
-				DomainEventStream firstEventStream = realResult.getData();
+				DomainEventStream firstEventStream = result;
 				
 				String commandId = context.getProcessingCommand().getMessage().getId();
 				
@@ -508,7 +507,7 @@ public class DefaultEventService implements IEventService {
 
 	private void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStreamMessage eventStream) {
 
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -516,12 +515,12 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public AsyncTaskResult<Void> asyncAction() throws Exception {
-				return domainEventPublisher.publishAsync(eventStream).get();
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+				return domainEventPublisher.publishAsync(eventStream);
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<Void> result) {
+			public void finishAction(Void result) {
 				
 				logger.debug("Publish event success, {}", eventStream.toString());
 

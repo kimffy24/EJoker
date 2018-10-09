@@ -30,6 +30,8 @@ public final class EJokerEnvironment {
 	
 	public final static int MAX_BATCH_EVENTS;
 	
+	public final static boolean SUPPORT_BATCH_APPEND_EVENT;
+	
 	public final static String ENVIROMMENT_FILE="ejoker.properties";
 
 	static {
@@ -51,7 +53,7 @@ public final class EJokerEnvironment {
 				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "64"));
 
 		MAILBOX_IDLE_TIMEOUT =
-				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "180000"));
+				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "1800000"));
 
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
@@ -61,6 +63,9 @@ public final class EJokerEnvironment {
 
 		MAX_BATCH_EVENTS =
 				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "16"));
+		
+		SUPPORT_BATCH_APPEND_EVENT = 
+				Boolean.valueOf(props.getProperty("SUPPORT_BATCH_APPEND_EVENT", "false"));
 
 	}
 

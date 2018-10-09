@@ -17,4 +17,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.EJokerAnnotation;
 @EJokerAnnotation
 public @interface EInitialize {
 
+	public int priority() default 50;
+	
 }

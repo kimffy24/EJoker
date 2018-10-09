@@ -42,7 +42,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     	
         Y message = processingMessage.getMessage();
         
-        ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Long>>() {
+        ioHelper.tryAsyncAction(new IOActionExecutionContext<Long>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -50,13 +50,13 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			}
 
 			@Override
-			public AsyncTaskResult<Long> asyncAction() throws Exception {
-				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId()).get();
+			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() throws Exception {
+				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId());
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<Long> result) {
-				long publishedVersion = result.getData();
+			public void finishAction(Long result) {
+				long publishedVersion = result.longValue();
 				long currentEventVersion = message.getVersion();
 				if (publishedVersion + 1 == currentEventVersion) {
 					dispatchProcessingMessageAsyncInternal(processingMessage);
@@ -90,7 +90,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     
     private void dispatchProcessingMessageAsyncInternal(X processingMessage) {
     	
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -98,12 +98,12 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			}
 
 			@Override
-			public AsyncTaskResult<Void> asyncAction() throws Exception {
-				return dispatchProcessingMessageAsync(processingMessage).get();
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+				return dispatchProcessingMessageAsync(processingMessage);
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<Void> result) {
+			public void finishAction(Void result) {
 				updatePublishedVersionAsync(processingMessage);
 			}
 
@@ -129,7 +129,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     	
     }
     private void updatePublishedVersionAsync(X processingMessage) {
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<AsyncTaskResult<Void>>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
 
 			@Override
 			public String getAsyncActionName() {
@@ -137,13 +137,13 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			}
 
 			@Override
-			public AsyncTaskResult<Void> asyncAction() throws Exception {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
 				Y message = processingMessage.getMessage();
-				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion()).get();
+				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion());
 			}
 
 			@Override
-			public void finishAction(AsyncTaskResult<Void> result) {
+			public void finishAction(Void result) {
 				processingMessage.complete();
 			}
 

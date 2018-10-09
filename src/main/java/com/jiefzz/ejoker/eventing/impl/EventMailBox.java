@@ -105,7 +105,6 @@ public class EventMailBox {
 			if(null == contextList || 0 == contextList.size()) {
 				exit();
 				if(null != messageQueue.peek())
-					tryEnter();
 					tryRun();
 			}
 		}
