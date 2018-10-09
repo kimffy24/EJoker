@@ -348,9 +348,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				return;
 			Object instance;
 			if(null == (instance = instanceMap.get(eServiceClazz.getName()))) {
-				instance = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(
-						newInstance -> enqueueInitMethod(newInstance)
-				);
+				instance = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(this::enqueueInitMethod);
 				if(null != instanceMap.putIfAbsent(eServiceClazz.getName(), instance)) {
 					instance = instanceMap.get(eServiceClazz.getName());
 				}
@@ -402,7 +400,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
 			if(defaultInstance.equals(dependence = instanceGenericTypeMap.getOrDefault(instanceTypeName, defaultInstance))) {
 				instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(
-						newInstance -> enqueueInitMethod(newInstance)
+						this::enqueueInitMethod
 						));
 				
 				{
@@ -453,7 +451,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);
 					int priority = annotation.priority();
-					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
+					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, LinkedBlockingQueue::new);
 					initTaskQueue.offer(() -> {
 							try {
 								method.invoke(instance);
