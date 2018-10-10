@@ -1,11 +1,15 @@
 package com.jiefzz.ejoker.z.common.task;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 public class AsyncPool {
 
@@ -23,14 +27,14 @@ public class AsyncPool {
 
 					@Override
 					protected void beforeExecute(Thread t, Runnable r) {
-						activeThreadCount.incrementAndGet();
 						super.beforeExecute(t, r);
+						activeThreadCount.incrementAndGet();
 					}
 
 					@Override
 					protected void afterExecute(Runnable r, Throwable t) {
-						super.afterExecute(r, t);
 						activeThreadCount.decrementAndGet();
+						super.afterExecute(r, t);
 					}
 			
 		};
@@ -40,6 +44,31 @@ public class AsyncPool {
 	}
 
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IAsyncTask<TAsyncTaskResult> asyncTaskThread) {
+//		{
+//			if(System.currentTimeMillis() > 0)
+//				return CompletableFuture.supplyAsync(() -> {
+//					try {
+//						return asyncTaskThread.call();
+//					} catch (Exception e1) {
+//						e1.printStackTrace();
+//						throw new AsyncWrapperException(e1);
+//					}
+//				});
+//			
+//			RipenFuture<TAsyncTaskResult> ripenFuture = new RipenFuture<>();
+//			new Thread(() -> {
+//				try {
+//					TAsyncTaskResult call = asyncTaskThread.call();
+//					ripenFuture.trySetResult(call);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//					ripenFuture.trySetException(e);
+//				}
+//			})
+//			.start();
+//			if(System.currentTimeMillis() > 0)
+//				return ripenFuture;
+//		}
 		Future<TAsyncTaskResult> submit = newThreadPool.submit(asyncTaskThread);
 		return submit;
 	}

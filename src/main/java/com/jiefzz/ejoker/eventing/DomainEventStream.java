@@ -1,7 +1,6 @@
 package com.jiefzz.ejoker.eventing;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public class DomainEventStream {
@@ -48,7 +47,7 @@ public class DomainEventStream {
         }
     }
 	
-	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, List<IDomainEvent<?>> events) {
+	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent<?>> events) {
         this(commandId, aggregateRootId, aggregateRootTypeName, version, timestamp, events, null);
     }
 	

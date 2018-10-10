@@ -27,7 +27,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	@SuppressWarnings("unused")
 	private final static  Logger logger = LoggerFactory.getLogger(EventSourcingAggregateStorage.class);
 	
-	private long minVersion = 1;
+	private long minVersion = 1l;
 	
 	private long maxVersion = Long.MAX_VALUE;
 	

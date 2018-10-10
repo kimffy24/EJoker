@@ -9,7 +9,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
-@EService
+//@EService
 public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 
 	private final SystemFutureWrapper<AsyncTaskResult<Void>> successTask

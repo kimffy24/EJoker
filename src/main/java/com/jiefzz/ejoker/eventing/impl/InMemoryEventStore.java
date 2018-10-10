@@ -26,7 +26,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
-@EService
+//@EService
 public class InMemoryEventStore implements IEventStore {
 
 	private final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);

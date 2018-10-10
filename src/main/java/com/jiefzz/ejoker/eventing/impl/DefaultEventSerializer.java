@@ -28,7 +28,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 	public Map<String, String> serializer(Collection<IDomainEvent<?>> events) {
 		Map<String, String> dict = new LinkedHashMap<String, String>();
 		for(IDomainEvent<?> event:events)
-			dict.put(event.getClass().getName(), jsonSerializer.convert(event));
+			dict.put(event.getClass().getName().replaceAll("\\.", "#"), jsonSerializer.convert(event));
 		return dict;
 	}
 
@@ -37,7 +37,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 		List<IDomainEvent<?>> list = new ArrayList<IDomainEvent<?>>();
 		Set<Entry<String,String>> entrySet = data.entrySet();
 		for(Entry<String,String> entry:entrySet) {
-			Class<?> eventType = typeNameProvider.getType(entry.getKey());
+			Class<?> eventType = typeNameProvider.getType(entry.getKey().replaceAll("#", "."));
 			Object revert = jsonSerializer.revert(entry.getValue(), eventType);
 			list.add((IDomainEvent<?> )revert);
 		}
