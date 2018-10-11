@@ -76,7 +76,32 @@ public class ProcessingCommandMailbox {
 		this.eJokerAsyncHelper = eJokerAsyncHelper;
 	}
 
+	// TODO debug
+	private AtomicLong al = new AtomicLong(0);
+
+	// TODO debug
+	public void d1() {
+		logger.debug("aggregateRootId: {}, hit: {}, onRunning: {}, onPaused: {}, isProcessingCommand: {}, consumedSequence: {}, consumingSequence: {}, nextSequence: {}, requestToCompleteCommandDict.size(): {}, messageDict.size(): {}, asyncLock: {}, enqueueLock: {}",
+				aggregateRootId,
+				al.get(),
+				onRunning.get(),
+				onPaused.get(),
+				isProcessingCommand.get(),
+				consumedSequence.get(),
+				consumingSequence.get(),
+				nextSequence.get(),
+				requestToCompleteCommandDict.size(),
+				messageDict.size(),
+				asyncLock.toString(),
+				enqueueLock.toString()
+		);
+	}
+	
 	public void enqueueMessage(ProcessingCommand message) {
+		{
+			// TODO debug
+			al.getAndIncrement();
+		}
 		enqueueLock.lock();
 		try {
 			long acquireSequence = nextSequence.get();

@@ -14,6 +14,7 @@ import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
@@ -75,7 +76,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		IAggregateRoot aggregateRoot = restoreFromSnapshotResult.get();
 		
 		if(null == aggregateRoot)
-			return null;
+			return FutureWrapperUtil.createCompleteFuture(null);
 		
 		if(!aggregateRootType.equals(aggregateRoot.getClass()) || !aggregateRootId.equals(aggregateRoot.getUniqueId()))
 			throw new RuntimeException(String.format(
@@ -95,20 +96,20 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		Collection<DomainEventStream> queryAggregateEvents = eventStore.queryAggregateEvents(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion);
 		aggregateRoot.replayEvents(queryAggregateEvents);
 		
-		{
-    		RipenFuture<IAggregateRoot> rf = new RipenFuture<>();
-    		rf.trySetResult(aggregateRoot);
-            return new SystemFutureWrapper<>(rf);
-		}
+		return FutureWrapperUtil.createCompleteFuture(aggregateRoot);
 	}
 
 	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, Collection<DomainEventStream> eventStreams) {
 		if (null == eventStreams || 0 == eventStreams.size())
 			return null;
 
+		logger.error("replay Event start ...");
+		
 		IAggregateRoot aggregateRoot = aggregateRootFactory.createAggregateRoot(aggregateRootType);
 		aggregateRoot.replayEvents(eventStreams);
 
+		logger.error("replay Event end ...");
+		logger.error("aggregateId: {}, version: {} ...", aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
 		return aggregateRoot;
 	}
 }

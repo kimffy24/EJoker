@@ -83,7 +83,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void remoteInvoke(final String data, final String host, final int port) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			private String actName = String.format("remoteInvoke[target: %s:%d]", host, port);
 			

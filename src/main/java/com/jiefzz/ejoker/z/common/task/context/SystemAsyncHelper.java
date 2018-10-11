@@ -22,7 +22,7 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 
 	@Override
 	protected boolean prestartAll() {
-		return true;
+		return false;
 	};
 	
 	@Override
@@ -44,25 +44,25 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 		submitInternalWrapper(() -> callback.trigger(futureResult.get()));
 	}
 
-	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback) {
-		return submit(vf, callback, false);
-	}
-
-	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback, boolean waitFinish) {
-		Thread currentThread = Thread.currentThread();
-		SystemFutureWrapper<T> futureResult = submitInternalWrapper(vf);
-		SystemFutureWrapper<TA> submitInternal = submitInternalWrapper(() -> {
-			try {
-				return callback.trigger(futureResult.get());
-			} finally {
-				if(waitFinish)
-					LockSupport.unpark(currentThread);
-			}
-		});
-		if(waitFinish)
-			LockSupport.park();
-		return submitInternal;
-	}
+//	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback) {
+//		return submit(vf, callback, false);
+//	}
+//
+//	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback, boolean waitFinish) {
+//		Thread currentThread = Thread.currentThread();
+//		SystemFutureWrapper<T> futureResult = submitInternalWrapper(vf);
+//		SystemFutureWrapper<TA> submitInternal = submitInternalWrapper(() -> {
+//			try {
+//				return callback.trigger(futureResult.get());
+//			} finally {
+//				if(waitFinish)
+//					LockSupport.unpark(currentThread);
+//			}
+//		});
+//		if(waitFinish)
+//			LockSupport.park();
+//		return submitInternal;
+//	}
 
 	protected <T> SystemFutureWrapper<T> submitInternalWrapper(IFunction<T> vf) {
 		return new SystemFutureWrapper<>(submitInternal(vf));

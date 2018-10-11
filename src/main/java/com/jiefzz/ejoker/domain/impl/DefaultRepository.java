@@ -32,9 +32,8 @@ public class DefaultRepository implements IRepository {
 		// TODO @await
 		/// 此处满足 异步传递
 		return systemAsyncHelper.submit(
-				() -> memoryCache.getAsync(aggregateRootId, aggregateRootType),
-				(task) -> {
-					IAggregateRoot aggregateRoot = task.get();
+				() -> {
+					IAggregateRoot aggregateRoot = memoryCache.getAsync(aggregateRootId, aggregateRootType).get();
 					if(null != aggregateRoot)
 						return aggregateRoot;
 					return aggregateRootStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get();

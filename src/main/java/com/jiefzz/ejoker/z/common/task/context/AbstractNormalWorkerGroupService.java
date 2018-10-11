@@ -34,7 +34,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	};
 	
 	public void d1() {
-		logger.info(" ==========> asyncPool.getActiveCount() = {}", asyncPool.getActiveCount());
+		logger.debug(" ==========> asyncPool.getActiveCount() = {}", asyncPool.getActiveCount());
 	}
 	
 	protected <T> Future<T> submitInternal(IFunction<T> vf) {

@@ -53,53 +53,53 @@ public class EJokerAsyncHelper {
 			return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, r);
 		});
 	}
-
-	public <T> SystemFutureWrapper<AsyncTaskResult<Void>> submit(IFunction<T> vf, IVoidFunction1<T> callback) {
-		return systemAsyncHelper.submit(
-				() -> {
-					try {
-						return vf.trigger();
-					} catch (Exception e) {
-						throw new AsyncWrapperException(e);
-					}
-				},
-				r -> {
-					try {
-						callback.trigger(r);
-					} catch (Exception e) {
-						return new AsyncTaskResult<>(
-								((e instanceof IOException || e instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
-								e.getMessage(),
-								null
-						);
-					}
-					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, null);
-				});
-	}
-
-	public <T, TA> SystemFutureWrapper<AsyncTaskResult<TA>> submit(IFunction<T> vf, IFunction1<TA, T> callback) {
-		return systemAsyncHelper.submit(
-				() -> {
-					try {
-						return vf.trigger();
-					} catch (Exception e1) {
-						throw new AsyncWrapperException(e1);
-					}
-				},
-				r -> {
-					TA ra;
-					try {
-						ra = callback.trigger(r);
-					} catch (Exception e) {
-						return new AsyncTaskResult<>(
-								((e instanceof IOException || e instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
-								e.getMessage(),
-								null
-						);
-					}
-					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, ra);
-				},
-				false);
-	}
+//
+//	public <T> SystemFutureWrapper<AsyncTaskResult<Void>> submit(IFunction<T> vf, IVoidFunction1<T> callback) {
+//		return systemAsyncHelper.submit(
+//				() -> {
+//					try {
+//						return vf.trigger();
+//					} catch (Exception e) {
+//						throw new AsyncWrapperException(e);
+//					}
+//				},
+//				r -> {
+//					try {
+//						callback.trigger(r);
+//					} catch (Exception e) {
+//						return new AsyncTaskResult<>(
+//								((e instanceof IOException || e instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
+//								e.getMessage(),
+//								null
+//						);
+//					}
+//					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, null);
+//				});
+//	}
+//
+//	public <T, TA> SystemFutureWrapper<AsyncTaskResult<TA>> submit(IFunction<T> vf, IFunction1<TA, T> callback) {
+//		return systemAsyncHelper.submit(
+//				() -> {
+//					try {
+//						return vf.trigger();
+//					} catch (Exception e1) {
+//						throw new AsyncWrapperException(e1);
+//					}
+//				},
+//				r -> {
+//					TA ra;
+//					try {
+//						ra = callback.trigger(r);
+//					} catch (Exception e) {
+//						return new AsyncTaskResult<>(
+//								((e instanceof IOException || e instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
+//								e.getMessage(),
+//								null
+//						);
+//					}
+//					return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, ra);
+//				},
+//				false);
+//	}
 
 }

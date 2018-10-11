@@ -132,7 +132,7 @@ public class DefaultEventService implements IEventService {
 		LinkedHashSet<DomainEventStream> domainEventStreams = new LinkedHashSet<>();
 		ForEachUtil.processForEach(committingContexts, (item) -> domainEventStreams.add(item.getEventStream()));
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<EventAppendResult>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<EventAppendResult>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -217,7 +217,7 @@ public class DefaultEventService implements IEventService {
 
 	private void persistEventAsync(final EventCommittingContext context) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<EventAppendResult>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<EventAppendResult>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -323,7 +323,7 @@ public class DefaultEventService implements IEventService {
 
         ICommand command = context.getProcessingCommand().getMessage();
 		
-        ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>() {
+        ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -384,7 +384,7 @@ public class DefaultEventService implements IEventService {
 		
 		DomainEventStream eventStream = context.getEventStream();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(){
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(true){
 
 			@Override
 			public String getAsyncActionName() {
@@ -507,7 +507,7 @@ public class DefaultEventService implements IEventService {
 
 	private void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStreamMessage eventStream) {
 
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			@Override
 			public String getAsyncActionName() {

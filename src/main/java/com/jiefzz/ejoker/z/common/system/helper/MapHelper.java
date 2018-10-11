@@ -17,12 +17,7 @@ public final class MapHelper {
 	public static <K, T> T getOrAdd(Map<K, T> map, K uniqueKey, IFunction<T> f) {
 		T value;
 		while(null == (value = map.get(uniqueKey)))
-			try {
-				while(null == (value = map.get(uniqueKey)))
-					map.putIfAbsent(uniqueKey, f.trigger());
-			} catch (Exception e) {
-				return null;
-			}
+			map.putIfAbsent(uniqueKey, f.trigger());
 		return value;
 	}
 }

@@ -81,34 +81,28 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
 		
 		ICommand message = processingCommand.getMessage();
+		return systemAsyncHelper.submit(() -> {
+				systemAsyncHelper.submit(
+						() -> {
+							if(StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
+								String errorInfo = String.format("The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(), message.getId());
+								logger.error(errorInfo);
+								return completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+							}
+				
+							try {
+								ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
+								return handleCommand(processingCommand, handler);
+//								return handleCommandAsync(processingCommand, handler);
+							} catch( Exception e ) {
+								logger.error(e.getMessage());
+								e.printStackTrace();
+								return completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), e.getMessage());
+							}
+						}
+			).get();
+		});
 		
-		return systemAsyncHelper.submit(
-				() -> {
-					if(StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
-						String errorInfo = String.format("The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(), message.getId());
-						logger.error(errorInfo);
-						return completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
-					}
-		
-					try {
-						ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
-						return handleCommand(processingCommand, handler);
-//						return handleCommandAsync(processingCommand, handler);
-					} catch( Exception e ) {
-						logger.error(e.getMessage());
-						e.printStackTrace();
-						return completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), e.getMessage());
-					}
-				},
-				r -> {
-					try {
-						r.get();
-						return null;
-					} catch (Exception e) {
-						throw new AsyncWrapperException(e);
-					}
-				}
-		);
 		
 	}
 	
@@ -120,18 +114,16 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 				() -> {
 					processingCommand.getCommandExecuteContext().clear();
 					
+					boolean b = false;
 					try {
 						/// TODO @await
 						commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 						logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]", commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
-						return true;
+						b = true;
 					} catch( Exception ex ) {
 			            handleExceptionAsync(processingCommand, commandHandler, ex);
-						return false;
 					}
 					
-				},
-				b -> {
 					if(b) {
 						try {
 							// TOTO 事件过程的起点
@@ -146,8 +138,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 							}
 						}
 					}
-				}
-			);
+				});
 		
 	}
 	
@@ -218,7 +209,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
     private void processIfNoEventsOfCommand(ProcessingCommand processingCommand) {
     	ICommand command = processingCommand.getMessage();
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -259,7 +250,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	private void handleExceptionAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler, Exception exception) {
 		ICommand command = processingCommand.getMessage();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -317,7 +308,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	
 	
 	private void publishExceptionAsync(ProcessingCommand processingCommand, IPublishableException exception) {
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -435,7 +426,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	private void publishMessageAsync(ProcessingCommand processingCommand, IApplicationMessage message) {
 		ICommand command = processingCommand.getMessage();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			@Override
 			public String getAsyncActionName() {

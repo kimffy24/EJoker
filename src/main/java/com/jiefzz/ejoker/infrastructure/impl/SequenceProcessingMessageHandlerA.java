@@ -42,7 +42,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     	
         Y message = processingMessage.getMessage();
         
-        ioHelper.tryAsyncAction(new IOActionExecutionContext<Long>() {
+        ioHelper.tryAsyncAction(new IOActionExecutionContext<Long>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -58,14 +58,15 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			public void finishAction(Long result) {
 				long publishedVersion = result.longValue();
 				long currentEventVersion = message.getVersion();
-				if (publishedVersion + 1 == currentEventVersion) {
+				if (publishedVersion + 1l == currentEventVersion) {
 					dispatchProcessingMessageAsyncInternal(processingMessage);
-				} else if (publishedVersion + 1 < currentEventVersion) {
-					logger.debug(
-							"The sequence message cannot be process now as the version is not the next version, it will be handle later. contextInfo [aggregateRootId={},lastPublishedVersion={},messageVersion={}]",
+				} else if (publishedVersion + 1l < currentEventVersion) {
+					logger.warn(
+							"The sequence message cannot be process now as the version is not the next version, it will be handle later! contextInfo [aggregateRootId={}, lastPublishedVersion={}, messageVersion={}]",
 							message.getAggregateRootStringId(), publishedVersion, currentEventVersion);
 					processingMessage.addToWaitingList();
 				} else {
+					logger.warn("This sequence message has been processed before! contextInfo: {}", this.getContextInfo());
 					processingMessage.complete();
 				}
 			}
@@ -90,7 +91,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     
     private void dispatchProcessingMessageAsyncInternal(X processingMessage) {
     	
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			@Override
 			public String getAsyncActionName() {
@@ -129,7 +130,7 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     	
     }
     private void updatePublishedVersionAsync(X processingMessage) {
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+    	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			@Override
 			public String getAsyncActionName() {

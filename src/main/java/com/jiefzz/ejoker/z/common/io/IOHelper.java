@@ -193,7 +193,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		/**
 		 * 标识-当失败时是否重试
 		 */
-		protected boolean retryWhenFailed = false;
+		public final boolean retryWhenFailed;
 
 		/**
 		 * 最大的即时重试次数<br>
@@ -205,6 +205,13 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		 * 重试间隔
 		 */
 		protected int retryInterval = 1000;
+		
+		public IOActionExecutionContext() {
+			this(false);
+		}
+		public IOActionExecutionContext(boolean retryWhenFailed) {
+			this.retryWhenFailed = true;
+		}
 
 		/**
 		 * 设定异步任务名

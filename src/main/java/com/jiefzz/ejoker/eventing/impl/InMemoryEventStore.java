@@ -86,27 +86,27 @@ public class InMemoryEventStore implements IEventStore {
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(final String aggregateRootId, final int version) {
+		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+		Object previous = aggregateEventStore.getOrDefault("" +version, null);
+		DomainEventStream des = null;
+		if(null != previous)
+			des = revertFromStorageFormat((String )previous);
+		
 		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<>();
-				Map<String, String> aggregateEventStore;
-				while(null == (aggregateEventStore = mStorage.get(aggregateRootId))) {
-					mStorage.putIfAbsent(aggregateRootId, new ConcurrentHashMap<>());
-				}
-				
-				Object previous = aggregateEventStore.getOrDefault("" +version, null);
-				future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, revertFromStorageFormat((String )previous)));
+		future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, des));
 		return new SystemFutureWrapper<>(future);
 	}
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
+		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+		Object previous = aggregateEventStore.getOrDefault(commandId, null);
+		DomainEventStream des = null;
+		if(null != previous)
+			des = revertFromStorageFormat((String )previous);
+		
 		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<>();
-				Map<String, String> aggregateEventStore;
-				while(null == (aggregateEventStore = mStorage.get(aggregateRootId))) {
-					mStorage.putIfAbsent(aggregateRootId, new ConcurrentHashMap<>());
-				}
-				
-				Object previous = aggregateEventStore.getOrDefault(commandId, null);
-				future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, revertFromStorageFormat((String )previous)));
+		future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, des));
 		return new SystemFutureWrapper<>(future);
 	}
 
