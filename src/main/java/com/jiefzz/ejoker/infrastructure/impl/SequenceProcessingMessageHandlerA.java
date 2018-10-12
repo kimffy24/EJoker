@@ -35,13 +35,17 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage) {
-		return eJokerAsyncHelper.submit(() -> handleMessageAsync(processingMessage));
+		return eJokerAsyncHelper.submit(() -> handle(processingMessage));
+	}
+
+	@Override
+	public void handle(X processingMessage) {
+		handleMessageAsync(processingMessage);
 	}
 	
     private void handleMessageAsync(X processingMessage) {
     	
         Y message = processingMessage.getMessage();
-        
         ioHelper.tryAsyncAction(new IOActionExecutionContext<Long>(true) {
 
 			@Override
@@ -110,10 +114,10 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 
 			@Override
 			public void faildAction(Exception ex) {
-				ex.printStackTrace();
-				logger.error(
-						"Dispatching message has unknown exception, the code should not be run to here, errorMessage: {}",
-						ex.getMessage());
+				logger.error(String.format(
+							"Dispatching message has unknown exception, the code should not be run to here, errorMessage: %s",
+							ex.getMessage()),
+						ex);
 			}
 
 			@Override
@@ -130,6 +134,8 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
     	
     }
     private void updatePublishedVersionAsync(X processingMessage) {
+    	
+		Y message = processingMessage.getMessage();
     	ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
 
 			@Override
@@ -139,7 +145,6 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 
 			@Override
 			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
-				Y message = processingMessage.getMessage();
 				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion());
 			}
 
@@ -150,13 +155,11 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 
 			@Override
 			public void faildAction(Exception ex) {
-				ex.printStackTrace();
-				logger.error("Update published version has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage());
+				logger.error(String.format("Update published version has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex);
 			}
 			
 			@Override
 			public String getContextInfo() {
-				Y message = processingMessage.getMessage();
 				return String.format(
 						"sequence message [messageId:{}, messageType:{}, aggregateRootId:{}, aggregateRootVersion:{}]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootStringId(),

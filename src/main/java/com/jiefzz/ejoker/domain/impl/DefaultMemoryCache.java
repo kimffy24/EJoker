@@ -53,31 +53,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	@Override
 	public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
-		
-		return systemAsyncHelper.submit(() -> {
-			AggregateCacheInfo aggregateRootInfo;
-			if( null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString())) ) {
-				IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
-				if (!aggregateRoot.getClass().equals(aggregateRootType))
-					throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
-				if (aggregateRoot.getChanges().size() > 0) {
-					
-					// TODO @await
-					IAggregateRoot lastestAggregateRoot;
-					try {
-						lastestAggregateRoot = aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get();
-					} catch (Exception e) {
-						throw new AsyncWrapperException(e);
-					}
-					if (null != lastestAggregateRoot)
-						setInternal(lastestAggregateRoot);
-					
-					return lastestAggregateRoot;
-				}
-				return aggregateRoot;
-			}
-			return null;
-		});
+		return systemAsyncHelper.submit(() -> get(aggregateRootId, aggregateRootType));
 	}
 
 	@Override
@@ -86,34 +62,57 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public SystemFutureWrapper<Void> refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
-		
-		return systemAsyncHelper.submit(() -> {
-			
-			Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
-			if(null == aggregateRootType) {
+	public SystemFutureWrapper<Void> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName, String aggregateRootId) {
+		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(aggregateRootTypeName, aggregateRootId));
+	}
 
-				logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
-				return;
+	@Override
+	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
+		Ensure.notNull(aggregateRootId, "aggregateRootId");
+		AggregateCacheInfo aggregateRootInfo;
+		if( null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString())) ) {
+			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
+			if (!aggregateRoot.getClass().equals(aggregateRootType))
+				throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
+			if (aggregateRoot.getChanges().size() > 0) {
 				
-			}
-
-			try {
 				// TODO @await
-				@SuppressWarnings("unchecked")
-				IAggregateRoot aggregateRoot = aggregateStorage.getAsync((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString()).get();
-				if (null != aggregateRoot) {
-					setInternal(aggregateRoot);
+				IAggregateRoot lastestAggregateRoot;
+				try {
+					lastestAggregateRoot = aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
+				} catch (Exception e) {
+					throw new AsyncWrapperException(e);
 				}
-				return;
-			} catch (Exception ex) {
-				logger.error(String.format("Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s", aggregateRootTypeName, aggregateRootId), ex);
-				throw new AsyncWrapperException(ex);
+				if (null != lastestAggregateRoot)
+					setInternal(lastestAggregateRoot);
+				
+				return lastestAggregateRoot;
 			}
-			
-		});
+			return aggregateRoot;
+		}
+		return null;
+	}
 
-		
+	@Override
+	public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
+		Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
+		if(null == aggregateRootType) {
+			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
+			return;
+		}
+
+		try {
+			// TODO @await
+			@SuppressWarnings("unchecked")
+			IAggregateRoot aggregateRoot = aggregateStorage.get((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString());
+			if (null != aggregateRoot) {
+				setInternal(aggregateRoot);
+			}
+			return;
+		} catch (Exception ex) {
+			logger.error(String.format("Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s", aggregateRootTypeName, aggregateRootId), ex);
+			throw ex;
+		}
 	}
 
 	private void setInternal(IAggregateRoot aggregateRoot) {

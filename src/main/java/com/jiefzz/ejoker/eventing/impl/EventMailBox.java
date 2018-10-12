@@ -13,15 +13,14 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class EventMailBox {
 
 	private final static Logger logger = LoggerFactory.getLogger(EventMailBox.class);
 	
-	private final EJokerAsyncHelper eJokerAsyncHelper;
+	private final SystemAsyncHelper systemAsyncHelper;
 	
 	private final String aggregateRootId;
 	
@@ -47,13 +46,13 @@ public class EventMailBox {
 		return onRunning.get();
 	}
 	
-	public EventMailBox(String aggregateRootId, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, EJokerAsyncHelper eJokerAsyncHelper) {
+	public EventMailBox(String aggregateRootId, IVoidFunction1<List<EventCommittingContext>> handleMessageAction, SystemAsyncHelper systemAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.handleMessageAction = handleMessageAction;
 		this.lastActiveTime = System.currentTimeMillis();
 		
-		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
-		this.eJokerAsyncHelper = eJokerAsyncHelper;
+		Ensure.notNull(systemAsyncHelper, "systemAsyncHelper");
+		this.systemAsyncHelper = systemAsyncHelper;
 	}
 	
 	public void enqueueMessage(EventCommittingContext message) {
@@ -72,7 +71,7 @@ public class EventMailBox {
         if (exitFirst)
             exit();
         if (tryEnter()) {
-        	eJokerAsyncHelper.submit(this::run);
+        	systemAsyncHelper.submit(this::run);
         }
         
     }

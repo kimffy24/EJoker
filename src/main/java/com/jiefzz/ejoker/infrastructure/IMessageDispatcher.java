@@ -20,5 +20,5 @@ public interface IMessageDispatcher {
 	 * @return
 	 */
 	SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages);
-    
+
 }

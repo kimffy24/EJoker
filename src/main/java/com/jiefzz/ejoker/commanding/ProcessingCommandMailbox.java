@@ -14,12 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingCommandMailbox {
@@ -40,11 +38,11 @@ public class ProcessingCommandMailbox {
 	
 	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	
-	private AtomicLong nextSequence = new AtomicLong(0l);
+	private long nextSequence = 0l;
 	
-	private AtomicLong consumingSequence = new AtomicLong(0l);
+	private long consumingSequence = 0l;
 	
-	private AtomicLong consumedSequence = new AtomicLong(-1l);
+	private long consumedSequence = 0l;
 	
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
@@ -87,9 +85,9 @@ public class ProcessingCommandMailbox {
 				onRunning.get(),
 				onPaused.get(),
 				isProcessingCommand.get(),
-				consumedSequence.get(),
-				consumingSequence.get(),
-				nextSequence.get(),
+				consumedSequence,
+				consumingSequence,
+				nextSequence,
 				requestToCompleteCommandDict.size(),
 				messageDict.size(),
 				asyncLock.toString(),
@@ -104,11 +102,11 @@ public class ProcessingCommandMailbox {
 		}
 		enqueueLock.lock();
 		try {
-			long acquireSequence = nextSequence.get();
+			long acquireSequence = nextSequence;
 			message.setSequence(acquireSequence);
 			message.setMailbox(this);
 			if(null == messageDict.putIfAbsent(acquireSequence, message))
-				nextSequence.getAndIncrement();
+				nextSequence++;
 		} finally {
 			enqueueLock.unlock();
 		}
@@ -132,45 +130,41 @@ public class ProcessingCommandMailbox {
 	
 	public void resetConsumingSequence(long consumingSequence){
         lastActiveTime = System.currentTimeMillis();
-        this.consumingSequence.set(consumingSequence);
+        this.consumingSequence = consumingSequence;
         requestToCompleteCommandDict.clear();
 	}
 
-	/// 重点检查异步语义对不对！
-	public SystemFutureWrapper<AsyncTaskResult<Void>> completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
-		return eJokerAsyncHelper.submit(() -> {
-			asyncLock.lock();
-			try {
-		        lastActiveTime = System.currentTimeMillis();
-		        long processingSequence = processingCommand.getSequence();
-		        long expectSequence = consumedSequence.get() + 1;
-				if (processingSequence == expectSequence)
-	            {
-	                messageDict.remove(processingSequence);
-	                // TODO @await
-	                completeCommand(processingCommand, commandResult).get();
-	                consumedSequence.set(processNextCompletedCommands(processingSequence));
-	            }
-	            else if (processingSequence > expectSequence)
-	            {
-	                requestToCompleteCommandDict.put(processingSequence, commandResult);
-	            }
-	            else if (processingSequence < expectSequence)
-	            {
-	                messageDict.remove(processingSequence);
-	                // TODO @await
-	                completeCommand(processingCommand, commandResult).get();
-	                requestToCompleteCommandDict.remove(processingSequence);
-	            } else {
-	            	assert false;
-	            }
-			} catch (Exception ex) {
-	            logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
-	            throw new AsyncWrapperException(ex);
-			} finally {
-				asyncLock.unlock();
-			}
-		});
+	public SystemFutureWrapper<AsyncTaskResult<Void>> completeMessageAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
+		return eJokerAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
+	}
+
+	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
+		asyncLock.lock();
+		try {
+			lastActiveTime = System.currentTimeMillis();
+			long processingSequence = processingCommand.getSequence();
+			long expectSequence = consumedSequence + 1l;
+			if (processingSequence == expectSequence) {
+				messageDict.remove(processingSequence);
+				// TODO @await
+				completeCommand(processingCommand, commandResult);
+				consumedSequence = processNextCompletedCommands(processingSequence);
+			} else if (processingSequence < expectSequence) {
+				messageDict.remove(processingSequence);
+				// TODO @await
+				completeCommand(processingCommand, commandResult);
+				requestToCompleteCommandDict.remove(processingSequence);
+			} else {
+				// processingSequence > expectSequence
+				requestToCompleteCommandDict.put(processingSequence, commandResult);
+			} 
+		} catch (Exception ex) {
+			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
+					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
+			throw ex;
+		} finally {
+			asyncLock.unlock();
+		}
 	}
 
     public void run() {
@@ -185,16 +179,13 @@ public class ProcessingCommandMailbox {
 		try {
 			isProcessingCommand.set(true);
 			int count = 0;
-			while (consumingSequence.get() < nextSequence.get() && count < batchSize) {
-				processingCommand = messageDict.get(consumingSequence.get());
+			while (consumingSequence < nextSequence && count < batchSize) {
+				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand)
 					// TODO @await
-					messageHandler.handle(processingCommand).get();
+					messageHandler.handle(processingCommand);
             	count++;
-            	/// 不要再messageDict.get()过程中使用getAndIncrement(),
-            	/// 因为如果messageHandler.handle(processingCommand)出现异常，将难以回退consumingSequence
-            	/// 而完成后自增更符合语义
-            	consumingSequence.getAndIncrement();
+            	consumingSequence++;
         	}
         } catch (Exception ex) {
 			logger.error(
@@ -207,7 +198,7 @@ public class ProcessingCommandMailbox {
 		} finally {
 			isProcessingCommand.set(false);
         	exit();
-            if (consumingSequence.get() < nextSequence.get()) {
+            if (consumingSequence < nextSequence) {
             	tryRun();
             }
         }
@@ -232,7 +223,8 @@ public class ProcessingCommandMailbox {
             if (null != (processingCommand = messageDict.remove(nextSequence)))
             {
             	CommandResult commandResult = requestToCompleteCommandDict.get(nextSequence);
-                completeCommand(processingCommand, commandResult);
+            	// TODO async
+                completeCommandAsync(processingCommand, commandResult);
             }
             requestToCompleteCommandDict.remove(nextSequence);
             returnSequence = nextSequence;
@@ -240,13 +232,22 @@ public class ProcessingCommandMailbox {
         }
         return returnSequence;
     }
-    
-	private SystemFutureWrapper<Void> completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+
+	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
+		// TODO 完成传递
 		try {
-			return processingCommand.complete(commandResult);
+			return processingCommand.completeAsync(commandResult);
 		} catch (Exception ex) {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
-			return FutureWrapperUtil.createCompleteFuture(null);
+			return EJokerFutureWrapperUtil.createCompleteFuture();
+		}
+	}
+    
+	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+		try {
+			processingCommand.complete(commandResult);
+		} catch (Exception ex) {
+			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
 		}
 	}
 

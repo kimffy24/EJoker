@@ -11,5 +11,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 public interface ICommandExecuteContext extends ICommandContext, ITrackingContext{
 
 	public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult);
-	
+
+	public void onCommandExecuted(CommandResult commandResult);
 }

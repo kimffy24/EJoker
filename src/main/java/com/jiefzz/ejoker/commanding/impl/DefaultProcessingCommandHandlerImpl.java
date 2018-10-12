@@ -33,9 +33,7 @@ import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureEJokerTaskUtil;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
@@ -78,68 +76,62 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	private EJokerAsyncHelper eJokerAsyncHelper;
 	
 	@Override
-	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
-		
+	public SystemFutureWrapper<Void> handleAsync(ProcessingCommand processingCommand) {
+		return systemAsyncHelper.submit(() -> handle(processingCommand));
+	}
+
+	@Override
+	public void handle(ProcessingCommand processingCommand) {
 		ICommand message = processingCommand.getMessage();
-		return systemAsyncHelper.submit(() -> {
-				systemAsyncHelper.submit(
-						() -> {
-							if(StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
-								String errorInfo = String.format("The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(), message.getId());
-								logger.error(errorInfo);
-								return completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
-							}
-				
-							try {
-								ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
-								return handleCommand(processingCommand, handler);
-//								return handleCommandAsync(processingCommand, handler);
-							} catch( Exception e ) {
-								logger.error(e.getMessage());
-								e.printStackTrace();
-								return completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), e.getMessage());
-							}
-						}
-			).get();
-		});
-		
-		
+		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
+			String errorInfo = String.format(
+					"The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(),
+					message.getId());
+			logger.error(errorInfo);
+			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+		}
+
+		try {
+			ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
+			handleCommand(processingCommand, handler);
+//			return handleCommandAsync(processingCommand, handler);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), e.getMessage());
+		}
+
 	}
 	
-	private SystemFutureWrapper<AsyncTaskResult<Void>> handleCommand(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
+	private void handleCommand(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
 
 		ICommand message = processingCommand.getMessage();
-		
-		return eJokerAsyncHelper.submit(
-				() -> {
-					processingCommand.getCommandExecuteContext().clear();
-					
-					boolean b = false;
-					try {
-						/// TODO @await
-						commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
-						logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]", commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
-						b = true;
-					} catch( Exception ex ) {
-			            handleExceptionAsync(processingCommand, commandHandler, ex);
-					}
-					
-					if(b) {
-						try {
-							// TOTO 事件过程的起点
-							commitAggregateChanges(processingCommand);
-						} catch( Exception e ) {
-							logger.error("{} raise when {} handling {}. commandId={}, aggregateId={}", e.getMessage(), commandHandler.toString(), message.getId(), message.getAggregateRootId());
-							try {
-								/// TODO @await
-								completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(), "Unknow exception caught when committing changes of command.").get();
-							} catch (Exception e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-				});
-		
+
+		processingCommand.getCommandExecuteContext().clear();
+
+		boolean b = false;
+		try {
+			/// TODO @await
+			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
+			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
+					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
+			b = true;
+		} catch (Exception ex) {
+			handleExceptionAsync(processingCommand, commandHandler, ex);
+		}
+
+		if (b) {
+			try {
+				// TOTO 事件过程的起点
+				commitAggregateChanges(processingCommand);
+			} catch (Exception e) {
+				logCommandExecuteException(processingCommand, commandHandler, e);
+				/// TODO @await
+				completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(),
+							"Unknow exception caught when committing changes of command.");
+			}
+		}
+
 	}
 	
 	private void commitAggregateChanges(ProcessingCommand processingCommand) {
@@ -163,7 +155,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 							command.getId()
 					);
 					logger.error(errorInfo);
-					completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+					completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 					return;
 				}
 				dirtyAggregateRoot=aggregateRoot;
@@ -182,9 +174,11 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			processIfNoEventsOfCommand(processingCommand);
 			return;
 		}
-		
+
+        //构造出一个事件流对象
 		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
-		
+
+        //将事件流提交到EventStore
 		// TODO event提交从这里开始(可以作为调试点)
 		eventService.commitDomainEventAsync(new EventCommittingContext(dirtyAggregateRoot, eventStream, processingCommand));
 		
@@ -227,7 +221,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
                 if (null != existingEventStream) {
                     eventService.publishDomainEventAsync(processingCommand, existingEventStream);
                 } else {
-                    completeCommand(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
+                    completeCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
                 }
 			}
 
@@ -283,7 +277,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
                         publishExceptionAsync(processingCommand, publishableException);
                     } else {
                         logCommandExecuteException(processingCommand, commandHandler, exception);
-                        completeCommand(processingCommand, CommandStatus.Failed, exception.getClass().getName(), exception.getMessage());
+                        completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), exception.getMessage());
                     }
                     
                 }
@@ -322,7 +316,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 			@Override
 			public void finishAction(Void result) {
-				completeCommand(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
+				completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
 			}
 
 			@Override
@@ -372,7 +366,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 	                            command.getId(),
 	                            command.getAggregateRootId());
 						
-						return FutureWrapperUtil.createCompleteFuture(null);
+						return EJokerFutureWrapperUtil.createCompleteFutureTask();
 					} catch (Exception ex) {
 						
 						while(ex instanceof IOExceptionOnRuntime)
@@ -416,10 +410,10 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 			if (null != message) {
 				publishMessageAsync(processingCommand, message);
 			} else {
-				completeCommand(processingCommand, CommandStatus.Success, null, null);
+				completeCommandAsync(processingCommand, CommandStatus.Success, null, null);
 			}
 		} else {
-			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorMessage);
+			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorMessage);
 		}
 	}
 
@@ -440,7 +434,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 			@Override
 			public void finishAction(Void result) {
-				completeCommand(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message));
+				completeCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message));
 			}
 
 			@Override
@@ -456,11 +450,19 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 		});
 	}
 
-	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommand(ProcessingCommand processingCommand,
+	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandStatus commandStatus, String resultType, String result) {
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);
-		return processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
+		// TODO 完成传递
+		return processingCommand.getMailbox().completeMessageAsync(processingCommand, commandResult);
+	}
+
+	private void completeCommand(ProcessingCommand processingCommand,
+			CommandStatus commandStatus, String resultType, String result) {
+		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
+				processingCommand.getMessage().getAggregateRootId(), result, resultType);
+		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
 	}
 	
 }

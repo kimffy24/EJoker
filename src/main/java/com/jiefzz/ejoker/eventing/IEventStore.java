@@ -16,9 +16,11 @@ public interface IEventStore {
 	
 	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync(DomainEventStream eventStream);
 	
-	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, int version);
+	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, long version);
 	
 	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId);
+    
+	public SystemFutureWrapper<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
 	
 	/**
 	 * 为保证返回顺序请使用LinkedHashSet
@@ -30,8 +32,13 @@ public interface IEventStore {
 	 * @return
 	 */
 	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
-    
-	public SystemFutureWrapper<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion, long maxVersion);
-
+	
+	public EventAppendResult batchAppend(LinkedHashSet<DomainEventStream> eventStreams);
+	
+	public EventAppendResult append(DomainEventStream eventStream);
+	
+	public DomainEventStream find(String aggregateRootId, long version);
+	
+	public DomainEventStream find(String aggregateRootId, String commandId);
 	
 }

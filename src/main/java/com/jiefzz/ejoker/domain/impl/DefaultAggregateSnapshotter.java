@@ -19,16 +19,19 @@ public class DefaultAggregateSnapshotter implements IAggregateSnapshotter {
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> restoreFromSnapshot(Class<?> aggregateRootType, String aggregateRootId) {
-		return systemAsyncHelper.submit(() -> {
-			IAggregateRepositoryProxy aggregateRepository = aggregateRepositoryProvider.getRepository(aggregateRootType);
-			if(null != aggregateRepository) {
-				// TODO @await
-				aggregateRepository.getAsync(aggregateRootId).get();
-			}
-			return null;
-		});
+	public IAggregateRoot restoreFromSnapshot(Class<?> aggregateRootType, String aggregateRootId) {
+		IAggregateRepositoryProxy aggregateRepository = aggregateRepositoryProvider.getRepository(aggregateRootType);
+		if(null != aggregateRepository) {
+			// TODO @await
+			return aggregateRepository.getAsync(aggregateRootId).get();
+		}
+		return null;
 		
+	}
+	
+	@Override
+	public SystemFutureWrapper<IAggregateRoot> restoreFromSnapshotAsync(Class<?> aggregateRootType, String aggregateRootId) {
+		return systemAsyncHelper.submit(() -> restoreFromSnapshot(aggregateRootType, aggregateRootId));
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -105,7 +106,7 @@ public class MessageHandlerPool {
 						}catch (Exception e) {
 							ripenFuture.trySetException(e);
 						}
-					}) .start();
+					}).start();
 				return new SystemFutureWrapper<>(ripenFuture);
 			});
 		}
@@ -116,11 +117,13 @@ public class MessageHandlerPool {
 		@Override
 		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, IVoidFunction> submitter) {
 			return submitter.trigger(()-> {
-				try {
-					handleReflectionMethod.invoke(getInnerObject(), message);
-				} catch (Exception e) {
-					throw new AsyncWrapperException(e);
-				}
+					try {
+						handleReflectionMethod.invoke(getInnerObject(), message);
+					} catch (IllegalAccessException|IllegalArgumentException e) {
+						throw new AsyncWrapperException(e);
+					} catch (InvocationTargetException e) {
+						throw (Exception )e.getCause();
+					}
 			});
 		}
 

@@ -19,12 +19,15 @@ public abstract class DefaultProcessingMessageHandlerA<X extends IProcessingMess
 	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage) {
+		return eJokerAsyncHelper.submit(() -> handle(processingMessage));
+	}
+
+	@Override
+	public void handle(X processingMessage) {
 		Y message = processingMessage.getMessage();
-		return eJokerAsyncHelper.submit(() -> {
-			/// TODO @await
-			messageDispatcher.dispatchMessageAsync(message).get();
-			processingMessage.complete();
-		});
+		/// TODO @await
+		messageDispatcher.dispatchMessageAsync(message).get();
+		processingMessage.complete();
 	}
 
 }

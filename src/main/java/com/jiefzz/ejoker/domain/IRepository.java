@@ -5,5 +5,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 public interface IRepository {
 	
     public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId);
-    
+
+    public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId);
 }

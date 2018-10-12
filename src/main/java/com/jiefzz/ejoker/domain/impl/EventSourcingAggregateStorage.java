@@ -14,8 +14,6 @@ import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
@@ -25,7 +23,6 @@ import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 @EService
 public class EventSourcingAggregateStorage implements IAggregateStorage {
 
-	@SuppressWarnings("unused")
 	private final static  Logger logger = LoggerFactory.getLogger(EventSourcingAggregateStorage.class);
 	
 	private long minVersion = 1l;
@@ -51,32 +48,35 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		if( null==aggregateRootId )
 			throw new ArgumentNullException("aggregateRootId");
 		
-		
-		return systemAsyncHelper.submit(() -> {
-			// TODO @await
-			IAggregateRoot aggregateRoot = tryGetFromSnapshot(aggregateRootId, aggregateRootType).get();
-			
-			if(null != aggregateRoot)
-				return aggregateRoot;
+		return systemAsyncHelper.submit(() -> get(aggregateRootType, aggregateRootId));
+	}
 
-			// TODO @await
-			/// assert 当前处于异步上下文中
-			/// 所以不再占用新线程。
-			Collection<DomainEventStream> eventStreams = eventStore.queryAggregateEvents(aggregateRootId, aggregateRootType.getName(), minVersion, maxVersion);
-			
-			return rebuildAggregateRoot(aggregateRootType, eventStreams);
-			
-		});
+	@Override
+	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
+		if (null == aggregateRootType)
+			throw new ArgumentNullException("aggregateRootType");
+		if (null == aggregateRootId)
+			throw new ArgumentNullException("aggregateRootId");
+
+		IAggregateRoot aggregateRoot = tryGetFromSnapshot(aggregateRootId, aggregateRootType);
+
+		if (null != aggregateRoot)
+			return aggregateRoot;
+
+		Collection<DomainEventStream> eventStreams = eventStore.queryAggregateEvents(aggregateRootId,
+				aggregateRootType.getName(), minVersion, maxVersion);
+
+		return rebuildAggregateRoot(aggregateRootType, eventStreams);
+
 	}
 	
-	private SystemFutureWrapper<IAggregateRoot> tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
+	private IAggregateRoot tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		
 		// TODO @await
-		SystemFutureWrapper<IAggregateRoot> restoreFromSnapshotResult = aggregateSnapshotter.restoreFromSnapshot(aggregateRootType, aggregateRootId);
-		IAggregateRoot aggregateRoot = restoreFromSnapshotResult.get();
+		IAggregateRoot aggregateRoot = aggregateSnapshotter.restoreFromSnapshot(aggregateRootType, aggregateRootId);
 		
 		if(null == aggregateRoot)
-			return FutureWrapperUtil.createCompleteFuture(null);
+			return null;
 		
 		if(!aggregateRootType.equals(aggregateRoot.getClass()) || !aggregateRootId.equals(aggregateRoot.getUniqueId()))
 			throw new RuntimeException(String.format(
@@ -96,7 +96,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		Collection<DomainEventStream> queryAggregateEvents = eventStore.queryAggregateEvents(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion);
 		aggregateRoot.replayEvents(queryAggregateEvents);
 		
-		return FutureWrapperUtil.createCompleteFuture(aggregateRoot);
+		return aggregateRoot;
 	}
 
 	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, Collection<DomainEventStream> eventStreams) {
@@ -110,6 +110,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 
 		logger.error("replay Event end ...");
 		logger.error("aggregateId: {}, version: {} ...", aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
+		
 		return aggregateRoot;
 	}
 }

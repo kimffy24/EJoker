@@ -3,7 +3,6 @@ package com.jiefzz.ejoker.commanding;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 public class ProcessingCommand {
@@ -24,7 +23,11 @@ public class ProcessingCommand {
     	this.items = (null != items ? items : new HashMap<>());
     }
 
-    public SystemFutureWrapper<Void> complete(CommandResult commandResult) {
+    public void complete(CommandResult commandResult) {
+    	commandExecuteContext.onCommandExecuted(commandResult);
+    }
+
+    public SystemFutureWrapper<Void> completeAsync(CommandResult commandResult) {
     	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }
     

@@ -6,5 +6,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 public interface IProcessingMessageHandler<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
 
 	SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage);
+
+	void handle(X processingMessage);
 	
 }

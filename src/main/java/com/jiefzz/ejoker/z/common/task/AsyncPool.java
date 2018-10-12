@@ -1,15 +1,11 @@
 package com.jiefzz.ejoker.z.common.task;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 public class AsyncPool {
 
@@ -22,19 +18,17 @@ public class AsyncPool {
 	}
 	
 	public AsyncPool(int threadPoolSize, boolean prestartAllThread) {
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, threadPoolSize, 500l, TimeUnit.MILLISECONDS,
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 500l, TimeUnit.MILLISECONDS,
 				new LinkedBlockingQueue<Runnable>()) {
 
 					@Override
 					protected void beforeExecute(Thread t, Runnable r) {
-						super.beforeExecute(t, r);
 						activeThreadCount.incrementAndGet();
 					}
 
 					@Override
 					protected void afterExecute(Runnable r, Throwable t) {
 						activeThreadCount.decrementAndGet();
-						super.afterExecute(r, t);
 					}
 			
 		};

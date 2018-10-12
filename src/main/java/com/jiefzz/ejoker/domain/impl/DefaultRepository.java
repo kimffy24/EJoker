@@ -30,15 +30,21 @@ public class DefaultRepository implements IRepository {
 			throw new ArgumentNullException("aggregateRootId");
 		
 		// TODO @await
-		/// 此处满足 异步传递
-		return systemAsyncHelper.submit(
-				() -> {
-					IAggregateRoot aggregateRoot = memoryCache.getAsync(aggregateRootId, aggregateRootType).get();
-					if(null != aggregateRoot)
-						return aggregateRoot;
-					return aggregateRootStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get();
-				});
+		return systemAsyncHelper.submit(() -> get(aggregateRootType, aggregateRootId));
 		
+	}
+
+	@Override
+	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
+		if (aggregateRootType == null)
+			throw new ArgumentNullException("aggregateRootType");
+		if (aggregateRootId == null)
+			throw new ArgumentNullException("aggregateRootId");
+		
+		IAggregateRoot aggregateRoot = memoryCache.getAsync(aggregateRootId, aggregateRootType).get();
+		if(null != aggregateRoot)
+			return aggregateRoot;
+		return aggregateRootStorage.get(aggregateRootType, aggregateRootId.toString());
 	}
 
 }

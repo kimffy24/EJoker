@@ -111,8 +111,8 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 				
 				/// TODO @await
 				/// assert 当前会处于多线程任务调度上下文中,
-				/// 所以这里直接同步化处理
-				messageHandler.handleAsync(processingMessage).get();
+				/// assert 所以这里直接同步化处理
+				messageHandler.handle(processingMessage);
 				
 			}
 		} catch (Exception ex) {

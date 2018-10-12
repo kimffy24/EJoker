@@ -17,7 +17,6 @@ import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
@@ -56,6 +55,34 @@ public class InMemoryEventStore implements IEventStore {
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> batchAppendAsync(LinkedHashSet<DomainEventStream> eventStreams) {
+		if(!supportBatchAppendEvent)
+			throw new RuntimeException("Unsupport batch append event.");
+		return eJokerAsyncHelper.submit(() -> batchAppend(eventStreams));
+	}
+
+	@Override
+	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync(DomainEventStream eventStream) {
+		return eJokerAsyncHelper.submit(() -> append(eventStream));
+	}
+
+	@Override
+	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, long version) {
+		return eJokerAsyncHelper.submit(() -> find(aggregateRootId, version));
+	}
+
+	@Override
+	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
+		return eJokerAsyncHelper.submit(() -> find(aggregateRootId, commandId));
+	}
+
+	@Override
+	public SystemFutureWrapper<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
+			long maxVersion) {
+		return eJokerAsyncHelper.submit(() -> queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
+	}
+
+	@Override
+	public EventAppendResult batchAppend(LinkedHashSet<DomainEventStream> eventStreams) {
 		
 		if(!supportBatchAppendEvent)
 			throw new RuntimeException("Unsupport batch append event.");
@@ -63,51 +90,37 @@ public class InMemoryEventStore implements IEventStore {
 		Iterator<DomainEventStream> iterator = eventStreams.iterator();
 		while (iterator.hasNext()) {
 			DomainEventStream currentEventStream = iterator.next();
-			SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync = appendAsync(currentEventStream);
-			if(!EventAppendResult.Success.equals(appendAsync.get().getData()))
-				return appendAsync;
+			EventAppendResult appendResult = appendSync(currentEventStream);
+			if(!EventAppendResult.Success.equals(appendResult))
+				return appendResult;
 		}
-
-		RipenFuture<AsyncTaskResult<EventAppendResult>> future = new RipenFuture<>();
-		future.trySetResult(new AsyncTaskResult<EventAppendResult>(AsyncTaskStatus.Success, EventAppendResult.Success));
-		return new SystemFutureWrapper<>(future);
+		
+		return EventAppendResult.Success;
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> appendAsync(DomainEventStream eventStream) {
-		
-		EventAppendResult eventAppendResult = appendSync(eventStream);
-		
-		RipenFuture<AsyncTaskResult<EventAppendResult>> future = new RipenFuture<>();
-		future.trySetResult(new AsyncTaskResult<EventAppendResult>(AsyncTaskStatus.Success, eventAppendResult));
-
-		return new SystemFutureWrapper<>(future);
+	public EventAppendResult append(DomainEventStream eventStream) {
+		return appendSync(eventStream);
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(final String aggregateRootId, final int version) {
+	public DomainEventStream find(String aggregateRootId, long version) {
 		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		Object previous = aggregateEventStore.getOrDefault("" +version, null);
 		DomainEventStream des = null;
 		if(null != previous)
 			des = revertFromStorageFormat((String )previous);
-		
-		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<>();
-		future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, des));
-		return new SystemFutureWrapper<>(future);
+		return des;
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
+	public DomainEventStream find(String aggregateRootId, String commandId) {
 		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		Object previous = aggregateEventStore.getOrDefault(commandId, null);
 		DomainEventStream des = null;
 		if(null != previous)
 			des = revertFromStorageFormat((String )previous);
-		
-		final RipenFuture<AsyncTaskResult<DomainEventStream>> future = new RipenFuture<>();
-		future.trySetResult(new AsyncTaskResult<DomainEventStream>(AsyncTaskStatus.Success, des));
-		return new SystemFutureWrapper<>(future);
+		return des;
 	}
 
 	@Override
@@ -116,8 +129,7 @@ public class InMemoryEventStore implements IEventStore {
 		
 		Set<DomainEventStream> resultSet = new LinkedHashSet<>();
 		
-		Map<String, String> aggregateEventStore
-			= MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		
 		for(long cursor = minVersion; cursor <= maxVersion; cursor++) {
 			Object previous = aggregateEventStore.get("" + cursor);
@@ -131,13 +143,14 @@ public class InMemoryEventStore implements IEventStore {
 		return resultSet;
 	}
 
-	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Collection<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
-			long maxVersion) {
-		final RipenFuture<AsyncTaskResult<Collection<DomainEventStream>>> future = new RipenFuture<>();
-				future.trySetResult(new AsyncTaskResult<Collection<DomainEventStream>>(AsyncTaskStatus.Success, queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion)));
-		
-		return new SystemFutureWrapper<>(future);
+	private AtomicLong atLong = new AtomicLong(0);
+	
+	private String convertToStorageFormat(DomainEventStream eventStream) {
+		return jsonConverter.convert(eventStream);
+	}
+	
+	private DomainEventStream revertFromStorageFormat(String content) {
+		return jsonConverter.revert(content, DomainEventStream.class);
 	}
 
 	private EventAppendResult appendSync(DomainEventStream eventStream) {
@@ -167,15 +180,4 @@ public class InMemoryEventStore implements IEventStore {
 		}
 
 	}
-
-	private AtomicLong atLong = new AtomicLong(0);
-	
-	private String convertToStorageFormat(DomainEventStream eventStream) {
-		return jsonConverter.convert(eventStream);
-	}
-	
-	private DomainEventStream revertFromStorageFormat(String content) {
-		return jsonConverter.revert(content, DomainEventStream.class);
-	}
-
 }

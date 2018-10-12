@@ -11,12 +11,12 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
  * @author kimffy
  *
  */
-public final class FutureEJokerTaskUtil {
+public final class EJokerFutureTaskUtil {
 
 	public static Future<AsyncTaskResult<Void>> createFutureDirectly(AsyncTaskStatus status) {
 
 		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
-		rf.trySetResult(new AsyncTaskResult<Void>(status));
+		rf.trySetResult(new AsyncTaskResult<>(status));
 		return rf;
 
 	}

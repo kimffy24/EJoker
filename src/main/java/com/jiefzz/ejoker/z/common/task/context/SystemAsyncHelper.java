@@ -1,14 +1,10 @@
 package com.jiefzz.ejoker.z.common.task.context;
 
-import java.util.concurrent.locks.LockSupport;
-
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
-import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
-import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 
 /**
  * 创建EJoker内置的任务线程组，整个EJoker生命周期内的异步任务都可以提交到此处<br>
@@ -37,32 +33,6 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
 		return submitInternalWrapper(vf);
 	}
-	
-
-	public <T> void submit(IFunction<T> vf, IVoidFunction1<T> callback) {
-		SystemFutureWrapper<T> futureResult = submitInternalWrapper(vf);
-		submitInternalWrapper(() -> callback.trigger(futureResult.get()));
-	}
-
-//	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback) {
-//		return submit(vf, callback, false);
-//	}
-//
-//	public <T, TA> SystemFutureWrapper<TA> submit(IFunction<T> vf, IFunction1<TA, T> callback, boolean waitFinish) {
-//		Thread currentThread = Thread.currentThread();
-//		SystemFutureWrapper<T> futureResult = submitInternalWrapper(vf);
-//		SystemFutureWrapper<TA> submitInternal = submitInternalWrapper(() -> {
-//			try {
-//				return callback.trigger(futureResult.get());
-//			} finally {
-//				if(waitFinish)
-//					LockSupport.unpark(currentThread);
-//			}
-//		});
-//		if(waitFinish)
-//			LockSupport.park();
-//		return submitInternal;
-//	}
 
 	protected <T> SystemFutureWrapper<T> submitInternalWrapper(IFunction<T> vf) {
 		return new SystemFutureWrapper<>(submitInternal(vf));

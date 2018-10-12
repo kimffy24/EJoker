@@ -32,7 +32,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.FutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
@@ -164,7 +164,7 @@ public class CommandConsumer implements IWorkerService {
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return FutureWrapperUtil.createCompleteFuture(null);
+				return EJokerFutureWrapperUtil.createCompleteFuture();
 			
 			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);
 		
@@ -185,8 +185,7 @@ public class CommandConsumer implements IWorkerService {
 		}
 
 		@Override
-		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz,
-				boolean tryFromCache) {
+		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz, boolean tryFromCache) {
 
 			RipenFuture<T> ripenFuture = new RipenFuture<>();
 			if (id == null) {
@@ -194,30 +193,7 @@ public class CommandConsumer implements IWorkerService {
 				return new SystemFutureWrapper<>(ripenFuture);
 			}
 			
-			return systemAsyncHelper.submit(() -> {
-
-				String aggregateRootId = id.toString();
-				IAggregateRoot aggregateRoot = null;
-
-				//try get aggregate root from the last execute context.
-				if (null != (aggregateRoot = trackingAggregateRootDict.get(aggregateRootId)))
-					return (T )aggregateRoot;
-
-				if (tryFromCache)
-					// TODO @await
-					aggregateRoot = repository.getAsync((Class<IAggregateRoot> )clazz, id).get();
-				else
-					// TODO @await
-					aggregateRoot = aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get();
-
-				if (aggregateRoot != null) {
-					trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
-					return (T )aggregateRoot;
-				}
-				
-				return null;
-				
-			});
+			return systemAsyncHelper.submit(() -> get(id, clazz, tryFromCache));
 
 		}
 
@@ -240,6 +216,48 @@ public class CommandConsumer implements IWorkerService {
 		@Override
 		public String getResult() {
 			return result;
+		}
+
+		@Override
+		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
+
+			RipenFuture<T> ripenFuture = new RipenFuture<>();
+			if (id == null) {
+				throw new ArgumentNullException("id");
+			}
+			
+			String aggregateRootId = id.toString();
+			IAggregateRoot aggregateRoot = null;
+
+			//try get aggregate root from the last execute context.
+			if (null != (aggregateRoot = trackingAggregateRootDict.get(aggregateRootId)))
+				return (T )aggregateRoot;
+
+			if (tryFromCache)
+				// TODO @await
+				aggregateRoot = repository.get((Class<IAggregateRoot> )clazz, id);
+			else
+				// TODO @await
+				aggregateRoot = aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
+
+			if (aggregateRoot != null) {
+				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
+				return (T )aggregateRoot;
+			}
+			
+			return null;
+		}
+
+		@Override
+		public void onCommandExecuted(CommandResult commandResult) {
+
+			messageContext.onMessageHandled(message);
+
+			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
+				return;
+			
+			sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress).get();
+		
 		}
 
 	}
