@@ -2,9 +2,6 @@ package com.jiefzz.ejoker.z.common.task.context;
 
 import java.util.concurrent.Future;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
@@ -15,8 +12,6 @@ import com.jiefzz.ejoker.z.common.task.ThreadPoolMaster;
 
 public abstract class AbstractNormalWorkerGroupService {
 	
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
 	private AsyncPool asyncPool = null;
 	
 	@Dependence
@@ -32,10 +27,6 @@ public abstract class AbstractNormalWorkerGroupService {
 	protected boolean prestartAll() {
 		return false;
 	};
-	
-	public void d1() {
-		logger.debug(" ==========> asyncPool.getActiveCount() = {}", asyncPool.getActiveCount());
-	}
 	
 	protected <T> Future<T> submitInternal(IFunction<T> vf) {
 		return asyncPool.execute(() -> {

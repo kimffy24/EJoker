@@ -56,17 +56,6 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
 	}
 	
-	// TODO debug
-	public void d1() {
-		ForEachUtil.processForEach(mailboxDict, (k, v) -> {
-			if(null == v) {
-				logger.debug("r: {}, v=null!!!", k);
-				return;
-			}
-			v.d1();
-		});
-	}
-	
 	@Override
 	public void process(ProcessingCommand processingCommand) {
 		

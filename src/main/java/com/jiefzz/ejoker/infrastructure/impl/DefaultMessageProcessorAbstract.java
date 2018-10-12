@@ -22,7 +22,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IMessageProcessor<X, Y> {
 
@@ -50,18 +49,6 @@ public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessa
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
 	}
 	
-	// TODO debug
-	public void d1() {
-		ForEachUtil.processForEach(mailboxDict, (k, v) -> {
-			if(null == v) {
-				logger.debug("r: {}, v=null!!!", k);
-				return;
-			}
-			logger.debug("r: {}, hit: {}, running: {}, waitingMessageDictSize: {}, messageQueue: {}", k, v.al, v.onRunning(), (null == v.getWaitingMessageDict() ? 0 : v.getWaitingMessageDict().size()), v.getMessageQueue().size());
-		});
-	}
-	
-	// react调度
 	public void process(X processingMessage) {
 		String routingKey = processingMessage.getMessage().getRoutingKey();
 		if (!StringHelper.isNullOrWhiteSpace(routingKey)) {

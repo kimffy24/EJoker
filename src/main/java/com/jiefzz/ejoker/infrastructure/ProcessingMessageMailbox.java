@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +21,8 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	private final String routingKey;
 
 	private volatile Map<Long, X> waitingMessageDict = null;
+	
+	private final Lock waitingMessageDictCreate = new ReentrantLock();
 
 	private final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
 
@@ -31,10 +33,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 	
 	private long lastActiveTime = System.currentTimeMillis();
-	
-	@SuppressWarnings("rawtypes")
-	private final AtomicReferenceFieldUpdater updater
-		= AtomicReferenceFieldUpdater.newUpdater(ProcessingMessageMailbox.class, Map.class, "waitingMessageDict");
 	
 	public ProcessingMessageMailbox(final String routingKey, final IProcessingMessageScheduler<X, Y> scheduler,
 			final IProcessingMessageHandler<X, Y> messageHandler) {
@@ -51,27 +49,10 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		return onRunning.get();
 	}
 	
-	// TODO debug
-	public AtomicLong al = new AtomicLong(0);
-
-	// TODO debug
-	public Map<Long, X> getWaitingMessageDict() {
-		return waitingMessageDict;
-	}
-	
-	// TODO debug
-	public Queue<X> getMessageQueue() {
-		return messageQueue;
-	}
-
 	public void enqueueMessage(X processingMessage) {
 		lastActiveTime = System.currentTimeMillis();
 		processingMessage.setMailBox(this);
 		messageQueue.offer(processingMessage);
-		{
-			// TODO debug
-			al.incrementAndGet();
-		}
 		tryRun();
 	}
 	
@@ -80,13 +61,19 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		ISequenceMessage sequenceMessage = (message instanceof ISequenceMessage) ? (ISequenceMessage )message : null;
 		Ensure.notNull(sequenceMessage, "sequenceMessage");
 		
-		Map<Long, X> _waitingMessageDict;
-		while(null == (_waitingMessageDict = (Map<Long, X> )updater.get(this))) {
-			updater.compareAndSet(this, null, new ConcurrentHashMap<>());
+		if(null == waitingMessageDict) {
+			waitingMessageDictCreate.lock();
+			try {
+				while(null == waitingMessageDict) {
+					waitingMessageDict = new ConcurrentHashMap<>();
+				}
+			} finally {
+				waitingMessageDictCreate.unlock();
+			}
 		}
 
 		lastActiveTime = System.currentTimeMillis();
-		_waitingMessageDict.putIfAbsent(sequenceMessage.getVersion(), waitingMessage);
+		waitingMessageDict.putIfAbsent(sequenceMessage.getVersion(), waitingMessage);
 		exit();
 		tryRun();
 	}
@@ -140,7 +127,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 
         X nextMessage;
         if (null != waitingMessageDict && null != (nextMessage = waitingMessageDict.remove(sequenceMessage.getVersion() + 1l))) {
-            logger.warn("完成早到的事件流。 aggregateRootId: {}, version: {}", routingKey, sequenceMessage.getVersion() + 1l);
             scheduler.scheduleMessage(nextMessage);
             return true;
         }

@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -73,33 +72,8 @@ public class ProcessingCommandMailbox {
 		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
 		this.eJokerAsyncHelper = eJokerAsyncHelper;
 	}
-
-	// TODO debug
-	private AtomicLong al = new AtomicLong(0);
-
-	// TODO debug
-	public void d1() {
-		logger.debug("aggregateRootId: {}, hit: {}, onRunning: {}, onPaused: {}, isProcessingCommand: {}, consumedSequence: {}, consumingSequence: {}, nextSequence: {}, requestToCompleteCommandDict.size(): {}, messageDict.size(): {}, asyncLock: {}, enqueueLock: {}",
-				aggregateRootId,
-				al.get(),
-				onRunning.get(),
-				onPaused.get(),
-				isProcessingCommand.get(),
-				consumedSequence,
-				consumingSequence,
-				nextSequence,
-				requestToCompleteCommandDict.size(),
-				messageDict.size(),
-				asyncLock.toString(),
-				enqueueLock.toString()
-		);
-	}
 	
 	public void enqueueMessage(ProcessingCommand message) {
-		{
-			// TODO debug
-			al.getAndIncrement();
-		}
 		enqueueLock.lock();
 		try {
 			long acquireSequence = nextSequence;
