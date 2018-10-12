@@ -62,9 +62,9 @@ public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMes
 			public void finishAction(Long result) {
 				long publishedVersion = result.longValue();
 				long currentEventVersion = message.getVersion();
-				if (publishedVersion + 1l == currentEventVersion) {
+				if (publishedVersion + 1l - currentEventVersion == 0l) {
 					dispatchProcessingMessageAsyncInternal(processingMessage);
-				} else if (publishedVersion + 1l < currentEventVersion) {
+				} else if (publishedVersion + 1l - currentEventVersion < 0l) {
 					logger.warn(
 							"The sequence message cannot be process now as the version is not the next version, it will be handle later! contextInfo [aggregateRootId={}, lastPublishedVersion={}, messageVersion={}]",
 							message.getAggregateRootStringId(), publishedVersion, currentEventVersion);

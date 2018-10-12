@@ -23,6 +23,10 @@ public interface IPublishedVersionStore {
      * @return
      */
 	SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId);
+
+	void updatePublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId, long publishedVersion);
+    
+	long getPublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId);
     
     
 }

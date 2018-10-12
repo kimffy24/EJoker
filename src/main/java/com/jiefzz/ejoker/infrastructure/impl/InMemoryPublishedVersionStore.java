@@ -19,21 +19,30 @@ public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId, long publishedVersion) {
-		versionDict.put(buildKey(processorName, aggregateRootId), publishedVersion);
+		updatePublishedVersion(processorName, aggregateRootTypeName, aggregateRootId, publishedVersion);
 		return successTask;
 	}
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId) {
+		return EJokerFutureWrapperUtil.createCompleteFutureTask(getPublishedVersion(processorName, aggregateRootTypeName, aggregateRootId));
 		
-		Long version = versionDict.getOrDefault(buildKey(processorName, aggregateRootId), 0l);
-		return EJokerFutureWrapperUtil.createCompleteFutureTask(version);
-		
+	}
+
+	@Override
+	public void updatePublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId,
+			long publishedVersion) {
+		versionDict.put(buildKey(processorName, aggregateRootId), publishedVersion);
+	}
+
+	@Override
+	public long getPublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId) {
+		return versionDict.getOrDefault(buildKey(processorName, aggregateRootId), 0l);
 	}
 
 	private String buildKey(String eventProcessorName, String aggregateRootId) {
 		return String.format("%s-%s", eventProcessorName, aggregateRootId);
 	}
-
+	
 }
