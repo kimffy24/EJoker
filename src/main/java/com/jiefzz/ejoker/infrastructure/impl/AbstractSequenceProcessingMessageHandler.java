@@ -15,7 +15,7 @@ import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
-public abstract class SequenceProcessingMessageHandlerA<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
+public abstract class AbstractSequenceProcessingMessageHandler<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
 		implements IProcessingMessageHandler<X, Y> {
 
 	protected final Logger logger = LoggerFactory.getLogger(this.getClass());

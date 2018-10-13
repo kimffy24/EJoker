@@ -10,7 +10,7 @@ import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 
-public final class PublishableExceptionHelper {
+public final class PublishableExceptionCodecHelper {
 	
 	private static Map<Class<? extends IPublishableException>, Map<String, Field>> reflectMap= new HashMap<>();
 

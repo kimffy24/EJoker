@@ -24,7 +24,7 @@ import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
-import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionHelper;
+import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
@@ -41,9 +41,9 @@ import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
-public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHandler {
+public class DefaultProcessingCommandHandler implements IProcessingCommandHandler {
 	
-	private final static Logger logger = LoggerFactory.getLogger(DefaultProcessingCommandHandlerImpl.class);
+	private final static Logger logger = LoggerFactory.getLogger(DefaultProcessingCommandHandler.class);
 
 	@Dependence
 	private IJSONConverter jsonSerializer;
@@ -326,7 +326,7 @@ public class DefaultProcessingCommandHandlerImpl implements IProcessingCommandHa
 
 			@Override
 			public String getContextInfo() {
-                return String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionHelper.serialize(exception));
+                return String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionCodecHelper.serialize(exception));
             }
 			
 		});

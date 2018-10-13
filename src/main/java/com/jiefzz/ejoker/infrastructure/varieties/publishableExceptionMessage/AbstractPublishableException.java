@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage;
 
 import com.jiefzz.ejoker.utils.EObjectId;
 
-public abstract class PublishableExceptionA extends RuntimeException implements IPublishableException {
+public abstract class AbstractPublishableException extends RuntimeException implements IPublishableException {
 
 	private static final long serialVersionUID = 4037848789314871750L;
 
@@ -12,7 +12,7 @@ public abstract class PublishableExceptionA extends RuntimeException implements 
 	
 	private int sequence;
 	
-	public PublishableExceptionA() {
+	public AbstractPublishableException() {
         id = EObjectId.generateHexStringId();
         timestamp = System.currentTimeMillis();
         sequence = 1;

@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.jiefzz.ejoker.infrastructure.SequenceMessageA;
+import com.jiefzz.ejoker.infrastructure.AbstractSequenceMessage;
 
-public class DomainEventStreamMessage extends SequenceMessageA<String> {
+public class DomainEventStreamMessage extends AbstractSequenceMessage<String> {
 
 	private String commandId;
 	

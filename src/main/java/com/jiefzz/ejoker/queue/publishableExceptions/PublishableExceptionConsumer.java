@@ -14,7 +14,7 @@ import com.jiefzz.ejoker.queue.QueueProcessingContext;
 import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
-import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionHelper;
+import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
@@ -81,7 +81,7 @@ public class PublishableExceptionConsumer {
         IPublishableException exception = null;
         {
         	// PublishableExceptionMessage exceptionMessage => IPublishableException exception
-        	exception =  PublishableExceptionHelper.deserialize(exceptionMessage.getSerializableInfo(), applicationMessageType);
+        	exception =  PublishableExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), applicationMessageType);
         }
         ProcessingPublishableExceptionMessage processingMessage = new ProcessingPublishableExceptionMessage(exception, processContext);
 

@@ -10,8 +10,9 @@ import java.io.Serializable;
 /**
  * JVM提供的序列化工具类
  * @author jiefzz
- *
+ * @deprecated 如果真的需要，考虑google的protobuf实现
  */
+@Deprecated
 public final class JavaObjectSerializeUtil {
 
 	/**

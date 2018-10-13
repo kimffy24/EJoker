@@ -29,7 +29,7 @@ public class DefaultRepository implements IRepository {
 		if (aggregateRootId == null)
 			throw new ArgumentNullException("aggregateRootId");
 		
-		// TODO @await
+		// TODO 异步传递
 		return systemAsyncHelper.submit(() -> get(aggregateRootType, aggregateRootId));
 		
 	}
@@ -40,7 +40,8 @@ public class DefaultRepository implements IRepository {
 			throw new ArgumentNullException("aggregateRootType");
 		if (aggregateRootId == null)
 			throw new ArgumentNullException("aggregateRootId");
-		
+
+		// TODO @await
 		IAggregateRoot aggregateRoot = memoryCache.getAsync(aggregateRootId, aggregateRootType).get();
 		if(null != aggregateRoot)
 			return aggregateRoot;

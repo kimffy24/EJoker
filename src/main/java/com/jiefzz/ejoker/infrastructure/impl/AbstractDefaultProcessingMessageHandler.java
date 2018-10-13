@@ -9,7 +9,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
-public abstract class DefaultProcessingMessageHandlerA<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IProcessingMessageHandler<X, Y> {
+public abstract class AbstractDefaultProcessingMessageHandler<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IProcessingMessageHandler<X, Y> {
 
 	@Dependence
 	IMessageDispatcher messageDispatcher;

@@ -16,7 +16,7 @@ import com.jiefzz.ejoker.z.common.InvalidOperationException;
 import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot {
+public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot {
 
 	private long version = 0;
 	
@@ -33,16 +33,16 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 		this.id = id;
 	}
 	
-	protected AggregateRootA(){ }
+	protected AbstractAggregateRoot(){ }
 
-	protected AggregateRootA(TAggregateRootId id) {
+	protected AbstractAggregateRoot(TAggregateRootId id) {
 		this();
 		if (id == null)
 			throw new ArgumentNullException("id");
 		this.id = id;
 	}
 
-	protected AggregateRootA(TAggregateRootId id, long version) {
+	protected AbstractAggregateRoot(TAggregateRootId id, long version) {
 		this(id);
 		if (version < 0)
 			throw new ArgumentException(String.format("Version can not small than 0, aggregateRootId=%s version=%s", id, version));
@@ -107,7 +107,7 @@ public abstract class AggregateRootA<TAggregateRootId> implements IAggregateRoot
 					throw new InvalidOperationException(String.format(
 							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
 							domainEvent.getClass().getName(),
-							AggregateRootA.this.getClass().getName(),
+							AbstractAggregateRoot.this.getClass().getName(),
 							id
 					));
 				}

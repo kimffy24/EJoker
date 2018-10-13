@@ -12,10 +12,14 @@ import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
 import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 
-@EService
+/**
+ * 线性化和立体化协议，此职责应该由用户自己负起，<br>
+ * 此处提供一个参考实现
+ * @author kimffy
+ *
+ */
 public class DefaultEventSerializer implements IEventSerializer {
 
 	@Dependence
@@ -28,7 +32,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 	public Map<String, String> serializer(Collection<IDomainEvent<?>> events) {
 		Map<String, String> dict = new LinkedHashMap<String, String>();
 		for(IDomainEvent<?> event:events)
-			dict.put(event.getClass().getName().replaceAll("\\.", "#"), jsonSerializer.convert(event));
+			dict.put(event.getClass().getName(), jsonSerializer.convert(event));
 		return dict;
 	}
 
@@ -37,7 +41,7 @@ public class DefaultEventSerializer implements IEventSerializer {
 		List<IDomainEvent<?>> list = new ArrayList<IDomainEvent<?>>();
 		Set<Entry<String,String>> entrySet = data.entrySet();
 		for(Entry<String,String> entry:entrySet) {
-			Class<?> eventType = typeNameProvider.getType(entry.getKey().replaceAll("#", "."));
+			Class<?> eventType = typeNameProvider.getType(entry.getKey());
 			Object revert = jsonSerializer.revert(entry.getValue(), eventType);
 			list.add((IDomainEvent<?> )revert);
 		}

@@ -11,7 +11,6 @@ public class AggregateCacheInfo {
     }
 
     public boolean isExpired(long timeoutMilliseconds) {
-    	//取秒数？？
         return 0 < (System.currentTimeMillis() - lastUpdateTime - timeoutMilliseconds);
     }
     

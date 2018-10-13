@@ -92,7 +92,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 
 		// TODO @await
 		/// assert 当前处于异步上下文中
-		/// 所以不再占用新线程。
+		/// assert 所以不再占用新线程。
 		Collection<DomainEventStream> queryAggregateEvents = eventStore.queryAggregateEvents(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion);
 		aggregateRoot.replayEvents(queryAggregateEvents);
 		
@@ -103,13 +103,8 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		if (null == eventStreams || 0 == eventStreams.size())
 			return null;
 
-		logger.error("replay Event start ...");
-		
 		IAggregateRoot aggregateRoot = aggregateRootFactory.createAggregateRoot(aggregateRootType);
 		aggregateRoot.replayEvents(eventStreams);
-
-		logger.error("replay Event end ...");
-		logger.error("aggregateId: {}, version: {} ...", aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
 		
 		return aggregateRoot;
 	}

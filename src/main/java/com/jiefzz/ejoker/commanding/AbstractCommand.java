@@ -1,9 +1,9 @@
 package com.jiefzz.ejoker.commanding;
 
-import com.jiefzz.ejoker.infrastructure.MessageA;
+import com.jiefzz.ejoker.infrastructure.AbstractMessage;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-public class AbstractCommand extends MessageA implements ICommand {
+public class AbstractCommand extends AbstractMessage implements ICommand {
 	
 	private String aggregateRootId;
 

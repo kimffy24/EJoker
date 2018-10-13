@@ -6,7 +6,7 @@ import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
 import com.jiefzz.ejoker.utils.idHelper.IDHelper;
-import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionHelper;
+import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.context.dev2.impl.EjokerContextDev2Impl;
@@ -52,7 +52,7 @@ public class EJoker {
 				
 				// preload IPubliashableException field inf 
 				if(clazz.isAssignableFrom(IPublishableException.class))
-					PublishableExceptionHelper.getReflectFields((Class<IPublishableException> )clazz);
+					PublishableExceptionCodecHelper.getReflectFields((Class<IPublishableException> )clazz);
 		});
 		
 		context.scanPackage(SELF_PACNAGE_NAME);

@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-public abstract class ProcessingMessageA<X extends IProcessingMessage<X, Y>, Y extends IMessage>
+public abstract class AbstractProcessingMessage<X extends IProcessingMessage<X, Y>, Y extends IMessage>
 		implements IProcessingMessage<X, Y> {
 
 	protected ProcessingMessageMailbox<X, Y> mailbox;
@@ -9,7 +9,7 @@ public abstract class ProcessingMessageA<X extends IProcessingMessage<X, Y>, Y e
 
 	private final Y message;
 
-	public ProcessingMessageA(Y message, IMessageProcessContext processContext) {
+	public AbstractProcessingMessage(Y message, IMessageProcessContext processContext) {
 		this.message = message;
 		this.processContext = processContext;
 	}

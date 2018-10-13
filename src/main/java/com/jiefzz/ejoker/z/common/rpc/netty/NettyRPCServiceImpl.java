@@ -7,7 +7,6 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.action.Action;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
@@ -16,6 +15,7 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -36,7 +36,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	EJokerAsyncHelper eJokerAsyncHelper;
 	
 	@Override
-	public void export(final Action<String> action, final int port) {
+	public void export(final IVoidFunction1<String> action, final int port) {
 		if (portMap.containsKey(port)) {
 			throw new RuntimeException(String.format("Another action has registed on port %d!!!", port));
 		}

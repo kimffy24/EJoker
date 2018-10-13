@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.jiefzz.ejoker.z.common.action.Action;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 
 /**
  * 不使用Java对象动态代理技术。
@@ -17,7 +17,7 @@ public interface IRPCService {
 	
 	final static Lock rpcRegistLock = new ReentrantLock();
 
-	public void export(Action<String> action, int port);
+	public void export(IVoidFunction1<String> action, int port);
 	
 	public void remoteInvoke(String data, String host, int port);
 	
@@ -27,9 +27,9 @@ public interface IRPCService {
 		
 		public final Thread ioThread;
 		
-		public final Action<?> action;
+		public final IVoidFunction1<?> action;
 		
-		public RPCTuple(Action<?> action, Thread ioThread) {
+		public RPCTuple(IVoidFunction1<?> action, Thread ioThread) {
 			this.ioThread = ioThread;
 			this.action = action;
 		}

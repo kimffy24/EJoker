@@ -8,6 +8,11 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
+/**
+ * 已经发布事件版本记录中心服务。
+ * @author kimffy
+ *
+ */
 //@EService
 public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 

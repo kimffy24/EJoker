@@ -23,7 +23,7 @@ import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 
-public abstract class DefaultMessageProcessorAbstract<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IMessageProcessor<X, Y> {
+public abstract class AbstractDefaultMessageProcessor<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IMessageProcessor<X, Y> {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
