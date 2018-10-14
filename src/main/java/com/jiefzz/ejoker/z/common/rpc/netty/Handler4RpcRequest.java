@@ -7,11 +7,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 @Sharable
-public class RequestHandler extends SimpleChannelInboundHandler<String> {
+public class Handler4RpcRequest extends SimpleChannelInboundHandler<String> {
 	
 	public IVoidFunction1<String> action;
 	
-	public RequestHandler(IVoidFunction1<String> action) {
+	public Handler4RpcRequest(IVoidFunction1<String> action) {
 		this.action = action;
 	}
 	
@@ -19,7 +19,7 @@ public class RequestHandler extends SimpleChannelInboundHandler<String> {
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         
         action.trigger(msg);
-        
         ctx.writeAndFlush('\n');
+        
 	}
 }

@@ -1,10 +1,8 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -65,23 +63,14 @@ public abstract class AbstractDefaultMessageProcessor<X extends IProcessingMessa
 	 * 清理超时mailbox的函数。<br>
 	 */
 	private void cleanInactiveMailbox() {
-		List<String> idelMailboxKeyList = new ArrayList<>();
-		Set<Entry<String,ProcessingMessageMailbox<X,Y>>> entrySet = mailboxDict.entrySet();
-		for(Entry<String,ProcessingMessageMailbox<X,Y>> entry:entrySet) {
-			ProcessingMessageMailbox<X,Y> processingMailbox = entry.getValue();
-			if(!processingMailbox.onRunning() && processingMailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT))
-				idelMailboxKeyList.add(entry.getKey());
-		}
-		
-		for(String mailboxKey:idelMailboxKeyList) {
-			ProcessingMessageMailbox<X, Y> processingMessageMailbox = mailboxDict.get(mailboxKey);
-			if(!processingMessageMailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
-				// 在上面判断其达到空闲条件后，又被重新使能（临界情况）
-				// 放弃本次操作
-				continue;
+		Iterator<Entry<String, ProcessingMessageMailbox<X, Y>>> it = mailboxDict.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, ProcessingMessageMailbox<X, Y>> current = it.next();
+			ProcessingMessageMailbox<X, Y> mailbox = current.getValue();
+			if(mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
+				it.remove();
+				logger.debug("Removed inactive {} mailbox, aggregateRootId: {}", getMessageName(), current.getKey());
 			}
-			mailboxDict.remove(mailboxKey);
-			logger.debug("Removed inactive {} mailbox, aggregateRootId: {}", getMessageName(), mailboxKey);
 		}
 	}
 	

@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 
 /**
@@ -17,7 +19,11 @@ public interface IRPCService {
 	
 	final static Lock rpcRegistLock = new ReentrantLock();
 
-	public void export(IVoidFunction1<String> action, int port);
+	default public void export(IVoidFunction1<String> action, int port) {
+		export(action, port, false);
+	}
+	
+	public void export(IVoidFunction1<String> action, int port, boolean waitFinished);
 	
 	public void remoteInvoke(String data, String host, int port);
 	
@@ -27,11 +33,14 @@ public interface IRPCService {
 		
 		public final Thread ioThread;
 		
-		public final IVoidFunction1<?> action;
+		public final IVoidFunction1<String> closeAction;
 		
-		public RPCTuple(IVoidFunction1<?> action, Thread ioThread) {
+		public final RipenFuture<Void> initialFuture;
+		
+		public RPCTuple(IVoidFunction1<String> closeAction, Thread ioThread) {
 			this.ioThread = ioThread;
-			this.action = action;
+			this.closeAction = closeAction;
+			this.initialFuture = new RipenFuture<>();
 		}
 		
 	}

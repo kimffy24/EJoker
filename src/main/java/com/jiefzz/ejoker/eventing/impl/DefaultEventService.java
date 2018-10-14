@@ -1,10 +1,10 @@
 package com.jiefzz.ejoker.eventing.impl;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -588,21 +588,14 @@ public class DefaultEventService implements IEventService {
 	}
 
 	private void cleanInactiveMailbox() {
-		List<String> idelMailboxKeyList = new ArrayList<>();
-		ForEachUtil.processForEach(eventMailboxDict, (aggregateId, mailbox) -> {
-			if(!mailbox.isRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT))
-				idelMailboxKeyList.add(aggregateId);
-		});
-		
-		for(String mailboxKey:idelMailboxKeyList) {
-			EventMailBox eventMailBox = eventMailboxDict.get(mailboxKey);
-			if(!eventMailBox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
-				// 在上面判断其达到空闲条件后，又被重新使能（临界情况）
-				// 放弃本次操作
-				continue;
+		Iterator<Entry<String, EventMailBox>> it = eventMailboxDict.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, EventMailBox> current = it.next();
+			EventMailBox mailbox = current.getValue();
+			if(!mailbox.isRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
+				it.remove();
+				logger.debug("Removed inactive event mailbox, aggregateRootId: {}", current.getKey());
 			}
-			eventMailboxDict.remove(mailboxKey);
-			logger.debug("Removed inactive event mailbox, aggregateRootId: {}", mailboxKey);
 		}
 	}
 }

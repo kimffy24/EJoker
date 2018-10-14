@@ -18,6 +18,8 @@ public final class EJokerEnvironment {
 	public final static int ASYNC_IO_RETRY_THREADPOLL_SIZE;
 	
 	public final static long MAILBOX_IDLE_TIMEOUT;
+	
+	public final static long AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT;
 
 	public final static int REPLY_PORT;
 
@@ -53,7 +55,10 @@ public final class EJokerEnvironment {
 				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "64"));
 
 		MAILBOX_IDLE_TIMEOUT =
-				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "1800000"));
+				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "180000"));
+
+		AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT =
+				Long.valueOf(props.getProperty("AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT", "180000"));
 
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));

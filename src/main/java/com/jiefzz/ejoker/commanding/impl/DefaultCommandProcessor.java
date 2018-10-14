@@ -1,8 +1,8 @@
 package com.jiefzz.ejoker.commanding.impl;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -21,7 +21,6 @@ import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 /**
  * 默认的命令处理类<br>
@@ -72,21 +71,14 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	 * 清理超时mailbox的函数。<br>
 	 */
 	private void cleanInactiveMailbox() {
-		List<String> idelMailboxKeyList = new ArrayList<>();
-		ForEachUtil.processForEach(mailboxDict, (aggregateId, mailbox) -> {
-			if(!mailbox.onRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT))
-				idelMailboxKeyList.add(aggregateId);
-		});
-		
-		for(String mailboxKey:idelMailboxKeyList) {
-			ProcessingCommandMailbox processingCommandMailbox = mailboxDict.get(mailboxKey);
-			if(!processingCommandMailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
-				// 在上面判断其达到空闲条件后，又被重新使能（临界情况）
-				// 放弃本次操作
-				continue;
+		Iterator<Entry<String, ProcessingCommandMailbox>> it = mailboxDict.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, ProcessingCommandMailbox> current = it.next();
+			ProcessingCommandMailbox mailbox = current.getValue();
+			if(!mailbox.onRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
+				it.remove();
+				logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
 			}
-			mailboxDict.remove(mailboxKey);
-			logger.debug("Removed inactive command mailbox, aggregateRootId: {}", mailboxKey);
 		}
 	}
 }

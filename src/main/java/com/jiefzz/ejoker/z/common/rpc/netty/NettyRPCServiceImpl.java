@@ -1,22 +1,30 @@
 package com.jiefzz.ejoker.z.common.rpc.netty;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
+import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -29,18 +37,39 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	private final static Logger logger = LoggerFactory.getLogger(NettyRPCServiceImpl.class);
 
-	@Dependence
-	IOHelper ioHelper;
+	private final static long clientInactiveMilliseconds = 15000l;
 	
 	@Dependence
-	EJokerAsyncHelper eJokerAsyncHelper;
+	private Scavenger scavenger;
+	
+	@Dependence
+	private IOHelper ioHelper;
+
+	@Dependence
+	private IScheduleService scheduleService;
+	
+	@Dependence
+	private EJokerAsyncHelper eJokerAsyncHelper;
+	
+	private Map<Integer, IVoidFunction> closeHookTrigger = new HashMap<>();
+	
+	private Map<String, NettySimpleClient> clientStore = new ConcurrentHashMap<>();
+	
+	@EInitialize
+	private void init() {
+		scavenger.addFianllyJob(this::exitHook);
+		scheduleService.startTask(String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
+				this::cleanInactiveClient,
+				800l,
+				800l);
+	}
 	
 	@Override
-	public void export(final IVoidFunction1<String> action, final int port) {
+	public void export(final IVoidFunction1<String> action, final int port, boolean waitFinished) {
 		if (portMap.containsKey(port)) {
 			throw new RuntimeException(String.format("Another action has registed on port %d!!!", port));
 		}
-
+		RPCTuple currentTuple = null;
 		rpcRegistLock.lock();
 		try {
 			Thread ioThread = new Thread(() -> {
@@ -50,91 +79,170 @@ public class NettyRPCServiceImpl implements IRPCService {
 						ServerBootstrap b = new ServerBootstrap();
 						b.group(bossGroup, workerGroup);
 						b.channel(NioServerSocketChannel.class);
-						b.childHandler(new EJokerServerInitializer(new RequestHandler(action)));
+						b.childHandler(new EJokerServerInitializer(new Handler4RpcRequest(action)));
 
 						// 服务器绑定端口监听
 						ChannelFuture f = b.bind(port).sync();
+						
+						{
+							// sync 协调逻辑
+							closeHookTrigger.put(port, f.channel()::close);
+							RPCTuple currentRPCTuple;
+							while(null == (currentRPCTuple = portMap.get(port)))
+								TimeUnit.MICROSECONDS.sleep(50l);
+							currentRPCTuple.initialFuture.trySetResult(null);
+						}
+						
 						// 监听服务器关闭监听
 						f.channel().closeFuture().sync();
+						// 期间，此线程应该会一直等待。
 
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					} catch (Exception e) {
+						{
+							// sync 协调逻辑
+							RPCTuple currentRPCTuple;
+							while(null == (currentRPCTuple = portMap.get(port)))
+								;
+							currentRPCTuple.initialFuture.trySetException(e);
+						}
 					} finally {
 						bossGroup.shutdownGracefully();
 						workerGroup.shutdownGracefully();
 					}
 				}
-			);
+			, "rcp:listener:" + port);
+			portMap.put(port, currentTuple = new RPCTuple(action, ioThread));
+			// sync: start一定要放在注册portMap之后进行。
 			ioThread.start();
-			portMap.put(port, new RPCTuple(action, ioThread));
+		} finally {
+			rpcRegistLock.unlock();
+		}
+		
+		if(waitFinished)
+			currentTuple.initialFuture.get();
+			
+	}
+
+	// @unsafe
+	@Override
+	public void removeExport(int port) {
+		rpcRegistLock.lock();
+		try {
+			IVoidFunction closeAction = closeHookTrigger.remove(port);
+			if(null == closeAction)
+				return;
+			closeAction.trigger();
+			portMap.remove(port);
 		} finally {
 			rpcRegistLock.unlock();
 		}
 	}
 
 	@Override
-	public void removeExport(int port) {
-		RPCTuple rpcTuple;
-		if (null != (rpcTuple = portMap.remove(port))) {
-			rpcTuple.ioThread.interrupt();
-		}
-	}
-
-	@Override
 	public void remoteInvoke(final String data, final String host, final int port) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<NettySimpleClient>(true) {
 
-			private String actName = String.format("remoteInvoke[target: %s:%d]", host, port);
-			
 			@Override
 			public String getAsyncActionName() {
-				return actName;
+				return "GetOrCreateNettyClient";
 			}
-
-			/**
-			 * 
-			 * TODO NettyRPCServiceImpl 1. 此处目前还是java原生实现，有空记得改为netty
-			 */
+			
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
-				return eJokerAsyncHelper.submit(() -> {
-					Socket socket = null;
-					try {
-						socket = new Socket(host, port);// 创建一个客户端连接
-						OutputStream out = socket.getOutputStream();// 获取服务端的输出流，为了向服务端输出数据
-						// InputStream in = socket.getInputStream();//
-						// 获取服务端的输入流，为了获取服务端输入的数据
-
-						PrintWriter bufw = new PrintWriter(out, true);
-						bufw.println(data);// 发送数据给服务端
-						bufw.flush();
-
-						bufw.close();
-						out.close();
-						bufw = null;
-						out = null;
-						
-					} catch (Exception e) {
-						e.printStackTrace();
-						throw IOExceptionOnRuntime.encapsulation(e);
-					} finally {
-						if(null!=socket) {
-							socket.close();
-							socket = null;
-						}
-					}
-				});
+			public SystemFutureWrapper<AsyncTaskResult<NettySimpleClient>> asyncAction() throws Exception {
+				NettySimpleClient nettySimpleClient = clientStore.get(host+":"+port);
+				if(null != nettySimpleClient)
+					return EJokerFutureWrapperUtil.createCompleteFutureTask(nettySimpleClient);
+				return eJokerAsyncHelper.submit(() -> new NettySimpleClient(host, port));
 			}
 
 			@Override
 			public void faildAction(Exception ex) {
-				logger.error("failedAction invoke! parameter: {}", ex.getMessage());
+				logger.error(String.format("Faild on client creating!!! errMsg: %s, contextInfo: %s", ex.getMessage(), getContextInfo()), ex);
+			}
+
+			@Override
+			public void finishAction(NettySimpleClient result) {
+				NettySimpleClient client = clientStore.putIfAbsent(host+":"+port, result);
+				if(null != client) {
+					result.close();
+				} else {
+					client = result;
+				}
+				remoteInvokeInternal(client, data);
+			}
+
+			@Override
+			public String getContextInfo() {
+				return String.format("processing on create client [target: %s:%d]", host, port);
+			}
+			
+		});
+	}
+	
+	private void remoteInvokeInternal(NettySimpleClient client, String data) {
+		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
+
+			@Override
+			public String getAsyncActionName() {
+				return "RemoteInvoke";
+			}
+
+			@Override
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+				return eJokerAsyncHelper.submit(() -> client.sendMessage(data));
 			}
 
 			@Override
 			public void finishAction(Void result) {
-				// 暂时不做处理
-			}});
+				// do nothing.
+			}
+
+			@Override
+			public void faildAction(Exception ex) {
+				logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s, data: %s", client.toString(), data));
+			}
+
+			@Override
+			public String getContextInfo() {
+				return String.format("remoteInvoke[target: %s]", client.toString());
+			}
+			
+		});
+	}
+	
+	private void cleanInactiveClient() {
+		Iterator<Entry<String, NettySimpleClient>> iterator = clientStore.entrySet().iterator();
+		while(iterator.hasNext()) {
+			Entry<String, NettySimpleClient> current = iterator.next();
+			if(!current.getValue().isInactive(clientInactiveMilliseconds))
+				continue;
+			iterator.remove();
+			logger.debug("Close rpc client: {}", current.getKey());
+			try {
+				current.getValue().close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void exitHook() {
+		
+		ForEachUtil.processForEach(clientStore, (k, c) -> {
+			logger.debug("Close netty rpc client {}", k);
+			try {
+				c.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		clientStore.clear();
+		
+		ForEachUtil.processForEach(closeHookTrigger, (p, a) -> {
+			a.trigger();
+			portMap.remove(p);
+		});
+		closeHookTrigger.clear();
 	}
 }

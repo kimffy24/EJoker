@@ -1,6 +1,8 @@
 package com.jiefzz.ejoker.domain.impl;
 
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -124,6 +126,14 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 	
 	private void cleanInactiveAggregates() {
-		
+		Iterator<Entry<String, AggregateCacheInfo>> it = aggregateRootInfoDict.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, AggregateCacheInfo> current = it.next();
+			AggregateCacheInfo aggregateCacheInfo = current.getValue();
+			if(aggregateCacheInfo.isExpired(EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT)) {
+				it.remove();
+				logger.debug("Removed inactive aggregate root, id: {}", current.getKey());
+			}
+		}
 	}
 }
