@@ -74,7 +74,6 @@ public class NettySimpleClient {
 		if (socketChannel == null) {
 			throw new RuntimeException("Not avaliable!!!");
 		}
-		logger.debug("send: {}", msg);
 		socketChannel.writeAndFlush(msg);
 		lostInvokeTime = System.currentTimeMillis();
 	}

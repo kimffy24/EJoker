@@ -18,6 +18,8 @@ public class Handler4RpcRequest extends SimpleChannelInboundHandler<String> {
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         
+		
+		
         action.trigger(msg);
         ctx.writeAndFlush('\n');
         

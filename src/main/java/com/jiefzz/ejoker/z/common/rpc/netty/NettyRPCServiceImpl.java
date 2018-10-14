@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 	
 	@Dependence
 	private EJokerAsyncHelper eJokerAsyncHelper;
+	
+	private Lock lock4CreateClient = new ReentrantLock();
 	
 	private Map<Integer, IVoidFunction> closeHookTrigger = new HashMap<>();
 	
@@ -141,43 +145,19 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void remoteInvoke(final String data, final String host, final int port) {
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<NettySimpleClient>(true) {
-
-			@Override
-			public String getAsyncActionName() {
-				return "GetOrCreateNettyClient";
-			}
-			
-			@Override
-			public SystemFutureWrapper<AsyncTaskResult<NettySimpleClient>> asyncAction() throws Exception {
-				NettySimpleClient nettySimpleClient = clientStore.get(host+":"+port);
-				if(null != nettySimpleClient)
-					return EJokerFutureWrapperUtil.createCompleteFutureTask(nettySimpleClient);
-				return eJokerAsyncHelper.submit(() -> new NettySimpleClient(host, port));
-			}
-
-			@Override
-			public void faildAction(Exception ex) {
-				logger.error(String.format("Faild on client creating!!! errMsg: %s, contextInfo: %s", ex.getMessage(), getContextInfo()), ex);
-			}
-
-			@Override
-			public void finishAction(NettySimpleClient result) {
-				NettySimpleClient client = clientStore.putIfAbsent(host+":"+port, result);
-				if(null != client) {
-					result.close();
-				} else {
-					client = result;
+		NettySimpleClient nettySimpleClient = clientStore.get(host+":"+port);
+		if(null == nettySimpleClient) {
+			lock4CreateClient.lock();
+			try {
+				if(null == (nettySimpleClient = clientStore.get(host+":"+port))) {
+					nettySimpleClient = new NettySimpleClient(host, port);
+					clientStore.put(host+":"+port, nettySimpleClient);
 				}
-				remoteInvokeInternal(client, data);
+			} finally {
+				lock4CreateClient.unlock();
 			}
-
-			@Override
-			public String getContextInfo() {
-				return String.format("processing on create client [target: %s:%d]", host, port);
-			}
-			
-		});
+		}
+		remoteInvokeInternal(nettySimpleClient, data);
 	}
 	
 	private void remoteInvokeInternal(NettySimpleClient client, String data) {
@@ -190,7 +170,15 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 			@Override
 			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
-				return eJokerAsyncHelper.submit(() -> client.sendMessage(data));
+				
+				String s;
+				int dIndexOf = data.lastIndexOf('\n');
+				if(data.length() - dIndexOf -1 != 0)
+					s = data + "\n";
+				else
+					s = data;
+				
+				return eJokerAsyncHelper.submit(() -> client.sendMessage(s));
 			}
 
 			@Override

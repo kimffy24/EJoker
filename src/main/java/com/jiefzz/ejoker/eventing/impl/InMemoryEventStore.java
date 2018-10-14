@@ -33,7 +33,7 @@ public class InMemoryEventStore implements IEventStore {
 
 	private final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);
 
-	private Map<String, Map<String, String>> mStorage = new ConcurrentHashMap<>();
+	private Map<String, Map<String, DomainEventStream>> mStorage = new ConcurrentHashMap<>();
 
 	@Dependence
 	private IJSONConverter jsonConverter;
@@ -108,22 +108,14 @@ public class InMemoryEventStore implements IEventStore {
 
 	@Override
 	public DomainEventStream find(String aggregateRootId, long version) {
-		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
-		Object previous = aggregateEventStore.getOrDefault("" +version, null);
-		DomainEventStream des = null;
-		if(null != previous)
-			des = revertFromStorageFormat((String )previous);
-		return des;
+		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+		return aggregateEventStore.getOrDefault("" +version, null);
 	}
 
 	@Override
 	public DomainEventStream find(String aggregateRootId, String commandId) {
-		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
-		Object previous = aggregateEventStore.getOrDefault(commandId, null);
-		DomainEventStream des = null;
-		if(null != previous)
-			des = revertFromStorageFormat((String )previous);
-		return des;
+		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+		return aggregateEventStore.getOrDefault(commandId, null);
 	}
 
 	@Override
@@ -132,45 +124,35 @@ public class InMemoryEventStore implements IEventStore {
 		
 		Set<DomainEventStream> resultSet = new LinkedHashSet<>();
 		
-		Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		
 		for(long cursor = minVersion; cursor <= maxVersion; cursor++) {
-			Object previous = aggregateEventStore.get("" + cursor);
+			DomainEventStream previous = aggregateEventStore.get("" + cursor);
 			if(null == previous) {
 				throw new RuntimeException(String.format("Event[aggregateId=%s, version=%d] is not exist!!!", aggregateRootId, cursor));
 			}
-			DomainEventStream revertFromStorageFormat = revertFromStorageFormat((String )previous);
-			resultSet.add(revertFromStorageFormat);
+			resultSet.add(previous);
 		}
 		
 		return resultSet;
 	}
 
 	private AtomicLong atLong = new AtomicLong(0);
-	
-	private String convertToStorageFormat(DomainEventStream eventStream) {
-		return jsonConverter.convert(eventStream);
-	}
-	
-	private DomainEventStream revertFromStorageFormat(String content) {
-		return jsonConverter.revert(content, DomainEventStream.class);
-	}
 
 	private EventAppendResult appendSync(DomainEventStream eventStream) {
 		try {
 			String aggregateRootId = eventStream.getAggregateRootId();
-			Map<String, String> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
+			Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 			
-			String saveData = convertToStorageFormat(eventStream);
 			boolean hasPrevous = false;
-			hasPrevous &= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), saveData);
-			hasPrevous &= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), saveData);
+			hasPrevous &= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream);
+			hasPrevous &= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream);
 			
 			if (hasPrevous)
 				return EventAppendResult.DuplicateEvent;
 			else {
 
-				logger.debug(" ==> 模拟io! 执行次数: {}, EventStream: {}.", atLong.incrementAndGet(), convertToStorageFormat(eventStream));
+				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(), eventStream.getAggregateRootId());
 				
 				return EventAppendResult.Success;
 			}
