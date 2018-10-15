@@ -7,7 +7,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
@@ -309,7 +308,7 @@ public final class GenericDefination {
 	
 	/// ========================== ///
 	
-	private final static Map<Class<?>, GenericDefination> definationStore= new ConcurrentHashMap<>();
+	private final static Map<Class<?>, GenericDefination> definationStore= new HashMap<>();
 	
 	public final static GenericDefination defaultGenericDefination = new GenericDefination(Object.class);
 	

@@ -109,13 +109,13 @@ public class InMemoryEventStore implements IEventStore {
 	@Override
 	public DomainEventStream find(String aggregateRootId, long version) {
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
-		return aggregateEventStore.getOrDefault("" +version, null);
+		return aggregateEventStore.get("" +version);
 	}
 
 	@Override
 	public DomainEventStream find(String aggregateRootId, String commandId) {
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
-		return aggregateEventStore.getOrDefault(commandId, null);
+		return aggregateEventStore.get(commandId);
 	}
 
 	@Override

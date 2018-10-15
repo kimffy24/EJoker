@@ -1,11 +1,11 @@
 package com.jiefzz.ejoker.z.common.schedule.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
@@ -16,7 +16,7 @@ import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 @EService
 public class ScheduleServiceImpl implements IScheduleService {
 
-	private Map<String, Timer> timerTaskList = new ConcurrentHashMap<>();
+	private Map<String, Timer> timerTaskList = new HashMap<>();
 	
 	@Dependence
 	private Scavenger scavenger;

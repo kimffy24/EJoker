@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 public final class EJokerEnvironment {
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
+	
+	public final static boolean ASYNC_ALL;
 
 	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;	
 	
@@ -47,6 +49,9 @@ public final class EJokerEnvironment {
 			throw new RuntimeException(e);
 		}
 		// ## region end
+		
+		ASYNC_ALL =
+				Boolean.valueOf(props.getProperty("ASYNC_ALL", "false"));
 
 		ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE =
 				Integer.valueOf(props.getProperty("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE", "256"));

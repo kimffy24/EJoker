@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.queue.command;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	@Dependence
 	private IJSONConverter jsonConverter;
 	
-	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<>();
+	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new HashMap<>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
 

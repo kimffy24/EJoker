@@ -4,7 +4,6 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
@@ -144,7 +143,7 @@ public class CommandConsumer implements IWorkerService {
 		
 		private String result;
 		
-		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new ConcurrentHashMap<>();
+		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new HashMap<>();
 		
 		private final EJokerQueueMessage message;
 		

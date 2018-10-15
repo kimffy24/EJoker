@@ -1,11 +1,14 @@
 package com.jiefzz.ejoker.z.common.task;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 
 public class AsyncPool {
 
@@ -26,7 +29,20 @@ public class AsyncPool {
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IAsyncTask<TAsyncTaskResult> asyncTaskThread) {
 		
 		// @important 建立新线程存在线程上限和大量的上下文切换成本，极易发生OutOfMemory。
+		
 		// @important CompletableFuture.runAsync 有大量的 ForkJoinPool开销，且我对新版本的线程理念还不熟。
+//		{
+//			RipenFuture<TAsyncTaskResult> ripenFuture = new RipenFuture<>();
+//			CompletableFuture.runAsync(() -> {
+//				try {
+//					TAsyncTaskResult result = asyncTaskThread.call();
+//					ripenFuture.trySetResult(result);
+//				} catch (Exception e) {
+//					ripenFuture.trySetException(e);
+//				}
+//			});
+//			return ripenFuture;
+//		}
 		
 		// @important 使用线程池模式的话，正常的情况还好，但是有一个棘手的问题，
 		// @important 在整个系统中某一个有超过系统空闲线程（或这个数量级附近时），

@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,7 +43,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	/**
 	 * 已加载的标记集合
 	 */
-	private final Map<Class<?>, Object> markLoad = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Object> markLoad = new HashMap<>();
 	
 	/**
 	 * 严格映射记录<br>
@@ -58,17 +57,17 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	 * 冲突记录<br>
 	 * * 存在多条映射路径
 	 */
-	private final Map<Class<?>, Set<Class<?>>> conflictMapperRecord = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Set<Class<?>>> conflictMapperRecord = new HashMap<>();
 
 	/**
 	 * 对象容器<br>
 	 */
-	private final Map<String, Object> instanceMap = new ConcurrentHashMap<>();
+	private final Map<String, Object> instanceMap = new HashMap<>();
 
 	/**
 	 * 对象容器(有泛型的)
 	 */
-	private final Map<String, Object> instanceGenericTypeMap = new ConcurrentHashMap<>();
+	private final Map<String, Object> instanceGenericTypeMap = new HashMap<>();
 	
 	/**
 	 * 推演模式
@@ -78,12 +77,12 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	/**
 	 * 类映射(推演模式专用)
 	 */
-	private final Map<String, Class<?>> instanceCandidateGenericTypeMap = new ConcurrentHashMap<>();
+	private final Map<String, Class<?>> instanceCandidateGenericTypeMap = new HashMap<>();
 	
 	/**
 	 * 推演失败(推演模式专用)
 	 */
-	private final Map<String, Object> instanceCandidateFaildMap = new ConcurrentHashMap<>();
+	private final Map<String, Object> instanceCandidateFaildMap = new HashMap<>();
 	
 	/**
 	 * 禁止推演记录集(推演模式专用)<br>

@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Resource;
 
@@ -50,8 +49,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	 */
 	private final Set<Class<?>> hasBeenAnalyzeClass = new HashSet<>();
 
-	private Map<Class<? extends IEjokerClazzScannerHook>, IEjokerClazzScannerHook> hookMap = 
-			new ConcurrentHashMap<>();
+	private Map<Class<? extends IEjokerClazzScannerHook>, IEjokerClazzScannerHook> hookMap = new HashMap<>();
 	
 	/**
 	 * 放入扫描过的包得路径的字符串

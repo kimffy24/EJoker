@@ -3,11 +3,11 @@ package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.EJoker;
 import com.jiefzz.ejoker.infrastructure.IMessage;
@@ -37,7 +37,7 @@ public class MessageHandlerPool {
 
 	private final static Class<?> PARAMETER_TYPE_SUPER_0 = IMessage.class;
 
-	private final static Map<Class<? extends IMessage>, List<MessageHandlerReflectionTuple>> handlerMapper = new ConcurrentHashMap<>();
+	private final static Map<Class<? extends IMessage>, List<MessageHandlerReflectionTuple>> handlerMapper = new HashMap<>();
 
 	public final static void regist(Class<? extends IMessageHandler> implementationHandlerClazz) {
 		

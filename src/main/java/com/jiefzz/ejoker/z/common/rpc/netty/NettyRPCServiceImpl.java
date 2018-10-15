@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,7 +20,6 @@ import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
@@ -57,7 +55,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	
 	private Map<Integer, IVoidFunction> closeHookTrigger = new HashMap<>();
 	
-	private Map<String, NettySimpleClient> clientStore = new ConcurrentHashMap<>();
+	private Map<String, NettySimpleClient> clientStore = new HashMap<>();
 	
 	@EInitialize
 	private void init() {
