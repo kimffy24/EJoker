@@ -2,6 +2,11 @@ package com.jiefzz.ejoker_quasar_test;
 
 import com.jiefzz.ejoker_quasar.EJokerQuasarBootstrap;
 
+/**
+ * 测试能成功使用Fiber
+ * @author kimffy
+ *
+ */
 public class QEJokerTest {
 
 	public static void main(String[] args) throws Exception {
