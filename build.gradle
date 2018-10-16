@@ -35,11 +35,26 @@ dependencies {
     compile "co.paralleluniverse:quasar-core:${quasarVer}${classifier}"
     quasar "co.paralleluniverse:quasar-core:${quasarVer}${classifier}@jar"
     
+    // mvn -Dmaven.test.skip=true clean \
+    //		compile \
+    //		package \
+    //		install \
+    //		org.apache.maven.plugins:maven-dependency-plugin:3.1.1:properties \
+    //		org.fortasoft:gradle-maven-plugin:1.0.8:invoke \
+    //		package \
+    //		install
+    //
+    // gradle这里依赖同版本的ejoker库，与mvn构建命令中的两次install对应,
+    // 前一个install构建一个没有instrumentation的包，里面会提供相关依赖关系，
+    // gradle会继承这些关系。
+    // 如果不需要使用quasar，则前4个声明周期即可构建功能完备的ejoker
+    // gradle-maven-plugin:invoke 就是调用此gradle任务的起点。
+    // 后一个instal则是构建已经instrumentation的包的。
     compile "com.jiefzz:ejoker:0.3.1-Alpha"
     
 }
 
-//改变项目默认结构
+//改变项目默认结构，使其与与maven目录结构一致
 sourceSets {
     //设置源代码所在目录
     main {
