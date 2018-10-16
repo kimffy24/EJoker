@@ -28,7 +28,6 @@ public class Scavenger {
 		int totalJob = amountOfJob.get();
 		for(IVoidFunction cleanJob : waitingCleanJobs)
 			try {
-//				TimeUnit.SECONDS.sleep(2);
 				cleanJob.trigger();
 				amountOfJob.decrementAndGet();
 			} catch (Exception e) {

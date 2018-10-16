@@ -26,6 +26,7 @@ import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
@@ -92,9 +93,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						final AtomicInteger waitingTimes = new AtomicInteger(0);
 						while(onRunning.get()) {
 							while(onPasue.get()) {
-								try {
-									TimeUnit.MILLISECONDS.sleep(200);
-								} catch (InterruptedException e) { }
+								SleepWrapper.sleep(TimeUnit.MILLISECONDS, 200l);
 								if(0 == (waitingTimes.getAndIncrement()%35))
 									logger.debug("The consumer has been pause, waiting resume... ");
 							}
@@ -118,9 +117,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		});
 		
 		submit(() -> {
-			try {
-				TimeUnit.MILLISECONDS.sleep(600);
-			} catch (InterruptedException e) { }
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
 			onPasue.set(false);
 		});
 		
@@ -143,9 +140,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		});
 		logger.debug("All comsumer Thread has quit... ");
 
-		try {
-			TimeUnit.MILLISECONDS.sleep(600);
-		} catch (InterruptedException e) { }
+		SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
 		
 		super.shutdown();
 	}

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
@@ -99,7 +100,7 @@ public class EventMailBox {
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.error(String.format("Event mailbox run has unknown exception, aggregateRootId: %s", aggregateRootId), e);
-			try { TimeUnit.SECONDS.sleep(1l); } catch (InterruptedException e1) { }
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1000l);
 		} finally {
 			if(null == contextList || 0 == contextList.size()) {
 				exit();

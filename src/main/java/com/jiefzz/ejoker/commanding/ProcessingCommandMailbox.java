@@ -16,6 +16,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
@@ -121,12 +122,18 @@ public class ProcessingCommandMailbox {
 			if (processingSequence == expectSequence) {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				completeCommand(processingCommand, commandResult);
+				if(EJokerEnvironment.ASYNC_ALL)
+					completeCommandAsync(processingCommand, commandResult).get();
+				else
+					completeCommand(processingCommand, commandResult);
 				consumedSequence = processNextCompletedCommands(processingSequence);
 			} else if (processingSequence < expectSequence) {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				completeCommand(processingCommand, commandResult);
+				if(EJokerEnvironment.ASYNC_ALL)
+					completeCommandAsync(processingCommand, commandResult).get();
+				else
+					completeCommand(processingCommand, commandResult);
 				requestToCompleteCommandDict.remove(processingSequence);
 			} else {
 				// processingSequence > expectSequence
@@ -155,9 +162,14 @@ public class ProcessingCommandMailbox {
 			int count = 0;
 			while (consumingSequence < nextSequence && count < batchSize) {
 				processingCommand = messageDict.get(consumingSequence);
-				if (null != processingCommand)
+				if (null != processingCommand) {
 					// TODO @await
-					messageHandler.handle(processingCommand);
+					if(EJokerEnvironment.ASYNC_ALL) {
+						messageHandler.handleAsync(processingCommand).get();
+					} else {
+						messageHandler.handle(processingCommand);
+					}
+				}
             	count++;
             	consumingSequence++;
         	}
@@ -166,9 +178,7 @@ public class ProcessingCommandMailbox {
 					String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}",
 							aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""),
 					ex);
-			try {
-				TimeUnit.MILLISECONDS.sleep(1);
-			} catch (InterruptedException e) { }
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1l);
 		} finally {
 			isProcessingCommand.set(false);
         	exit();

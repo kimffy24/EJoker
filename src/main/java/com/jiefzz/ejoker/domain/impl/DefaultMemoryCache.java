@@ -81,7 +81,9 @@ public class DefaultMemoryCache implements IMemoryCache {
 				// TODO @await
 				IAggregateRoot lastestAggregateRoot;
 				try {
-					lastestAggregateRoot = aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
+					lastestAggregateRoot = EJokerEnvironment.ASYNC_ALL
+							? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
+									: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
 				} catch (Exception e) {
 					throw new AsyncWrapperException(e);
 				}
@@ -106,7 +108,9 @@ public class DefaultMemoryCache implements IMemoryCache {
 		try {
 			// TODO @await
 			@SuppressWarnings("unchecked")
-			IAggregateRoot aggregateRoot = aggregateStorage.get((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString());
+			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
+					? aggregateStorage.getAsync((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString()).get()
+							: aggregateStorage.get((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString());
 			if (null != aggregateRoot) {
 				setInternal(aggregateRoot);
 			}

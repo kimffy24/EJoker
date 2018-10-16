@@ -10,6 +10,7 @@ import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
@@ -143,11 +144,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
 				submitInternal(() -> {
-					try {
-						TimeUnit.MILLISECONDS.sleep(externalContext.retryInterval);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					SleepWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
 					
 					externalContext.faildLoopAction();
 					});
@@ -204,7 +201,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		/**
 		 * 重试间隔
 		 */
-		protected int retryInterval = 1000;
+		protected long retryInterval = 1000l;
 		
 		public IOActionExecutionContext() {
 			this(false);

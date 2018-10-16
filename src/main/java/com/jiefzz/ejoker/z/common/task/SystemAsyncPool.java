@@ -1,31 +1,55 @@
 package com.jiefzz.ejoker.z.common.task;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class AsyncPool {
+public class SystemAsyncPool implements IAsyncEntrance {
+	
+	private final static Logger logger = LoggerFactory.getLogger(SystemAsyncPool.class);
 
 	private ExecutorService newThreadPool;
 	
-	public AsyncPool(int threadPoolSize) {
+	public SystemAsyncPool(int threadPoolSize) {
 		this(threadPoolSize, false);
 	}
 	
-	public AsyncPool(int threadPoolSize, boolean prestartAllThread) {
+	private BlockingQueue<Runnable> taskQueue = null;
+	
+	private AtomicLong aliveCount = new AtomicLong(0l);
+	
+	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 500l, TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>());
+				taskQueue = new LinkedBlockingQueue<Runnable>()) {
+
+					@Override
+					protected void beforeExecute(Thread t, Runnable r) {
+						aliveCount.getAndIncrement();
+					}
+
+					@Override
+					protected void afterExecute(Runnable r, Throwable t) {
+						aliveCount.decrementAndGet();
+					}
+			
+		};
 		if(prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();
 		newThreadPool = threadPoolExecutor;
 	}
+	
+	public void debugInfo(String poolName) {
+		logger.error("pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), taskQueue.size());
+	}
 
+	@Override
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IAsyncTask<TAsyncTaskResult> asyncTaskThread) {
 		
 		// @important 建立新线程存在线程上限和大量的上下文切换成本，极易发生OutOfMemory。

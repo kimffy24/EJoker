@@ -12,6 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
@@ -93,15 +95,16 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 			if (null != (processingMessage = messageQueue.poll())) {
 				
 				/// TODO @await
-				/// assert 当前会处于多线程任务调度上下文中,
-				/// assert 所以这里直接同步化处理
-				messageHandler.handle(processingMessage);
+				if(EJokerEnvironment.ASYNC_ALL)
+					messageHandler.handleAsync(processingMessage).get();
+				else
+					messageHandler.handle(processingMessage);
 				
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Message mailbox run has unknown exception, routingKey: %s, commandId: %s",
 					routingKey, processingMessage != null ? processingMessage.getMessage().getId() : ""), ex);
-			try { TimeUnit.MILLISECONDS.sleep(1); } catch (InterruptedException e) { }
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1l);
 		} finally {
 			if (processingMessage == null) {
 				exit();

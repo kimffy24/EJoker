@@ -46,13 +46,6 @@
 			<version>2.3</version>
 		</dependency>
 
-		<!-- netty -->
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-all</artifactId>
-			<version>${version.netty}</version>
-		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-client -->
 		<dependency>
 			<groupId>org.apache.rocketmq</groupId>

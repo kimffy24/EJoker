@@ -34,7 +34,7 @@ public class EJoker {
 
 	//////  private:
 	
-	private EJoker() {
+	protected EJoker() {
 		context = new EjokerContextDev2Impl();
 		
 		// regist scanner hook
@@ -56,12 +56,13 @@ public class EJoker {
 		});
 		
 		context.scanPackage(SELF_PACNAGE_NAME);
+		
 	}
 
 	//////  properties:
 	
-	private static EJoker instance;
+	protected static EJoker instance;
 	
-	private IEjokerContextDev2 context;
+	protected IEjokerContextDev2 context;
 	
 }

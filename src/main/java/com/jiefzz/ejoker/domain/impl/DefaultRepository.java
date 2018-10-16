@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.domain.impl;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IMemoryCache;
@@ -42,7 +43,9 @@ public class DefaultRepository implements IRepository {
 			throw new ArgumentNullException("aggregateRootId");
 
 		// TODO @await
-		IAggregateRoot aggregateRoot = memoryCache.getAsync(aggregateRootId, aggregateRootType).get();
+		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
+				? memoryCache.getAsync(aggregateRootId, aggregateRootType).get()
+						: memoryCache.get(aggregateRootId, aggregateRootType);
 		if(null != aggregateRoot)
 			return aggregateRoot;
 		return aggregateRootStorage.get(aggregateRootType, aggregateRootId.toString());

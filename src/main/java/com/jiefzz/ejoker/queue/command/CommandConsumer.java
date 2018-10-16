@@ -9,6 +9,7 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.AggregateRootAlreadyExistException;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
@@ -234,10 +235,14 @@ public class CommandConsumer implements IWorkerService {
 
 			if (tryFromCache)
 				// TODO @await
-				aggregateRoot = repository.get((Class<IAggregateRoot> )clazz, id);
+				aggregateRoot = EJokerEnvironment.ASYNC_ALL
+					? repository.getAsync((Class<IAggregateRoot> )clazz, id).get()
+							: repository.get((Class<IAggregateRoot> )clazz, id);
 			else
 				// TODO @await
-				aggregateRoot = aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
+				aggregateRoot = EJokerEnvironment.ASYNC_ALL
+						? aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get()
+								: aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
 
 			if (aggregateRoot != null) {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);

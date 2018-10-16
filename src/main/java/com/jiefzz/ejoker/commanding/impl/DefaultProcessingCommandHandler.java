@@ -6,6 +6,7 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandStatus;
 import com.jiefzz.ejoker.commanding.ICommand;
@@ -111,7 +112,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 		boolean b = false;
 		try {
-			/// TODO @await
+			/// TODO @await java直接同步实现
 			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
 					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
@@ -127,7 +128,11 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			} catch (Exception e) {
 				logCommandExecuteException(processingCommand, commandHandler, e);
 				/// TODO @await
-				completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(),
+				if(EJokerEnvironment.ASYNC_ALL)
+					completeCommandAsync(processingCommand, CommandStatus.Failed, e.getClass().getName(),
+							"Unknow exception caught when committing changes of command.").get();
+				else 
+					completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(),
 							"Unknow exception caught when committing changes of command.");
 			}
 		}

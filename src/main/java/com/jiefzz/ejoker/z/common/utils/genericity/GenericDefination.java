@@ -188,7 +188,7 @@ public final class GenericDefination {
 		}
 	}
 
-	// TODO //// important debug info, please do not delete it.
+	// //// important debug info, please do not delete it.
 //	private static void parseType(Type[] types, int level) {
 //		int accountOfSpace = level * 2;
 //		for(Type type : types) {

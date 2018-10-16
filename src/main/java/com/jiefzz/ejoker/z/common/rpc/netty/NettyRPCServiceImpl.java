@@ -23,6 +23,7 @@ import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
@@ -91,7 +92,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 							closeHookTrigger.put(port, f.channel()::close);
 							RPCTuple currentRPCTuple;
 							while(null == (currentRPCTuple = portMap.get(port)))
-								TimeUnit.MICROSECONDS.sleep(50l);
+								SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
 							currentRPCTuple.initialFuture.trySetResult(null);
 						}
 						

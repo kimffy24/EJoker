@@ -314,7 +314,10 @@ public class DefaultEventService implements IEventService {
 		commandMailBox.pause();
 		try {
 			/// TODO @await
-			refreshAggregateMemoryCacheToLatestVersion(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId());
+			if(EJokerEnvironment.ASYNC_ALL)
+				refreshAggregateMemoryCacheToLatestVersionAsync(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId()).get();
+			else
+				refreshAggregateMemoryCacheToLatestVersion(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId());
 			commandMailBox.resetConsumingSequence(consumingSequence);
 			eventMailBox.clear();
 			eventMailBox.exit();
