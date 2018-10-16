@@ -419,6 +419,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		} else if(speculateMode && !instanceCandidateDisable.contains(instanceTypeName)) {
 			/// upper泛型 eService无泛型
 			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
+			if(null == eServiceClazz) {
+				throw new ContextRuntimeException(String.format("Cound not found EService for [%s]", instanceTypeName));
+			}
 			dependence = instanceMap.get(eServiceClazz.getName());
 			
 		} 
