@@ -116,7 +116,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			dashboard.workThread.start(); 
 		});
 		
-		submit(() -> {
+		sumbiter.trigger(() -> {
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
 			onPasue.set(false);
 		});
@@ -261,7 +261,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		controlStruct.aheadCompletion.put(comsumedOffset, "");
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 		
-		submit(controlStruct.completeOffsetHandlingWorker::trigger);
+		sumbiter.trigger(controlStruct.completeOffsetHandlingWorker::trigger);
 	}
 	
 	public void syncOffsetToBroker() {
@@ -300,25 +300,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 	}
 	
-	private void submit(IVoidFunction vf) {
-		if(null == sumbiter) {
-			logger.warn("No submiter is provided, use default Thread strategy!");
-			new Thread(vf::trigger).start();
-		} else {
-			sumbiter.submit(vf);
-		}
-	}
+	/**
+	 * 默认异步策略
+	 */
+	private IVoidFunction1<IVoidFunction> sumbiter = (c) -> new Thread(c::trigger).start();
 	
-	private ISumbiter sumbiter = null;
-	
-	public void useSubmiter(ISumbiter sumbiter) {
+	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
 		this.sumbiter = sumbiter;
-	}
-	
-	public static interface ISumbiter {
-		
-		public void submit(IVoidFunction vf);
-		
 	}
 	
 }

@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.z.common.utils.relationship;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class UnsupportTypes {
+public class UnsupportTypes {
 	
 	private static Set<Class<?>> unsupportTypes = new HashSet<Class<?>>();
 	

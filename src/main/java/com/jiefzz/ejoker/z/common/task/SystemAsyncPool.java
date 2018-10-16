@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+
 public class SystemAsyncPool implements IAsyncEntrance {
 	
 	private final static Logger logger = LoggerFactory.getLogger(SystemAsyncPool.class);
@@ -50,7 +52,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	}
 
 	@Override
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IAsyncTask<TAsyncTaskResult> asyncTaskThread) {
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 		
 		// @important 建立新线程存在线程上限和大量的上下文切换成本，极易发生OutOfMemory。
 		
@@ -78,7 +80,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		// @important  2. 采用线程池占满补偿方案：
 		// @important		采用游离线程处理等待中的任务，且不接受超过n毫秒的任务，超时即杀死，并向提交此任务的线程返回异常。
 		// @important		* 可能长时间存在游离线程一直被杀死，且提交线程不断重试的情况。
-		return newThreadPool.submit(asyncTaskThread);
+		return newThreadPool.submit(asyncTaskThread::trigger);
 		
 		// TODO important
 		// @important 根治的解决方法使用coroutine方案，目前考虑使用 Quasar 方案
