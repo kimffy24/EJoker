@@ -100,7 +100,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 					
 						// 监听服务器关闭监听
 						f.channel().closeFuture().awaitUninterruptibly();
-					} catch (Exception e) {
+					} catch (RuntimeException e) {
 						{
 							// sync 协调逻辑
 							RPCTuple currentRPCTuple;
@@ -168,7 +168,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				
 				String s;
 				int dIndexOf = data.lastIndexOf('\n');

@@ -7,6 +7,8 @@ import java.util.concurrent.TimeoutException;
 
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+
 /**
  * 异常运行时化
  * 
@@ -14,7 +16,7 @@ import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
  *
  * @param <TResult>
  */
-public class SystemFutureWrapper<TResult> implements Future<TResult> {
+public class SystemFutureWrapper<TResult> {
 
 	public final Future<TResult> refFuture;
 
@@ -22,23 +24,23 @@ public class SystemFutureWrapper<TResult> implements Future<TResult> {
 		refFuture = javaSystemFuture;
 	}
 
-	@Override
+//	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		return refFuture.cancel(mayInterruptIfRunning);
 	}
 
-	@Override
+//	@Override
 	public boolean isCancelled() {
 		return refFuture.isCancelled();
 	}
 
-	@Override
+//	@Override
 	public boolean isDone() {
 		return refFuture.isDone();
 	}
 
-	@Override
-	public TResult get() {
+//	@Override
+	public TResult get() throws SuspendExecution {
 		try {
 			return refFuture.get();
 		} catch (InterruptedException | ExecutionException e) {
@@ -46,8 +48,8 @@ public class SystemFutureWrapper<TResult> implements Future<TResult> {
 		}
 	}
 
-	@Override
-	public TResult get(long timeout, TimeUnit unit) {
+//	@Override
+	public TResult get(long timeout, TimeUnit unit) throws SuspendExecution {
 		try {
 			return refFuture.get(timeout, unit);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {

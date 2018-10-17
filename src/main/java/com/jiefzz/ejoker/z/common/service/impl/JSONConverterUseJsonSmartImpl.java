@@ -17,7 +17,6 @@ import com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtil;
 import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodec;
 import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodecStore;
 
-import co.paralleluniverse.fibers.SuspendExecution;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONStyle;
@@ -156,6 +155,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 		try {
 			return revertRelationshipTreeUitl.revert((JSONObject )JSONValue.parseStrict(jsonString), clazz);
 		} catch (ParseException e) {
+			logger.error("revert JsonObject failed!!!", e);
 			throw new InfrastructureRuntimeException("revert JsonObject failed!!!", e);
 		}
 	}

@@ -12,6 +12,7 @@ import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 /**
  * 包装一下使异步任务返回AsyncTaskResult&lt;T&gt;结构
@@ -24,14 +25,15 @@ public class EJokerAsyncHelper {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
+	@Suspendable
 	public SystemFutureWrapper<AsyncTaskResult<Void>> submit(IVoidFunction vf) {
 		return systemAsyncHelper.submit(() -> {
 			try {
 				vf.trigger();
 				return new AsyncTaskResult<>(AsyncTaskStatus.Success);
+			} catch (SuspendExecution s) {
+				throw new AssertionError(s);
 			} catch (Exception ex) {
-				if(ex instanceof SuspendExecution)
-					throw (SuspendExecution )ex;
 				return new AsyncTaskResult<>(
 						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
 						ex.getMessage(),
@@ -41,14 +43,15 @@ public class EJokerAsyncHelper {
 		});
 	}
 
+	@Suspendable
 	public <T> SystemFutureWrapper<AsyncTaskResult<T>> submit(IFunction<T> vf) {
 		return systemAsyncHelper.submit(() -> {
 			try {
 				T r = vf.trigger();
 				return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, r);
-			} catch (Exception ex) {
-				if(ex instanceof SuspendExecution)
-					throw (SuspendExecution )ex;
+			} catch (SuspendExecution s) {
+				throw new AssertionError(s);
+			}  catch (Exception ex) {
 				return new AsyncTaskResult<>(
 						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
 						ex.getMessage(),

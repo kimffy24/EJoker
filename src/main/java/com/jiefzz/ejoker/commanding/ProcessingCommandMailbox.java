@@ -20,6 +20,9 @@ import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
+
 public class ProcessingCommandMailbox {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
@@ -113,6 +116,7 @@ public class ProcessingCommandMailbox {
 		return eJokerAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
 	}
 
+	@Suspendable
 	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
 		asyncLock.lock();
 		try {
@@ -139,15 +143,17 @@ public class ProcessingCommandMailbox {
 				// processingSequence > expectSequence
 				requestToCompleteCommandDict.put(processingSequence, commandResult);
 			} 
-		} catch (Exception ex) {
+		} catch (SuspendExecution s) {
+			throw new AssertionError(s);
+		} catch (RuntimeException ex) {
 			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
-			throw ex;
 		} finally {
 			asyncLock.unlock();
 		}
 	}
 
+	@Suspendable
     public void run() {
     	
 		lastActiveTime = System.currentTimeMillis();
@@ -173,7 +179,9 @@ public class ProcessingCommandMailbox {
             	count++;
             	consumingSequence++;
         	}
-        } catch (Exception ex) {
+        } catch (SuspendExecution s) {
+        	throw new AssertionError(s);
+        } catch (RuntimeException ex) {
 			logger.error(
 					String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}",
 							aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""),
@@ -221,7 +229,7 @@ public class ProcessingCommandMailbox {
 		// TODO 完成传递
 		try {
 			return processingCommand.completeAsync(commandResult);
-		} catch (Exception ex) {
+		} catch (RuntimeException ex) {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
 			return EJokerFutureWrapperUtil.createCompleteFuture();
 		}
@@ -230,7 +238,7 @@ public class ProcessingCommandMailbox {
 	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
 		try {
 			processingCommand.complete(commandResult);
-		} catch (Exception ex) {
+		} catch (RuntimeException ex) {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}", processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(), ex.getMessage());
 		}
 	}

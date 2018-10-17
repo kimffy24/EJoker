@@ -11,7 +11,7 @@ public class DefaultAggregateRootFactory implements IAggregateRootFactory {
 	public IAggregateRoot createAggregateRoot(Class<? extends IAggregateRoot> aggregateRootType) {
 		try {
 			return aggregateRootType.newInstance();
-		} catch (Exception e) {
+		} catch (InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(String.format("Could not create new instance of %s!!!", aggregateRootType.getName()), e);
 		}
 	}

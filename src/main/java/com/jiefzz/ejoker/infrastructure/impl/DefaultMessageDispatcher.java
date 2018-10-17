@@ -23,6 +23,8 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWra
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+
 @EService
 public class DefaultMessageDispatcher implements IMessageDispatcher {
 
@@ -51,7 +53,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 						}
 		
 						@Override
-						public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+						public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 							return proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit);
 						}
 		

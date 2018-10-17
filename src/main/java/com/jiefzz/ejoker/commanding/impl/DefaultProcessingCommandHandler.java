@@ -98,10 +98,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
 			handleCommand(processingCommand, handler);
 //			return handleCommandAsync(processingCommand, handler);
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), e.getMessage());
+		} catch (RuntimeException ex) {
+			logger.error(ex.getMessage());
+			ex.printStackTrace();
+			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
 		}
 
 	}
@@ -113,8 +113,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		processingCommand.getCommandExecuteContext().clear();
 
 		boolean b = false;
-		try {
 			/// TODO @await java直接同步实现
+		try {
 			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
 					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
@@ -127,14 +127,18 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			try {
 				// TOTO 事件过程的起点
 				commitAggregateChanges(processingCommand);
-			} catch (Exception e) {
-				logCommandExecuteException(processingCommand, commandHandler, e);
+			} catch (RuntimeException ex) {
+				logCommandExecuteException(processingCommand, commandHandler, ex);
 				/// TODO @await
 				if(EJokerEnvironment.ASYNC_ALL)
-					completeCommandAsync(processingCommand, CommandStatus.Failed, e.getClass().getName(),
-							"Unknow exception caught when committing changes of command.").get();
+					try {
+						completeCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
+								"Unknow exception caught when committing changes of command.").get();
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
 				else 
-					completeCommand(processingCommand, CommandStatus.Failed, e.getClass().getName(),
+					completeCommand(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
 							"Unknow exception caught when committing changes of command.");
 			}
 		}
@@ -218,7 +222,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
 				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
@@ -259,7 +263,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
 				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
@@ -317,7 +321,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				return exceptionPublisher.publishAsync(exception);
 			}
 
@@ -364,7 +368,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				}
 
 				@Override
-				public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+				public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 					try {
 						commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
 						logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
@@ -435,7 +439,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				return applicationMessagePublisher.publishAsync(message);
 			}
 

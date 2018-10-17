@@ -17,9 +17,9 @@ public class QuasarFiberExector implements IAsyncEntrance {
 		return new Fiber<TAsyncTaskResult>(() -> {
 			try {
 				return asyncTaskThread.trigger();
+			} catch (SuspendExecution s) {
+				throw new AssertionError(s);
 			} catch (Exception e) {
-				if(e instanceof SuspendExecution)
-					throw (SuspendExecution )e;
 				throw new AsyncWrapperException(e);
 			}
 		}).start();

@@ -13,6 +13,8 @@ import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandContext;
 import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+
 public class CommandHandlerPool {
 	
 	public final static Map<Class<? extends ICommand>, HandlerReflectionMapper> handlerMapper =
@@ -73,7 +75,6 @@ public class CommandHandlerPool {
 					e.printStackTrace();
 					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
-					e.printStackTrace();
 					if(null != e.getCause() && e.getCause() instanceof Exception)
 						throw (Exception )e.getCause();
 					else

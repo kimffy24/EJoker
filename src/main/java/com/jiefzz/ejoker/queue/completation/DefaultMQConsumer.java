@@ -107,7 +107,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							}
 							try {
 								dashboard.messageHandlingJob.trigger();
-							} catch (Exception ex) {
+							} catch (RuntimeException ex) {
 								exHandler.trigger(ex);
 							}
 						}

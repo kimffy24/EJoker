@@ -24,6 +24,9 @@ import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
+
 @EService
 public class DefaultMemoryCache implements IMemoryCache {
 
@@ -69,6 +72,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
+	@Suspendable
 	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		AggregateCacheInfo aggregateRootInfo;
@@ -80,13 +84,13 @@ public class DefaultMemoryCache implements IMemoryCache {
 				
 				// TODO @await
 				IAggregateRoot lastestAggregateRoot;
-				try {
-					lastestAggregateRoot = EJokerEnvironment.ASYNC_ALL
-							? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
-									: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
-				} catch (Exception e) {
-					throw new AsyncWrapperException(e);
-				}
+					try {
+						lastestAggregateRoot = EJokerEnvironment.ASYNC_ALL
+								? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
+										: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
 				if (null != lastestAggregateRoot)
 					setInternal(lastestAggregateRoot);
 				
@@ -98,6 +102,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
+	@Suspendable
 	public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
 		Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
 		if(null == aggregateRootType) {
@@ -107,7 +112,6 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 		try {
 			// TODO @await
-			@SuppressWarnings("unchecked")
 			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
 					? aggregateStorage.getAsync((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString()).get()
 							: aggregateStorage.get((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString());
@@ -115,9 +119,10 @@ public class DefaultMemoryCache implements IMemoryCache {
 				setInternal(aggregateRoot);
 			}
 			return;
-		} catch (Exception ex) {
+		} catch (SuspendExecution s) {
+			throw new AssertionError(s);
+		} catch (RuntimeException ex) {
 			logger.error(String.format("Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s", aggregateRootTypeName, aggregateRootId), ex);
-			throw ex;
 		}
 	}
 

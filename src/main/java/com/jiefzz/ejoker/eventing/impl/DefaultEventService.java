@@ -42,6 +42,7 @@ import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 @EService
 public class DefaultEventService implements IEventService {
@@ -149,7 +150,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws SuspendExecution {
 				return eventStore.batchAppendAsync(domainEventStreams);
 			}
 
@@ -235,7 +236,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws SuspendExecution {
 				return eventStore.appendAsync(context.getEventStream());
 			}
 
@@ -304,6 +305,7 @@ public class DefaultEventService implements IEventService {
 		return systemAsyncHelper.submit(() -> resetCommandMailBoxConsumingSequence(context, consumingSequence));
 	}
 
+	@Suspendable
 	private void resetCommandMailBoxConsumingSequence(EventCommittingContext context, long consumingSequence) {
 
 		EventMailBox eventMailBox = context.eventMailBox;
@@ -326,7 +328,9 @@ public class DefaultEventService implements IEventService {
 			logger.debug(
 					"ResetCommandMailBoxConsumingSequence success, commandId: {}, aggregateRootId: {}, consumingSequence: {}",
 					command.getId(), command.getAggregateRootId(), consumingSequence);
-		} catch (Exception ex) {
+		} catch (SuspendExecution s) {
+        	throw new AssertionError(s);
+        } catch (RuntimeException ex) {
 			logger.error(String.format(
 					"ResetCommandMailBoxConsumingOffset has unknown exception, commandId: %s, aggregateRootId: %s",
 					command.getId(), command.getAggregateRootId()), ex);
@@ -348,7 +352,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
 				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
@@ -409,7 +413,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
 				return eventStore.findAsync(eventStream.getAggregateRootId(), 1);
 			}
 
@@ -498,7 +502,7 @@ public class DefaultEventService implements IEventService {
 			context.getAggregateRoot().acceptChanges(context.getEventStream().getVersion());
 			memoryCache.set(context.getAggregateRoot());
 			
-		} catch (Exception ex) {
+		} catch (RuntimeException ex) {
 			logger.error(
 					String.format("Refresh aggregate memory cache failed for event stream:{}", jsonSerializer.convert(context.getEventStream())),
 					ex);
@@ -534,7 +538,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				return domainEventPublisher.publishAsync(eventStream);
 			}
 

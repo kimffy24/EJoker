@@ -9,6 +9,9 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
+
 @EService
 public class DefaultAggregateSnapshotter implements IAggregateSnapshotter {
 
@@ -19,11 +22,16 @@ public class DefaultAggregateSnapshotter implements IAggregateSnapshotter {
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Override
+	@Suspendable
 	public IAggregateRoot restoreFromSnapshot(Class<?> aggregateRootType, String aggregateRootId) {
 		IAggregateRepositoryProxy aggregateRepository = aggregateRepositoryProvider.getRepository(aggregateRootType);
 		if(null != aggregateRepository) {
 			// TODO @await
-			return aggregateRepository.getAsync(aggregateRootId).get();
+			try {
+				return aggregateRepository.getAsync(aggregateRootId).get();
+			} catch (SuspendExecution s) {
+				throw new AssertionError(s);
+			}
 		}
 		return null;
 		
