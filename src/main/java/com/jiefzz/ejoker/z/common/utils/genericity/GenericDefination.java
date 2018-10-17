@@ -271,6 +271,10 @@ public final class GenericDefination {
 		return superDefination;
 	}
 
+	public Map<Class<?>, GenericDefination> getInterfaceDefinations() {
+		return interfaceDefinations;
+	}
+
 	public GenericDefinedTypeMeta[] getDeliveryTypeMetasTableCopy() {
 		if(null == deliveryTypeMetasTable)
 			return null;

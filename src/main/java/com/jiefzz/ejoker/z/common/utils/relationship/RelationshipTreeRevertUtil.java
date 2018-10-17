@@ -189,7 +189,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	private void setField(Field field, Object instance, Object value) {
 		try {
 			field.set(instance, value);
-		} catch (Exception e) {
+		} catch (IllegalArgumentException | IllegalAccessException e) {
 			logger.error("Cannot access field!!!", e);
 			throw new RuntimeException(e);
 		}

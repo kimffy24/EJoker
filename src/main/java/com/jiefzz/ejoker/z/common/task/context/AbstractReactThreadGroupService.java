@@ -8,7 +8,7 @@ import com.jiefzz.ejoker.EJokerEnvironment;
  * @author JiefzzLon
  *
  */
-public class AbstractReactThreadGroupService extends AbstractNormalWorkerGroupService {
+public abstract class AbstractReactThreadGroupService extends AbstractNormalWorkerGroupService {
 
 	@Override
 	public int usePoolSize() {

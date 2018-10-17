@@ -11,6 +11,8 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+
 /**
  * 包装一下使异步任务返回AsyncTaskResult&lt;T&gt;结构
  * @author kimffy
@@ -26,30 +28,33 @@ public class EJokerAsyncHelper {
 		return systemAsyncHelper.submit(() -> {
 			try {
 				vf.trigger();
-			} catch (Exception e) {
+				return new AsyncTaskResult<>(AsyncTaskStatus.Success);
+			} catch (Exception ex) {
+				if(ex instanceof SuspendExecution)
+					throw (SuspendExecution )ex;
 				return new AsyncTaskResult<>(
-						((e instanceof IOException || e instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
-						e.getMessage(),
+						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
+						ex.getMessage(),
 						null
 				);
 			}
-			return new AsyncTaskResult<>(AsyncTaskStatus.Success);
 		});
 	}
 
 	public <T> SystemFutureWrapper<AsyncTaskResult<T>> submit(IFunction<T> vf) {
 		return systemAsyncHelper.submit(() -> {
-			T r;
 			try {
-				r = vf.trigger();
-			} catch (Exception e) {
+				T r = vf.trigger();
+				return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, r);
+			} catch (Exception ex) {
+				if(ex instanceof SuspendExecution)
+					throw (SuspendExecution )ex;
 				return new AsyncTaskResult<>(
-						((e instanceof IOException || e instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
-						e.getMessage(),
+						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
+						ex.getMessage(),
 						null
 				);
 			}
-			return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, r);
 		});
 	}
 

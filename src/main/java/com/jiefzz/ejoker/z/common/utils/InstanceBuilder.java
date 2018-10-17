@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.z.common.utils;
 
+import co.paralleluniverse.fibers.Suspendable;
+
 public class InstanceBuilder<T> {
 
 	private final Class<T> clazz;
@@ -8,13 +10,15 @@ public class InstanceBuilder<T> {
 		this.clazz = clazz;
 	}
 	
+	@Suspendable
 	public T doCreate() {
-		try {
-			Object newInstance = clazz.newInstance();
+			Object newInstance;
+			try {
+				newInstance = clazz.newInstance();
+			} catch (InstantiationException|IllegalAccessException e) {
+				throw new RuntimeException("Create new instance of ["+clazz.getName()+"] faild!!!", e);
+			}
 			return (T )newInstance;
-		} catch (Exception e) {
-			throw new RuntimeException("Create new instance of ["+clazz.getName()+"] faild!!!", e);
-		}
 	}
 
 }

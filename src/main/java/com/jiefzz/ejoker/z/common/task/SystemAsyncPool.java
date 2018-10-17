@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
 
 public class SystemAsyncPool implements IAsyncEntrance {
 	
@@ -55,6 +55,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 		
 		// @important 建立新线程存在线程上限和大量的上下文切换成本，极易发生OutOfMemory。
+		// @important 或者使用cachedThreadPool？？
 		
 		// @important CompletableFuture.runAsync 有大量的 ForkJoinPool开销，且我对新版本的线程理念还不熟。
 //		{
@@ -63,7 +64,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 //				try {
 //					TAsyncTaskResult result = asyncTaskThread.call();
 //					ripenFuture.trySetResult(result);
-//				} catch (Exception e) {
+//				} catch (Exception ex) {
 //					ripenFuture.trySetException(e);
 //				}
 //			});

@@ -3,8 +3,8 @@ package com.jiefzz.ejoker.z.common.task.context;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.system.functional.IFunction;
-import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 
 /**
  * 创建EJoker内置的任务线程组，整个EJoker生命周期内的异步任务都可以提交到此处<br>
@@ -31,15 +31,15 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 	}
 
 	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
-		return submitInternalWrapper(vf);
+		return submitInternalWrapper(vf::trigger);
 	}
 
 	protected <T> SystemFutureWrapper<T> submitInternalWrapper(IFunction<T> vf) {
-		return new SystemFutureWrapper<>(submitInternal(vf));
+		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
 	}
 
 	protected SystemFutureWrapper<Void> submitInternalWrapper(IVoidFunction vf) {
-		return new SystemFutureWrapper<>(submitInternal(vf));
+		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
 	}
 	
 }

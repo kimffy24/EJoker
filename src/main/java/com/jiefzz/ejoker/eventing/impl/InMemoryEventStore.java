@@ -140,25 +140,22 @@ public class InMemoryEventStore implements IEventStore {
 	private AtomicLong atLong = new AtomicLong(0);
 
 	private EventAppendResult appendSync(DomainEventStream eventStream) {
-		try {
-			String aggregateRootId = eventStream.getAggregateRootId();
-			Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
-			
-			boolean hasPrevous = false;
-			hasPrevous &= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream);
-			hasPrevous &= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream);
-			
-			if (hasPrevous)
-				return EventAppendResult.DuplicateEvent;
-			else {
+		String aggregateRootId = eventStream.getAggregateRootId();
+		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId,
+				ConcurrentHashMap::new);
 
-				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(), eventStream.getAggregateRootId());
-				
-				return EventAppendResult.Success;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return EventAppendResult.Failed;
+		boolean hasPrevous = false;
+		hasPrevous &= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream);
+		hasPrevous &= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream);
+
+		if (hasPrevous)
+			return EventAppendResult.DuplicateEvent;
+		else {
+
+			logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(),
+					eventStream.getAggregateRootId());
+
+			return EventAppendResult.Success;
 		}
 
 	}

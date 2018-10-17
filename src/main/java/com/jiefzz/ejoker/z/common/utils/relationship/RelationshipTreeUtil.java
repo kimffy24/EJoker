@@ -67,7 +67,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 					Object fieldValue;
 					try {
 						fieldValue = genericDefinedField.field.get(target);
-					} catch (Exception e) {
+					} catch (IllegalArgumentException|IllegalAccessException e) {
 						logger.error("Cannot access field!!!", e);
 						throw new RuntimeException(e);
 					}
@@ -203,7 +203,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 						Object fieldValue;
 						try {
 							fieldValue = genericDefinedField.field.get(target);
-						} catch (Exception e) {
+						} catch (IllegalArgumentException|IllegalAccessException e) {
 							logger.error("Cannot access field!!!", e);
 							throw new RuntimeException(e);
 						}

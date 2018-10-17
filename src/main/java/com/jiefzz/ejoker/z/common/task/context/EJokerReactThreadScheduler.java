@@ -15,10 +15,10 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 public class EJokerReactThreadScheduler extends AbstractReactThreadGroupService {
 	
 	public <T> SystemFutureWrapper<T> schedule(IFunction<T> f) {
-		return new SystemFutureWrapper<>(submitInternal(f));
+		return new SystemFutureWrapper<>(submitInternal(f::trigger));
 	}
 
 	public void submit(IVoidFunction f) {
-		submitInternal(f);
+		submitInternal(f::trigger);
 	}
 }

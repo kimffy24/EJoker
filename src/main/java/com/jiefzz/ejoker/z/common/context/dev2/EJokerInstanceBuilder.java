@@ -12,13 +12,14 @@ public class EJokerInstanceBuilder {
 	}
 	
 	public Object doCreate(IVoidFunction1<Object> afterEffector) {
+		Object newInstance;
 		try {
-			Object newInstance = clazz.newInstance();
-			afterEffector.trigger(newInstance);
-			return newInstance;
-		} catch (Exception e) {
-			throw new ContextRuntimeException("Create new instance of ["+clazz.getName()+"] faild!!!", e);
+			newInstance = clazz.newInstance();
+		} catch (InstantiationException | IllegalAccessException ex) {
+			throw new ContextRuntimeException("Create new instance of ["+clazz.getName()+"] faild!!!", ex);
 		}
+		afterEffector.trigger(newInstance);
+		return newInstance;
 	}
 
 }

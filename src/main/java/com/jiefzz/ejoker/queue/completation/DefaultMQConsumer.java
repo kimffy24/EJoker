@@ -14,10 +14,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.rocketmq.client.consumer.PullResult;
+import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.RPCHook;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,8 +107,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							}
 							try {
 								dashboard.messageHandlingJob.trigger();
-							} catch (Exception e) {
-								exHandler.trigger(e);
+							} catch (Exception ex) {
+								exHandler.trigger(ex);
 							}
 						}
 					} finally {
@@ -133,7 +135,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			// try to get the acquire of the dashboard or wait.
 			dashboard.isWorking.lock();
 			try {
-				;
+				while(dashboard.workThread.isAlive()) {
+					logger.debug("Waitting work thread for queue[{}] to exit ... ", mq.toString());
+					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
+				}
+				logger.debug("Work thread for queue[{}] is exit.", mq.toString());
 			} finally {
 				dashboard.isWorking.unlock();
 			}
@@ -192,7 +198,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						PullResult pullResult;
 						try {
 							pullResult = pullBlockIfNotFound(mq, null, controlStruct.offsetFetchLocal.get(), maxBatchSize);
-						} catch (Exception e) {
+						} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
 							throw new RuntimeException(e);
 						}
 								

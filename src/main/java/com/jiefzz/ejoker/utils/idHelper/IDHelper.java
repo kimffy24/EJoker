@@ -47,17 +47,18 @@ public final class IDHelper {
 
 	public static void setAggregateRootId(IAggregateRoot aggr, String stringId) {
 		GenericDefinedField gdf;
-		if(null == (gdf = idGdcCache.get(aggr.getClass())))
+		if (null == (gdf = idGdcCache.get(aggr.getClass())))
 			throw new RuntimeException(String.format("Type defined for %s is not found!!!", aggr.getClass()));
-		
+
 		Object decode = codecStore.get(gdf.genericDefinedTypeMeta.rawClazz).decode(stringId);
 		try {
 			gdf.field.set(aggr, decode);
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IllegalArgumentException | IllegalAccessException ex) {
+			ex.printStackTrace();
 			throw new RuntimeException(
-					String.format("Set value[value=%s] to field[fieldName=%s, aggregate=%s is faild!!!", stringId, "id", aggr.getClass()),
-					e);
+					String.format("Set value[value=%s] to field[fieldName=%s, aggregate=%s is faild!!!", stringId, "id",
+							aggr.getClass()),
+					ex);
 		}
 	}
 	

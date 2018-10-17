@@ -103,8 +103,8 @@ public class MessageHandlerPool {
 						try {
 							c.trigger();
 							ripenFuture.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, "", null));
-						}catch (Exception e) {
-							ripenFuture.trySetException(e);
+						} catch (Exception ex) {
+							ripenFuture.trySetException(ex);
 						}
 					}).start();
 				return new SystemFutureWrapper<>(ripenFuture);

@@ -75,10 +75,10 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 		List<Class<?>> clazzInSpecificPackage;
 		try {
 			clazzInSpecificPackage = ClassNamesScanner.scanClass(specificPackage);
-			hasScanPackage.add(specificPackage + ".");
-		} catch (Exception e) {
-			throw new ContextRuntimeException(String.format("Exception occur whild scanning package [%s]!!!", specificPackage), e);
+		} catch (ClassNotFoundException ex) {
+			throw new ContextRuntimeException(String.format("Exception occur whild scanning package [%s]!!!", specificPackage), ex);
 		}
+		hasScanPackage.add(specificPackage + ".");
 
 		for (Class<?> clazz:clazzInSpecificPackage) {
 			// skip Throwable \ Abstract \ Interface class
@@ -89,9 +89,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 				continue;
 			process(clazz);
 
-			ForEachUtil.processForEach(hookMap, (hookType, hook) -> {
-				hook.process(clazz);
-			});
+			ForEachUtil.processForEach(hookMap, (hookType, hook) -> hook.process(clazz));
 		}
 	}
 	

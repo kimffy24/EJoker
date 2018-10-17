@@ -27,6 +27,7 @@ import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
+import co.paralleluniverse.fibers.SuspendExecution;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -78,14 +79,15 @@ public class NettyRPCServiceImpl implements IRPCService {
 			Thread ioThread = new Thread(() -> {
 					EventLoopGroup bossGroup = new NioEventLoopGroup();
 					EventLoopGroup workerGroup = new NioEventLoopGroup();
+					// 期间，此线程应该会一直等待。
 					try {
 						ServerBootstrap b = new ServerBootstrap();
 						b.group(bossGroup, workerGroup);
 						b.channel(NioServerSocketChannel.class);
 						b.childHandler(new EJokerServerInitializer(new Handler4RpcRequest(action)));
-
+	
 						// 服务器绑定端口监听
-						ChannelFuture f = b.bind(port).sync();
+						ChannelFuture f = b.bind(port).awaitUninterruptibly();
 						
 						{
 							// sync 协调逻辑
@@ -95,11 +97,9 @@ public class NettyRPCServiceImpl implements IRPCService {
 								SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
 							currentRPCTuple.initialFuture.trySetResult(null);
 						}
-						
+					
 						// 监听服务器关闭监听
-						f.channel().closeFuture().sync();
-						// 期间，此线程应该会一直等待。
-
+						f.channel().closeFuture().awaitUninterruptibly();
 					} catch (Exception e) {
 						{
 							// sync 协调逻辑
@@ -168,7 +168,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
 				
 				String s;
 				int dIndexOf = data.lastIndexOf('\n');
@@ -181,12 +181,12 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public void finishAction(Void result) {
+			public void finishAction(Void result) throws SuspendExecution {
 				// do nothing.
 			}
 
 			@Override
-			public void faildAction(Exception ex) {
+			public void faildAction(Exception ex) throws SuspendExecution {
 				logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s, data: %s", client.toString(), data));
 			}
 
@@ -206,11 +206,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 				continue;
 			iterator.remove();
 			logger.debug("Close rpc client: {}", current.getKey());
-			try {
-				current.getValue().close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			current.getValue().close();
 		}
 	}
 	
@@ -218,11 +214,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		
 		ForEachUtil.processForEach(clientStore, (k, c) -> {
 			logger.debug("Close netty rpc client {}", k);
-			try {
-				c.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			c.close();
 		});
 		clientStore.clear();
 		

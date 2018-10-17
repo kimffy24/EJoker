@@ -15,6 +15,8 @@ import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+
 public abstract class AbstractSequenceProcessingMessageHandler<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
 		implements IProcessingMessageHandler<X, Y> {
 
@@ -54,12 +56,12 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() throws Exception {
+			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() throws Exception, SuspendExecution {
 				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId());
 			}
 
 			@Override
-			public void finishAction(Long result) {
+			public void finishAction(Long result) throws SuspendExecution {
 				long publishedVersion = result.longValue();
 				long currentEventVersion = message.getVersion();
 				if (publishedVersion + 1l - currentEventVersion == 0l) {
@@ -76,7 +78,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public void faildAction(Exception ex) {
+			public void faildAction(Exception ex) throws SuspendExecution {
 				ex.printStackTrace();
 				logger.error("Get published version has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage());
 			}
@@ -84,7 +86,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			@Override
 			public String getContextInfo() {
 				return String.format(
-						"sequence message [messageId:{}, messageType:{}, aggregateRootId:{}, aggregateRootVersion:{}]",
+						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootStringId(),
 						message.getVersion());
 			}
@@ -103,17 +105,17 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
 				return dispatchProcessingMessageAsync(processingMessage);
 			}
 
 			@Override
-			public void finishAction(Void result) {
+			public void finishAction(Void result) throws SuspendExecution {
 				updatePublishedVersionAsync(processingMessage);
 			}
 
 			@Override
-			public void faildAction(Exception ex) {
+			public void faildAction(Exception ex) throws SuspendExecution {
 				logger.error(String.format(
 							"Dispatching message has unknown exception, the code should not be run to here, errorMessage: %s",
 							ex.getMessage()),
@@ -124,7 +126,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			public String getContextInfo() {
 				Y message = processingMessage.getMessage();
 				return String.format(
-						"sequence message [messageId:{}, messageType:{}, aggregateRootId:{}, aggregateRootVersion:{}]",
+						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootStringId(),
 						message.getVersion());
 			}
@@ -144,24 +146,24 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
 				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion());
 			}
 
 			@Override
-			public void finishAction(Void result) {
+			public void finishAction(Void result) throws SuspendExecution {
 				processingMessage.complete();
 			}
 
 			@Override
-			public void faildAction(Exception ex) {
+			public void faildAction(Exception ex) throws SuspendExecution {
 				logger.error(String.format("Update published version has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex);
 			}
 			
 			@Override
 			public String getContextInfo() {
 				return String.format(
-						"sequence message [messageId:{}, messageType:{}, aggregateRootId:{}, aggregateRootVersion:{}]",
+						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootStringId(),
 						message.getVersion());
 			}

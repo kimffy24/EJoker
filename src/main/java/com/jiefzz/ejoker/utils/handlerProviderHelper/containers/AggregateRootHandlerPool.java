@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,9 +58,9 @@ public class AggregateRootHandlerPool {
 		public void handle(AbstractAggregateRoot<?> aggregateRoot, IDomainEvent<?> domainEvent) {
 			try {
 				handleReflectionMethod.invoke(aggregateRoot, domainEvent);
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new RuntimeException("Command execute failed!!! " +domainEvent.toString(), e);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+				ex.printStackTrace();
+				throw new RuntimeException("Command execute failed!!! " +domainEvent.toString(), ex);
 			}
 		}
 		

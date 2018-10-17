@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.z.common.context.dev2.impl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -441,8 +442,8 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	private void setField(Field field, Object instance, Object dependence) {
 		try {
 			field.set(instance, dependence);
-		} catch (Exception e) {
-			throw new ContextRuntimeException(String.format("Cannot find any dependence for field: %s !!!", field.getName()), e);
+		} catch (IllegalArgumentException | IllegalAccessException ex) {
+			throw new ContextRuntimeException(String.format("Cannot find any dependence for field: %s !!!", field.getName()), ex);
 		}
 	}
 	
@@ -455,13 +456,15 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 					int priority = annotation.priority();
 					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, LinkedBlockingQueue::new);
 					initTaskQueue.offer(() -> {
-							try {
-								method.invoke(instance);
-							} catch (Exception e) {
-								throw new ContextRuntimeException(String.format("Faild on invoke init method!!! target: %s, method: %s", instanceClazz.getName(), methodName), e);
-							}
+						try {
+							method.invoke(instance);
+						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+							throw new ContextRuntimeException(
+									String.format("Faild on invoke init method!!! target: %s, method: %s",
+											instanceClazz.getName(), methodName),
+									e);
 						}
-					);
+					});
 				}
 			);
 	}

@@ -23,8 +23,8 @@ public final class PublishableExceptionCodecHelper {
 			Object fValue;
 			try {
 				fValue = f.get(exception);
-			} catch (Exception e) {
-				throw new RuntimeException(e.getMessage(), e);
+			} catch (IllegalArgumentException | IllegalAccessException ex) {
+				throw new RuntimeException(ex.getMessage(), ex);
 			}
 			rMap.put(n, sValue(f.getType(), fValue));
 			
@@ -43,7 +43,7 @@ public final class PublishableExceptionCodecHelper {
 				Object dValue = dValue(f.getType(), pMap.get(n));
 				try {
 					f.set(e, dValue);
-				} catch (Exception ex) {
+				} catch (IllegalArgumentException | IllegalAccessException ex) {
 					throw new RuntimeException(ex.getMessage(), ex);
 				}
 				

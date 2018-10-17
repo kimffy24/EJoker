@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.z.common.scavenger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -26,13 +25,10 @@ public class Scavenger {
 
 	public void cleanUp(){
 		int totalJob = amountOfJob.get();
-		for(IVoidFunction cleanJob : waitingCleanJobs)
-			try {
-				cleanJob.trigger();
-				amountOfJob.decrementAndGet();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		for(IVoidFunction cleanJob : waitingCleanJobs) {
+			cleanJob.trigger();
+			amountOfJob.decrementAndGet();
+		}
 		logger.debug("In the end of Invoking Scavenger.cleanUp(), execute {} jobs, there {} jobs faild.", totalJob, amountOfJob.get());
 		System.gc();
 	}

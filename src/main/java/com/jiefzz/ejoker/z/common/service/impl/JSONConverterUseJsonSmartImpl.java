@@ -17,6 +17,7 @@ import com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtil;
 import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodec;
 import com.jiefzz.ejoker.z.common.utils.relationship.SpecialTypeCodecStore;
 
+import co.paralleluniverse.fibers.SuspendExecution;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONStyle;
@@ -146,14 +147,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 	
 	@Override
 	public <T> String convert(T object) {
-		JSONObject result;
-		try {
-			result = relationshipTreeUtil.getTreeStructure(object);
-		} catch (Exception e) {
-			String format = String.format("Could not convert {%s} to JsonString", object.getClass().getName());
-			logger.error(format);
-			throw new InfrastructureRuntimeException(format, e);
-		}
+		JSONObject result = relationshipTreeUtil.getTreeStructure(object);
 		return JSONValue.toJSONString(result, JSONStyle.NO_COMPRESS);
 	}
 
