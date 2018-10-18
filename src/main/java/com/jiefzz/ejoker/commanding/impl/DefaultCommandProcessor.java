@@ -19,8 +19,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerReactThreadScheduler;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 /**
  * 默认的命令处理类<br>
@@ -41,10 +40,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	private IScheduleService scheduleService;
 
 	@Dependence
-	private EJokerReactThreadScheduler eJokerReactThreadScheduler;
-
-	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 
 	@EInitialize
 	private void init() {

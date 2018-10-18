@@ -31,7 +31,9 @@ public class EJokerQuasar extends EJoker {
 	private static void sleep(TimeUnit u, Long millis) {
 		try {
 			Strand.sleep(millis, u);
-		} catch (SuspendExecution | InterruptedException e) {
+		} catch (SuspendExecution s) {
+			throw new AssertionError(s);
+		}  catch (InterruptedException e) {
 			// do nothing
 		}
 	}

@@ -17,6 +17,7 @@ import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
 
@@ -90,7 +91,8 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
         }
     }
 
-	public void run() throws SuspendExecution {
+    @Suspendable
+	public void run() {
 		lastActiveTime = System.currentTimeMillis();
 		X processingMessage = null;
 		try {
@@ -103,9 +105,9 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 					messageHandler.handle(processingMessage);
 				
 			}
-		} catch (Exception ex) {
-			if(ex instanceof SuspendExecution)
-				throw (SuspendExecution )ex;
+		} catch (SuspendExecution s) {
+			throw new AssertionError(s);
+		} catch (RuntimeException ex) {
 			logger.error(String.format("Message mailbox run has unknown exception, routingKey: %s, commandId: %s",
 					routingKey, processingMessage != null ? processingMessage.getMessage().getId() : ""), ex);
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1l);

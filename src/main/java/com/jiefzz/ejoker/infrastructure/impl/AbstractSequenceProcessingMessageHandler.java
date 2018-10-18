@@ -13,7 +13,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 
@@ -29,7 +29,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 	private IOHelper ioHelper;
 	
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	public abstract String getName();
 
@@ -56,7 +56,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() throws SuspendExecution {
 				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId());
 			}
 
@@ -105,7 +105,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				return dispatchProcessingMessageAsync(processingMessage);
 			}
 
@@ -146,7 +146,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion());
 			}
 

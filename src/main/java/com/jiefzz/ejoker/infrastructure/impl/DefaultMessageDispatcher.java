@@ -21,7 +21,9 @@ import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+
+import co.paralleluniverse.fibers.SuspendExecution;
 
 @EService
 public class DefaultMessageDispatcher implements IMessageDispatcher {
@@ -32,7 +34,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	private IOHelper ioHelper;
 	
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
@@ -51,7 +53,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 						}
 		
 						@Override
-						public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception {
+						public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 							return proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit);
 						}
 		

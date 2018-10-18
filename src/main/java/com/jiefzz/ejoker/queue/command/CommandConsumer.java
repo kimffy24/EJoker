@@ -35,8 +35,11 @@ import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
+
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 @EService
 public class CommandConsumer implements IWorkerService {
@@ -66,7 +69,7 @@ public class CommandConsumer implements IWorkerService {
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	/// #fix 180920 register sync offset task
 	@Dependence
@@ -219,6 +222,7 @@ public class CommandConsumer implements IWorkerService {
 		}
 
 		@Override
+		@Suspendable
 		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
 
 			RipenFuture<T> ripenFuture = new RipenFuture<>();
@@ -234,15 +238,23 @@ public class CommandConsumer implements IWorkerService {
 				return (T )aggregateRoot;
 
 			if (tryFromCache)
-				// TODO @await
-				aggregateRoot = EJokerEnvironment.ASYNC_ALL
-					? repository.getAsync((Class<IAggregateRoot> )clazz, id).get()
-							: repository.get((Class<IAggregateRoot> )clazz, id);
+				try {
+					// TODO @await
+					aggregateRoot = EJokerEnvironment.ASYNC_ALL
+						? repository.getAsync((Class<IAggregateRoot> )clazz, id).get()
+								: repository.get((Class<IAggregateRoot> )clazz, id);
+				} catch (SuspendExecution s) {
+					throw new AssertionError(s);
+				}
 			else
-				// TODO @await
-				aggregateRoot = EJokerEnvironment.ASYNC_ALL
-						? aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get()
-								: aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
+				try {
+					// TODO @await
+					aggregateRoot = EJokerEnvironment.ASYNC_ALL
+							? aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get()
+									: aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
+				} catch (SuspendExecution s) {
+					throw new AssertionError(s);
+				}
 
 			if (aggregateRoot != null) {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
@@ -253,6 +265,7 @@ public class CommandConsumer implements IWorkerService {
 		}
 
 		@Override
+		@Suspendable
 		public void onCommandExecuted(CommandResult commandResult) {
 
 			messageContext.onMessageHandled(message);
@@ -260,7 +273,11 @@ public class CommandConsumer implements IWorkerService {
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return;
 			
-			sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress).get();
+			try {
+				sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress).get();
+			} catch (SuspendExecution s) {
+				throw new AssertionError(s);
+			}
 		
 		}
 

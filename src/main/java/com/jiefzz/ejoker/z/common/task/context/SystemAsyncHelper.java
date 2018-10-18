@@ -6,6 +6,8 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 
+import co.paralleluniverse.fibers.Suspendable;
+
 /**
  * 创建EJoker内置的任务线程组，整个EJoker生命周期内的异步任务都可以提交到此处<br>
  * 可根据实际系统资源调整线程组的大小，已实现最佳性能<br>
@@ -26,19 +28,13 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 		return EJokerEnvironment.ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;
 	}
 
+	@Suspendable
 	public SystemFutureWrapper<Void> submit(IVoidFunction vf) {
-		return submitInternalWrapper(vf::trigger);
-	}
-
-	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
-		return submitInternalWrapper(vf::trigger);
-	}
-
-	protected <T> SystemFutureWrapper<T> submitInternalWrapper(IFunction<T> vf) {
 		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
 	}
 
-	protected SystemFutureWrapper<Void> submitInternalWrapper(IVoidFunction vf) {
+	@Suspendable
+	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
 		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
 	}
 	

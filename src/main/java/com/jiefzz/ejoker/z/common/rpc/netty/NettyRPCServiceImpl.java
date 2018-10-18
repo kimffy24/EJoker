@@ -24,7 +24,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -51,7 +51,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	private IScheduleService scheduleService;
 	
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private Lock lock4CreateClient = new ReentrantLock();
 	
@@ -100,7 +100,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 					
 						// 监听服务器关闭监听
 						f.channel().closeFuture().awaitUninterruptibly();
-					} catch (Exception e) {
+					} catch (RuntimeException e) {
 						{
 							// sync 协调逻辑
 							RPCTuple currentRPCTuple;
@@ -168,7 +168,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws Exception, SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
 				
 				String s;
 				int dIndexOf = data.lastIndexOf('\n');

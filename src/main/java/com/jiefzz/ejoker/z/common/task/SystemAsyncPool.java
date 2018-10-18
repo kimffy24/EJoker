@@ -17,7 +17,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	
 	private final static Logger logger = LoggerFactory.getLogger(SystemAsyncPool.class);
 
-	private ExecutorService newThreadPool;
+	private ExecutorService defaultThreadPool;
 	
 	public SystemAsyncPool(int threadPoolSize) {
 		this(threadPoolSize, false);
@@ -44,7 +44,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		};
 		if(prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();
-		newThreadPool = threadPoolExecutor;
+		defaultThreadPool = threadPoolExecutor;
 	}
 	
 	public void debugInfo(String poolName) {
@@ -81,14 +81,14 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		// @important  2. 采用线程池占满补偿方案：
 		// @important		采用游离线程处理等待中的任务，且不接受超过n毫秒的任务，超时即杀死，并向提交此任务的线程返回异常。
 		// @important		* 可能长时间存在游离线程一直被杀死，且提交线程不断重试的情况。
-		return newThreadPool.submit(asyncTaskThread::trigger);
+		return defaultThreadPool.submit(asyncTaskThread::trigger);
 		
 		// TODO important
 		// @important 根治的解决方法使用coroutine方案，目前考虑使用 Quasar 方案
 	}
 
 	public void shutdown() {
-		newThreadPool.shutdown();
+		defaultThreadPool.shutdown();
 	}
 
 }
