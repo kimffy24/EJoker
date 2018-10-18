@@ -31,20 +31,20 @@ public abstract class AbstractNormalWorkerGroupService {
 	private void init() {
 
 		if (lock.compareAndSet(false, true)) {
-			AsyncEntranceProvider = this::getDefaultThreadPool;
+			AsyncEntranceProvider = AbstractNormalWorkerGroupService::getDefaultThreadPool;
 		}
 
-		asyncPool = AsyncEntranceProvider.trigger();
-		if(asyncPool instanceof SystemAsyncPool) {
-			logger.debug("Create a new ThreadPool[{}] for {}.", SystemAsyncPool.class.getName(), this.getClass().getName());
-			scavenger.addFianllyJob(((SystemAsyncPool )asyncPool)::shutdown);
-			scheduleService.startTask(
-					String.format("debug_show_pool_state_%s@%s", this.getClass(), this.hashCode()),
-					() -> ((SystemAsyncPool )asyncPool).debugInfo(String.format("ThreadPool[%s]", this.getClass())),
-					15000l,
-					15000l);
-			
-		}
+		asyncPool = AsyncEntranceProvider.trigger(this);
+		scavenger.addFianllyJob(asyncPool::shutdown);
+		logger.debug("Create a new AsyncEntrance[{}] for {}.", asyncPool.getClass().getName(), this.getClass().getName());
+//		if(asyncPool instanceof SystemAsyncPool) {
+//			scheduleService.startTask(
+//					String.format("debug_show_pool_state_%s@%s", this.getClass(), this.hashCode()),
+//					() -> ((SystemAsyncPool )asyncPool).debugInfo(String.format("ThreadPool[%s]", this.getClass())),
+//					15000l,
+//					15000l);
+//			
+//		}
 	}
 
 	protected int usePoolSize() {
@@ -66,16 +66,15 @@ public abstract class AbstractNormalWorkerGroupService {
 		});
 	}
 	
-	protected IAsyncEntrance getDefaultThreadPool() {
-		SystemAsyncPool asyncPool = new SystemAsyncPool(usePoolSize(), prestartAll());
-		return asyncPool;
+	protected static IAsyncEntrance getDefaultThreadPool(AbstractNormalWorkerGroupService service) {
+		return new SystemAsyncPool(service.usePoolSize(), service.prestartAll());
 	}
 
 	private static AtomicBoolean lock = new AtomicBoolean(false);
 
-	private static com.jiefzz.ejoker.z.common.system.functional.IFunction<IAsyncEntrance> AsyncEntranceProvider = null;
+	private static com.jiefzz.ejoker.z.common.system.functional.IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> AsyncEntranceProvider = null;
 
-	public static void setAsyncEntranceProvider(com.jiefzz.ejoker.z.common.system.functional.IFunction<IAsyncEntrance> f) {
+	public static void setAsyncEntranceProvider(com.jiefzz.ejoker.z.common.system.functional.IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> f) {
 		if (!lock.compareAndSet(false, true))
 			throw new RuntimeException("AsyncEntranceProvider has been set before!!!");
 		AsyncEntranceProvider = f;

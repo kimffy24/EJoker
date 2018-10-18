@@ -32,72 +32,48 @@ public class SendQueueMessageService {
 
 	public SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync(final DefaultMQProducer producer, final EJokerQueueMessage message,
 			final String routingKey, String messageId, String version) {
+//		
+//		SystemFutureWrapper<AsyncTaskResult<Void>> asyncResultSource = new SystemFutureWrapper<AsyncTaskResult<Void>>(new RipenFuture<>());
+//		cachedThreadPool.execute(() -> {
+//				RipenFuture<AsyncTaskResult<Void>> f = (RipenFuture<AsyncTaskResult<Void>> )asyncResultSource.refFuture;
+//				SendResult sendResult;
+//				try {
+//					sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
+//				} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
+//					f.trySetException(e);
+//					return;
+//				}
+//				if(!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+//					logger.error(
+//							"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
+//							sendResult.toString(),
+//							routingKey,
+//							messageId,
+//							version
+//							);
+//					f.trySetException(new IOException(sendResult.toString()));
+//				}
+//				f.trySetResult(AsyncTaskResult.Success);
+//		});
+//		return asyncResultSource;
 		
-		SystemFutureWrapper<AsyncTaskResult<Void>> asyncResultSource = new SystemFutureWrapper<AsyncTaskResult<Void>>(new RipenFuture<>());
-		cachedThreadPool.execute(() -> {
-				RipenFuture<AsyncTaskResult<Void>> f = (RipenFuture<AsyncTaskResult<Void>> )asyncResultSource.refFuture;
-				SendResult sendResult;
-				try {
-					sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
-				} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
-					f.trySetException(e);
-					return;
-				}
-				if(!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-					logger.error(
-							"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-							sendResult.toString(),
-							routingKey,
-							messageId,
-							version
-							);
-					f.trySetException(new IOException(sendResult.toString()));
-				}
-				f.trySetResult(AsyncTaskResult.Success);
-		});
-		return asyncResultSource;
-		
-//		return eJokerAsyncHelper.submit(() -> {
-//					SendResult sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
-//					if(!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-//						logger.error(
-//								"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-//								sendResult.toString(),
-//								routingKey,
-//								messageId,
-//								version
-//								);
-//						throw new IOException(sendResult.toString());
-//					}
-//			}
-//		);
+		return eJokerAsyncHelper.submit(() -> {
+					SendResult sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
+					if(!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+						logger.error(
+								"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
+								sendResult.toString(),
+								routingKey,
+								messageId,
+								version
+								);
+						throw new IOException(sendResult.toString());
+					}
+			}
+		);
 	}
 
 	// ============================== //
 	
-	private ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
-//	
-//	private Queue<MessageInfo> memoryQueue = new ConcurrentLinkedQueue<>();
-//	
-//	private static class MessageInfo {
-//		
-//		public final EJokerQueueMessage message;
-//		
-//		public final String routingKey;
-//		
-//		public final String messageId;
-//		
-//		public final String version;
-//		
-//		public final RipenFuture<SendStatus> resultSource = new RipenFuture<>();
-//		
-//		public MessageInfo(EJokerQueueMessage message, String routingKey, String messageId, String version) {
-//			super();
-//			this.message = message;
-//			this.routingKey = routingKey;
-//			this.messageId = messageId;
-//			this.version = version;
-//		}
-//		
-//	}
+//	private ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
 }

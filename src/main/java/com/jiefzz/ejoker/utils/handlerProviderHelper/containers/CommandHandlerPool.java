@@ -13,8 +13,6 @@ import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandContext;
 import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-
 public class CommandHandlerPool {
 	
 	public final static Map<Class<? extends ICommand>, HandlerReflectionMapper> handlerMapper =

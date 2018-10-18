@@ -7,8 +7,6 @@ import java.util.concurrent.TimeoutException;
 
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-
 /**
  * 异常运行时化
  * 
@@ -40,7 +38,7 @@ public class SystemFutureWrapper<TResult> {
 	}
 
 //	@Override
-	public TResult get() throws SuspendExecution {
+	public TResult get() {
 		try {
 			return refFuture.get();
 		} catch (InterruptedException | ExecutionException e) {
@@ -49,7 +47,7 @@ public class SystemFutureWrapper<TResult> {
 	}
 
 //	@Override
-	public TResult get(long timeout, TimeUnit unit) throws SuspendExecution {
+	public TResult get(long timeout, TimeUnit unit) {
 		try {
 			return refFuture.get(timeout, unit);
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {

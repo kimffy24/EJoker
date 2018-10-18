@@ -38,9 +38,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 @EService
 public class CommandConsumer implements IWorkerService {
 
@@ -49,66 +46,64 @@ public class CommandConsumer implements IWorkerService {
 
 	@Dependence
 	private SendReplyService sendReplyService;
-	
+
 	@Dependence
 	private IJSONConverter jsonSerializer;
-	
+
 	@Dependence
 	private ICommandProcessor processor;
-	
+
 	@Dependence
 	private IRepository repository;
-	
+
 	@Dependence
 	private IAggregateStorage aggregateRootStorage;
-	
+
 	@Dependence
 	private ITypeNameProvider typeNameProvider;
-	
+
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
-	
+
 	/// #fix 180920 register sync offset task
 	@Dependence
 	private IScheduleService scheduleService;
-	
+
 	private static long taskIndex = 0;
-	
+
 	private final long tx = ++taskIndex;
 	///
-	
+
 	private DefaultMQConsumer consumer;
-	
+
 	public DefaultMQConsumer getConsumer() {
 		return consumer;
 	}
-	
+
 	public CommandConsumer useConsumer(DefaultMQConsumer consumer) {
 		this.consumer = consumer;
 		return this;
 	}
 
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
-		
+
 		// Here QueueMessage is a carrier of Command
-		// separate it from  QueueMessage；
+		// separate it from QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<>();
 		String messageBody = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType = (Class<? extends ICommand> )typeNameProvider.getType(queueMessage.getTag());
+		Class<? extends ICommand> commandType = (Class<? extends ICommand>) typeNameProvider
+				.getType(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
-		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(
-				queueMessage,
-				context,
-				commandMessage);
+		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(queueMessage, context, commandMessage);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
-	
-	public CommandConsumer start(){
+
+	public CommandConsumer start() {
 		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
@@ -116,13 +111,14 @@ public class CommandConsumer implements IWorkerService {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
-		
+
 		/// #fix 180920 register sync offset task
 		{
-			scheduleService.startTask(this.getClass().getName() + "@" + this.hashCode()+ "#sync offset task", consumer::syncOffsetToBroker, 2000, 2000);
+			scheduleService.startTask(this.getClass().getName() + "@" + this.hashCode() + "#sync offset task",
+					consumer::syncOffsetToBroker, 2000, 2000);
 		}
 		///
-		
+
 		return this;
 	}
 
@@ -136,26 +132,28 @@ public class CommandConsumer implements IWorkerService {
 
 		return this;
 	}
-	
+
 	/**
 	 * commandHandler处理过程中，使用的上下文就是这个上下文。<br>
 	 * 他能新增一个聚合根，取出聚合跟，修改聚合并提交发布，都在次上下文中提供调用
+	 * 
 	 * @author kimffy
 	 *
 	 */
 	class CommandExecuteContext implements ICommandExecuteContext {
-		
+
 		private String result;
-		
+
 		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new HashMap<>();
-		
+
 		private final EJokerQueueMessage message;
-		
+
 		private final IEJokerQueueMessageContext messageContext;
-		
+
 		private final CommandMessage commandMessage;
 
-		public CommandExecuteContext(EJokerQueueMessage message, IEJokerQueueMessageContext messageContext, CommandMessage commandMessage) {
+		public CommandExecuteContext(EJokerQueueMessage message, IEJokerQueueMessageContext messageContext,
+				CommandMessage commandMessage) {
 			this.message = message;
 			this.commandMessage = commandMessage;
 			this.messageContext = messageContext;
@@ -163,14 +161,15 @@ public class CommandConsumer implements IWorkerService {
 
 		@Override
 		public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult) {
-			
+
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return EJokerFutureWrapperUtil.createCompleteFuture();
-			
-			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress);
-		
+
+			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult,
+					commandMessage.replyAddress);
+
 		}
 
 		@Override
@@ -178,24 +177,25 @@ public class CommandConsumer implements IWorkerService {
 			if (aggregateRoot == null)
 				throw new ArgumentNullException("aggregateRoot");
 			String uniqueId = aggregateRoot.getUniqueId();
-			if(null != trackingAggregateRootDict.putIfAbsent(uniqueId, aggregateRoot))
+			if (null != trackingAggregateRootDict.putIfAbsent(uniqueId, aggregateRoot))
 				throw new AggregateRootAlreadyExistException(uniqueId, aggregateRoot.getClass());
 		}
-		
+
 		@Override
 		public SystemFutureWrapper<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot) {
 			return eJokerAsyncHelper.submit(() -> add(aggregateRoot));
 		}
 
 		@Override
-		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz, boolean tryFromCache) {
+		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz,
+				boolean tryFromCache) {
 
 			RipenFuture<T> ripenFuture = new RipenFuture<>();
 			if (id == null) {
 				ripenFuture.trySetException(new ArgumentNullException("id"));
 				return new SystemFutureWrapper<>(ripenFuture);
 			}
-			
+
 			return systemAsyncHelper.submit(() -> get(id, clazz, tryFromCache));
 
 		}
@@ -222,63 +222,50 @@ public class CommandConsumer implements IWorkerService {
 		}
 
 		@Override
-		@Suspendable
 		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
 
 			RipenFuture<T> ripenFuture = new RipenFuture<>();
 			if (id == null) {
 				throw new ArgumentNullException("id");
 			}
-			
+
 			String aggregateRootId = id.toString();
 			IAggregateRoot aggregateRoot = null;
 
-			//try get aggregate root from the last execute context.
+			// try get aggregate root from the last execute context.
 			if (null != (aggregateRoot = trackingAggregateRootDict.get(aggregateRootId)))
-				return (T )aggregateRoot;
+				return (T) aggregateRoot;
 
 			if (tryFromCache)
-				try {
-					// TODO @await
-					aggregateRoot = EJokerEnvironment.ASYNC_ALL
-						? repository.getAsync((Class<IAggregateRoot> )clazz, id).get()
-								: repository.get((Class<IAggregateRoot> )clazz, id);
-				} catch (SuspendExecution s) {
-					throw new AssertionError(s);
-				}
+				// TODO @await
+				aggregateRoot = EJokerEnvironment.ASYNC_ALL
+						? repository.getAsync((Class<IAggregateRoot>) clazz, id).get()
+						: repository.get((Class<IAggregateRoot>) clazz, id);
 			else
-				try {
-					// TODO @await
-					aggregateRoot = EJokerEnvironment.ASYNC_ALL
-							? aggregateRootStorage.getAsync((Class<IAggregateRoot> )clazz, aggregateRootId).get()
-									: aggregateRootStorage.get((Class<IAggregateRoot> )clazz, aggregateRootId);
-				} catch (SuspendExecution s) {
-					throw new AssertionError(s);
-				}
-
+				// TODO @await
+				aggregateRoot = EJokerEnvironment.ASYNC_ALL
+						? aggregateRootStorage.getAsync((Class<IAggregateRoot>) clazz, aggregateRootId).get()
+						: aggregateRootStorage.get((Class<IAggregateRoot>) clazz, aggregateRootId);
 			if (aggregateRoot != null) {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
-				return (T )aggregateRoot;
+				return (T) aggregateRoot;
 			}
-			
+
 			return null;
 		}
 
 		@Override
-		@Suspendable
 		public void onCommandExecuted(CommandResult commandResult) {
 
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return;
-			
-			try {
-				sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress).get();
-			} catch (SuspendExecution s) {
-				throw new AssertionError(s);
-			}
-		
+
+			sendReplyService
+					.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress)
+					.get();
+
 		}
 
 	}

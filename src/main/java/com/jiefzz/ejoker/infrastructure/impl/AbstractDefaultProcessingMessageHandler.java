@@ -9,9 +9,6 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 public abstract class AbstractDefaultProcessingMessageHandler<X extends IProcessingMessage<X, Y>, Y extends IMessage> implements IProcessingMessageHandler<X, Y> {
 
 	@Dependence
@@ -26,15 +23,10 @@ public abstract class AbstractDefaultProcessingMessageHandler<X extends IProcess
 	}
 
 	@Override
-	@Suspendable
 	public void handle(X processingMessage) {
 		Y message = processingMessage.getMessage();
 		/// TODO @await
-		try {
-			messageDispatcher.dispatchMessageAsync(message).get();
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
-		}
+		messageDispatcher.dispatchMessageAsync(message).get();
 		processingMessage.complete();
 	}
 

@@ -16,9 +16,6 @@ import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingMessageMailbox.class);
@@ -91,7 +88,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
         }
     }
 
-    @Suspendable
 	public void run() {
 		lastActiveTime = System.currentTimeMillis();
 		X processingMessage = null;
@@ -105,8 +101,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 					messageHandler.handle(processingMessage);
 				
 			}
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
 		} catch (RuntimeException ex) {
 			logger.error(String.format("Message mailbox run has unknown exception, routingKey: %s, commandId: %s",
 					routingKey, processingMessage != null ? processingMessage.getMessage().getId() : ""), ex);

@@ -15,8 +15,6 @@ import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-
 public abstract class AbstractSequenceProcessingMessageHandler<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
 		implements IProcessingMessageHandler<X, Y> {
 
@@ -56,12 +54,12 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Long>> asyncAction() {
 				return publishedVersionStore.getPublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId());
 			}
 
 			@Override
-			public void finishAction(Long result) throws SuspendExecution {
+			public void finishAction(Long result) {
 				long publishedVersion = result.longValue();
 				long currentEventVersion = message.getVersion();
 				if (publishedVersion + 1l - currentEventVersion == 0l) {
@@ -78,7 +76,7 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				ex.printStackTrace();
 				logger.error("Get published version has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage());
 			}
@@ -105,17 +103,17 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				return dispatchProcessingMessageAsync(processingMessage);
 			}
 
 			@Override
-			public void finishAction(Void result) throws SuspendExecution {
+			public void finishAction(Void result) {
 				updatePublishedVersionAsync(processingMessage);
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format(
 							"Dispatching message has unknown exception, the code should not be run to here, errorMessage: %s",
 							ex.getMessage()),
@@ -146,17 +144,17 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				return publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion());
 			}
 
 			@Override
-			public void finishAction(Void result) throws SuspendExecution {
+			public void finishAction(Void result) {
 				processingMessage.complete();
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format("Update published version has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex);
 			}
 			

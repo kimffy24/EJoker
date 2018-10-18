@@ -14,9 +14,6 @@ import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 /**
  * 模拟IOHelper的实现
  * {@link https://github.com/tangxuehua/ecommon/blob/master/src/ECommon/IO/IOHelper.cs}
@@ -42,15 +39,10 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
-	@Suspendable
 	public <T> void tryAsyncAction(IOActionExecutionContext<T> externalContext) {
 
 		if (!externalContext.hasInitialized) {
-			try {
-				externalContext.init();
-			} catch (SuspendExecution s) {
-				throw new AssertionError(s);
-			}
+			externalContext.init();
 			externalContext.hasInitialized = true;
 			
 			externalContext.ioHelper = this;
@@ -60,7 +52,6 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 
 	}
 
-	@Suspendable
 	private <T> void taskContinueAction(IOActionExecutionContext<T> externalContext) {
 		
 		SystemFutureWrapper<AsyncTaskResult<T>> task;
@@ -70,8 +61,6 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			AsyncTaskResult<T> result = null;
 			try {
 				result = task.get();
-			} catch(SuspendExecution s) {
-				throw new AssertionError(s);
 			} catch (Exception ex) {
 				Exception cause = (Exception )ex.getCause();
 				processTaskException(externalContext, cause);
@@ -120,15 +109,12 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			default:
 				assert false;
 			}
-		} catch(SuspendExecution s) {
-			throw new AssertionError(s);
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the taskContinueAction, asyncActionName: %s, contextInfo: %s",
 					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
 		}
 	}
 
-	@Suspendable
 	private void processTaskException(IOActionExecutionContext<?> externalContext, Exception exception) {
 		if (exception instanceof IOException || exception instanceof IOExceptionOnRuntime) {
 			logger.error(String.format(
@@ -150,7 +136,6 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		}
 	}
 
-	@Suspendable
 	private void executeRetryAction(final IOActionExecutionContext<?> externalContext) {
 		externalContext.currentRetryTimes++;
 		try {
@@ -163,21 +148,16 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			} else {
 				externalContext.faildLoopAction();
 			}
-		} catch(SuspendExecution s) {
-			throw new AssertionError(s);
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the retryAction, asyncActionName: %s, context info: %s",
 					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
 		}
 	}
 
-	@Suspendable
 	private void executeFailedAction(final IOActionExecutionContext<?> externalContext, Exception exception) {
 		try {
 			externalContext.faildAction(exception);
-	    } catch(SuspendExecution s) {
-			throw new AssertionError(s);
-		} catch (Exception ex) {
+	    } catch (Exception ex) {
 	        logger.error(
 	        		String.format(
 	        				"Failed to execute the failedAction of asyncAction: %s, contextInfo: %s",
@@ -236,13 +216,13 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		 * 
 		 * @return
 		 */
-		abstract public SystemFutureWrapper<AsyncTaskResult<TAsyncResult>> asyncAction() throws SuspendExecution;
+		abstract public SystemFutureWrapper<AsyncTaskResult<TAsyncResult>> asyncAction();
 
 		/**
 		 * 重试执行的方法
 		 * 
 		 */
-		public void faildLoopAction() throws SuspendExecution {
+		public void faildLoopAction() {
 			ioHelper.tryAsyncAction(this);
 		}
 		
@@ -252,20 +232,20 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		 * 
 		 * @param result
 		 */
-		abstract public void finishAction(TAsyncResult result) throws SuspendExecution;
+		abstract public void finishAction(TAsyncResult result);
 
 		/**
 		 * 异步执行失败后执行的处理方法
 		 * 
 		 * @param errorMessage
 		 */
-		abstract public void faildAction(Exception ex) throws SuspendExecution;
+		abstract public void faildAction(Exception ex);
 
 		/**
 		 * 初始化方法<br>
 		 * * 允许用户执行一些初始化方法
 		 */
-		public void init() throws SuspendExecution {
+		public void init() {
 			;
 		}
 

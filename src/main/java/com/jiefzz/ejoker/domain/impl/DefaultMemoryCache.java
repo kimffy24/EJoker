@@ -18,45 +18,41 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 @EService
 public class DefaultMemoryCache implements IMemoryCache {
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
-	
+
 	private final Map<String, AggregateCacheInfo> aggregateRootInfoDict = new ConcurrentHashMap<>();
-	
+
 	@Dependence
 	private IAggregateStorage aggregateStorage;
-	
+
 	@Dependence
 	private ITypeNameProvider typeNameProvider;
 
 	@Dependence
 	private IScheduleService scheduleService;
-	
+
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
-	
+
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "CleanInactiveAggregates()"),
-				this::cleanInactiveAggregates,
-				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
+				this::cleanInactiveAggregates, EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
+	public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId,
+			Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		return systemAsyncHelper.submit(() -> get(aggregateRootId, aggregateRootType));
 	}
@@ -67,33 +63,30 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public SystemFutureWrapper<Void> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName, String aggregateRootId) {
+	public SystemFutureWrapper<Void> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName,
+			String aggregateRootId) {
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(aggregateRootTypeName, aggregateRootId));
 	}
 
 	@Override
-	@Suspendable
 	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		AggregateCacheInfo aggregateRootInfo;
-		if( null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString())) ) {
+		if (null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString()))) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
 			if (!aggregateRoot.getClass().equals(aggregateRootType))
-				throw new RuntimeException(String.format("Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s", aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
+				throw new RuntimeException(String.format(
+						"Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s",
+						aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
 			if (aggregateRoot.getChanges().size() > 0) {
-				
+
 				// TODO @await
-				IAggregateRoot lastestAggregateRoot;
-					try {
-						lastestAggregateRoot = EJokerEnvironment.ASYNC_ALL
-								? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
-										: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
-					} catch (SuspendExecution s) {
-						throw new AssertionError(s);
-					}
+				IAggregateRoot lastestAggregateRoot = EJokerEnvironment.ASYNC_ALL
+						? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
+						: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
 				if (null != lastestAggregateRoot)
 					setInternal(lastestAggregateRoot);
-				
+
 				return lastestAggregateRoot;
 			}
 			return aggregateRoot;
@@ -102,10 +95,9 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	@Suspendable
 	public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
 		Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
-		if(null == aggregateRootType) {
+		if (null == aggregateRootType) {
 			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
 			return;
 		}
@@ -113,33 +105,36 @@ public class DefaultMemoryCache implements IMemoryCache {
 		try {
 			// TODO @await
 			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
-					? aggregateStorage.getAsync((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString()).get()
-							: aggregateStorage.get((Class<IAggregateRoot> )aggregateRootType, aggregateRootId.toString());
+					? aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString())
+							.get()
+					: aggregateStorage.get((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString());
 			if (null != aggregateRoot) {
 				setInternal(aggregateRoot);
 			}
 			return;
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
 		} catch (RuntimeException ex) {
-			logger.error(String.format("Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s", aggregateRootTypeName, aggregateRootId), ex);
+			logger.error(String.format(
+					"Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s",
+					aggregateRootTypeName, aggregateRootId), ex);
 		}
 	}
 
 	private void setInternal(IAggregateRoot aggregateRoot) {
 		Ensure.notNull(aggregateRoot, "aggregateRoot");
-		AggregateCacheInfo previous = MapHelper.getOrAddConcurrent(aggregateRootInfoDict, aggregateRoot.getUniqueId(), () -> new AggregateCacheInfo(aggregateRoot));
+		AggregateCacheInfo previous = MapHelper.getOrAddConcurrent(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
+				() -> new AggregateCacheInfo(aggregateRoot));
 		previous.aggregateRoot = aggregateRoot;
 		previous.lastUpdateTime = System.currentTimeMillis();
-		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}", aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
+		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}",
+				aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
 	}
-	
+
 	private void cleanInactiveAggregates() {
 		Iterator<Entry<String, AggregateCacheInfo>> it = aggregateRootInfoDict.entrySet().iterator();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			Entry<String, AggregateCacheInfo> current = it.next();
 			AggregateCacheInfo aggregateCacheInfo = current.getValue();
-			if(aggregateCacheInfo.isExpired(EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT)) {
+			if (aggregateCacheInfo.isExpired(EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT)) {
 				it.remove();
 				logger.debug("Removed inactive aggregate root, id: {}", current.getKey());
 			}

@@ -20,9 +20,6 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 /**
  *
  */
@@ -72,18 +69,12 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 
 	}
 	
-	@Suspendable
 	private IAggregateRoot tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		
 		// TODO @await
-		IAggregateRoot aggregateRoot;
-		try {
-			aggregateRoot = EJokerEnvironment.ASYNC_ALL
+		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
 					? aggregateSnapshotter.restoreFromSnapshotAsync(aggregateRootType, aggregateRootId).get()
 							:aggregateSnapshotter.restoreFromSnapshot(aggregateRootType, aggregateRootId);
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
-		}
 		
 		if(null == aggregateRoot)
 			return null;
@@ -102,12 +93,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 
 		// TODO @await
 		if(EJokerEnvironment.ASYNC_ALL) {
-			AsyncTaskResult<Collection<DomainEventStream>> taskResult;
-			try {
-				taskResult = eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion).get();
-			} catch (SuspendExecution s) {
-				throw new AssertionError(s);
-			}
+			AsyncTaskResult<Collection<DomainEventStream>> taskResult = eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion).get();
 			if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
                 aggregateRoot.replayEvents(taskResult.getData());
                 return aggregateRoot;

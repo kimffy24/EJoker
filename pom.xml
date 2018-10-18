@@ -37,13 +37,6 @@
 			<version>4.3.0</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
-		<dependency>
-			<groupId>co.paralleluniverse</groupId>
-			<artifactId>quasar-core</artifactId>
-			<version>0.7.10</version>
-		</dependency>
-
 	</dependencies>
 
 

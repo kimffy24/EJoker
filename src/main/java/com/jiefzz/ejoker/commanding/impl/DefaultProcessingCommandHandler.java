@@ -41,9 +41,6 @@ import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 @EService
 public class DefaultProcessingCommandHandler implements IProcessingCommandHandler {
 	
@@ -107,7 +104,6 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 	}
 	
-	@Suspendable
 	private void handleCommand(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
 
 		ICommand message = processingCommand.getMessage();
@@ -133,12 +129,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				logCommandExecuteException(processingCommand, commandHandler, ex);
 				/// TODO @await
 				if(EJokerEnvironment.ASYNC_ALL)
-					try {
 						completeCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
 								"Unknow exception caught when committing changes of command.").get();
-					} catch (SuspendExecution s) {
-						throw new AssertionError(s);
-					}
 				else 
 					completeCommand(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
 							"Unknow exception caught when committing changes of command.");
@@ -224,12 +216,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() {
 				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
 			@Override
-			public void finishAction(DomainEventStream result) throws SuspendExecution {
+			public void finishAction(DomainEventStream result) {
 				DomainEventStream existingEventStream = result;
                 if (null != existingEventStream) {
                     eventService.publishDomainEventAsync(processingCommand, existingEventStream);
@@ -239,7 +231,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(
 						String.format("Find event by commandId has unknown exception, the code should not be run to here, errorMessage: {}",
 								ex.getMessage()),
@@ -265,12 +257,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() {
 				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
 			@Override
-			public void finishAction(DomainEventStream result) throws SuspendExecution {
+			public void finishAction(DomainEventStream result) {
 				
 				DomainEventStream existingEventStream = result;
                 if (existingEventStream != null) {
@@ -297,7 +289,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(
 						String.format("Find event by commandId has unknown exception, the code should not be run to here, errorMessage: {}",
 								ex.getMessage()),
@@ -323,17 +315,17 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				return exceptionPublisher.publishAsync(exception);
 			}
 
 			@Override
-			public void finishAction(Void result) throws SuspendExecution {
+			public void finishAction(Void result) {
 				completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex);
 			}
 
@@ -370,7 +362,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				}
 
 				@Override
-				public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+				public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 					try {
 						commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
 						logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
@@ -398,12 +390,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				}
 
 				@Override
-				public void finishAction(Void result) throws SuspendExecution {
+				public void finishAction(Void result) {
 					commitChangesAsync(processingCommand, true, null, null);
 				}
 
 				@Override
-				public void faildAction(Exception ex) throws SuspendExecution {
+				public void faildAction(Exception ex) {
 					commitChangesAsync(processingCommand, false, null, ex.getMessage());
 				}
 
@@ -441,17 +433,17 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				return applicationMessagePublisher.publishAsync(message);
 			}
 
 			@Override
-			public void finishAction(Void result) throws SuspendExecution {
+			public void finishAction(Void result) {
 				completeCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message));
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format("Publish application message has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex);
 			}
 

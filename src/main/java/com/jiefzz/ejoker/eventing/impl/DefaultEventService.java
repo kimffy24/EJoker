@@ -41,9 +41,6 @@ import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 @EService
 public class DefaultEventService implements IEventService {
 
@@ -150,12 +147,12 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() {
 				return eventStore.batchAppendAsync(domainEventStreams);
 			}
 
 			@Override
-			public void finishAction(EventAppendResult result) throws SuspendExecution {
+			public void finishAction(EventAppendResult result) {
 
 				EventCommittingContext firstEventCommittingContext = committingContexts.get(0);
 				EventMailBox eventMailBox = firstEventCommittingContext.eventMailBox;
@@ -211,7 +208,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format("Batch persist event has unknown exception, the code should not be run to here, errorMessage: {0}", ex.getMessage()), ex);
 			}
 			
@@ -236,12 +233,12 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> asyncAction() {
 				return eventStore.appendAsync(context.getEventStream());
 			}
 
 			@Override
-			public void finishAction(EventAppendResult realrResult) throws SuspendExecution {
+			public void finishAction(EventAppendResult realrResult) {
 				switch (realrResult) {
 				case Success:
 					logger.debug("Persist event success, {}", jsonSerializer.convert(context.getEventStream()));
@@ -295,7 +292,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format("Batch persist event has unknown exception, the code should not be run to here, errorMessage: {0}", ex.getMessage()), ex);
 			}});
 
@@ -305,7 +302,6 @@ public class DefaultEventService implements IEventService {
 		return systemAsyncHelper.submit(() -> resetCommandMailBoxConsumingSequence(context, consumingSequence));
 	}
 
-	@Suspendable
 	private void resetCommandMailBoxConsumingSequence(EventCommittingContext context, long consumingSequence) {
 
 		EventMailBox eventMailBox = context.eventMailBox;
@@ -328,9 +324,7 @@ public class DefaultEventService implements IEventService {
 			logger.debug(
 					"ResetCommandMailBoxConsumingSequence success, commandId: {}, aggregateRootId: {}, consumingSequence: {}",
 					command.getId(), command.getAggregateRootId(), consumingSequence);
-		} catch (SuspendExecution s) {
-        	throw new AssertionError(s);
-        } catch (RuntimeException ex) {
+		} catch (RuntimeException ex) {
 			logger.error(String.format(
 					"ResetCommandMailBoxConsumingOffset has unknown exception, commandId: %s, aggregateRootId: %s",
 					command.getId(), command.getAggregateRootId()), ex);
@@ -352,12 +346,12 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() {
 				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
 			}
 
 			@Override
-			public void finishAction(DomainEventStream result) throws SuspendExecution {
+			public void finishAction(DomainEventStream result) {
 
 				DomainEventStream existingEventStream = result;
                 if (null != existingEventStream)
@@ -388,7 +382,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(
 						String.format(
 								"Find event by commandId has unknown exception, the code should not be run to here, errorMessage: %s",
@@ -413,12 +407,12 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() {
 				return eventStore.findAsync(eventStream.getAggregateRootId(), 1);
 			}
 
 			@Override
-			public void finishAction(DomainEventStream result) throws SuspendExecution {
+			public void finishAction(DomainEventStream result) {
 				
 				DomainEventStream firstEventStream = result;
 				
@@ -484,7 +478,7 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(
 					String.format(
 						"Find the first version of event has unknown exception, the code should not be run to here, errorMessage: %s",
@@ -538,12 +532,12 @@ public class DefaultEventService implements IEventService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				return domainEventPublisher.publishAsync(eventStream);
 			}
 
 			@Override
-			public void finishAction(Void result) throws SuspendExecution {
+			public void finishAction(Void result) {
 				
 				logger.debug("Publish event success, {}", eventStream.toString());
 
@@ -564,7 +558,7 @@ public class DefaultEventService implements IEventService {
 			}
 			
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(
 						String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex);
 			}});

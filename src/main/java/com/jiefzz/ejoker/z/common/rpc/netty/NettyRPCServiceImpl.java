@@ -27,7 +27,6 @@ import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
-import co.paralleluniverse.fibers.SuspendExecution;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -168,7 +167,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() throws SuspendExecution {
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				
 				String s;
 				int dIndexOf = data.lastIndexOf('\n');
@@ -181,12 +180,12 @@ public class NettyRPCServiceImpl implements IRPCService {
 			}
 
 			@Override
-			public void finishAction(Void result) throws SuspendExecution {
+			public void finishAction(Void result) {
 				// do nothing.
 			}
 
 			@Override
-			public void faildAction(Exception ex) throws SuspendExecution {
+			public void faildAction(Exception ex) {
 				logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s, data: %s", client.toString(), data));
 			}
 

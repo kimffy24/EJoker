@@ -11,9 +11,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
-
 @EService
 public class DefaultRepository implements IRepository {
 
@@ -39,7 +36,6 @@ public class DefaultRepository implements IRepository {
 	}
 
 	@Override
-	@Suspendable
 	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
 		if (aggregateRootType == null)
 			throw new ArgumentNullException("aggregateRootType");
@@ -47,14 +43,9 @@ public class DefaultRepository implements IRepository {
 			throw new ArgumentNullException("aggregateRootId");
 
 		// TODO @await
-		IAggregateRoot aggregateRoot;
-		try {
-			aggregateRoot = EJokerEnvironment.ASYNC_ALL
+		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
 					? memoryCache.getAsync(aggregateRootId, aggregateRootType).get()
 							: memoryCache.get(aggregateRootId, aggregateRootType);
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
-		}
 		if(null != aggregateRoot)
 			return aggregateRoot;
 		return aggregateRootStorage.get(aggregateRootType, aggregateRootId.toString());

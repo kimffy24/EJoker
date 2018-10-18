@@ -8,4 +8,6 @@ public interface IAsyncEntrance {
 
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread);
 	
+	public void shutdown();
+	
 }

@@ -1,7 +1,5 @@
 package com.jiefzz.ejoker.z.common.utils;
 
-import co.paralleluniverse.fibers.Suspendable;
-
 public class InstanceBuilder<T> {
 
 	private final Class<T> clazz;
@@ -10,7 +8,6 @@ public class InstanceBuilder<T> {
 		this.clazz = clazz;
 	}
 	
-	@Suspendable
 	public T doCreate() {
 			Object newInstance;
 			try {
