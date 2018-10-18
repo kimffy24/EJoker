@@ -37,14 +37,11 @@ public abstract class AbstractNormalWorkerGroupService {
 		asyncPool = AsyncEntranceProvider.trigger(this);
 		scavenger.addFianllyJob(asyncPool::shutdown);
 		logger.debug("Create a new AsyncEntrance[{}] for {}.", asyncPool.getClass().getName(), this.getClass().getName());
-//		if(asyncPool instanceof SystemAsyncPool) {
-//			scheduleService.startTask(
-//					String.format("debug_show_pool_state_%s@%s", this.getClass(), this.hashCode()),
-//					() -> ((SystemAsyncPool )asyncPool).debugInfo(String.format("ThreadPool[%s]", this.getClass())),
-//					15000l,
-//					15000l);
-//			
-//		}
+	}
+	
+	public void d1() {
+		if(asyncPool instanceof SystemAsyncPool)
+			((SystemAsyncPool )asyncPool).debugInfo(String.format("ThreadPool[%s]", this.getClass()));
 	}
 
 	protected int usePoolSize() {

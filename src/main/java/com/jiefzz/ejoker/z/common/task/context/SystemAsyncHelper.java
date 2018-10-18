@@ -7,7 +7,7 @@ import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
 import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
 
 /**
- * 创建EJoker内置的任务线程组，整个EJoker生命周期内的异步任务都可以提交到此处<br>
+ * 创建EJoker内置的任务线程组，整个EJoker生命周期内的异步行为都可以提交到此处<br>
  * 可根据实际系统资源调整线程组的大小，已实现最佳性能<br>
  * 监控是也可以监控此线程组，如果太多线程在等待或挂起中，可以发现系统中的问题。
  * @author kimffy
