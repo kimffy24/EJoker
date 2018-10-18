@@ -17,7 +17,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWra
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -27,7 +27,7 @@ public class ProcessingCommandMailbox {
 	
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
 	
-	private final EJokerAsyncHelper eJokerAsyncHelper;
+	private final EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private final IProcessingCommandHandler messageHandler;
 
@@ -69,7 +69,7 @@ public class ProcessingCommandMailbox {
 		return lastActiveTime;
 	}
 
-	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler, EJokerAsyncHelper eJokerAsyncHelper) {
+	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler, EJokerTaskAsyncHelper eJokerAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.messageHandler = messageHandler;
 		

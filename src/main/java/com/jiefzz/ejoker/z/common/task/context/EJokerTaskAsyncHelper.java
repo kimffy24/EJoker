@@ -20,7 +20,7 @@ import co.paralleluniverse.fibers.Suspendable;
  *
  */
 @EService
-public class EJokerAsyncHelper {
+public class EJokerTaskAsyncHelper {
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;

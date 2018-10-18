@@ -21,7 +21,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 /**
  * 供演示和测试排错使用
@@ -42,7 +42,7 @@ public class InMemoryEventStore implements IEventStore {
 	private IEventSerializer eventSerializer;
 	
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private boolean supportBatchAppendEvent = EJokerEnvironment.SUPPORT_BATCH_APPEND_EVENT;
 	

@@ -1,3 +1,5 @@
+java.util.concurrent.Future.*
+
 com.jiefzz.ejoker.z.common.system.functional.IFunction.trigger
 com.jiefzz.ejoker.z.common.system.functional.IFunction1.trigger
 com.jiefzz.ejoker.z.common.system.functional.IFunction2.trigger
@@ -16,9 +18,8 @@ com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction.trigger
 com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction1.trigger
 com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction.trigger
 com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction1.trigger
-com.jiefzz.ejoker.z.common.task.IAsyncTask.call
-com.jiefzz.ejoker.queue.completation.DefaultMQConsumer.ISumbiter.submit
 com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService.submitInternal
+
 com.jiefzz.ejoker.z.common.task.context.AbstractReactThreadGroupService.*
 com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext.*
 

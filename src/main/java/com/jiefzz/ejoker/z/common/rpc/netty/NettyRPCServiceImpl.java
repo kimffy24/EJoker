@@ -24,7 +24,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -51,7 +51,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	private IScheduleService scheduleService;
 	
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private Lock lock4CreateClient = new ReentrantLock();
 	

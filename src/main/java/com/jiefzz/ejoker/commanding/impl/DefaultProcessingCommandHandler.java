@@ -38,10 +38,11 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWra
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 @EService
 public class DefaultProcessingCommandHandler implements IProcessingCommandHandler {
@@ -76,7 +77,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	@Override
 	public SystemFutureWrapper<Void> handleAsync(ProcessingCommand processingCommand) {
@@ -106,6 +107,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 	}
 	
+	@Suspendable
 	private void handleCommand(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
 
 		ICommand message = processingCommand.getMessage();

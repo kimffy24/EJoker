@@ -7,7 +7,7 @@ import com.jiefzz.ejoker.infrastructure.IProcessingMessageHandler;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
@@ -18,7 +18,7 @@ public abstract class AbstractDefaultProcessingMessageHandler<X extends IProcess
 	IMessageDispatcher messageDispatcher;
 	
 	@Dependence
-	EJokerAsyncHelper eJokerAsyncHelper;
+	EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage) {

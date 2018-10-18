@@ -68,8 +68,10 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		try {
 			task = externalContext.asyncAction();
 			AsyncTaskResult<T> result = null;
-			result = task.get();
 			try {
+				result = task.get();
+			} catch(SuspendExecution s) {
+				throw new AssertionError(s);
 			} catch (Exception ex) {
 				Exception cause = (Exception )ex.getCause();
 				processTaskException(externalContext, cause);
@@ -118,6 +120,8 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			default:
 				assert false;
 			}
+		} catch(SuspendExecution s) {
+			throw new AssertionError(s);
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the taskContinueAction, asyncActionName: %s, contextInfo: %s",
 					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
@@ -159,6 +163,8 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			} else {
 				externalContext.faildLoopAction();
 			}
+		} catch(SuspendExecution s) {
+			throw new AssertionError(s);
 		} catch (Exception ex) {
 			logger.error(String.format("Failed to execute the retryAction, asyncActionName: %s, context info: %s",
 					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
@@ -169,7 +175,9 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	private void executeFailedAction(final IOActionExecutionContext<?> externalContext, Exception exception) {
 		try {
 			externalContext.faildAction(exception);
-	    } catch (Exception ex) {
+	    } catch(SuspendExecution s) {
+			throw new AssertionError(s);
+		} catch (Exception ex) {
 	        logger.error(
 	        		String.format(
 	        				"Failed to execute the failedAction of asyncAction: %s, contextInfo: %s",

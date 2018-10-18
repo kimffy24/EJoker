@@ -17,7 +17,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 @EService
 public class ApplicationMessagePublisher implements IMessagePublisher<IApplicationMessage>, IWorkerService {
@@ -35,7 +35,7 @@ public class ApplicationMessagePublisher implements IMessagePublisher<IApplicati
 	private IJSONConverter jsonConverter;
 	
 	@Dependence
-	private EJokerAsyncHelper eJokerAsyncHelper;
+	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private DefaultMQProducer producer;
 

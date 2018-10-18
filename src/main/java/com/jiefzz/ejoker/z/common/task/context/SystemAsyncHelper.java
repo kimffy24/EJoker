@@ -30,21 +30,11 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 
 	@Suspendable
 	public SystemFutureWrapper<Void> submit(IVoidFunction vf) {
-		return submitInternalWrapper(vf::trigger);
-	}
-
-	@Suspendable
-	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
-		return submitInternalWrapper(vf::trigger);
-	}
-
-	@Suspendable
-	protected <T> SystemFutureWrapper<T> submitInternalWrapper(IFunction<T> vf) {
 		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
 	}
 
 	@Suspendable
-	protected SystemFutureWrapper<Void> submitInternalWrapper(IVoidFunction vf) {
+	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
 		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
 	}
 	
