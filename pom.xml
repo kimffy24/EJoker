@@ -8,12 +8,6 @@
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
-	<!-- <repositories> <repository> <id>CN</id> <name>OSChina Central</name> 
-		<url>http://maven.oschina.net/content/groups/public/</url> </repository> 
-		<repository> <id>ui</id> <name>Human Readable Name for this Mirror.</name> 
-		<url>http://uk.maven.org/maven2/</url> </repository> <repository> <id>central</id> 
-		<url>https://repo1.maven.org/maven2</url> </repository> </repositories> -->
-
 	<dependencies>
 
 		<!-- 日志组件 -->
@@ -52,7 +46,7 @@
 				</configuration>
 			</plugin>
 
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.eclipse.m2e</groupId>
 				<artifactId>lifecycle-mapping</artifactId>
 				<version>1.0.0</version>
@@ -92,7 +86,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- <plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>3.1.1</version>
@@ -104,7 +98,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin> -->
+			</plugin>
 
 			<plugin>
 				<groupId>org.fortasoft</groupId>
@@ -112,22 +106,22 @@
 				<version>1.0.8</version>
 				<configuration>
 					<tasks>
-						<!-- this would effectively call "gradle doSomething" -->
+						this would effectively call "gradle doSomething"
 						<task>scanSuspendables</task>
 						<task>compileJava</task>
 					</tasks>
 				</configuration>
 				<executions>
 					<execution>
-						<!-- You can bind this to any phase you like -->
+						You can bind this to any phase you like
 						<phase>quasar-instrumentation</phase>
 						<goals>
-							<!-- goal must be "invoke" -->
+							goal must be "invoke"
 							<goal>invoke</goal>
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 </project>

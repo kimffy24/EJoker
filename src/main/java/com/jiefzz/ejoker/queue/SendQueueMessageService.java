@@ -1,15 +1,10 @@
 package com.jiefzz.ejoker.queue;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +13,6 @@ import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
@@ -32,31 +26,6 @@ public class SendQueueMessageService {
 
 	public SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync(final DefaultMQProducer producer, final EJokerQueueMessage message,
 			final String routingKey, String messageId, String version) {
-//		
-//		SystemFutureWrapper<AsyncTaskResult<Void>> asyncResultSource = new SystemFutureWrapper<AsyncTaskResult<Void>>(new RipenFuture<>());
-//		cachedThreadPool.execute(() -> {
-//				RipenFuture<AsyncTaskResult<Void>> f = (RipenFuture<AsyncTaskResult<Void>> )asyncResultSource.refFuture;
-//				SendResult sendResult;
-//				try {
-//					sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
-//				} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
-//					f.trySetException(e);
-//					return;
-//				}
-//				if(!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-//					logger.error(
-//							"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-//							sendResult.toString(),
-//							routingKey,
-//							messageId,
-//							version
-//							);
-//					f.trySetException(new IOException(sendResult.toString()));
-//				}
-//				f.trySetResult(AsyncTaskResult.Success);
-//		});
-//		return asyncResultSource;
-		
 		return eJokerAsyncHelper.submit(() -> {
 					SendResult sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true));
 					if(!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
@@ -73,7 +42,4 @@ public class SendQueueMessageService {
 		);
 	}
 
-	// ============================== //
-	
-//	private ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
 }
