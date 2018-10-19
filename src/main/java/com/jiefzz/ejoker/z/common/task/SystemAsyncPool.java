@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.z.common.task;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,40 +28,40 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	private AtomicLong aliveCount = new AtomicLong(0l);
 	
 	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-				60L, TimeUnit.SECONDS,
-				new SynchronousQueue<Runnable>()) {
-			@Override
-			protected void beforeExecute(Thread t, Runnable r) {
-				aliveCount.getAndIncrement();
-			}
-
-			@Override
-			protected void afterExecute(Runnable r, Throwable t) {
-				aliveCount.decrementAndGet();
-			}
-		};
-//		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 500l, TimeUnit.MILLISECONDS,
-//				taskQueue = new LinkedBlockingQueue<Runnable>()) {
+//		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+//				60L, TimeUnit.SECONDS,
+//				new SynchronousQueue<Runnable>()) {
+//			@Override
+//			protected void beforeExecute(Thread t, Runnable r) {
+//				aliveCount.getAndIncrement();
+//			}
 //
-//					@Override
-//					protected void beforeExecute(Thread t, Runnable r) {
-//						aliveCount.getAndIncrement();
-//					}
-//
-//					@Override
-//					protected void afterExecute(Runnable r, Throwable t) {
-//						aliveCount.decrementAndGet();
-//					}
-//			
+//			@Override
+//			protected void afterExecute(Runnable r, Throwable t) {
+//				aliveCount.decrementAndGet();
+//			}
 //		};
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 500l, TimeUnit.MILLISECONDS,
+				taskQueue = new LinkedBlockingQueue<Runnable>()) {
+
+					@Override
+					protected void beforeExecute(Thread t, Runnable r) {
+						aliveCount.getAndIncrement();
+					}
+
+					@Override
+					protected void afterExecute(Runnable r, Throwable t) {
+						aliveCount.decrementAndGet();
+					}
+			
+		};
 		if(prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();
 		defaultThreadPool = threadPoolExecutor;
 	}
 	
 	public void debugInfo(String poolName) {
-		logger.warn("pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), taskQueue.size());
+		logger.error("pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
 	}
 
 	@Override

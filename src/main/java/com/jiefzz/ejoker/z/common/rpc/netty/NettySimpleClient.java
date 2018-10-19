@@ -23,7 +23,7 @@ public class NettySimpleClient {
 	
 	private final String clientDesc;
 	
-	private long lostInvokeTime;
+	private long lastInvokeTime;
 
 	private EventLoopGroup eventLoopGroup;
 
@@ -45,7 +45,7 @@ public class NettySimpleClient {
 
 						ChannelPipeline pipeline = socketChannel.pipeline();
 
-						// 以("\n")为结尾分割的 解码器
+				        // 以("\n" or "\r\n")为结尾分割的 解码器
 						pipeline.addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
 
 						// 字符串解码 和 编码
@@ -67,7 +67,7 @@ public class NettySimpleClient {
 		}
 
 		clientDesc = host + ":" + port;
-		lostInvokeTime = System.currentTimeMillis();
+		lastInvokeTime = System.currentTimeMillis();
 	}
 
 	public void sendMessage(Object msg) {
@@ -75,7 +75,7 @@ public class NettySimpleClient {
 			throw new RuntimeException("Not avaliable!!!");
 		}
 		socketChannel.writeAndFlush(msg);
-		lostInvokeTime = System.currentTimeMillis();
+		lastInvokeTime = System.currentTimeMillis();
 	}
 
 	public void close() {
@@ -93,6 +93,6 @@ public class NettySimpleClient {
 	}
 	
 	public boolean isInactive(long atLast) {
-		return System.currentTimeMillis() - lostInvokeTime - atLast > 0l;
+		return System.currentTimeMillis() - lastInvokeTime - atLast > 0l;
 	}
 }

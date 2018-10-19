@@ -49,14 +49,13 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			logger.warn("{} has started!", this.getClass().getName());
 		} else {
 			rpcService.export((parameter) -> {
-				logger.debug("netty receive: {}", parameter);
-					ReplyMessage revert = jsonConverter.revert(parameter, ReplyMessage.class);
-					if(null!=revert.c)
-						CommandResultProcessor.this.handlerResult(revert.t, revert.c);
-					else if(null!=revert.d)
-						CommandResultProcessor.this.handlerResult(revert.t, revert.d);
+				logger.debug("receive: {}", parameter);
+				ReplyMessage revert = jsonConverter.revert(parameter, ReplyMessage.class);
+				if(null!=revert.c)
+					CommandResultProcessor.this.handlerResult(revert.t, revert.c);
+				else if(null!=revert.d)
+					CommandResultProcessor.this.handlerResult(revert.t, revert.d);
 			}, EJokerEnvironment.REPLY_PORT, true);
-			
 		}
 		return this;
 	}

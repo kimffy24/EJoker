@@ -18,7 +18,7 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 
 	@Override
 	protected boolean prestartAll() {
-		return false;
+		return true;
 	};
 	
 	@Override

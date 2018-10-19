@@ -165,17 +165,21 @@ public class NettyRPCServiceImpl implements IRPCService {
 			public String getAsyncActionName() {
 				return "RemoteInvoke";
 			}
+			
+			String s = null;
 
 			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
-				
-				String s;
+			public void init() {
 				int dIndexOf = data.lastIndexOf('\n');
 				if(data.length() - dIndexOf -1 != 0)
 					s = data + "\n";
 				else
 					s = data;
-				
+			}
+
+
+			@Override
+			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
 				return eJokerAsyncHelper.submit(() -> client.sendMessage(s));
 			}
 
