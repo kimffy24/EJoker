@@ -17,7 +17,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
@@ -42,44 +41,25 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 			CountDownLatch cdl = new CountDownLatch(handlers.size());
 			
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
-				eJokerAsyncHelper.submit(() -> {
-					ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
-		
-						@Override
-						public String getAsyncActionName() {
-							return "HandleSingleMessageAsync";
-						}
-		
-						@Override
-						public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
-							return proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit);
-						}
-		
-						@Override
-						public void finishAction(Void result) {
-							cdl.countDown();
-						}
-		
-						@Override
-						public void faildAction(Exception ex) {
-							logger.error(String.format("Handle single message has unknown exception, the code should not be run to here, errorMessage: %s!!!", ex.getMessage()), ex);
-						}
-
-						@Override
-						public String getContextInfo() {
-							
-							String msgDesc = String.format("id: %s, type: %s", message.getId(), message.getClass().getSimpleName());
-							
-							return String.format(
+				eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
+							"HandleSingleMessageAsync",
+							() -> proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit),
+							r -> cdl.countDown(),
+							() -> String.format(
 									"[messages: [%s], handlerType: %s]",
-									msgDesc,
+									String.format(
+											"id: %s, type: %s",
+											message.getId(),
+											message.getClass().getSimpleName()),
 									proxyAsyncHandler.toString()
-								);
-						}
-						
-					});
-					
-				});
+								),
+							ex -> logger.error(
+									String.format(
+											"Handle single message has unknown exception, the code should not be run to here, errorMessage: %s!!!",
+											ex.getMessage()),
+									ex),
+							true)
+				);
 			}
 			
 			try {

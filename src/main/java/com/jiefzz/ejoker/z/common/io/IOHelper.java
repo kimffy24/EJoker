@@ -10,6 +10,8 @@ import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
@@ -39,25 +41,80 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
-	public <T> void tryAsyncAction(IOActionExecutionContext<T> externalContext) {
-
-		if (!externalContext.hasInitialized) {
-			externalContext.init();
-			externalContext.hasInitialized = true;
-			
-			externalContext.ioHelper = this;
-		}
-
-		taskContinueAction(externalContext);
-
+	public <T> void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IVoidFunction1<T> completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction) {
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				null,
+				completeAction,
+				contextInfo,
+				faildAction);
 	}
 
-	private <T> void taskContinueAction(IOActionExecutionContext<T> externalContext) {
+	public <T> void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IVoidFunction1<Integer> loopAction,
+			IVoidFunction1<T> completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction) {
+		taskContinueAction(new IOHelperContext<>(
+				this,
+				actionName,
+				mainAction,
+				loopAction,
+				completeAction,
+				contextInfo,
+				faildAction));
+	}
+	
+	public <T> void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IVoidFunction1<T> completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction,
+			boolean retryWhenFailed) {
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				null,
+				completeAction,
+				contextInfo,
+				faildAction,
+				retryWhenFailed);
+	}
+
+	public <T> void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IVoidFunction1<Integer> loopAction,
+			IVoidFunction1<T> completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction,
+			boolean retryWhenFailed) {
+		taskContinueAction(new IOHelperContext<>(
+				this,
+				actionName,
+				mainAction,
+				loopAction,
+				completeAction,
+				contextInfo,
+				faildAction,
+				retryWhenFailed));
+	}
+
+	private <T> void taskContinueAction(IOHelperContext<T> externalContext) {
 		
 		SystemFutureWrapper<AsyncTaskResult<T>> task;
 		
 		try {
-			task = externalContext.asyncAction();
+			task = externalContext.mainAction.trigger();
 			AsyncTaskResult<T> result = null;
 			try {
 				result = task.get();
@@ -68,64 +125,85 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			}
 			if (task.isCancelled()) {
 				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.",
-						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.actionName,
+						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes);
-				executeFailedAction(externalContext, new Exception(
-						String.format("Async task '%s' was cancelled.", externalContext.getAsyncActionName())));
+				executeFailedAction(
+						externalContext,
+						new Exception(
+								String.format(
+										"Async task '%s' was cancelled.",
+										externalContext.actionName)
+								)
+						);
 				return;
 			}
 			if (result == null) {
 				logger.error("Async task '{}' result is null, context info: {}, current retryTimes: {}",
-						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+						externalContext.actionName,
+						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes);
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(externalContext, new Exception("task result is null!!!"));
+					executeFailedAction(externalContext, new RuntimeException("task result is null!!!"));
 				}
 				return;
 			}
 			switch (result.status) {
 			case Success:
-				externalContext.finishAction(result.getData());
+				externalContext.completeAction.trigger(result.getData());
 				break;
 			case IOException:
 				logger.error(
 						"Async task '{}' result status is io exception, context info: {}, current retryTimes:{}, errorMsg:{}, try to run the async task again.",
-						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
-						externalContext.currentRetryTimes, result.getErrorMessage());
+						externalContext.actionName,
+						externalContext.contextInfo.trigger(),
+						externalContext.currentRetryTimes,
+						result.getErrorMessage());
 				executeRetryAction(externalContext);
 				break;
 			case Failed:
 				logger.error("Async task '{}' failed, context info: {}, current retryTimes:{}, errorMsg:{}",
-						externalContext.getAsyncActionName(), externalContext.getContextInfo(),
-						externalContext.currentRetryTimes, result.errorMessage);
+						externalContext.actionName,
+						externalContext.contextInfo.trigger(),
+						externalContext.currentRetryTimes,
+						result.errorMessage);
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(externalContext, new Exception(result.errorMessage));
+					executeFailedAction(externalContext, new RuntimeException(result.errorMessage));
 				}
 				break;
 			default:
 				assert false;
 			}
 		} catch (Exception ex) {
-			logger.error(String.format("Failed to execute the taskContinueAction, asyncActionName: %s, contextInfo: %s",
-					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
+			logger.error(
+					String.format(
+							"Failed to execute the taskContinueAction, asyncActionName: %s, contextInfo: %s",
+							externalContext.actionName,
+							externalContext.contextInfo.trigger()),
+					ex);
 		}
 	}
 
-	private void processTaskException(IOActionExecutionContext<?> externalContext, Exception exception) {
+	private void processTaskException(IOHelperContext<?> externalContext, Exception exception) {
 		if (exception instanceof IOException || exception instanceof IOExceptionOnRuntime) {
-			logger.error(String.format(
-					"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
-					externalContext.getAsyncActionName(), externalContext.getContextInfo(),
-					externalContext.currentRetryTimes), exception);
+			logger.error(
+					String.format(
+							"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
+							externalContext.actionName,
+							externalContext.contextInfo.trigger(),
+							externalContext.currentRetryTimes),
+					exception);
 			executeRetryAction(externalContext);
 		} else {
 			logger.error(
-					String.format("Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
-							externalContext.getAsyncActionName(), externalContext.getContextInfo(),
+					String.format(
+							"Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
+							externalContext.actionName,
+							externalContext.contextInfo.trigger(),
 							externalContext.currentRetryTimes),
 					exception);
 			if (externalContext.retryWhenFailed) {
@@ -136,47 +214,41 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		}
 	}
 
-	private void executeRetryAction(final IOActionExecutionContext<?> externalContext) {
+	private void executeRetryAction(IOHelperContext<?> externalContext) {
 		externalContext.currentRetryTimes++;
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
 				submitInternal(() -> {
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
-					externalContext.faildLoopAction();
+					externalContext.loopAction.trigger(externalContext.currentRetryTimes);
 					});
-				
 			} else {
-				externalContext.faildLoopAction();
+				externalContext.loopAction.trigger(externalContext.currentRetryTimes);
 			}
-		} catch (Exception ex) {
-			logger.error(String.format("Failed to execute the retryAction, asyncActionName: %s, context info: %s",
-					externalContext.getAsyncActionName(), externalContext.getContextInfo()), ex);
+		} catch (RuntimeException ex) {
+			logger.error(
+					String.format(
+							"Failed to execute the retryAction, asyncActionName: %s, context info: %s",
+							externalContext.actionName,
+							externalContext.contextInfo.trigger()),
+					ex);
 		}
 	}
 
-	private void executeFailedAction(final IOActionExecutionContext<?> externalContext, Exception exception) {
+	private void executeFailedAction(IOHelperContext<?> externalContext, Exception exception) {
 		try {
-			externalContext.faildAction(exception);
-	    } catch (Exception ex) {
+			externalContext.faildAction.trigger(exception);
+	    } catch (RuntimeException ex) {
 	        logger.error(
 	        		String.format(
 	        				"Failed to execute the failedAction of asyncAction: %s, contextInfo: %s",
-	        				externalContext.getAsyncActionName(),
-	        				externalContext.getContextInfo()), ex);
+	        				externalContext.actionName,
+	        				externalContext.contextInfo.trigger()),
+	        		ex);
 	    }
 	}
-
-	/**
-	 * ioHelper连接实际执行环境的上下文
-	 * 
-	 * @author JiefzzLon
-	 *
-	 */
-	public static abstract class IOActionExecutionContext<TAsyncResult> {
-		
-		private IOHelper ioHelper = null;
-
-		private boolean hasInitialized = false;
+	
+	private static class IOHelperContext<T> {
 
 		/**
 		 * 当前重试次数
@@ -192,87 +264,87 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		 * 最大的即时重试次数<br>
 		 * 若失败重试次数超过此数字，则执行重试时会等待 ${重试间隔} ms 的时间再重试
 		 */
-		protected int maxRetryTimes = 3;
+		protected final int maxRetryTimes;
 
 		/**
 		 * 重试间隔
 		 */
-		protected long retryInterval = 1000l;
+		protected final long retryInterval;
+
+		protected final String actionName;
 		
-		public IOActionExecutionContext() {
-			this(false);
-		}
-		public IOActionExecutionContext(boolean retryWhenFailed) {
-			this.retryWhenFailed = true;
-		}
-
-		/**
-		 * 设定异步任务名
-		 */
-		abstract public String getAsyncActionName();
-
-		/**
-		 * 要执行的异步方法
-		 * 
-		 * @return
-		 */
-		abstract public SystemFutureWrapper<AsyncTaskResult<TAsyncResult>> asyncAction();
-
-		/**
-		 * 重试执行的方法
-		 * 
-		 */
-		public void faildLoopAction() {
-			ioHelper.tryAsyncAction(this);
-		}
+		protected final IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction;
 		
-		/**
-		 * 异步执行完成后对结果的处理的方法<br>
-		 * !!! 异步执行完成不代表 异步任务正确并完成 需要对结果返回信息确认。
-		 * 
-		 * @param result
-		 */
-		abstract public void finishAction(TAsyncResult result);
-
-		/**
-		 * 异步执行失败后执行的处理方法
-		 * 
-		 * @param errorMessage
-		 */
-		abstract public void faildAction(Exception ex);
-
-		/**
-		 * 初始化方法<br>
-		 * * 允许用户执行一些初始化方法
-		 */
-		public void init() {
-			;
-		}
-
-		/**
-		 * 返回相关上下文信息（默认为空字符串）
-		 * 
-		 * @return
-		 */
-		public String getContextInfo() {
-			return "";
-		}
-
-		/**
-		 * 将当前重试次数清0，重新计算
-		 */
-		public void resetCurrentRetryTimes() {
-			currentRetryTimes = 0;
-		}
+		protected final IVoidFunction1<Integer> loopAction;
 		
-		/**
-		 * 获取当前的重试次数<br>
-		 * 有可能客户需要按照当前重试次数做出相应控制
-		 * @return
-		 */
-		protected int getCurrentRetryTimes() {
-			return currentRetryTimes;
-		}
+		protected final IVoidFunction1<T> completeAction;
 		
+		protected final IFunction<String> contextInfo;
+		
+		protected final IVoidFunction1<Exception> faildAction;
+		
+		private IOHelper ioHelper = null;
+		
+		public IOHelperContext(
+				IOHelper ioHelper,
+				String actionName,
+				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<T> completeAction,
+				IFunction<String> contextInfo,
+				IVoidFunction1<Exception> faildAction,
+				boolean retryWhenFailed, int maxRetryTimes, long retryInterval) {
+			this.ioHelper = ioHelper;
+			this.actionName = actionName;
+			this.mainAction = mainAction;
+			this.loopAction = null == loopAction
+					? r -> this.ioHelper.taskContinueAction(this)
+					: loopAction;
+			this.completeAction = completeAction;
+			this.contextInfo = contextInfo;
+			this.faildAction = faildAction;
+			
+			this.retryWhenFailed = retryWhenFailed;
+			this.maxRetryTimes = maxRetryTimes;
+			this.retryInterval = retryInterval;
+		}
+
+		public IOHelperContext(
+				IOHelper ioHelper,
+				String actionName,
+				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<T> completeAction,
+				IFunction<String> contextInfo,
+				IVoidFunction1<Exception> faildAction,
+				boolean retryWhenFailed, int maxRetryTimes) {
+			this(ioHelper, actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
+					retryWhenFailed, maxRetryTimes, 1000l);
+		}
+
+		public IOHelperContext(
+				IOHelper ioHelper,
+				String actionName,
+				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<T> completeAction,
+				IFunction<String> contextInfo,
+				IVoidFunction1<Exception> faildAction,
+				boolean retryWhenFailed) {
+			this(ioHelper, actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
+					retryWhenFailed, 3);
+		}
+
+		public IOHelperContext(
+				IOHelper ioHelper,
+				String actionName,
+				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<T> completeAction,
+				IFunction<String> contextInfo,
+				IVoidFunction1<Exception> faildAction) {
+			this(ioHelper, actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
+					false);
+		}
 	}
 }

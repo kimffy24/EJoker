@@ -16,7 +16,6 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
@@ -159,46 +158,21 @@ public class NettyRPCServiceImpl implements IRPCService {
 	}
 	
 	private void remoteInvokeInternal(NettySimpleClient client, String data) {
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
-
-			@Override
-			public String getAsyncActionName() {
-				return "RemoteInvoke";
-			}
-			
-			String s = null;
-
-			@Override
-			public void init() {
-				int dIndexOf = data.lastIndexOf('\n');
-				if(data.length() - dIndexOf -1 != 0)
-					s = data + "\n";
-				else
-					s = data;
-			}
-
-
-			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
-				return eJokerAsyncHelper.submit(() -> client.sendMessage(s));
-			}
-
-			@Override
-			public void finishAction(Void result) {
-				// do nothing.
-			}
-
-			@Override
-			public void faildAction(Exception ex) {
-				logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s, data: %s", client.toString(), data));
-			}
-
-			@Override
-			public String getContextInfo() {
-				return String.format("remoteInvoke[target: %s]", client.toString());
-			}
-			
-		});
+		final String s;
+		int dIndexOf = data.lastIndexOf('\n');
+		if(data.length() - dIndexOf -1 != 0)
+			s = data + "\n";
+		else
+			s = data;
+		
+		
+		ioHelper.tryAsyncAction2(
+				"RemoteInvoke",
+				() -> eJokerAsyncHelper.submit(() -> client.sendMessage(s)),
+				r -> {},
+				() -> String.format("remoteInvoke[target: %s]", client.toString()),
+				e -> logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s, data: %s", client.toString(), data)),
+				true);
 	}
 	
 	private void cleanInactiveClient() {

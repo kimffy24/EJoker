@@ -32,7 +32,6 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.io.IOHelper.IOActionExecutionContext;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
@@ -208,134 +207,72 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	
     private void processIfNoEventsOfCommand(ProcessingCommand processingCommand) {
     	ICommand command = processingCommand.getMessage();
-    	ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(true) {
-
-			@Override
-			public String getAsyncActionName() {
-				return "ProcessIfNoEventsOfCommand";
-			}
-
-			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() {
-				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
-			}
-
-			@Override
-			public void finishAction(DomainEventStream result) {
-				DomainEventStream existingEventStream = result;
-                if (null != existingEventStream) {
-                    eventService.publishDomainEventAsync(processingCommand, existingEventStream);
-                } else {
-                    completeCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
-                }
-			}
-
-			@Override
-			public void faildAction(Exception ex) {
-				logger.error(
-						String.format("Find event by commandId has unknown exception, the code should not be run to here, errorMessage: {}",
+    	ioHelper.tryAsyncAction2(
+    			"ProcessIfNoEventsOfCommand",
+    			() -> eventStore.findAsync(command.getAggregateRootId(), command.getId()),
+    			existingEventStream -> {
+                    if (null != existingEventStream) {
+                        eventService.publishDomainEventAsync(processingCommand, existingEventStream);
+                    } else {
+                        completeCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
+                    } },
+    			() -> String.format("[commandId: %s]", command.getId()),
+    			ex -> logger.error(
+						String.format(
+								"Find event by commandId has unknown exception, the code should not be run to here, errorMessage: {}",
 								ex.getMessage()),
-						ex);
-			}
-
-			@Override
-			public String getContextInfo() {
-				return String.format("[commandId: %s]", command.getId());
-			}
-			
-    	});
+						ex),
+    			true
+    			);
     }
 	
 	private void handleExceptionAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler, Exception exception) {
 		ICommand command = processingCommand.getMessage();
-		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<DomainEventStream>(true) {
-
-			@Override
-			public String getAsyncActionName() {
-				return "FindEventByCommandIdAsync";
-			}
-
-			@Override
-			public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> asyncAction() {
-				return eventStore.findAsync(command.getAggregateRootId(), command.getId());
-			}
-
-			@Override
-			public void finishAction(DomainEventStream result) {
-				
-				DomainEventStream existingEventStream = result;
-                if (existingEventStream != null) {
-                    //这里，我们需要再重新做一遍发布事件这个操作；
-                    //之所以要这样做是因为虽然该command产生的事件已经持久化成功，但并不表示事件已经发布出去了；
-                    //因为有可能事件持久化成功了，但那时正好机器断电了，则发布事件就没有做；
-                    eventService.publishDomainEventAsync(processingCommand, existingEventStream);
-                
-                } else {
-                	
-                    //到这里，说明当前command执行遇到异常，然后当前command之前也没执行过，是第一次被执行。
-                    //那就判断当前异常是否是需要被发布出去的异常，如果是，则发布该异常给所有消费者；
-                    //否则，就记录错误日志，然后认为该command处理失败即可；
-                	IPublishableException publishableException
-                		= (exception instanceof IPublishableException) ? (IPublishableException )exception : null;
-                    if (publishableException != null) {
-                        publishExceptionAsync(processingCommand, publishableException);
-                    } else {
-                        logCommandExecuteException(processingCommand, commandHandler, exception);
-                        completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), exception.getMessage());
-                    }
-                    
-                }
-			}
-
-			@Override
-			public void faildAction(Exception ex) {
-				logger.error(
-						String.format("Find event by commandId has unknown exception, the code should not be run to here, errorMessage: {}",
+		ioHelper.tryAsyncAction2(
+				"FindEventByCommandIdAsync",
+				() -> eventStore.findAsync(command.getAggregateRootId(), command.getId()),
+				existingEventStream -> {
+					if (existingEventStream != null) {
+	                    //这里，我们需要再重新做一遍发布事件这个操作；
+	                    //之所以要这样做是因为虽然该command产生的事件已经持久化成功，但并不表示事件已经发布出去了；
+	                    //因为有可能事件持久化成功了，但那时正好机器断电了，则发布事件就没有做；
+	                    eventService.publishDomainEventAsync(processingCommand, existingEventStream);
+	                
+	                } else {
+	                	
+	                    //到这里，说明当前command执行遇到异常，然后当前command之前也没执行过，是第一次被执行。
+	                    //那就判断当前异常是否是需要被发布出去的异常，如果是，则发布该异常给所有消费者；
+	                    //否则，就记录错误日志，然后认为该command处理失败即可；
+	                	IPublishableException publishableException
+	                		= (exception instanceof IPublishableException) ? (IPublishableException )exception : null;
+	                    if (publishableException != null) {
+	                        publishExceptionAsync(processingCommand, publishableException);
+	                    } else {
+	                        logCommandExecuteException(processingCommand, commandHandler, exception);
+	                        completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), exception.getMessage());
+	                    }
+	                    
+	                } },
+				() -> String.format("[commandId: %s]", command.getId()),
+				ex -> logger.error(
+						String.format(
+								"Find event by commandId has unknown exception, the code should not be run to here, errorMessage: {}",
 								ex.getMessage()),
-						ex);
-			}
-
-			@Override
-			public String getContextInfo() {
-				return String.format("[commandId: %s]", command.getId());
-			}
-			
-		});
-		
+						ex),
+				true
+				);
 	}
 	
 	
 	private void publishExceptionAsync(ProcessingCommand processingCommand, IPublishableException exception) {
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
-
-			@Override
-			public String getAsyncActionName() {
-				return "PublishExceptionAsync";
-			}
-
-			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
-				return exceptionPublisher.publishAsync(exception);
-			}
-
-			@Override
-			public void finishAction(Void result) {
-				completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage());
-			}
-
-			@Override
-			public void faildAction(Exception ex) {
-				logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex);
-			}
-
-			@Override
-			public String getContextInfo() {
-                return String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionCodecHelper.serialize(exception));
-            }
-			
-		});
-		
+		ioHelper.tryAsyncAction2(
+				"PublishExceptionAsync",
+				() -> exceptionPublisher.publishAsync(exception),
+				r -> completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
+				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionCodecHelper.serialize(exception)),
+				ex -> logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
+				true
+				);
 	}
 
     private void logCommandExecuteException(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler, Exception exception) {
@@ -352,61 +289,38 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private SystemFutureWrapper<AsyncTaskResult<Void>> handleCommandAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
-		return eJokerAsyncHelper.submit(() -> {
-			
-			ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>() {
+		return eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
+					"HandleCommandAsync",
+					() ->  {
+						try {
+							commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
+							logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
+		                            commandHandler.toString(),
+		                            command.getClass().getName(),
+		                            command.getId(),
+		                            command.getAggregateRootId());
+							
+							return EJokerFutureWrapperUtil.createCompleteFutureTask();
+						} catch (Exception ex) {
+							
+							while(ex instanceof IOExceptionOnRuntime)
+								ex = (Exception )ex.getCause();
+							
+		                    logger.error(String.format("Handle command async has io exception. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
+		                    		commandHandler.toString(),
+		                            command.getClass().getName(),
+		                            command.getId(),
+		                            command.getAggregateRootId()), ex);
 
-				@Override
-				public String getAsyncActionName() {
-					return "HandleCommandAsync";
-				}
-
-				@Override
-				public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
-					try {
-						commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
-						logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
-	                            commandHandler.toString(),
-	                            command.getClass().getName(),
-	                            command.getId(),
-	                            command.getAggregateRootId());
-						
-						return EJokerFutureWrapperUtil.createCompleteFutureTask();
-					} catch (Exception ex) {
-						
-						while(ex instanceof IOExceptionOnRuntime)
-							ex = (Exception )ex.getCause();
-						
-	                    logger.error(String.format("Handle command async has io exception. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
-	                    		commandHandler.toString(),
-	                            command.getClass().getName(),
-	                            command.getId(),
-	                            command.getAggregateRootId()), ex);
-
-	            		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
-	            		rf.trySetResult(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
-	                    return new SystemFutureWrapper<>(rf);
-	                }
-				}
-
-				@Override
-				public void finishAction(Void result) {
-					commitChangesAsync(processingCommand, true, null, null);
-				}
-
-				@Override
-				public void faildAction(Exception ex) {
-					commitChangesAsync(processingCommand, false, null, ex.getMessage());
-				}
-
-				@Override
-				public String getContextInfo() {
-					return String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString());
-				}
-				
-			});
-			
-		});
+		            		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
+		            		rf.trySetResult(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		                    return new SystemFutureWrapper<>(rf);
+		                } },
+					r -> commitChangesAsync(processingCommand, true, null, null),
+					() -> String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString()),
+					ex -> commitChangesAsync(processingCommand, false, null, ex.getMessage())
+					)
+		);
     }
 	
 	private void commitChangesAsync(ProcessingCommand processingCommand, boolean success, IApplicationMessage message,
@@ -425,34 +339,14 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private void publishMessageAsync(ProcessingCommand processingCommand, IApplicationMessage message) {
 		ICommand command = processingCommand.getMessage();
 		
-		ioHelper.tryAsyncAction(new IOActionExecutionContext<Void>(true) {
-
-			@Override
-			public String getAsyncActionName() {
-				return "PublishApplicationMessageAsync";
-			}
-
-			@Override
-			public SystemFutureWrapper<AsyncTaskResult<Void>> asyncAction() {
-				return applicationMessagePublisher.publishAsync(message);
-			}
-
-			@Override
-			public void finishAction(Void result) {
-				completeCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message));
-			}
-
-			@Override
-			public void faildAction(Exception ex) {
-				logger.error(String.format("Publish application message has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex);
-			}
-
-			@Override
-			public String getContextInfo() {
-				return String.format("[application message:[id: %, type: %s],command:[id: %s, type: %s]]", message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName());
-			}
-			
-		});
+		ioHelper.tryAsyncAction2(
+				"PublishApplicationMessageAsync",
+				() -> applicationMessagePublisher.publishAsync(message),
+				r -> completeCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
+				() -> String.format("[application message:[id: %, type: %s],command:[id: %s, type: %s]]", message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
+				ex -> logger.error(String.format("Publish application message has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
+				true
+				);
 	}
 
 	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandAsync(ProcessingCommand processingCommand,
