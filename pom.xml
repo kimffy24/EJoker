@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jiefzz</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>0.3.1-Beta</version>
+	<version>0.3.2-Beta</version>
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
