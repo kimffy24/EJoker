@@ -5,8 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,14 +13,13 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
@@ -51,7 +49,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
-	private Lock lock4CreateClient = new ReentrantLock();
+	private final Map<String, AtomicBoolean> clientConnectionOccupation = new HashMap<>();
 	
 	private Map<Integer, IVoidFunction> closeHookTrigger = new HashMap<>();
 	
@@ -66,57 +64,62 @@ public class NettyRPCServiceImpl implements IRPCService {
 				800l);
 	}
 	
+	// @unsafe
 	@Override
-	public void export(final IVoidFunction1<String> action, final int port, boolean waitFinished) {
+	public void export(IVoidFunction1<String> action, int port, boolean waitFinished) {
 		if (portMap.containsKey(port)) {
 			throw new RuntimeException(String.format("Another action has registed on port %d!!!", port));
 		}
+
 		RPCTuple currentTuple = null;
-		rpcRegistLock.lock();
-		try {
-			Thread ioThread = new Thread(() -> {
-					EventLoopGroup bossGroup = new NioEventLoopGroup();
-					EventLoopGroup workerGroup = new NioEventLoopGroup();
-					// 期间，此线程应该会一直等待。
-					try {
-						ServerBootstrap b = new ServerBootstrap();
-						b.group(bossGroup, workerGroup);
-						b.channel(NioServerSocketChannel.class);
-						b.childHandler(new EJokerServerInitializer(new Handler4RpcRequest(action)));
-	
-						// 服务器绑定端口监听
-						ChannelFuture f = b.bind(port).awaitUninterruptibly();
-						
-						{
-							// sync 协调逻辑
-							closeHookTrigger.put(port, f.channel()::close);
-							RPCTuple currentRPCTuple;
-							while(null == (currentRPCTuple = portMap.get(port)))
-								SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
-							currentRPCTuple.initialFuture.trySetResult(null);
+		AtomicBoolean ab = MapHelper.getOrAdd(serverPortOccupation, port, AtomicBoolean::new);
+		if(ab.compareAndSet(false, true)) {
+			Thread ioThread = new Thread(
+					() -> {
+						EventLoopGroup bossGroup = new NioEventLoopGroup();
+						EventLoopGroup workerGroup = new NioEventLoopGroup();
+						// 期间，此线程应该会一直等待。
+						try {
+							ServerBootstrap b = new ServerBootstrap();
+							b.group(bossGroup, workerGroup);
+							b.channel(NioServerSocketChannel.class);
+							b.childHandler(new EJokerServerInitializer(new Handler4RpcRequest(action)));
+			
+							// 服务器绑定端口监听
+							ChannelFuture f = b.bind(port).awaitUninterruptibly();
+							
+							{
+								// sync 协调逻辑
+								closeHookTrigger.put(port, f.channel()::close);
+								RPCTuple currentRPCTuple;
+								while(null == (currentRPCTuple = portMap.get(port)))
+									SleepWrapper.sleep(TimeUnit.MILLISECONDS, 5l);
+								currentRPCTuple.initialFuture.trySetResult(null);
+							}					
+							// 监听服务器关闭监听
+							f.channel().closeFuture().awaitUninterruptibly();
+						} catch (RuntimeException e) {
+							{
+								// sync 协调逻辑
+								RPCTuple currentRPCTuple;
+								while(null == (currentRPCTuple = portMap.get(port)))
+									;
+								currentRPCTuple.initialFuture.trySetException(e);
+							}
+						} finally {
+							bossGroup.shutdownGracefully();
+							workerGroup.shutdownGracefully();
 						}
-					
-						// 监听服务器关闭监听
-						f.channel().closeFuture().awaitUninterruptibly();
-					} catch (RuntimeException e) {
-						{
-							// sync 协调逻辑
-							RPCTuple currentRPCTuple;
-							while(null == (currentRPCTuple = portMap.get(port)))
-								;
-							currentRPCTuple.initialFuture.trySetException(e);
-						}
-					} finally {
-						bossGroup.shutdownGracefully();
-						workerGroup.shutdownGracefully();
-					}
-				}
-			, "rcp:listener:" + port);
+					},
+				"rcp:listener:" + port);
 			portMap.put(port, currentTuple = new RPCTuple(action, ioThread));
 			// sync: start一定要放在注册portMap之后进行。
 			ioThread.start();
-		} finally {
-			rpcRegistLock.unlock();
+		} else {
+			if(waitFinished) {
+				while(null == (currentTuple = portMap.get(port)))
+					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 10l);
+			}
 		}
 		
 		if(waitFinished)
@@ -127,31 +130,33 @@ public class NettyRPCServiceImpl implements IRPCService {
 	// @unsafe
 	@Override
 	public void removeExport(int port) {
-		rpcRegistLock.lock();
-		try {
-			IVoidFunction closeAction = closeHookTrigger.remove(port);
-			if(null == closeAction)
-				return;
-			closeAction.trigger();
-			portMap.remove(port);
-		} finally {
-			rpcRegistLock.unlock();
-		}
+		AtomicBoolean atomicBoolean = serverPortOccupation.get(port);
+		if(!atomicBoolean.compareAndSet(true, false))
+			return;
+		IVoidFunction closeAction = closeHookTrigger.remove(port);
+		if(null == closeAction)
+			return;
+		closeAction.trigger();
+		portMap.remove(port);
 	}
 
 	@Override
-	public void remoteInvoke(final String data, final String host, final int port) {
-		
-		NettySimpleClient nettySimpleClient = clientStore.get(host+":"+port);
+	public void remoteInvoke(String data, String host, int port) {
+		String uniqueKey = host+":"+port;
+		NettySimpleClient nettySimpleClient = clientStore.get(uniqueKey);
 		if(null == nettySimpleClient) {
-			lock4CreateClient.lock();
-			try {
-				if(null == (nettySimpleClient = clientStore.get(host+":"+port))) {
-					nettySimpleClient = new NettySimpleClient(host, port);
-					clientStore.put(host+":"+port, nettySimpleClient);
+			AtomicBoolean acquired = MapHelper.getOrAdd(clientConnectionOccupation, uniqueKey, AtomicBoolean::new);
+			if(acquired.compareAndSet(false, true)) {
+				nettySimpleClient = new NettySimpleClient(host, port);
+				clientStore.put(host+":"+port, nettySimpleClient);
+			} else {
+				int loop = 0;
+				while (loop++<3 && null == (nettySimpleClient = clientStore.get(uniqueKey)))
+					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
+				if(null == nettySimpleClient) {
+					remoteInvoke(data, host, port);
+					return;
 				}
-			} finally {
-				lock4CreateClient.unlock();
 			}
 		}
 		remoteInvokeInternal(nettySimpleClient, data);
@@ -182,12 +187,20 @@ public class NettyRPCServiceImpl implements IRPCService {
 			if(!current.getValue().isInactive(clientInactiveMilliseconds))
 				continue;
 			iterator.remove();
-			logger.debug("Close rpc client: {}", current.getKey());
+			AtomicBoolean ab = clientConnectionOccupation.get(current.getKey());
+			if(null != ab)
+				ab.set(false);
 			current.getValue().close();
+			logger.debug("Close rpc client: {}", current.getKey());
 		}
 	}
 	
+	// @unsafe
 	private void exitHook() {
+		
+		// TODO 没关注clientConnectionOccupation和serverPortOccupation
+		clientConnectionOccupation.clear();
+		serverPortOccupation.clear();
 		
 		ForEachUtil.processForEach(clientStore, (k, c) -> {
 			logger.debug("Close netty rpc client {}", k);

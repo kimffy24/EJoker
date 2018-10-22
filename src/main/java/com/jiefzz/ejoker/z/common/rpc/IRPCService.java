@@ -2,11 +2,9 @@ package com.jiefzz.ejoker.z.common.rpc;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
-import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 
 /**
@@ -17,8 +15,8 @@ public interface IRPCService {
 	
 	final static Map<Integer, RPCTuple> portMap = new HashMap<>();
 	
-	final static Lock rpcRegistLock = new ReentrantLock();
-
+	final static Map<Integer, AtomicBoolean> serverPortOccupation = new HashMap<>();
+	
 	default public void export(IVoidFunction1<String> action, int port) {
 		export(action, port, false);
 	}
