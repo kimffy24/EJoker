@@ -43,12 +43,10 @@ public class SendQueueMessageService {
 //						throw new IOException(sendResult.toString());
 //					}
 
-			long ts = System.currentTimeMillis();
 			Future<SendResult> sendAsync = producer.sendAsync(new Message(message.getTopic(), message.getTag(),
 					routingKey, message.getCode(), message.getBody(), true));
 			while (!sendAsync.isDone())
 				SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1l);
-			System.err.println("time use: " + (System.currentTimeMillis() - ts));
 			SendResult sendResult = sendAsync.get();
 			if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
 				logger.error(

@@ -1,22 +1,29 @@
 package com.jiefzz.ejoker.z.common.system.extension.acrossSupport;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.LockSupport;
 
 import com.jiefzz.ejoker.z.common.system.extension.TaskFaildException;
-import com.jiefzz.ejoker.z.common.system.extension.TaskWaitingTimeoutException;
 
 /**
  * 一个用于等待重要任务执行结果的封装对象。<br>
- * 期望能提供类似c#的TaskCompletionSource&lt;TResult&gt;的功能
  * @author kimffy
  *
  * @param <TResult>
  */
 public class RipenFuture<TResult> implements Future<TResult> {
 	
-	private CountDownLatch countDownLatch = new CountDownLatch(1);
+	private final WaitingNode waitingsHeader = new WaitingNode(() -> {});
+
+	private WaitingNode waitingsTail = waitingsHeader;
+	
+	private AtomicBoolean isFinishing = new AtomicBoolean(false);
+	
+	private AtomicBoolean isCompleted = new AtomicBoolean(false);
 	
 	private boolean hasException = false;
 	
@@ -27,32 +34,37 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	private TResult result = null;
 	
 	@Override
+	@Deprecated
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		if(mayInterruptIfRunning) {
-			/// TODO RipenFuture 未完成！
-			/// TODO RipenFuture 1. 实现取消线程的语义
-			return false;
-		}
-		countDownLatch.countDown();
-		return true;
+			/// TODO RipenFuture 无法实现取消线程的语义！
+		throw new RuntimeException("Unsupport Operation(\"cancle\") in RipenFuture!!!");
 	}
 
 	@Override
 	public boolean isCancelled() {
-		return countDownLatch.getCount()==0?hasCanceled:false;
+		return hasCanceled;
 	}
 
 	@Override
 	public boolean isDone() {
-		return countDownLatch.getCount()==0?(!hasException && !hasCanceled):false;
+		return isCompleted.get();
 	}
 
 	@Override
 	public TResult get() {
-		try {
-			countDownLatch.await();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		
+		if(!isCompleted.get()) {
+			Thread currentExecuteUnit = Thread.currentThread();
+			WaitingNode currentWaiting = new WaitingNode(() -> {
+				LockSupport.unpark(currentExecuteUnit);
+			});
+			for( WaitingNode currentTail = waitingsTail; ; currentTail = WaitingNode.nextUpdater.get(currentTail) ) {
+				if(!WaitingNode.nextUpdater.compareAndSet(waitingsTail, null, currentWaiting))
+					break;
+			}
+			waitingsTail = currentWaiting;
+			if(!isCompleted.get())
+				LockSupport.park();
 		}
 		if (hasCanceled)
 			return null;
@@ -62,15 +74,28 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	}
 
 	@Override
-	public TResult get(long timeout, TimeUnit unit) {
-		boolean awaitSuccess = true;
-		try {
-			awaitSuccess = countDownLatch.await(timeout, unit);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}        
-		if(!awaitSuccess)  
-            throw new TaskWaitingTimeoutException(); 
+	public TResult get(long timeout, TimeUnit unit) throws TimeoutException {
+
+		final AtomicBoolean isTimeout = new AtomicBoolean(false);
+		if(!isCompleted.get()) {
+			Thread currentExecuteUnit = Thread.currentThread();
+			WaitingNode currentWaiting = new WaitingNode(() -> {
+				if(!isTimeout.get())
+					LockSupport.unpark(currentExecuteUnit);
+			});
+			for( WaitingNode currentTail = waitingsTail; ; currentTail = WaitingNode.nextUpdater.get(currentTail) ) {
+				if(!WaitingNode.nextUpdater.compareAndSet(waitingsTail, null, currentWaiting))
+					break;
+			}
+			waitingsTail = currentWaiting;
+			if(!isCompleted.get()) {
+				LockSupport.parkNanos(this, unit.toNanos(timeout));
+				if(!isCompleted.get()) {
+					isTimeout.set(true);
+					throw new TimeoutException();
+				}
+			}
+		}
 		if (hasCanceled)
 			return null;
 		if (hasException)
@@ -79,30 +104,61 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	}
 
 	public boolean trySetCanceled() {
-		if (0<countDownLatch.getCount()) {
+		if (isFinishing.compareAndSet(false, true)) {
 			this.hasCanceled = true;
-			countDownLatch.countDown();
+			this.isCompleted.set(true);
+			enrollWaiting();
 			return true;
 		} else
 			return false;
 	}
 
 	public boolean trySetException(Throwable exception) {
-		if (0<countDownLatch.getCount()) {
+		if (isFinishing.compareAndSet(false, true)) {
 			this.hasException = true;
 			this.exception = exception;
-			countDownLatch.countDown();
+			this.isCompleted.set(true);
+			enrollWaiting();
 			return true;
 		} else
 			return false;
 	}
 	
 	public boolean trySetResult(TResult result) {
-		if (0<countDownLatch.getCount()) {
+		if (isFinishing.compareAndSet(false, true)) {
 			this.result = result;
-			countDownLatch.countDown();
+			this.isCompleted.set(true);
+			enrollWaiting();
 			return true;
 		} else
 			return false;
+	}
+	
+	private void enrollWaiting() {
+		for(WaitingNode waiting = WaitingNode.nextUpdater.get(waitingsHeader);
+				waiting != null;
+				waiting = WaitingNode.nextUpdater.get(waiting)
+				)
+			waiting.continuation.trigger();
+	}
+	
+	private final static class WaitingNode {
+		
+		public final IVF continuation;
+		
+		@SuppressWarnings("unused")
+		private volatile WaitingNode next = null;
+		
+		public static AtomicReferenceFieldUpdater<WaitingNode, WaitingNode> nextUpdater =
+				AtomicReferenceFieldUpdater.newUpdater(WaitingNode.class, WaitingNode.class, "next");
+
+		public WaitingNode(IVF continuation) {
+			this.continuation = continuation;
+		}
+		
+	}
+	
+	private static interface IVF {
+		public void trigger();
 	}
 }
