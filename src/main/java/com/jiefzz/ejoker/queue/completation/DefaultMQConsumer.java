@@ -194,6 +194,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						ControlStruct controlStruct = dashboards.get(mq);
 						
 						long currentOffset = controlStruct.offsetFetchLocal.get();
+						
+						// 流控,
+						if(currentOffset - controlStruct.offsetConsumedLocal.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+							SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+							return;
+						}
+						
 						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 						PullResult pullResult;
 						try {

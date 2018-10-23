@@ -30,7 +30,7 @@ public final class EJokerEnvironment {
 
 	public final static boolean ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL;
 	
-	public final static int MAX_AMOUNT_OF_ON_PROCESSING_COMMAND;
+	public final static int MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE;
 	
 	public final static long MAILBOX_IDLE_TIMEOUT;
 	
@@ -43,11 +43,11 @@ public final class EJokerEnvironment {
 	 */
 	public final static int NUMBER_OF_PROCESSOR = Runtime.getRuntime().availableProcessors();
 	
+	public final static boolean SUPPORT_BATCH_APPEND_EVENT;
+	
 	public final static int MAX_BATCH_COMMANDS;
 	
 	public final static int MAX_BATCH_EVENTS;
-	
-	public final static boolean SUPPORT_BATCH_APPEND_EVENT;
 	
 	public final static String ENVIROMMENT_FILE="ejoker.properties";
 
@@ -84,7 +84,7 @@ public final class EJokerEnvironment {
 		ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL =
 				Boolean.valueOf(props.getProperty("ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL", "false"));
 
-		MAX_AMOUNT_OF_ON_PROCESSING_COMMAND =
+		MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE =
 				Integer.valueOf(props.getProperty("MAX_AMOUNT_OF_ON_PROCESSING_COMMAND", "" + (ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE/2 + NUMBER_OF_PROCESSOR)));
 		
 		MAILBOX_IDLE_TIMEOUT =
@@ -95,15 +95,15 @@ public final class EJokerEnvironment {
 
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
-
-		MAX_BATCH_COMMANDS =
-				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "32"));
-
-		MAX_BATCH_EVENTS =
-				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "16"));
 		
 		SUPPORT_BATCH_APPEND_EVENT = 
 				Boolean.valueOf(props.getProperty("SUPPORT_BATCH_APPEND_EVENT", "false"));
+
+		MAX_BATCH_COMMANDS =
+				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "16"));
+
+		MAX_BATCH_EVENTS =
+				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "32"));
 
 	}
 
