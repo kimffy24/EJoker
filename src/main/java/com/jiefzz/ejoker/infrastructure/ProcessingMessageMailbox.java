@@ -95,7 +95,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 			if (null != (processingMessage = messageQueue.poll())) {
 				
 				/// TODO @await
-				if(EJokerEnvironment.ASYNC_ALL)
+				if(EJokerEnvironment.ASYNC_BASE)
 					messageHandler.handleAsync(processingMessage).get();
 				else
 					messageHandler.handle(processingMessage);

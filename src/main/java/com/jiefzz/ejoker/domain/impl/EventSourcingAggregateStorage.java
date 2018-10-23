@@ -72,7 +72,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	private IAggregateRoot tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		
 		// TODO @await
-		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
+		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_BASE
 					? aggregateSnapshotter.restoreFromSnapshotAsync(aggregateRootType, aggregateRootId).get()
 							:aggregateSnapshotter.restoreFromSnapshot(aggregateRootType, aggregateRootId);
 		
@@ -92,7 +92,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		String aggregateRootTypeName = aggregateRootType.getName();
 
 		// TODO @await
-		if(EJokerEnvironment.ASYNC_ALL) {
+		if(EJokerEnvironment.ASYNC_BASE) {
 			AsyncTaskResult<Collection<DomainEventStream>> taskResult = eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion).get();
 			if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
                 aggregateRoot.replayEvents(taskResult.getData());

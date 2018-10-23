@@ -43,7 +43,7 @@ public class DefaultRepository implements IRepository {
 			throw new ArgumentNullException("aggregateRootId");
 
 		// TODO @await
-		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
+		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_BASE
 					? memoryCache.getAsync(aggregateRootId, aggregateRootType).get()
 							: memoryCache.get(aggregateRootId, aggregateRootType);
 		if(null != aggregateRoot)

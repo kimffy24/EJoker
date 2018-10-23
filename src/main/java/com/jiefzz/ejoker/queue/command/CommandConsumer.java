@@ -238,12 +238,12 @@ public class CommandConsumer implements IWorkerService {
 
 			if (tryFromCache)
 				// TODO @await
-				aggregateRoot = EJokerEnvironment.ASYNC_ALL
+				aggregateRoot = EJokerEnvironment.ASYNC_BASE
 						? repository.getAsync((Class<IAggregateRoot>) clazz, id).get()
 						: repository.get((Class<IAggregateRoot>) clazz, id);
 			else
 				// TODO @await
-				aggregateRoot = EJokerEnvironment.ASYNC_ALL
+				aggregateRoot = EJokerEnvironment.ASYNC_BASE
 						? aggregateRootStorage.getAsync((Class<IAggregateRoot>) clazz, aggregateRootId).get()
 						: aggregateRootStorage.get((Class<IAggregateRoot>) clazz, aggregateRootId);
 			if (aggregateRoot != null) {

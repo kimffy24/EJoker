@@ -81,7 +81,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			if (aggregateRoot.getChanges().size() > 0) {
 
 				// TODO @await
-				IAggregateRoot lastestAggregateRoot = EJokerEnvironment.ASYNC_ALL
+				IAggregateRoot lastestAggregateRoot = EJokerEnvironment.ASYNC_BASE
 						? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
 						: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
 				if (null != lastestAggregateRoot)
@@ -104,7 +104,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 		try {
 			// TODO @await
-			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_ALL
+			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_BASE
 					? aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString())
 							.get()
 					: aggregateStorage.get((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString());

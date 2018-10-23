@@ -124,7 +124,7 @@ public class ProcessingCommandMailbox {
 			if (processingSequence == expectSequence) {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				if (EJokerEnvironment.ASYNC_ALL)
+				if (EJokerEnvironment.ASYNC_BASE)
 					completeCommandAsync(processingCommand, commandResult).get();
 				else
 					completeCommand(processingCommand, commandResult);
@@ -132,7 +132,7 @@ public class ProcessingCommandMailbox {
 			} else if (processingSequence < expectSequence) {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				if (EJokerEnvironment.ASYNC_ALL)
+				if (EJokerEnvironment.ASYNC_BASE)
 					completeCommandAsync(processingCommand, commandResult).get();
 				else
 					completeCommand(processingCommand, commandResult);
@@ -165,7 +165,7 @@ public class ProcessingCommandMailbox {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
 					// TODO @await
-					if (EJokerEnvironment.ASYNC_ALL) {
+					if (EJokerEnvironment.ASYNC_BASE) {
 						messageHandler.handleAsync(processingCommand).get();
 					} else {
 						messageHandler.handle(processingCommand);

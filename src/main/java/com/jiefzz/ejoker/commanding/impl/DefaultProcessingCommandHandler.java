@@ -127,7 +127,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			} catch (RuntimeException ex) {
 				logCommandExecuteException(processingCommand, commandHandler, ex);
 				/// TODO @await
-				if(EJokerEnvironment.ASYNC_ALL)
+				if(EJokerEnvironment.ASYNC_BASE)
 						completeCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
 								"Unknow exception caught when committing changes of command.").get();
 				else 
