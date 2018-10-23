@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +56,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	private IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> messageProcessor = null;
 	
 	private Map<MessageQueue, ControlStruct> dashboards = new HashMap<>();
+	
+	private final AtomicInteger consumingAmount = new AtomicInteger(0);
 	
 	public DefaultMQConsumer() {
 		super();
@@ -195,12 +198,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						
 						long currentOffset = controlStruct.offsetFetchLocal.get();
 						
-						// 流控,
-						if(currentOffset - controlStruct.offsetConsumedLocal.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-							SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
-							return;
-						}
-						
 						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 						PullResult pullResult;
 						try {
@@ -213,6 +210,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							case FOUND:
 								List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 								for (int i = 0; i<messageExtList.size(); i++) {
+									if(consumingAmount.incrementAndGet() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+										// 流控,
+										while(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+											// 触发流控
+											logger.error("触发流控！！！consumingAmount: {}", consumingAmount.get());
+											SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+										}
+									}
 									final long consumingOffset = currentOffset + i + 1;
 									MessageExt rmqMsg = messageExtList.get(i);
 									EJokerQueueMessage queueMessage = new EJokerQueueMessage(
@@ -258,6 +263,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						delta--;
 						if (delta > 0) {
 							currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta);
+							{
+								// 给流控仪表对象减数
+								for(int j = 0; j<delta; j++)
+									consumingAmount.decrementAndGet();
+							}
 						}
 					}
 				)

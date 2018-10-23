@@ -33,6 +33,11 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		return EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE;
 	}
 	
+	@Override
+	protected boolean prestartAll() {
+		return false;
+	}
+
 	/**
 	 * ioHelper自身继承了线程组服务，但是主要目的还是为了IO重试<br>
 	 * 其余异步委托还是使用系统异步助手

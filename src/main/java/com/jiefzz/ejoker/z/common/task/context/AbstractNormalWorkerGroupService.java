@@ -45,13 +45,9 @@ public abstract class AbstractNormalWorkerGroupService {
 			((SystemAsyncPool )asyncPool).debugInfo(String.format("ThreadPool[%s]", this.getClass()));
 	}
 
-	protected int usePoolSize() {
-		return EJokerEnvironment.NUMBER_OF_PROCESSOR * 2 + 1;
-	}
+	protected abstract int usePoolSize();
 
-	protected boolean prestartAll() {
-		return false;
-	};
+	protected abstract boolean prestartAll();
 
 	protected <T> Future<T> submitInternal(IFunction<T> vf) {
 		return asyncPool.execute(vf::trigger);
