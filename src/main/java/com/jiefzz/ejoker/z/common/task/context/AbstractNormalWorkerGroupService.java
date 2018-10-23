@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
@@ -45,7 +46,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	}
 
 	protected int usePoolSize() {
-		return 2;
+		return EJokerEnvironment.NUMBER_OF_PROCESSOR * 2 + 1;
 	}
 
 	protected boolean prestartAll() {

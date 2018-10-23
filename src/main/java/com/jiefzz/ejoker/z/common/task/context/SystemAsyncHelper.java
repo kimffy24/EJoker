@@ -18,7 +18,7 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 
 	@Override
 	protected boolean prestartAll() {
-		return true;
+		return EJokerEnvironment.ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL;
 	};
 	
 	@Override

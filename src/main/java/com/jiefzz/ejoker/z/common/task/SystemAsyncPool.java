@@ -41,7 +41,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 //				aliveCount.decrementAndGet();
 //			}
 //		};
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 500l, TimeUnit.MILLISECONDS,
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0l, TimeUnit.MILLISECONDS,
 				taskQueue = new LinkedBlockingQueue<Runnable>()) {
 
 					@Override
