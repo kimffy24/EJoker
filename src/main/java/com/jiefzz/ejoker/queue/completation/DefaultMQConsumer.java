@@ -36,11 +36,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
 
-	private final static int maxBatch = EJokerEnvironment.MAX_BATCH_COMMANDS;
-	
 	private String focusTopic = "";
-	
-	private int maxBatchSize = maxBatch;
 	
 	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 
@@ -153,14 +149,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		super.shutdown();
 	}
 	
-	public void setMaxBatchSize(int maxBatchSize) {
-		this.maxBatchSize = maxBatchSize;
-	}
-	
-	public int getMaxBatchSize() {
-		return this.maxBatchSize;
-	}
-	
 	private void loadSubcribeInfoAndPrepareConsume() {
 
 		Set<MessageQueue> messageQueues;
@@ -171,7 +159,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			throw new RuntimeException(e);
 		}
 
-		for (MessageQueue mq : messageQueues) {
+		for (final MessageQueue mq : messageQueues) {
 
 			if (null != queueMatcher && !queueMatcher.trigger(mq)) {
 				continue;
@@ -200,7 +188,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 						PullResult pullResult;
 						try {
-							pullResult = pullBlockIfNotFound(mq, null, controlStruct.offsetFetchLocal.get(), maxBatchSize);
+							pullResult = pullBlockIfNotFound(mq, null, controlStruct.offsetFetchLocal.get(), 32);
 						} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
 							throw new RuntimeException(e);
 						}
@@ -248,22 +236,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						/// 语法上无法从lambda中获取到内部类的成员变量或内部类的this指针
 						/// 只能从运行时中获取
 						ControlStruct controlStruct = dashboards.get(mq);
-						
-						AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
+
 						Map<Long, String> aheadOffsetDict = controlStruct.aheadCompletion;
+						AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
+						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
 						
-						if(null == aheadOffsetDict || 0 == aheadOffsetDict.size()) {
+						if(/*null == aheadOffsetDict || */0 == aheadOffsetDict.size()) {
 							return;
 						}
 						
-						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
-						int delta = 1;
-						for (; null != aheadOffsetDict.remove(currentComsumedOffsetL + delta); delta++)
-							;
+						int delta = 0;
+						do {
+							delta++;
+						} while(null != aheadOffsetDict.remove(currentComsumedOffsetL + delta));
 						delta--;
 						if (delta > 0) {
-							currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta);
-							{
+							if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta)) {
 								// 给流控仪表对象减数
 								for(int j = 0; j<delta; j++)
 									consumingAmount.decrementAndGet();
@@ -284,10 +272,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		controlStruct.aheadCompletion.put(comsumedOffset, "");
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 		
-		sumbiter.trigger(controlStruct.completeOffsetHandlingWorker::trigger);
+		controlStruct.completeOffsetHandlingWorker.trigger();
 	}
 	
 	public void syncOffsetToBroker() {
+		logger.error("sync consumed to broker ...");
 		for(MessageQueue mq : matchQueue)
 			try {
 				updateConsumeOffset(mq, dashboards.get(mq).offsetConsumedLocal.get());
