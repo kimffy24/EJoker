@@ -253,9 +253,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						delta--;
 						if (delta > 0) {
 							if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta)) {
-								// 给流控仪表对象减数
-								for(int j = 0; j<delta; j++)
-									consumingAmount.decrementAndGet();
+								;
 							}
 						}
 					}
@@ -272,6 +270,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		ControlStruct controlStruct = dashboards.get(mq);
 		controlStruct.aheadCompletion.put(comsumedOffset, "");
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
+
+		// 给流控仪表对象减数
+		consumingAmount.decrementAndGet();
 		
 		controlStruct.completeOffsetHandlingWorker.trigger();
 	}
