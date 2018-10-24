@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -210,7 +209,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							case FOUND:
 								List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 								for (int i = 0; i<messageExtList.size(); i++) {
-									if(consumingAmount.incrementAndGet() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+									if(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
 										// 流控,
 										while(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
 											// 触发流控
@@ -218,6 +217,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 											SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
 										}
 									}
+									consumingAmount.getAndIncrement();
 									final long consumingOffset = currentOffset + i + 1;
 									MessageExt rmqMsg = messageExtList.get(i);
 									EJokerQueueMessage queueMessage = new EJokerQueueMessage(
