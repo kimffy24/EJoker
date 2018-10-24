@@ -255,8 +255,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						nextIndex -= 1l;
 						if (0 < beforeSequence.size()) {
 							if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
-								for(Long index : beforeSequence)
+								for(Long index : beforeSequence) {
 									aheadOffsetDict.remove(index);
+									consumingAmount.decrementAndGet();
+								}
 							}
 						}
 					}
