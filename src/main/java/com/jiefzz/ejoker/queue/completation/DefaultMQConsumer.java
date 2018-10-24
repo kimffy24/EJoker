@@ -199,10 +199,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 								for (int i = 0; i<messageExtList.size(); i++) {
 									if(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
 										// 流控,
+										long sleepMillis = 1l;
 										while(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
 											// 触发流控
 											logger.error("触发流控！！！consumingAmount: {}", consumingAmount.get());
-											SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+											SleepWrapper.sleep(TimeUnit.MILLISECONDS, sleepMillis >= 512l ? (sleepMillis += 512l) : (sleepMillis = 2*sleepMillis));
 										}
 									}
 									consumingAmount.getAndIncrement();
@@ -279,6 +280,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		logger.error("sync consumed to broker ...");
 		for(MessageQueue mq : matchQueue)
 			try {
+				ControlStruct controlStruct = dashboards.get(mq);
+				controlStruct.completeOffsetHandlingWorker.trigger();
 				updateConsumeOffset(mq, dashboards.get(mq).offsetConsumedLocal.get());
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
