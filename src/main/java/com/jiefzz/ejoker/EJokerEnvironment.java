@@ -85,7 +85,7 @@ public final class EJokerEnvironment {
 				Boolean.valueOf(props.getProperty("ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL", "false"));
 
 		MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE =
-				Integer.valueOf(props.getProperty("MAX_AMOUNT_OF_ON_PROCESSING_COMMAND", "" + (ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE/2 + NUMBER_OF_PROCESSOR)));
+				Integer.valueOf(props.getProperty("MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE", "" + (ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE/2 + NUMBER_OF_PROCESSOR)));
 		
 		MAILBOX_IDLE_TIMEOUT =
 				Long.valueOf(props.getProperty("MAILBOX_IDLE_TIMEOUT", "180000"));
