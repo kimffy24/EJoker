@@ -78,10 +78,9 @@ public class ProcessingCommandMailbox {
 	public void enqueueMessage(ProcessingCommand message) {
 		enqueueLock.lock();
 		try {
-			long acquireSequence = nextSequence;
-			message.setSequence(acquireSequence);
+			message.setSequence(nextSequence);
 			message.setMailbox(this);
-			if (null == messageDict.putIfAbsent(acquireSequence, message))
+			if (null == messageDict.putIfAbsent(message.getSequence(), message))
 				nextSequence++;
 		} finally {
 			enqueueLock.unlock();
@@ -129,7 +128,9 @@ public class ProcessingCommandMailbox {
 				else
 					completeCommand(processingCommand, commandResult);
 				consumedSequence = processNextCompletedCommands(processingSequence);
-			} else if (processingSequence < expectSequence) {
+			} else if(processingSequence > expectSequence) {
+				requestToCompleteCommandDict.put(processingSequence, commandResult);
+			} else/* if (processingSequence < expectSequence)*/ {
 				messageDict.remove(processingSequence);
 				// TODO @await
 				if (EJokerEnvironment.ASYNC_BASE)
@@ -137,9 +138,6 @@ public class ProcessingCommandMailbox {
 				else
 					completeCommand(processingCommand, commandResult);
 				requestToCompleteCommandDict.remove(processingSequence);
-			} else {
-				// processingSequence > expectSequence
-				requestToCompleteCommandDict.put(processingSequence, commandResult);
 			}
 		} catch (RuntimeException ex) {
 			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
