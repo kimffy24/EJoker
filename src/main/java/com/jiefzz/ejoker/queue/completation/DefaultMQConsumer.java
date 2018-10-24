@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.queue.completation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -246,13 +247,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							return;
 						}
 						
-						int delta = 0;
-						do {
-							delta++;
-						} while(null != aheadOffsetDict.remove(currentComsumedOffsetL + delta));
-						delta--;
-						if (delta > 0) {
-							if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, currentComsumedOffsetL + delta)) {
+						List<Long> beforeSequence = new ArrayList<>();
+						long nextIndex = currentComsumedOffsetL;
+						while(null != aheadOffsetDict.get(nextIndex += 1l)) {
+							beforeSequence.add(nextIndex);
+						}
+						nextIndex -= 1l;
+						if (0 < beforeSequence.size()) {
+							if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
 								;
 							}
 						}
@@ -271,18 +273,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		controlStruct.aheadCompletion.put(comsumedOffset, "");
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 
-		// 给流控仪表对象减数
-		consumingAmount.decrementAndGet();
-		
-		controlStruct.completeOffsetHandlingWorker.trigger();
+		sumbiter.trigger(controlStruct.completeOffsetHandlingWorker::trigger);
 	}
 	
 	public void syncOffsetToBroker() {
 		logger.error("sync consumed to broker ...");
 		for(MessageQueue mq : matchQueue)
 			try {
-				ControlStruct controlStruct = dashboards.get(mq);
-				controlStruct.completeOffsetHandlingWorker.trigger();
 				updateConsumeOffset(mq, dashboards.get(mq).offsetConsumedLocal.get());
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
