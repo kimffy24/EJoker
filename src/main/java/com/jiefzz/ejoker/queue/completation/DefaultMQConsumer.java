@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.rocketmq.client.consumer.PullResult;
@@ -52,6 +54,21 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	private IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> messageProcessor = null;
 	
 	private Map<MessageQueue, ControlStruct> dashboards = new HashMap<>();
+
+	private final Thread processComsumedSequenceThread = new Thread(() -> {
+		while (null == dashboards) {
+			try {
+				TimeUnit.SECONDS.sleep(1l);
+			} catch (InterruptedException e) { }
+		}
+		while (onRunning.get()) {
+			Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
+			for (Entry<MessageQueue, ControlStruct> entry : entrySet) {
+				processComsumedSequence(entry.getValue());
+			}
+			LockSupport.park();
+		}
+	});
 	
 	private final AtomicInteger consumingAmount = new AtomicInteger(0);
 	
@@ -116,6 +133,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			});
 			dashboard.workThread.start(); 
 		});
+		
+		processComsumedSequenceThread.start();
 		
 		sumbiter.trigger(() -> {
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
@@ -231,35 +250,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 								throw new RuntimeException("OFFSET_ILLEGAL");
 							default:
 								assert false;
-							}
-						},
-					() -> {
-						
-						/// 语法上无法从lambda中获取到内部类的成员变量或内部类的this指针
-						/// 只能从运行时中获取
-						ControlStruct controlStruct = dashboards.get(mq);
-
-						Map<Long, String> aheadOffsetDict = controlStruct.aheadCompletion;
-						AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
-						long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
-						
-						if(/*null == aheadOffsetDict || */0 == aheadOffsetDict.size()) {
-							return;
-						}
-						
-						List<Long> beforeSequence = new ArrayList<>();
-						long nextIndex = currentComsumedOffsetL;
-						while(null != aheadOffsetDict.get(nextIndex += 1l)) {
-							beforeSequence.add(nextIndex);
-						}
-						nextIndex -= 1l;
-						if (0 < beforeSequence.size()) {
-							if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
-								for(Long index : beforeSequence) {
-									aheadOffsetDict.remove(index);
-									consumingAmount.decrementAndGet();
-								}
-							}
 						}
 					}
 				)
@@ -275,8 +265,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		ControlStruct controlStruct = dashboards.get(mq);
 		controlStruct.aheadCompletion.put(comsumedOffset, "");
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
-
-		sumbiter.trigger(controlStruct.completeOffsetHandlingWorker::trigger);
+		
+		enableSequenceProcessing();
 	}
 	
 	public void syncOffsetToBroker() {
@@ -289,6 +279,36 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			}
 		getOffsetStore().persistAll(matchQueue);
 		
+	}
+	
+	private void enableSequenceProcessing() {
+		LockSupport.unpark(processComsumedSequenceThread);
+	}
+	
+	private void processComsumedSequence(ControlStruct controlStruct) {
+		
+		Map<Long, String> aheadOffsetDict = controlStruct.aheadCompletion;
+		AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
+		long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
+		
+		if(/*null == aheadOffsetDict || */0 == aheadOffsetDict.size()) {
+			return;
+		}
+		
+		List<Long> beforeSequence = new ArrayList<>();
+		long nextIndex = currentComsumedOffsetL;
+		while(null != aheadOffsetDict.get(nextIndex += 1l)) {
+			beforeSequence.add(nextIndex);
+		}
+		nextIndex -= 1l;
+		if (0 < beforeSequence.size()) {
+			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
+				for(Long index : beforeSequence) {
+					aheadOffsetDict.remove(index);
+					consumingAmount.decrementAndGet();
+				}
+			}
+		}
 	}
 	
 	private final class ControlStruct {
@@ -305,12 +325,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 		public Thread workThread = null;
 		
-		public final IVoidFunction completeOffsetHandlingWorker;
-		
-		public ControlStruct(long initOffset, IVoidFunction messageHandlingJob, IVoidFunction completeOffsetHandlingWorker) {
+		public ControlStruct(long initOffset, IVoidFunction messageHandlingJob) {
 			this.offsetConsumedLocal = new AtomicLong(initOffset);
 			this.offsetFetchLocal = new AtomicLong(initOffset);
-			this.completeOffsetHandlingWorker = completeOffsetHandlingWorker;
 			this.messageHandlingJob = messageHandlingJob;
 		}
 		
