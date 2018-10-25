@@ -2,6 +2,7 @@ package com.jiefzz.ejoker.commanding.impl;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 	@Override
 	public void handle(ProcessingCommand processingCommand) {
+		entranceHit.incrementAndGet();
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(
@@ -116,6 +118,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
 					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
 			b = true;
+			cHandledHit.incrementAndGet();
 		} catch (Exception ex) {
 			handleExceptionAsync(processingCommand, commandHandler, ex);
 		}
@@ -124,6 +127,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			try {
 				// TOTO 事件过程的起点
 				commitAggregateChanges(processingCommand);
+				eCommitedHit.incrementAndGet();
 			} catch (RuntimeException ex) {
 				logCommandExecuteException(processingCommand, commandHandler, ex);
 				/// TODO @await
@@ -137,6 +141,16 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		}
 
 	}
+	
+    private AtomicInteger entranceHit = new AtomicInteger(0);
+    
+    private AtomicInteger cHandledHit = new AtomicInteger(0);
+
+    private AtomicInteger eCommitedHit = new AtomicInteger(0);
+    
+    public void d1() {
+            logger.error("entranceHit: {}, cHandledHit: {}, eCommitedHit: {}", entranceHit.get(), cHandledHit.get(), eCommitedHit.get());
+    }
 	
 	private void commitAggregateChanges(ProcessingCommand processingCommand) {
 

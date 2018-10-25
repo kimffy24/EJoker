@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -44,7 +45,7 @@ public class ProcessingCommandMailbox {
 
 	private long consumingSequence = 0l;
 
-	private long consumedSequence = 0l;
+	private long consumedSequence = -1l;
 
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
@@ -113,6 +114,7 @@ public class ProcessingCommandMailbox {
 
 	public SystemFutureWrapper<AsyncTaskResult<Void>> completeMessageAsync(ProcessingCommand processingCommand,
 			CommandResult commandResult) {
+		completeAsyncInvkdeHit.incrementAndGet();
 		return eJokerAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
 	}
 
@@ -120,6 +122,7 @@ public class ProcessingCommandMailbox {
 		// asyncLock.lock();
 		lock(processingCommand, commandResult);
 		try {
+			completeMessageHit.incrementAndGet();
 			lastActiveTime = System.currentTimeMillis();
 			long processingSequence = processingCommand.getSequence();
 			long expectSequence = consumedSequence + 1l;
@@ -142,7 +145,7 @@ public class ProcessingCommandMailbox {
 					completeCommand(processingCommand, commandResult);
 				requestToCompleteCommandDict.remove(processingSequence);
 			}
-		} catch (RuntimeException ex) {
+		} catch (Exception ex) {
 			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
 		} finally {
@@ -156,7 +159,7 @@ public class ProcessingCommandMailbox {
 		
 		WaitingNode tail = this.tail;
 		
-		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter, processingCommand, commandResult)))
+		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter)))
 			tail = WaitingNode.nextUpdater.get(tail);
 		
 		if(!currentWaitingHeader.equals(tail)) {
@@ -177,25 +180,20 @@ public class ProcessingCommandMailbox {
 		}
 	}
 	
-	private final WaitingNode currentWaitingHeader = new WaitingNode(null, null, null);
+	private final WaitingNode currentWaitingHeader = new WaitingNode(null);
 	
 	private WaitingNode tail = currentWaitingHeader;
 	
 	private final static class WaitingNode {
 		
-		public final ProcessingCommand processingCommand;
-		public final CommandResult commandResult;
 		public final Thread executor;
 		
-		@SuppressWarnings("unused")
 		private volatile WaitingNode next = null;
 		
 		public final static AtomicReferenceFieldUpdater<WaitingNode, WaitingNode> nextUpdater = 
 				AtomicReferenceFieldUpdater.newUpdater(WaitingNode.class, WaitingNode.class, "next");
 		
-		public WaitingNode(Thread executor, ProcessingCommand processingCommand, CommandResult commandResult) {
-			this.processingCommand = processingCommand;
-			this.commandResult = commandResult;
+		public WaitingNode(Thread executor) {
 			this.executor = executor;
 		}
 		
@@ -268,8 +266,34 @@ public class ProcessingCommandMailbox {
 		return returnSequence;
 	}
 
+	private AtomicInteger completeAsyncInvkdeHit = new AtomicInteger(0);
+	private AtomicInteger completeCommandHit = new AtomicInteger(0);
+	private AtomicInteger completeMessageHit = new AtomicInteger(0);
+	private AtomicInteger completeAsyncHit = new AtomicInteger(0);
+
+	public void showLog() {
+		if(consumedSequence > 3) {
+
+			int i = completeMessageHit.get();
+			int j = completeCommandHit.get();
+			int k = completeAsyncHit.get();
+			int l = completeAsyncInvkdeHit.get();
+			int n = requestToCompleteCommandDict.size();
+
+			logger.error("aggregateId: {}, completeMessagehit: {}, completeCommandhit: {}, completeAsyncHit: {}, completeAsyncInvkdeHit: {}, requestToCompleteCommandDictSize: {}",
+					aggregateRootId,
+					i,
+					j,
+					k,
+					l,
+					n
+					);
+		}
+	}
+
 	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandResult commandResult) {
+		completeCommandHit.incrementAndGet();
 		// TODO 完成传递
 		try {
 			return processingCommand.completeAsync(commandResult);
@@ -282,6 +306,7 @@ public class ProcessingCommandMailbox {
 	}
 
 	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
+		completeCommandHit.incrementAndGet();
 		try {
 			processingCommand.complete(commandResult);
 		} catch (RuntimeException ex) {

@@ -5,7 +5,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,6 +113,22 @@ public class DefaultEventService implements IEventService {
 
 	}
 
+	private AtomicInteger appendFinishedHit = new AtomicInteger(0);
+	private AtomicInteger appendCompletedHit = new AtomicInteger(0);
+	private AtomicInteger publishAndCompleteMessageHit = new AtomicInteger(0);
+
+	public void d1() {
+//		Set<Entry<String, EventMailBox>> entrySet = eventMailboxDict.entrySet();
+//		for(Entry<String, EventMailBox> ety:entrySet) {
+//			ety.getValue().showLog();
+//		}
+		logger.error("appendFinishedHit: {}, appendCompletedHit: {}, publishAndCompleteMessageHit: {}",
+				appendFinishedHit.get(),
+				appendCompletedHit.get(),
+				publishAndCompleteMessageHit.get()
+				);
+	}
+
 	/**
 	 * 封装DomainEventStream，并向q端发布领域事件
 	 * 
@@ -206,8 +224,10 @@ public class DefaultEventService implements IEventService {
 				"PersistEventAsync",
 				() -> eventStore.appendAsync(context.getEventStream()),
 				realrResult -> {
+					appendFinishedHit.incrementAndGet();
 					switch (realrResult) {
 						case Success:
+							appendCompletedHit.incrementAndGet();
 							logger.debug("Persist event success, {}", jsonSerializer.convert(context.getEventStream()));
 							
 							systemAsyncHelper.submit(
@@ -457,7 +477,9 @@ public class DefaultEventService implements IEventService {
 							eventStream.getAggregateRootId(),
 							commandHandleResult,
 							String.class.getName());
-					completeCommandAsync(processingCommand, commandResult); },
+					completeCommandAsync(processingCommand, commandResult);
+					publishAndCompleteMessageHit.incrementAndGet();
+					},
 				() -> String.format("[eventStream: %s]", eventStream.toString()),
 				ex -> logger.error(
 						String.format(
