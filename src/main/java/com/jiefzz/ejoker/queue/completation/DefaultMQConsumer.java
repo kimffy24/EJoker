@@ -270,7 +270,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void syncOffsetToBroker() {
-		logger.error("sync consumed to broker ...");
 		for(MessageQueue mq : matchQueue)
 			try {
 				updateConsumeOffset(mq, dashboards.get(mq).offsetConsumedLocal.get());
