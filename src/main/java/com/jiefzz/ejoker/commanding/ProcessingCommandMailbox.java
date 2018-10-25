@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -115,7 +117,8 @@ public class ProcessingCommandMailbox {
 	}
 
 	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
-		asyncLock.lock();
+		// asyncLock.lock();
+		lock(processingCommand, commandResult);
 		try {
 			lastActiveTime = System.currentTimeMillis();
 			long processingSequence = processingCommand.getSequence();
@@ -143,8 +146,60 @@ public class ProcessingCommandMailbox {
 			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
 		} finally {
-			asyncLock.unlock();
+			// asyncLock.unlock();
+			unlock();
 		}
+	}
+	
+	private void lock(final ProcessingCommand processingCommand, final CommandResult commandResult) {
+		Thread currentExecuter = Thread.currentThread();
+		
+		WaitingNode tail = this.tail;
+		
+		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter, processingCommand, commandResult)))
+			tail = WaitingNode.nextUpdater.get(tail);
+		
+		if(!currentWaitingHeader.equals(tail)) {
+			LockSupport.park();
+		}
+		
+	}
+	
+	private void unlock() {
+		WaitingNode waitingNodeExecuting = currentWaitingHeader.next;
+		WaitingNode waitingNodeNext;
+		if(WaitingNode.nextUpdater.compareAndSet(
+				currentWaitingHeader,
+				waitingNodeExecuting,
+				waitingNodeNext = WaitingNode.nextUpdater.get(waitingNodeExecuting))) {
+			if(null != waitingNodeNext)
+				LockSupport.unpark(waitingNodeNext.executor);
+		}
+	}
+	
+	private final WaitingNode currentWaitingHeader = new WaitingNode(null, null, null);
+	
+	private WaitingNode tail = currentWaitingHeader;
+	
+	private final static class WaitingNode {
+		
+		public final ProcessingCommand processingCommand;
+		public final CommandResult commandResult;
+		public final Thread executor;
+		
+		@SuppressWarnings("unused")
+		private volatile WaitingNode next = null;
+		
+		public final static AtomicReferenceFieldUpdater<WaitingNode, WaitingNode> nextUpdater = 
+				AtomicReferenceFieldUpdater.newUpdater(WaitingNode.class, WaitingNode.class, "next");
+		
+		public WaitingNode(Thread executor, ProcessingCommand processingCommand, CommandResult commandResult) {
+			this.processingCommand = processingCommand;
+			this.commandResult = commandResult;
+			this.executor = executor;
+		}
+		
+		
 	}
 
 	public void run() {
