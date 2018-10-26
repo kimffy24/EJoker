@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
@@ -41,7 +42,6 @@ import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 @EService
 public class CommandConsumer implements IWorkerService {
 
-	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
@@ -72,9 +72,6 @@ public class CommandConsumer implements IWorkerService {
 	@Dependence
 	private IScheduleService scheduleService;
 
-	private static long taskIndex = 0;
-
-	private final long tx = ++taskIndex;
 	///
 
 	private DefaultMQConsumer consumer;
@@ -87,9 +84,12 @@ public class CommandConsumer implements IWorkerService {
 		this.consumer = consumer;
 		return this;
 	}
+	
+	public void d1() {
+		this.consumer.showLog("CommandConsumer");
+	}
 
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
-
 		// Here QueueMessage is a carrier of Command
 		// separate it from QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<>();

@@ -87,6 +87,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	public DefaultMQConsumer(String consumerGroup) {
 		super(consumerGroup);
 	}
+	
+	public void showLog(String x) {
+		logger.error("{}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
+	}
 
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
 		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.onRunning");
@@ -217,15 +221,20 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							case FOUND:
 								List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 								for (int i = 0; i<messageExtList.size(); i++) {
-									if(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-										// 流控,
-										long sleepMillis = 1l;
-										while(consumingAmount.get() - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-											// 触发流控
-											logger.error("触发流控！！！consumingAmount: {}", consumingAmount.get());
-											SleepWrapper.sleep(TimeUnit.MILLISECONDS, sleepMillis >= 512l ? (sleepMillis += 512l) : (sleepMillis = 2*sleepMillis));
-										}
-									}
+//									int ca = consumingAmount.get();
+//									int frezon = 0;
+//									if(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+//										// 流控,
+//										int lastOnProcessing = ca;
+//										while(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+//											// 触发流控
+//											if(frezon++ > 3 && ca == lastOnProcessing)
+//												break;
+//											logger.warn("触发流控！！！consumingAmount: {}", ca);
+//											SleepWrapper.sleep(TimeUnit.MILLISECONDS, 25l);
+//											ca = consumingAmount.get();
+//										}
+//									}
 									consumingAmount.getAndIncrement();
 									final long consumingOffset = currentOffset + i + 1;
 									MessageExt rmqMsg = messageExtList.get(i);
@@ -263,7 +272,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private void tryMarkCompletion(MessageQueue mq, long comsumedOffset) {
 		ControlStruct controlStruct = dashboards.get(mq);
-		controlStruct.aheadCompletion.put(comsumedOffset, "");
+		if(null != controlStruct.aheadCompletion.putIfAbsent(comsumedOffset, ""))
+			throw new RuntimeException();
 		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 		
 		enableSequenceProcessing();

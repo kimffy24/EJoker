@@ -61,6 +61,10 @@ public class DomainEventConsumer implements IWorkerService {
 		this.consumer = consumer;
 		return this;
 	}
+	
+	public void d1() {
+		this.consumer.showLog("DomainEventConsumer");
+	}
 
 	public DomainEventConsumer start() {
 		consumer.registerEJokerCallback(this::handle);

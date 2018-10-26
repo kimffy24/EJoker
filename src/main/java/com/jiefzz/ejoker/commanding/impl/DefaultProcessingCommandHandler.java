@@ -149,7 +149,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
     private AtomicInteger eCommitedHit = new AtomicInteger(0);
     
     public void d1() {
-            logger.error("entranceHit: {}, cHandledHit: {}, eCommitedHit: {}", entranceHit.get(), cHandledHit.get(), eCommitedHit.get());
+            logger.error("processingCommand -> entranceHit: {}, cHandledHit: {}, eCommitedHit: {}", entranceHit.get(), cHandledHit.get(), eCommitedHit.get());
     }
 	
 	private void commitAggregateChanges(ProcessingCommand processingCommand) {

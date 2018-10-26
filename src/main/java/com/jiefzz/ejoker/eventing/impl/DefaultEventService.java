@@ -122,7 +122,7 @@ public class DefaultEventService implements IEventService {
 //		for(Entry<String, EventMailBox> ety:entrySet) {
 //			ety.getValue().showLog();
 //		}
-		logger.error("appendFinishedHit: {}, appendCompletedHit: {}, publishAndCompleteMessageHit: {}",
+		logger.error("eventService -> appendFinishedHit: {}, appendCompletedHit: {}, publishAndCompleteMessageHit: {}",
 				appendFinishedHit.get(),
 				appendCompletedHit.get(),
 				publishAndCompleteMessageHit.get()

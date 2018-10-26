@@ -42,7 +42,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 //			}
 //		};
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0l, TimeUnit.MILLISECONDS,
-				taskQueue = new LinkedBlockingQueue<Runnable>()) {
+				taskQueue = new LinkedBlockingQueue<Runnable>(1), new ThreadPoolExecutor.CallerRunsPolicy()) {
 
 					@Override
 					protected void beforeExecute(Thread t, Runnable r) {
