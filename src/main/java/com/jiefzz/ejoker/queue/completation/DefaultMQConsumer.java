@@ -221,21 +221,23 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							case FOUND:
 								List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 								for (int i = 0; i<messageExtList.size(); i++) {
-//									int ca = consumingAmount.get();
-//									int frezon = 0;
-//									if(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-//										// 流控,
-//										int lastOnProcessing = ca;
-//										while(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-//											// 触发流控
-//											if(frezon++ > 3 && ca == lastOnProcessing)
-//												break;
-//											logger.warn("触发流控！！！consumingAmount: {}", ca);
-//											SleepWrapper.sleep(TimeUnit.MILLISECONDS, 25l);
-//											ca = consumingAmount.get();
-//										}
-//									}
-									consumingAmount.getAndIncrement();
+									if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING) {
+										// 流控,
+										int ca = consumingAmount.get();
+										int frezon = 0;
+										if(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+											int lastOnProcessing = ca;
+											while(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
+												// 触发流控
+												if(frezon++ > 3 && ca == lastOnProcessing)
+													break;
+												logger.warn("触发流控！！！on consuming amount: {}", ca);
+												SleepWrapper.sleep(TimeUnit.MILLISECONDS, 25l);
+												ca = consumingAmount.get();
+											}
+										}
+										consumingAmount.getAndIncrement();
+									}
 									final long consumingOffset = currentOffset + i + 1;
 									MessageExt rmqMsg = messageExtList.get(i);
 									EJokerQueueMessage queueMessage = new EJokerQueueMessage(
@@ -314,7 +316,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
 				for(Long index : beforeSequence) {
 					aheadOffsetDict.remove(index);
-					consumingAmount.decrementAndGet();
+
+					if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING) {
+						// 在处理消息数量步减
+						consumingAmount.decrementAndGet();
+					}
 				}
 			}
 		}

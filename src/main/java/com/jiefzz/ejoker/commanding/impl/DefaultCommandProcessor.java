@@ -52,13 +52,6 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
 	}
 
-	public void d1() {
-		Set<Entry<String, ProcessingCommandMailbox>> entrySet = mailboxDict.entrySet();
-		for (Entry<String, ProcessingCommandMailbox> ety : entrySet) {
-			ety.getValue().showLog();
-		}
-	}
-
 	@Override
 	public void process(ProcessingCommand processingCommand) {
 		

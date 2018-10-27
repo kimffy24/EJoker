@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.queue.command;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	@Dependence
 	private IJSONConverter jsonConverter;
 	
-	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new HashMap<>();
+	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
 
@@ -76,8 +76,8 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,
 			RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
-		if (null != commandTaskMap.putIfAbsent(command.getId(),
-				new CommandTaskCompletionSource(commandReturnType, taskCompletionSource))) {
+		CommandTaskCompletionSource commandTaskCompletionSource = new CommandTaskCompletionSource(commandReturnType, taskCompletionSource);
+		if (null != commandTaskMap.putIfAbsent(command.getId(), commandTaskCompletionSource)) {
 			throw new RuntimeException(String.format("Duplicate processing command registion, [type=%s, id=%s]",
 					command.getClass().getName(), command.getId()));
 		}
@@ -102,7 +102,6 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	@Override
 	public void handlerResult(int type, CommandResult commandResult) {
-
 		CommandTaskCompletionSource commandTaskCompletionSource;
 		if (null != (commandTaskCompletionSource = commandTaskMap.getOrDefault(commandResult.getCommandId(), null))) {
 
