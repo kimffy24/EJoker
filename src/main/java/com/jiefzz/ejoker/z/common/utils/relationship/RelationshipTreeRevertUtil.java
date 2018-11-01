@@ -67,8 +67,11 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		Object instance = (new InstanceBuilder(expression.getDeclarePrototype())).doCreate();
 		expression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> { 
-						if(checkIgnoreField(genericDefinedField.field))
+						if(
+								checkIgnoreField(genericDefinedField.field)
+								|| !disassemblyEval.hasKey(kvDataSet, fieldName)) {
 							return;
+						}
 						disassemblyStructure(
 							genericDefinedField.genericDefinedTypeMeta,
 							disassemblyEval.getValue(kvDataSet, fieldName),
@@ -169,7 +172,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
 							"(# lose in foreach)"));
 				}
-				if (UnsupportTypes.isUnsupportType(definedClazz)) {
+				if (UnsupportTypes.isUnsupportType(serializedValue.getClass())) {
 					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on %s#%s", definedClazz.getName(),
 							targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
 							"(# lose in foreach)"));
@@ -293,5 +296,6 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		}
 		return result;
 	}
+	
 	
 }

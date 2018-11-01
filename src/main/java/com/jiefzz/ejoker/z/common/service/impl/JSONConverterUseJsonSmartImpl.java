@@ -120,6 +120,11 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 				}, specialTypeHandler);
 		
 		revertRelationshipTreeUitl = new RelationshipTreeRevertUtil<JSONObject, JSONArray>(new IRelationshipTreeDisassemblers<JSONObject, JSONArray>() {
+			
+					@Override
+					public boolean hasKey(JSONObject source, Object key) {
+						return source.containsKey(key);
+					}
 
 					@Override
 					public Object getValue(JSONObject source, Object key) {

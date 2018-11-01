@@ -5,6 +5,14 @@ import java.util.Set;
 public interface IRelationshipTreeDisassemblers<KVP, VP> {
 	
 	/**
+	 * 有这个key不？
+	 * @param source
+	 * @param key
+	 * @return
+	 */
+	public boolean hasKey(KVP source, Object key);
+	
+	/**
 	 * 从KVP中获取对应key的值
 	 * @param source
 	 * @param key
