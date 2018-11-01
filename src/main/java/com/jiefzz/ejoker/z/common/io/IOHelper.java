@@ -44,7 +44,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	 */
 	
 	@Dependence
-	private SystemAsyncHelper systemAsyncHelper;
+	protected SystemAsyncHelper systemAsyncHelper;
 
 	public <T> void tryAsyncAction2(
 			String actionName,

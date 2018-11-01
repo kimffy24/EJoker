@@ -193,6 +193,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			long consumedOffset;
 			try {
 				maxOffset = new AtomicLong(maxOffset(mq));
+//				if("EjokerCommandConsumerGroup".equals(getConsumerGroup())) {
+//					consumedOffset = 14990271;
+//				} else 
 				consumedOffset = fetchConsumeOffset(mq, false);
 			} catch (MQClientException e3) {
 				throw new RuntimeException(e3);
@@ -212,7 +215,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 						PullResult pullResult;
 						try {
-							pullResult = pullBlockIfNotFound(mq, null, controlStruct.offsetFetchLocal.get(), 32);
+							pullResult = pullBlockIfNotFound(mq, null, currentOffset, 32);
 						} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
 							throw new RuntimeException(e);
 						}
