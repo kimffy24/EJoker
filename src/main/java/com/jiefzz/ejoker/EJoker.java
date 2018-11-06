@@ -1,5 +1,8 @@
 package com.jiefzz.ejoker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
@@ -18,9 +21,11 @@ import com.jiefzz.ejoker.z.common.context.dev2.impl.EjokerContextDev2Impl;
  */
 public class EJoker {
 	
+	private final static Logger logger = LoggerFactory.getLogger(EJoker.class);
+	
 	//////  public:
 	
-	public static final String SELF_PACNAGE_NAME = "com.jiefzz.ejoker";
+	public static final String SELF_PACNAGE_NAME;
 	
 	public static EJoker getInstance(){
 		if ( instance == null )
@@ -64,5 +69,16 @@ public class EJoker {
 	protected static EJoker instance;
 	
 	protected IEjokerContextDev2 context;
+	
+	static {
+		String packageName = EjokerContextDev2Impl.class.getName();
+		String[] split = packageName.split("\\.");
+		SELF_PACNAGE_NAME = split[0]
+				+ "."
+				+ split[1]
+				+ "."
+				+ split[2];
+		logger.debug("SELF_PACNAGE_NAME = {}", SELF_PACNAGE_NAME);
+	}
 	
 }

@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jiefzz</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>0.3.2-Beta</version>
+	<version>0.3.3-SNAPSHOT</version>
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
@@ -45,6 +45,40 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>com.github.wvengen</groupId>
+				<artifactId>proguard-maven-plugin</artifactId>
+				<version>2.0.11</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>proguard</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<obfuscate>true</obfuscate>
+					<proguardInclude>${basedir}/proguard.conf</proguardInclude>
+					<!-- 添加依赖，这里你可以按你的需要修改 -->
+					<libs>
+						<lib>${java.home}/lib/rt.jar</lib>
+						<lib>${java.home}/lib/jce.jar</lib>
+					</libs>
+					<addMavenDescriptor>false</addMavenDescriptor>
+				</configuration>
+				<dependencies>
+					<!-- 使用4.8版本来混淆 -->
+					<dependency>
+						<groupId>net.sf.proguard</groupId>
+						<artifactId>proguard-base</artifactId>
+						<version>6.0.3</version>
+						<scope>runtime</scope>
+					</dependency>
+				</dependencies>
+			</plugin>
+
 
 			<!-- <plugin>
 				<groupId>org.eclipse.m2e</groupId>
