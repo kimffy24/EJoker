@@ -42,7 +42,7 @@ public class SendReplyService {
 	
 	private void sendReplyInternal(String replyAddress, ReplyMessage rm) {
 		String convert = jsonConverter.convert(rm);
-		rpcService.remoteInvoke(convert, replyAddress, EJokerEnvironment.REPLY_PORT);
+		rpcService.remoteInvoke(convert, getHost(replyAddress), getPort(replyAddress));
 	}
 
 	/**
@@ -59,4 +59,17 @@ public class SendReplyService {
 		public DomainEventHandledMessage d = null;
 		
 	}
+	
+	private static String getHost(String replyAddress) {
+		String[] split = replyAddress.split(":");
+		return split[0];
+	}
+
+	private static int getPort(String replyAddress) {
+		String[] split = replyAddress.split(":");
+		if(split.length == 2)
+			return Integer.valueOf(split[1]);
+		return EJokerEnvironment.REPLY_PORT;
+	}
+	
 }

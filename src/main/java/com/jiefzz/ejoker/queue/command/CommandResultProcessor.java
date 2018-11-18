@@ -71,7 +71,9 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	}
 
 	public String getBindingAddress() {
-		return clientNodeIPAddressProvider.getClientNodeIPAddress();
+		if(65056 - EJokerEnvironment.REPLY_PORT == 0)
+			return clientNodeIPAddressProvider.getClientNodeIPAddress();
+		return clientNodeIPAddressProvider.getClientNodeIPAddress() + ":" + EJokerEnvironment.REPLY_PORT;
 	}
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,
