@@ -6,6 +6,7 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
@@ -63,7 +64,8 @@ public class DomainEventConsumer implements IWorkerService {
 	}
 	
 	public void d1() {
-		this.consumer.showLog("DomainEventConsumer");
+		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
+			this.consumer.showLog("DomainEventConsumer");
 	}
 
 	public DomainEventConsumer start() {

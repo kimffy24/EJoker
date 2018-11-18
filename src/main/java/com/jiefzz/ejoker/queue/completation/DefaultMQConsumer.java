@@ -89,7 +89,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void showLog(String x) {
-		logger.error("{}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
+		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
+			logger.debug("EjokerStatus => {}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
 	}
 
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {

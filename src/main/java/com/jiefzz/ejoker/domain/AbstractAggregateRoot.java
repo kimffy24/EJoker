@@ -119,7 +119,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	private void verifyEvent(DomainEventStream eventStream){
-		if (eventStream.getVersion() > 1 && eventStream.getAggregateRootId() != this.getUniqueId()) {
+		if (eventStream.getVersion() > 1 &&  !this.getUniqueId().equals(eventStream.getAggregateRootId())) {
 			throw new InvalidOperationException(String.format(
 					"Invalid domain event stream, aggregateRootId: %s, expected aggregateRootId: %s, type: %s", 
 					eventStream.getAggregateRootId(),

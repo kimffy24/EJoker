@@ -61,7 +61,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	}
 	
 	public void debugInfo(String poolName) {
-		logger.error("pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
+		logger.debug("EjokerStatus => pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
 	}
 
 	@Override

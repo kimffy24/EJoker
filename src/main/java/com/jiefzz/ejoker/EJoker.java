@@ -25,7 +25,7 @@ public class EJoker {
 	
 	//////  public:
 	
-	public static final String SELF_PACNAGE_NAME;
+	public static final String SELF_PACKAGE_NAME;
 	
 	public static EJoker getInstance(){
 		if ( instance == null )
@@ -44,7 +44,7 @@ public class EJoker {
 		
 		// regist scanner hook
 		context.registeScannerHook(clazz -> {
-				if(!clazz.getPackage().getName().startsWith(SELF_PACNAGE_NAME)) {
+				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
 					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
 					RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
 					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
@@ -52,7 +52,7 @@ public class EJoker {
 				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
 				
 				// register StringId to GenericId codec.
-				if(clazz.isAssignableFrom(IAggregateRoot.class))
+				if(IAggregateRoot.class.isAssignableFrom(clazz))
 					IDHelper.addAggregateRoot((Class<IAggregateRoot> )clazz);
 				
 				// preload IPubliashableException field inf 
@@ -60,7 +60,7 @@ public class EJoker {
 					PublishableExceptionCodecHelper.getReflectFields((Class<IPublishableException> )clazz);
 		});
 		
-		context.scanPackage(SELF_PACNAGE_NAME);
+		context.scanPackage(SELF_PACKAGE_NAME);
 		
 	}
 
@@ -73,12 +73,12 @@ public class EJoker {
 	static {
 		String packageName = EjokerContextDev2Impl.class.getName();
 		String[] split = packageName.split("\\.");
-		SELF_PACNAGE_NAME = split[0]
+		SELF_PACKAGE_NAME = split[0]
 				+ "."
 				+ split[1]
 				+ "."
 				+ split[2];
-		logger.debug("SELF_PACNAGE_NAME = {}", SELF_PACNAGE_NAME);
+		logger.debug("SELF_PACNAGE_NAME = {}", SELF_PACKAGE_NAME);
 	}
 	
 }

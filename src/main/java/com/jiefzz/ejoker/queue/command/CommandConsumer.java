@@ -86,7 +86,8 @@ public class CommandConsumer implements IWorkerService {
 	}
 	
 	public void d1() {
-		this.consumer.showLog("CommandConsumer");
+		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
+			this.consumer.showLog("CommandConsumer");
 	}
 
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
