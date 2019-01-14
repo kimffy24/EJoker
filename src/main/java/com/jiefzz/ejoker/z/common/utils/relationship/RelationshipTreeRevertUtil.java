@@ -85,7 +85,8 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<Object> effector) {
 		
 		if(null == serializedValue) {
-			effector.trigger(null);
+			if(!targetDefinedTypeMeta.rawClazz.isPrimitive())
+				effector.trigger(null);
 			return;
 		}
 		

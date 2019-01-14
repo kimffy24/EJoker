@@ -56,7 +56,7 @@ public class EJoker {
 					IDHelper.addAggregateRoot((Class<IAggregateRoot> )clazz);
 				
 				// preload IPubliashableException field inf 
-				if(clazz.isAssignableFrom(IPublishableException.class))
+				if(IPublishableException.class.isAssignableFrom(clazz))
 					PublishableExceptionCodecHelper.getReflectFields((Class<IPublishableException> )clazz);
 		});
 		
