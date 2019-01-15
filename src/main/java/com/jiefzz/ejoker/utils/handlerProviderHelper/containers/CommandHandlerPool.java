@@ -73,9 +73,10 @@ public class CommandHandlerPool {
 					e.printStackTrace();
 					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
-					if(null != e.getCause() && e.getCause() instanceof Exception)
+					if(null != e.getCause() && e.getCause() instanceof Exception) {
+						e.printStackTrace();
 						throw (Exception )e.getCause();
-					else
+					} else
 						throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
 				}
 		}

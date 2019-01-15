@@ -122,6 +122,7 @@ public class MessageHandlerPool {
 					} catch (IllegalAccessException|IllegalArgumentException e) {
 						throw new AsyncWrapperException(e);
 					} catch (InvocationTargetException e) {
+						e.printStackTrace();
 						throw (Exception )e.getCause();
 					}
 			});

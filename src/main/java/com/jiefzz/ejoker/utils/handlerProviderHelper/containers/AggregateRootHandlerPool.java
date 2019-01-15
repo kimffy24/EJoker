@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.jiefzz.ejoker.domain.AbstractAggregateRoot;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
+import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 
 public class AggregateRootHandlerPool {
 	
@@ -58,9 +59,11 @@ public class AggregateRootHandlerPool {
 		public void handle(AbstractAggregateRoot<?> aggregateRoot, IDomainEvent<?> domainEvent) {
 			try {
 				handleReflectionMethod.invoke(aggregateRoot, domainEvent);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-				ex.printStackTrace();
-				throw new RuntimeException("Command execute failed!!! " +domainEvent.toString(), ex);
+			} catch (IllegalAccessException | IllegalArgumentException e) {
+				throw new AsyncWrapperException(e);
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+				throw new RuntimeException("Command execute failed!!! " +domainEvent.toString(), (Exception )e.getCause());
 			}
 		}
 		
