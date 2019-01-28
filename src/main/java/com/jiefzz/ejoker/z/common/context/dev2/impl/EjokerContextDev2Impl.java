@@ -22,6 +22,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.dev2.EJokerInstanceBuilder;
 import com.jiefzz.ejoker.z.common.context.dev2.EjokerRootDefinationStore;
+import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerClazzScannerHook;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
@@ -101,6 +102,14 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private final static Object defaultInstance = new Object();
 	
+	public EjokerContextDev2Impl() {
+
+		instanceMap.put(IEJokerSimpleContext.class.getName(), this);
+		instanceMap.put(IEjokerContextDev2.class.getName(), this);
+		instanceMap.put(EjokerContextDev2Impl.class.getName(), this);
+		
+	}
+	
 	@Override
 	public <T> T get(Class<T> clazz) {
 		
@@ -145,6 +154,16 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 							));
 		
 		return (T )dependence;
+	}
+
+	@Override
+	public void shallowRegist(Object instance) {
+		String instanceTypeName = instance.getClass().getName();
+		
+		if(instanceMap.containsKey(instanceTypeName))
+			throw new ContextRuntimeException("It seems another instance type of " + instanceTypeName + " has registered!!!");
+		
+		instanceMap.put(instanceTypeName, instance);
 	}
 
 	@Override
