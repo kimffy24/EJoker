@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
+import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandAsyncHandlerHelper;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
@@ -46,7 +47,8 @@ public class EJoker {
 		context.registeScannerHook(clazz -> {
 				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
 					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
-					RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz);
+					RegistCommandHandlerHelper.checkAndRegistCommandHandler(context, clazz);
+					RegistCommandAsyncHandlerHelper.checkAndRegistCommandAsyncHandler(context, clazz);
 					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 				}
 				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);

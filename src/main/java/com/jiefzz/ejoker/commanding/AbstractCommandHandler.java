@@ -7,10 +7,21 @@ package com.jiefzz.ejoker.commanding;
  * @author jiefzz
  *
  */
-public abstract class AbstractCommandHandler implements ICommandHandler<ICommand> {
+public abstract class AbstractCommandHandler implements ICommandHandler<ICommand>, ICommandAsyncHandler<ICommand> {
 	
 	@Override
 	public void handle(ICommandContext context, ICommand command) {
 		throw new CommandRuntimeException("Do you forget to implement the handler function to handle command which type is " +command.getClass().getName());
 	}
+
+	@Override
+	public Object handleAsync(ICommandContext context, ICommand command) {
+		throw new CommandRuntimeException("Do you forget to implement the async handler function to handle command which type is " +command.getClass().getName());
+	}
+
+	@Override
+	public Object handleAsync(ICommand command) {
+		throw new CommandRuntimeException("Do you forget to implement the async handler function to handle command which type is " +command.getClass().getName());
+	}
+	
 }

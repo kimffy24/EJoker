@@ -8,10 +8,13 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
+import com.jiefzz.ejoker.commanding.CommandRuntimeException;
 import com.jiefzz.ejoker.commanding.CommandStatus;
 import com.jiefzz.ejoker.commanding.ICommand;
+import com.jiefzz.ejoker.commanding.ICommandAsyncHandlerProvider;
+import com.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
 import com.jiefzz.ejoker.commanding.ICommandExecuteContext;
-import com.jiefzz.ejoker.commanding.ICommandHandlerPrivider;
+import com.jiefzz.ejoker.commanding.ICommandHandlerProvider;
 import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import com.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
@@ -52,7 +55,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private IEventStore eventStore;
 	
 	@Dependence
-	private ICommandHandlerPrivider commandHandlerPrivider;
+	private ICommandHandlerProvider commandHandlerPrivider;
+	
+	@Dependence
+	private ICommandAsyncHandlerProvider commandAsyncHandlerPrivider;
 	
 	@Dependence
 	private IEventService eventService;
@@ -93,8 +99,18 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 		try {
 			ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
-			handleCommand(processingCommand, handler);
-//			return handleCommandAsync(processingCommand, handler);
+			if(null != handler) {
+				handleCommand(processingCommand, handler);
+				return;
+			}
+			
+			ICommandAsyncHandlerProxy asyncHandler = commandAsyncHandlerPrivider.getHandler(message.getClass());
+			if(null != asyncHandler) {
+				handleCommandAsync(processingCommand, asyncHandler);
+				return;
+			}
+			
+			throw new CommandRuntimeException(message.getClass().getName() +" is no handler found for it!!!");
 		} catch (RuntimeException ex) {
 			logger.error(ex.getMessage());
 			ex.printStackTrace();
@@ -109,18 +125,21 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 		processingCommand.getCommandExecuteContext().clear();
 
-		boolean b = false;
-			/// TODO @await java直接同步实现
+		//调用command handler执行当前command
+		boolean handleSuccess = false;
 		try {
+			/// TODO @await java直接同步实现
 			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
 					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
-			b = true;
+			handleSuccess = true;
 		} catch (Exception ex) {
 			handleExceptionAsync(processingCommand, commandHandler, ex);
+			return;
 		}
 
-		if (b) {
+		//如果command执行成功，则提交执行后的结果
+		if (handleSuccess) {
 			try {
 				// TOTO 事件过程的起点
 				commitAggregateChanges(processingCommand);
@@ -286,21 +305,21 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         logger.error(errorMessage, exception);
     }
 	
-	private SystemFutureWrapper<AsyncTaskResult<Void>> handleCommandAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler) {
+	private SystemFutureWrapper<AsyncTaskResult<Void>> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
 		return eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 					"HandleCommandAsync",
 					() ->  {
 						try {
-							commandHandler.handle(processingCommand.getCommandExecuteContext(), command);
+							Object ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
 							logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
 		                            commandHandler.toString(),
 		                            command.getClass().getName(),
 		                            command.getId(),
 		                            command.getAggregateRootId());
 							
-							return EJokerFutureWrapperUtil.createCompleteFutureTask();
+							return EJokerFutureWrapperUtil.createCompleteFutureTask((IApplicationMessage )ressult);
 						} catch (Exception ex) {
 							
 							while(ex instanceof IOExceptionOnRuntime)
@@ -312,14 +331,13 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		                            command.getId(),
 		                            command.getAggregateRootId()), ex);
 
-		            		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
-		            		rf.trySetResult(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
-		                    return new SystemFutureWrapper<>(rf);
-		                } },
-					r -> commitChangesAsync(processingCommand, true, null, null),
+		            		return EJokerFutureWrapperUtil.createCompleteFuture(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		                }
+					},
+					r -> commitChangesAsync(processingCommand, true, r, null),
 					() -> String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString()),
 					ex -> commitChangesAsync(processingCommand, false, null, ex.getMessage())
-					)
+				)
 		);
     }
 	
