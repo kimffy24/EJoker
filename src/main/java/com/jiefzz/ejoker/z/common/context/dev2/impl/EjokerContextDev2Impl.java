@@ -157,7 +157,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	}
 
 	@Override
-	public void shallowRegist(Object instance) {
+	public void shallowRegister(Object instance) {
 		String instanceTypeName = instance.getClass().getName();
 		
 		if(instanceMap.containsKey(instanceTypeName))
