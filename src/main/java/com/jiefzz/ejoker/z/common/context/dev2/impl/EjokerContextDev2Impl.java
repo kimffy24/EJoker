@@ -29,6 +29,7 @@ import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedField;
@@ -98,7 +99,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			return o1.intValue() - o2.intValue();
 		}});
 	
-	private final AtomicBoolean onService = new AtomicBoolean(false);
+	private final AtomicBoolean onService = new AtomicBoolean(true);
 	
 	private final static Object defaultInstance = new Object();
 	
@@ -113,17 +114,19 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public <T> T get(Class<T> clazz) {
 		
-		if(!onService.get())
-			throw new ContextRuntimeException("context is not on service!!!");
+		AcquireHelper.waitAcquire(onService, false, 50, count -> {
+			logger.warn("Context is not on service!!! Current retry {} times", count);
+		});
 		
 		return (T )instanceMap.get(clazz.getName());
 	}
 
 	@Override
 	public <T> T get(Class<T> clazz, Type... types) {
-		
-		if(!onService.get())
-			throw new ContextRuntimeException("context is not on service!!!");
+
+		AcquireHelper.waitAcquire(onService, false, 50, count -> {
+			logger.warn("Context is not on service!!! Current retry {} times", count);
+		});
 		
 		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz, types);
 		
@@ -179,7 +182,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void refresh() {
 		
-		assert !onService.get();
+		onService.set(false);
 		
 		refreshContextRecord();
 		
@@ -194,6 +197,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		preparePreviouslyLoad();
 		completeInstanceInitMethod();
+		
 		onService.compareAndSet(false, true);
 	}
 	

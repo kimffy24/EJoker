@@ -63,10 +63,10 @@ public class DomainEventConsumer implements IWorkerService {
 		return this;
 	}
 	
-	public void d1() {
-		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
-			this.consumer.showLog("DomainEventConsumer");
-	}
+//	public void d1() {
+//		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
+//			this.consumer.showLog("DomainEventConsumer");
+//	}
 
 	public DomainEventConsumer start() {
 		consumer.registerEJokerCallback(this::handle);

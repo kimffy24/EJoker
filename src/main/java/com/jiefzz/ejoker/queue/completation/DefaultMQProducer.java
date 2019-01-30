@@ -12,6 +12,7 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.RPCHook;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 
 public class DefaultMQProducer extends org.apache.rocketmq.client.producer.DefaultMQProducer {
 
@@ -35,8 +36,13 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		init();
 	}
 	
+	@Deprecated
 	public Future<SendResult> sendAsync(Message msg) {
 		return threadPoolExecutor.submit(() -> this.defaultMQProducerImpl.send(msg));
+	}
+	
+	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
+		return threadPoolExecutor.submit(vf::trigger);
 	}
 	
 	private ThreadPoolExecutor threadPoolExecutor;
@@ -48,7 +54,8 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 				0l,
 				TimeUnit.MILLISECONDS,
 				new LinkedBlockingQueue<Runnable>(),
-				new SendThreadFactory());
+				new SendThreadFactory(),
+				new ThreadPoolExecutor.CallerRunsPolicy());
 		if(EJokerEnvironment.ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL)
 			threadPoolExecutor.prestartAllCoreThreads();
 	}

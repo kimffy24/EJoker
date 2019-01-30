@@ -88,10 +88,24 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		super(consumerGroup);
 	}
 	
-	public void showLog(String x) {
-		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
-			logger.debug("EjokerStatus => {}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
-	}
+//	public void showLog(String x) {
+////		logger.error("EjokerStatus => {}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
+//		Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
+//		boolean onWorking = false;
+//		for(Entry<MessageQueue, ControlStruct> ety : entrySet) {
+//			ControlStruct cs = ety.getValue();
+//			long fetchPoint = cs.offsetFetchLocal.get();
+//			long consumedPoint = cs.offsetConsumedLocal.get();
+//			
+//			if(0 == fetchPoint - consumedPoint) {
+//				continue;
+//			}
+//			
+//			onWorking |= true;
+//			break;
+//		}
+//		logger.error("EjokerStatus => {}.DefaultMQConsumer -> onWorking: {}, currentTimestamp: {}", x, onWorking, System.currentTimeMillis());
+//	}
 
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
 		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.onRunning");
@@ -355,7 +369,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	/**
 	 * 默认异步策略
 	 */
-	private IVoidFunction1<IVoidFunction> sumbiter = (c) -> new Thread(c::trigger).start();
+	private IVoidFunction1<IVoidFunction> sumbiter = c -> new Thread(c::trigger).start();
 	
 	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
 		this.sumbiter = sumbiter;

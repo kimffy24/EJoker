@@ -22,7 +22,7 @@ public final class EJokerFutureWrapperUtil {
 
 	public static <T> SystemFutureWrapper<AsyncTaskResult<T>> createCompleteFutureTask(T result) {
 
-        return new SystemFutureWrapper<>(EJokerFutureTaskUtil.createFutureDirectly(result));
+        return new SystemFutureWrapper<>(EJokerFutureTaskUtil.completeTask(result));
         
 	}
 

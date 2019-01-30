@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
@@ -38,13 +37,9 @@ public abstract class AbstractNormalWorkerGroupService {
 		asyncPool = AsyncEntranceProvider.trigger(this);
 		scavenger.addFianllyJob(asyncPool::shutdown);
 		logger.debug("Create a new AsyncEntrance[{}] for {}.", asyncPool.getClass().getName(), this.getClass().getName());
+		
 	}
 	
-	public void d1() {
-		if(asyncPool instanceof SystemAsyncPool)
-			((SystemAsyncPool )asyncPool).debugInfo(String.format("ThreadPool[%s]", this.getClass()));
-	}
-
 	protected abstract int usePoolSize();
 
 	protected abstract boolean prestartAll();

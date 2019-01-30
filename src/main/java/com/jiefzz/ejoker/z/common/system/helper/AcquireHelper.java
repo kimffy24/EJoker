@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 
 /**
@@ -27,6 +28,14 @@ public final class AcquireHelper {
 		}
 	}
 
+	public static void waitAcquire(AtomicBoolean ab, long msPerLoop, IVoidFunction1<Integer> loopAction) {
+		int i = -1;
+		while (ab.get()) {
+			loopAction.trigger(++i);
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+		}
+	}
+
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop, IVoidFunction loopAction) {
 		while (expect == ab.get()) {
 			loopAction.trigger();
@@ -36,6 +45,14 @@ public final class AcquireHelper {
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop) {
 		while (expect == ab.get()) {
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+		}
+	}
+
+	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop, IVoidFunction1<Integer> loopAction) {
+		int i = -1;
+		while (expect == ab.get()) {
+			loopAction.trigger(++i);
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}

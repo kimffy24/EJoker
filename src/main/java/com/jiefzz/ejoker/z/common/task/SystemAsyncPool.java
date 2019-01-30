@@ -1,12 +1,13 @@
 package com.jiefzz.ejoker.z.common.task;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,26 +24,144 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		this(threadPoolSize, false);
 	}
 	
-	private BlockingQueue<Runnable> taskQueue = null;
+//	private BlockingQueue<Runnable> taskQueue = null;
 	
-	private AtomicLong aliveCount = new AtomicLong(0l);
+//	private AtomicLong aliveCount = new AtomicLong(0l);
 	
 	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
-//		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-//				60L, TimeUnit.SECONDS,
-//				new SynchronousQueue<Runnable>()) {
-//			@Override
-//			protected void beforeExecute(Thread t, Runnable r) {
-//				aliveCount.getAndIncrement();
-//			}
-//
-//			@Override
-//			protected void afterExecute(Runnable r, Throwable t) {
-//				aliveCount.decrementAndGet();
-//			}
-//		};
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0l, TimeUnit.MILLISECONDS,
-				taskQueue = new LinkedBlockingQueue<Runnable>(1), new ThreadPoolExecutor.CallerRunsPolicy()) {
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+				threadPoolSize,
+				threadPoolSize,
+				0l,
+				TimeUnit.MILLISECONDS,
+//				taskQueue = new LinkedBlockingQueue<Runnable>(1),
+				new BlockingQueue<Runnable>() {
+					@Override
+					public Runnable remove() {
+						return null;
+					}
+
+					@Override
+					public Runnable poll() {
+						return null;
+					}
+
+					@Override
+					public Runnable element() {
+						return null;
+					}
+
+					@Override
+					public Runnable peek() {
+						return null;
+					}
+
+					@Override
+					public int size() {
+						return 0;
+					}
+
+					@Override
+					public boolean isEmpty() {
+						return true;
+					}
+
+					@Override
+					public Iterator<Runnable> iterator() {
+						return null;
+					}
+
+					@Override
+					public Object[] toArray() {
+						return null;
+					}
+
+					@Override
+					public <T> T[] toArray(T[] a) {
+						return null;
+					}
+
+					@Override
+					public boolean containsAll(Collection<?> c) {
+						return false;
+					}
+
+					@Override
+					public boolean addAll(Collection<? extends Runnable> c) {
+						return false;
+					}
+
+					@Override
+					public boolean removeAll(Collection<?> c) {
+						return false;
+					}
+
+					@Override
+					public boolean retainAll(Collection<?> c) {
+						return false;
+					}
+
+					@Override
+					public void clear() {
+					}
+
+					@Override
+					public boolean add(Runnable e) {
+						return false;
+					}
+
+					@Override
+					public boolean offer(Runnable e) {
+						return false;
+					}
+
+					@Override
+					public void put(Runnable e) throws InterruptedException {
+						throw new RuntimeException("Not support!!!");
+					}
+
+					@Override
+					public boolean offer(Runnable e, long timeout, TimeUnit unit) throws InterruptedException {
+						return false;
+					}
+
+					@Override
+					public Runnable take() throws InterruptedException {
+						return null;
+					}
+
+					@Override
+					public Runnable poll(long timeout, TimeUnit unit) throws InterruptedException {
+						return null;
+					}
+
+					@Override
+					public int remainingCapacity() {
+						return 0;
+					}
+
+					@Override
+					public boolean remove(Object o) {
+						return false;
+					}
+
+					@Override
+					public boolean contains(Object o) {
+						return false;
+					}
+
+					@Override
+					public int drainTo(Collection<? super Runnable> c) {
+						return 0;
+					}
+
+					@Override
+					public int drainTo(Collection<? super Runnable> c, int maxElements) {
+						return 0;
+					}
+					
+				},
+				new ThreadPoolExecutor.CallerRunsPolicy())/* {
 
 					@Override
 					protected void beforeExecute(Thread t, Runnable r) {
@@ -54,15 +173,15 @@ public class SystemAsyncPool implements IAsyncEntrance {
 						aliveCount.decrementAndGet();
 					}
 			
-		};
+		} */;
 		if(prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();
 		defaultThreadPool = threadPoolExecutor;
 	}
 	
-	public void debugInfo(String poolName) {
-		logger.debug("EjokerStatus => pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
-	}
+//	public void debugInfo(String poolName) {
+//		logger.error("EjokerStatus => pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
+//	}
 
 	@Override
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {

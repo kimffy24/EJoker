@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -9,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.EJoker;
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageHandler;
@@ -16,6 +20,7 @@ import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
@@ -30,6 +35,8 @@ import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
  *
  */
 public class MessageHandlerPool {
+	
+	private final static Logger logger = LoggerFactory.getLogger(MessageHandlerPool.class);
 
 	public final static String HANDLER_METHOD_NAME = "handleAsync";
 
@@ -62,7 +69,7 @@ public class MessageHandlerPool {
 				coverSet.add(messageType.getName());
 				if (!method.isAccessible())
 					method.setAccessible(true);
-				List<MessageHandlerReflectionTuple> handlerInvokerList = MapHelper.getOrAdd(handlerMapper, messageType, ArrayList::new);
+				List<MessageHandlerReflectionTuple> handlerInvokerList = getProxyAsyncHandlers(messageType);
 				handlerInvokerList.add(new MessageHandlerReflectionTuple(method));
 			}
 		}
@@ -94,17 +101,23 @@ public class MessageHandlerPool {
 			return EJoker.getInstance().getEJokerContext().get(handlerClass);
 		}
 
+		@Deprecated // 此处是使用原生线程来执行任务。
 		@Override
 		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message) {
 			/// 使用默认的异步任务执行器，就是创建新线程
-			return handleAsync(message, (c) -> {
+			return handleAsync(message, c -> {
 				RipenFuture<AsyncTaskResult<Void>> ripenFuture = new RipenFuture<>();
 				new Thread(() -> {
 						try {
 							c.trigger();
-							ripenFuture.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, "", null));
+							ripenFuture.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, null, null));
 						} catch (Exception ex) {
-							ripenFuture.trySetException(ex);
+							logger.debug("Message async handler execute faild!!!", ex);
+							ripenFuture.trySetResult(new AsyncTaskResult<>(
+									(ex instanceof IOException | ex instanceof IOExceptionOnRuntime ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
+									ex.getMessage(),
+									null)
+								);
 						}
 					}).start();
 				return new SystemFutureWrapper<>(ripenFuture);
@@ -116,7 +129,7 @@ public class MessageHandlerPool {
 		 */
 		@Override
 		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, IVoidFunction> submitter) {
-			return submitter.trigger(()-> {
+			return submitter.trigger(() -> {
 					try {
 						handleReflectionMethod.invoke(getInnerObject(), message);
 					} catch (IllegalAccessException|IllegalArgumentException e) {
