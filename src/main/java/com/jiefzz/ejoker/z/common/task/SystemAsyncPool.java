@@ -24,7 +24,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		this(threadPoolSize, false);
 	}
 	
-//	private BlockingQueue<Runnable> taskQueue = null;
+	private BlockingQueue<Runnable> taskQueue = null;
 	
 //	private AtomicLong aliveCount = new AtomicLong(0l);
 	
@@ -35,7 +35,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 				0l,
 				TimeUnit.MILLISECONDS,
 //				taskQueue = new LinkedBlockingQueue<Runnable>(1),
-				new BlockingQueue<Runnable>() {
+				taskQueue = new BlockingQueue<Runnable>() {
 					@Override
 					public Runnable remove() {
 						return null;

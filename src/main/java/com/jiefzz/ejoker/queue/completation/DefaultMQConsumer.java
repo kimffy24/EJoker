@@ -140,6 +140,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 								if(!onRunning.get())
 									return;
 							}
+							
 							try {
 								dashboard.messageHandlingJob.trigger();
 							} catch (RuntimeException ex) {

@@ -6,6 +6,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -17,10 +19,12 @@ import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 /**
@@ -137,8 +141,6 @@ public class InMemoryEventStore implements IEventStore {
 		return resultSet;
 	}
 
-	private AtomicLong atLong = new AtomicLong(0);
-
 	private EventAppendResult appendSync(DomainEventStream eventStream) {
 		String aggregateRootId = eventStream.getAggregateRootId();
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId,
@@ -151,12 +153,60 @@ public class InMemoryEventStore implements IEventStore {
 		if (hasPrevous)
 			return EventAppendResult.DuplicateEvent;
 		else {
-
-			logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(),
-					eventStream.getAggregateRootId());
+			queue.offer(eventStream);
 
 			return EventAppendResult.Success;
 		}
 
+	}
+	
+	// for time test
+	private ConcurrentLinkedQueue<DomainEventStream> queue = new ConcurrentLinkedQueue<>();
+	
+	private long min = Long.MAX_VALUE, max = 0;
+
+	private AtomicLong atLong = new AtomicLong(0);
+	
+	private Thread monitor = new Thread(() -> {
+		while(true) {
+			DomainEventStream des;
+			while(null != (des = queue.poll())) {
+
+				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(),
+						des.getAggregateRootId());
+				
+				long ts = des.getTimestamp();
+				if(ts < min) {
+					min = ts;
+				}
+				if(ts > max) {
+					max = ts;
+				}
+			} 
+			if(null == des){
+				SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+			}
+		}
+	});
+	
+	public long getMin() {
+		return min;
+	}
+	
+	public long getMax() {
+		return max;
+	}
+	
+	public long getESAmount() {
+		return atLong.get();
+	}
+	
+	public long sizeOfMStore() {
+		return mStorage.size();
+	}
+	
+	@EInitialize
+	public void init() {
+		monitor.start();
 	}
 }
