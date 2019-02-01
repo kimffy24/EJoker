@@ -1,7 +1,5 @@
 package com.jiefzz.ejoker.z.common.task;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -34,133 +32,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 				threadPoolSize,
 				0l,
 				TimeUnit.MILLISECONDS,
-//				taskQueue = new LinkedBlockingQueue<Runnable>(1),
-				taskQueue = new BlockingQueue<Runnable>() {
-					@Override
-					public Runnable remove() {
-						return null;
-					}
-
-					@Override
-					public Runnable poll() {
-						return null;
-					}
-
-					@Override
-					public Runnable element() {
-						return null;
-					}
-
-					@Override
-					public Runnable peek() {
-						return null;
-					}
-
-					@Override
-					public int size() {
-						return 0;
-					}
-
-					@Override
-					public boolean isEmpty() {
-						return true;
-					}
-
-					@Override
-					public Iterator<Runnable> iterator() {
-						return null;
-					}
-
-					@Override
-					public Object[] toArray() {
-						return null;
-					}
-
-					@Override
-					public <T> T[] toArray(T[] a) {
-						return null;
-					}
-
-					@Override
-					public boolean containsAll(Collection<?> c) {
-						return false;
-					}
-
-					@Override
-					public boolean addAll(Collection<? extends Runnable> c) {
-						return false;
-					}
-
-					@Override
-					public boolean removeAll(Collection<?> c) {
-						return false;
-					}
-
-					@Override
-					public boolean retainAll(Collection<?> c) {
-						return false;
-					}
-
-					@Override
-					public void clear() {
-					}
-
-					@Override
-					public boolean add(Runnable e) {
-						return false;
-					}
-
-					@Override
-					public boolean offer(Runnable e) {
-						return false;
-					}
-
-					@Override
-					public void put(Runnable e) throws InterruptedException {
-						throw new RuntimeException("Not support!!!");
-					}
-
-					@Override
-					public boolean offer(Runnable e, long timeout, TimeUnit unit) throws InterruptedException {
-						return false;
-					}
-
-					@Override
-					public Runnable take() throws InterruptedException {
-						return null;
-					}
-
-					@Override
-					public Runnable poll(long timeout, TimeUnit unit) throws InterruptedException {
-						return null;
-					}
-
-					@Override
-					public int remainingCapacity() {
-						return 0;
-					}
-
-					@Override
-					public boolean remove(Object o) {
-						return false;
-					}
-
-					@Override
-					public boolean contains(Object o) {
-						return false;
-					}
-
-					@Override
-					public int drainTo(Collection<? super Runnable> c) {
-						return 0;
-					}
-
-					@Override
-					public int drainTo(Collection<? super Runnable> c, int maxElements) {
-						return 0;
-					}
-					
-				},
+				taskQueue = new LinkedBlockingQueue<Runnable>(1),
 				new ThreadPoolExecutor.CallerRunsPolicy())/* {
 
 					@Override
@@ -178,7 +50,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 			threadPoolExecutor.prestartAllCoreThreads();
 		defaultThreadPool = threadPoolExecutor;
 	}
-	
+
 //	public void debugInfo(String poolName) {
 //		logger.error("EjokerStatus => pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
 //	}
