@@ -31,9 +31,11 @@ import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
-import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
+
+import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
@@ -259,12 +261,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 									}
 									final long consumingOffset = currentOffset + i + 1;
 									MessageExt rmqMsg = messageExtList.get(i);
-									EJokerQueueMessage queueMessage = new EJokerQueueMessage(
+									final EJokerQueueMessage queueMessage = new EJokerQueueMessage(
 										rmqMsg.getTopic(),
 										rmqMsg.getFlag(),
 										rmqMsg.getBody(),
 										rmqMsg.getTags());
-									messageProcessor.trigger(queueMessage, message -> tryMarkCompletion(mq, consumingOffset));
+									sumbiter.trigger(() -> 
+									messageProcessor.trigger(queueMessage, message -> tryMarkCompletion(mq, consumingOffset))
+									)
+									;
 								}
 								controlStruct.offsetFetchLocal.getAndSet(pullResult.getNextBeginOffset());
 								maxOffset.getAndSet(pullResult.getMaxOffset());

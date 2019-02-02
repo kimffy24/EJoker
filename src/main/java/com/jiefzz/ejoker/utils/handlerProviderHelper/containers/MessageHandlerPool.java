@@ -26,7 +26,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IVoidFunction;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction;
 
 /**
  * 由于message类型可以有多个handler，
@@ -128,7 +128,7 @@ public class MessageHandlerPool {
 		 * submitter为异步任务执行器的调度封装方法
 		 */
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, IVoidFunction> submitter) {
+		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, QIVoidFunction> submitter) {
 			return submitter.trigger(() -> {
 					try {
 						handleReflectionMethod.invoke(getInnerObject(), message);

@@ -7,7 +7,7 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 
 public abstract class AbstractRelationshipUtil {
 
-	protected ThreadLocal<Queue<IVoidFunction>> taskQueueBox = ThreadLocal.withInitial(LinkedBlockingQueue::new);
+//	protected ThreadLocal<Queue<IVoidFunction>> taskQueueBox = ThreadLocal.withInitial(LinkedBlockingQueue::new);
 
 	protected final SpecialTypeCodecStore<?> specialTypeCodecStore;
 	

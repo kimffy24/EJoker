@@ -53,7 +53,6 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 
 	@Override
 	public void process(ProcessingCommand processingCommand) {
-		
 		String aggregateRootId = processingCommand.getMessage().getAggregateRootId();
         if (aggregateRootId==null || "".equals(aggregateRootId))
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());

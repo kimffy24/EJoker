@@ -81,6 +81,7 @@ public class EJoker {
 				+ "."
 				+ split[2];
 		logger.debug("SELF_PACNAGE_NAME = {}", SELF_PACKAGE_NAME);
+		
 	}
 	
 }

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,11 +52,13 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	}
 	
 	public <T> T revert(ContainerKVP kvDataSet, Class<T> clazz) {
-		
-		T revertValue = (T )revertInternal(kvDataSet, GenericExpressionFactory.getGenericExpress(clazz));
+
+		Queue<IVoidFunction> queue = new ConcurrentLinkedQueue<>();
+//		Queue<IVoidFunction> queue = taskQueueBox.get();
+		T revertValue = (T )revertInternal(kvDataSet, GenericExpressionFactory.getGenericExpress(clazz), queue);
 
 		IVoidFunction task;
-		while(null != (task = taskQueueBox.get().poll())) {
+		while(null != (task = queue.poll())) {
 			task.trigger();
 		};
 		
@@ -63,7 +66,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		
 	}
 	
-	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression) { 
+	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression, Queue<IVoidFunction> subTaskQueue) { 
 		Object instance = (new InstanceBuilder(expression.getDeclarePrototype())).doCreate();
 		expression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> { 
@@ -75,14 +78,15 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 						disassemblyStructure(
 							genericDefinedField.genericDefinedTypeMeta,
 							disassemblyEval.getValue(kvDataSet, fieldName),
-							result -> setField(genericDefinedField.field, instance, result)
+							result -> { logger.error("field: {}, result: {}", fieldName, result); setField(genericDefinedField.field, instance, result);},
+							subTaskQueue
 						);
 				}
 		);
 		return instance;
 	}
 	
-	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<Object> effector) {
+	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<Object> effector, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == serializedValue) {
 			if(!targetDefinedTypeMeta.rawClazz.isPrimitive())
@@ -111,8 +115,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.componentTypeMeta,
 									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
-									result -> newArray[idx] = result
-									)
+									result -> newArray[idx] = result,
+									subTaskQueue
+									),
+							subTaskQueue
 					);
 				}
 			}
@@ -145,8 +151,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
 									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
-									result -> ((Collection )revertedResult).add(result)
-								)
+									result -> ((Collection )revertedResult).add(result),
+									subTaskQueue
+								),
+							subTaskQueue
 					);
 				}
 			} else {
@@ -160,8 +168,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									valueTypeMeta,
 									disassemblyEval.getValue((ContainerKVP )serializedValue, (String )key),
-									result -> ((Map )revertedResult).put((String )key, result)
-								)
+									result -> ((Map )revertedResult).put((String )key, result),
+									subTaskQueue
+								),
+							subTaskQueue
 					);
 				}
 			}
@@ -179,18 +189,20 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							"(# lose in foreach)"));
 				}
 			}
-			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable));
+			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
 		}
+		logger.error("revertedResult: {}", revertedResult);
 		effector.trigger(revertedResult);
 	}
 	
-	private void join(IVoidFunction task) {
-		if(!taskQueueBox.get().offer(task)) {
+	private void join(IVoidFunction task, Queue<IVoidFunction> subTaskQueue) {
+		if(!subTaskQueue.offer(task)) {
 			throw new RuntimeException("Task Queue has no more capacity!!!");
 		}
 	}
 	
 	private void setField(Field field, Object instance, Object value) {
+		logger.error("field: {}, value: {}", field.getName(), value);
 		try {
 			field.set(instance, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {

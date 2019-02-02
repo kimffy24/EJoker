@@ -30,6 +30,13 @@
 			<artifactId>rocketmq-client</artifactId>
 			<version>4.3.0</version>
 		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
+		<dependency>
+			<groupId>co.paralleluniverse</groupId>
+			<artifactId>quasar-core</artifactId>
+			<version>0.7.10</version>
+		</dependency>
 
 	</dependencies>
 
@@ -156,6 +163,29 @@
 					</execution>
 				</executions>
 			</plugin> -->
+			
+			<plugin>
+				<groupId>org.fortasoft</groupId>
+				<artifactId>gradle-maven-plugin</artifactId>
+				<version>1.0.8</version>
+				<configuration>
+					<tasks>
+						<!-- this would effectively call "gradle doSomething" -->
+						<task>scanSuspendables</task>
+						<task>compileJava</task>
+					</tasks>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- You can bind this to any phase you like -->
+						<phase>quasar-instrumentation</phase>
+						<goals>
+							<!-- goal must be "invoke" -->
+							<goal>invoke</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

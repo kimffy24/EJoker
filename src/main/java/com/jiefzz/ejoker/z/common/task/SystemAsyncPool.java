@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
 
 public class SystemAsyncPool implements IAsyncEntrance {
 	
@@ -56,7 +56,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 //	}
 
 	@Override
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(QIFunction<TAsyncTaskResult> asyncTaskThread) {
 		
 		// @important 建立新线程存在线程上限和大量的上下文切换成本，极易发生OutOfMemory。
 		// @important 或者使用cachedThreadPool？？

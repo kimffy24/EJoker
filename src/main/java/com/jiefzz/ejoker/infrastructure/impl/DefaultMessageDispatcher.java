@@ -20,6 +20,7 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 @EService
@@ -38,13 +39,13 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 
 		List<? extends IMessageHandlerProxy> handlers = MessageHandlerPool.getProxyAsyncHandlers(message.getClass());
 		if(null != handlers && 0 < handlers.size()) {
-			CountDownLatch cdl = new CountDownLatch(handlers.size());
+			Object countDownLatchHandle = CountDownLatchWrapper.newCountDownLatch(handlers.size());
 			
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
 				eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 							"HandleSingleMessageAsync",
 							() -> proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit),
-							r -> cdl.countDown(),
+							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
 							() -> String.format(
 									"[messages: [%s], handlerType: %s]",
 									String.format(
@@ -62,11 +63,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 				);
 			}
 			
-			try {
-				cdl.await();
-			} catch (InterruptedException e) {
-				throw new AsyncWrapperException(e);
-			}
+			CountDownLatchWrapper.await(countDownLatchHandle);
 		}
 		return EJokerFutureWrapperUtil.createCompleteFutureTask();
 	}
