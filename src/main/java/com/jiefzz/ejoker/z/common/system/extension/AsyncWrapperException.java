@@ -14,10 +14,10 @@ public class AsyncWrapperException extends RuntimeException {
 		super("Please see cause!", cause);
 	}
 
-	public final static Throwable getActuallyCause(Throwable t) {
+	public final static Exception getActuallyCause(Throwable t) {
 		Throwable e = t;
 		while(null != e && e instanceof AsyncWrapperException)
 			e = e.getCause();
-		return e;
+		return (Exception )e;
 	}
 }

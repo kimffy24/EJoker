@@ -29,11 +29,11 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 	// prepare job for eQuasar
 	static {
 		
-		SleepWrapper.setSleep((u, l) -> {
+		SleepWrapper.setProvider((u, l) -> {
 			try {
 				Strand.sleep(l, u);
-			} catch (SuspendExecution e) {
-				e.printStackTrace();
+			} catch (SuspendExecution s) {
+				throw s;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -70,7 +70,14 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 					try {
 						((CountDownLatch )o).await();
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						throw new AsyncWrapperException(e);
+					}
+				},
+				(o, l, u) -> {
+					try {
+						return ((CountDownLatch )o).await(l, u);
+					} catch (InterruptedException e) {
+						throw new AsyncWrapperException(e);
 					}
 				},
 				o -> ((CountDownLatch )o).countDown()

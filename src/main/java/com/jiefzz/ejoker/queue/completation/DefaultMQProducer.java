@@ -13,6 +13,7 @@ import org.apache.rocketmq.remoting.RPCHook;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.system.wrapper.MixedThreadPoolExecutor;
 
 public class DefaultMQProducer extends org.apache.rocketmq.client.producer.DefaultMQProducer {
 
@@ -47,15 +48,22 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 	
 	private ThreadPoolExecutor threadPoolExecutor;
 	
+	@Override
+	public void shutdown() {
+		if(null!=threadPoolExecutor) {
+			threadPoolExecutor.shutdown();
+		}
+		super.shutdown();
+	}
+
 	private void init() {
-		threadPoolExecutor = new ThreadPoolExecutor(
+		threadPoolExecutor = new MixedThreadPoolExecutor(
 				EJokerEnvironment.ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE,
 				EJokerEnvironment.ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE,
 				0l,
 				TimeUnit.MILLISECONDS,
 				new LinkedBlockingQueue<Runnable>(),
-				new SendThreadFactory(),
-				new ThreadPoolExecutor.CallerRunsPolicy());
+				new SendThreadFactory());
 		if(EJokerEnvironment.ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL)
 			threadPoolExecutor.prestartAllCoreThreads();
 	}

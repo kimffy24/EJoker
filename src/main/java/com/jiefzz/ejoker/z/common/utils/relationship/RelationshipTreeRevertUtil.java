@@ -13,18 +13,27 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
+import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction1;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.InstanceBuilder;
 import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
+
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 
 /**
  * 对象关系二维化工具类
@@ -78,7 +87,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 						disassemblyStructure(
 							genericDefinedField.genericDefinedTypeMeta,
 							disassemblyEval.getValue(kvDataSet, fieldName),
-							result -> { logger.error("field: {}, result: {}", fieldName, result); setField(genericDefinedField.field, instance, result);},
+							result -> setField(genericDefinedField.field, instance, result.trigger()),
 							subTaskQueue
 						);
 				}
@@ -86,11 +95,12 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		return instance;
 	}
 	
-	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<Object> effector, Queue<IVoidFunction> subTaskQueue) {
+	@Suspendable
+	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == serializedValue) {
 			if(!targetDefinedTypeMeta.rawClazz.isPrimitive())
-				effector.trigger(null);
+				effector.trigger(() -> null);
 			return;
 		}
 		
@@ -115,7 +125,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.componentTypeMeta,
 									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
-									result -> newArray[idx] = result,
+									result -> newArray[idx] = result.trigger(),
 									subTaskQueue
 									),
 							subTaskQueue
@@ -151,7 +161,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
 									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
-									result -> ((Collection )revertedResult).add(result),
+									result -> ((Collection )revertedResult).add(result.trigger()),
 									subTaskQueue
 								),
 							subTaskQueue
@@ -168,7 +178,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									valueTypeMeta,
 									disassemblyEval.getValue((ContainerKVP )serializedValue, (String )key),
-									result -> ((Map )revertedResult).put((String )key, result),
+									result -> ((Map )revertedResult).put((String )key, result.trigger()),
 									subTaskQueue
 								),
 							subTaskQueue
@@ -191,8 +201,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			}
 			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
 		}
-		logger.error("revertedResult: {}", revertedResult);
-		effector.trigger(revertedResult);
+		effector.trigger(() -> revertedResult);
 	}
 	
 	private void join(IVoidFunction task, Queue<IVoidFunction> subTaskQueue) {
@@ -202,7 +211,6 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	}
 	
 	private void setField(Field field, Object instance, Object value) {
-		logger.error("field: {}, value: {}", field.getName(), value);
 		try {
 			field.set(instance, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {

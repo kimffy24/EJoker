@@ -35,8 +35,6 @@ import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
-import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
-
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);

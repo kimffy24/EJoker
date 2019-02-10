@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -18,6 +17,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -152,7 +152,7 @@ public class ProcessingCommandMailbox {
 	}
 	
 	private void lock(final ProcessingCommand processingCommand, final CommandResult commandResult) {
-		Thread currentExecuter = Thread.currentThread();
+		MittenWrapper currentExecuter = MittenWrapper.currentThread();
 		
 		WaitingNode tail = this.tail;
 		
@@ -160,7 +160,7 @@ public class ProcessingCommandMailbox {
 			tail = WaitingNode.nextUpdater.get(tail);
 		
 		if(!currentWaitingHeader.equals(tail)) {
-			LockSupport.park();
+			MittenWrapper.park();
 		}
 		
 	}
@@ -173,7 +173,7 @@ public class ProcessingCommandMailbox {
 				waitingNodeExecuting,
 				waitingNodeNext = WaitingNode.nextUpdater.get(waitingNodeExecuting))) {
 			if(null != waitingNodeNext)
-				LockSupport.unpark(waitingNodeNext.executor);
+				MittenWrapper.unpark(waitingNodeNext.executor);
 		}
 	}
 	
@@ -183,14 +183,14 @@ public class ProcessingCommandMailbox {
 	
 	private final static class WaitingNode {
 		
-		public final Thread executor;
+		public final MittenWrapper executor;
 		
 		private volatile WaitingNode next = null;
 		
 		public final static AtomicReferenceFieldUpdater<WaitingNode, WaitingNode> nextUpdater = 
 				AtomicReferenceFieldUpdater.newUpdater(WaitingNode.class, WaitingNode.class, "next");
 		
-		public WaitingNode(Thread executor) {
+		public WaitingNode(MittenWrapper executor) {
 			this.executor = executor;
 		}
 		

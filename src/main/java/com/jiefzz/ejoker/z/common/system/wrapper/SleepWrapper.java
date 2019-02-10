@@ -20,7 +20,7 @@ public class SleepWrapper {
 		}
 	}
 
-	public final static void setSleep(QIVoidFunction2<TimeUnit, Long> vf2) {
+	public final static void setProvider(QIVoidFunction2<TimeUnit, Long> vf2) {
 		SleepWrapper.vf2 = vf2;
 	}
 
