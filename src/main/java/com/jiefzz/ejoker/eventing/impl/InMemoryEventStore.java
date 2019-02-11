@@ -142,6 +142,7 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	private EventAppendResult appendSync(DomainEventStream eventStream) {
+		long s = System.currentTimeMillis();
 		String aggregateRootId = eventStream.getAggregateRootId();
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId,
 				ConcurrentHashMap::new);
@@ -153,27 +154,40 @@ public class InMemoryEventStore implements IEventStore {
 		if (hasPrevous)
 			return EventAppendResult.DuplicateEvent;
 		else {
-			queue.offer(eventStream);
-
+			queue.offer(new MessageBox(eventStream, s, System.currentTimeMillis()));
 			return EventAppendResult.Success;
 		}
 
 	}
 	
 	// for time test
-	private ConcurrentLinkedQueue<DomainEventStream> queue = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<MessageBox> queue = new ConcurrentLinkedQueue<>();
+	
+	private final static class MessageBox {
+		public final DomainEventStream domainEventStream;
+		public final long timeStart, timeEnd;
+		public MessageBox(DomainEventStream domainEventStream, long timeStart, long timeEnd) {
+			this.domainEventStream = domainEventStream;
+			this.timeStart = timeStart;
+			this.timeEnd = timeEnd;
+		}
+	}
 	
 	private long min = Long.MAX_VALUE, max = 0;
 
 	private AtomicLong atLong = new AtomicLong(0);
 	
+	private AtomicLong saveUse = new AtomicLong(0);
+	
+	private long maxDelta = 0;
+	
 	private Thread monitor = new Thread(() -> {
 		while(true) {
+			MessageBox mb;
 			DomainEventStream des;
-			while(null != (des = queue.poll())) {
-
-				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(),
-						des.getAggregateRootId());
+			while(null != (mb = queue.poll())) {
+				des = mb.domainEventStream;
+				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(), des.getAggregateRootId());
 				
 				long ts = des.getTimestamp();
 				if(ts < min) {
@@ -182,9 +196,14 @@ public class InMemoryEventStore implements IEventStore {
 				if(ts > max) {
 					max = ts;
 				}
+				long delta = mb.timeEnd - mb.timeStart;
+				saveUse.getAndAdd(delta);
+				if(delta > maxDelta) {
+					maxDelta = delta;
+				}
 			} 
-			if(null == des){
-				SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+			if(null == mb){
+				SleepWrapper.sleep(TimeUnit.MILLISECONDS, 200l);
 			}
 		}
 	});
@@ -203,6 +222,13 @@ public class InMemoryEventStore implements IEventStore {
 	
 	public long sizeOfMStore() {
 		return mStorage.size();
+	}
+	
+	public long getMaxSaveDelta() {
+		return maxDelta;
+	}
+	public long getSaveUse() {
+		return saveUse.get();
 	}
 	
 	@EInitialize

@@ -6,8 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +15,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
@@ -30,9 +29,9 @@ public class ProcessingCommandMailbox {
 
 	private final IProcessingCommandHandler messageHandler;
 
-	private final Lock enqueueLock = new ReentrantLock();
+	private final Object enqueueLock = LockWrapper.createLock();
 
-	private final Lock asyncLock = new ReentrantLock();
+	private final Object asyncLock = LockWrapper.createLock();
 
 	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
@@ -78,14 +77,14 @@ public class ProcessingCommandMailbox {
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		enqueueLock.lock();
+		LockWrapper.lock(enqueueLock);
 		try {
 			message.setSequence(nextSequence);
 			message.setMailbox(this);
 			if (null == messageDict.putIfAbsent(message.getSequence(), message))
 				nextSequence++;
 		} finally {
-			enqueueLock.unlock();
+			LockWrapper.unlock(enqueueLock);
 		}
 		lastActiveTime = System.currentTimeMillis();
 		tryRun();
@@ -117,7 +116,7 @@ public class ProcessingCommandMailbox {
 	}
 
 	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
-		asyncLock.lock();
+		LockWrapper.lock(asyncLock);
 		//lock(processingCommand, commandResult);
 		try {
 			lastActiveTime = System.currentTimeMillis();
@@ -146,36 +145,36 @@ public class ProcessingCommandMailbox {
 			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
 		} finally {
-			asyncLock.unlock();
+			LockWrapper.unlock(asyncLock);
 			//unlock();
 		}
 	}
-	
-	private void lock(final ProcessingCommand processingCommand, final CommandResult commandResult) {
-		MittenWrapper currentExecuter = MittenWrapper.currentThread();
-		
-		WaitingNode tail = this.tail;
-		
-		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter)))
-			tail = WaitingNode.nextUpdater.get(tail);
-		
-		if(!currentWaitingHeader.equals(tail)) {
-			MittenWrapper.park();
-		}
-		
-	}
-	
-	private void unlock() {
-		WaitingNode waitingNodeExecuting = currentWaitingHeader.next;
-		WaitingNode waitingNodeNext;
-		if(WaitingNode.nextUpdater.compareAndSet(
-				currentWaitingHeader,
-				waitingNodeExecuting,
-				waitingNodeNext = WaitingNode.nextUpdater.get(waitingNodeExecuting))) {
-			if(null != waitingNodeNext)
-				MittenWrapper.unpark(waitingNodeNext.executor);
-		}
-	}
+//	
+//	private void lock(final ProcessingCommand processingCommand, final CommandResult commandResult) {
+//		MittenWrapper currentExecuter = MittenWrapper.currentThread();
+//		
+//		WaitingNode tail = this.tail;
+//		
+//		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter)))
+//			tail = WaitingNode.nextUpdater.get(tail);
+//		
+//		if(!currentWaitingHeader.equals(tail)) {
+//			MittenWrapper.park();
+//		}
+//		
+//	}
+//	
+//	private void unlock() {
+//		WaitingNode waitingNodeExecuting = currentWaitingHeader.next;
+//		WaitingNode waitingNodeNext;
+//		if(WaitingNode.nextUpdater.compareAndSet(
+//				currentWaitingHeader,
+//				waitingNodeExecuting,
+//				waitingNodeNext = WaitingNode.nextUpdater.get(waitingNodeExecuting))) {
+//			if(null != waitingNodeNext)
+//				MittenWrapper.unpark(waitingNodeNext.executor);
+//		}
+//	}
 	
 	private final WaitingNode currentWaitingHeader = new WaitingNode(null);
 	

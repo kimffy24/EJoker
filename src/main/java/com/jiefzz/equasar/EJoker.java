@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
@@ -13,6 +14,7 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.Strand;
 import co.paralleluniverse.strands.concurrent.CountDownLatch;
+import co.paralleluniverse.strands.concurrent.ReentrantLock;
 
 public class EJoker extends com.jiefzz.ejoker.EJoker {
 	
@@ -62,6 +64,19 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 				}).start();
 			}
 		});
+		
+		LockWrapper.setProvider(
+				ReentrantLock::new,
+				l -> ((ReentrantLock )l).lock(),
+				l -> ((ReentrantLock )l).unlock(),
+				l -> ((ReentrantLock )l).tryLock(),
+				(l, r, u) -> {
+					try {
+						return ((ReentrantLock )l).tryLock(r, u);
+					} catch (InterruptedException e) {
+						throw new AsyncWrapperException(e);
+					}
+				});
 		
 
 		CountDownLatchWrapper.setProvider(
