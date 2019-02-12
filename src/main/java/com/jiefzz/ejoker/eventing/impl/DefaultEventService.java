@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.eventing.impl;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -174,12 +176,10 @@ public class DefaultEventService implements IEventService {
 	                        		"Batch persist event has concurrent version conflict, first eventStream: {}, batchSize: {}",
 	                        		jsonSerializer.convert(firstEventCommittingContext.getEventStream()),
 	                        		committingContexts.size());
-	                        /// TODO .ConfigureAwait(false); @await
-	    					systemAsyncHelper.submit(
-	    							() -> resetCommandMailBoxConsumingSequence(
+	                        /// TODO .ConfigureAwait(false);
+	    					resetCommandMailBoxConsumingSequenceAsync(
 		                        		firstEventCommittingContext,
-		                        		firstEventCommittingContext.getProcessingCommand().getSequence())
-	    					);
+		                        		firstEventCommittingContext.getProcessingCommand().getSequence());
 	                        
 						}
 						
@@ -227,10 +227,8 @@ public class DefaultEventService implements IEventService {
 							} else {
 								logger.warn("Persist event has concurrent version conflict, eventStream: {}", jsonSerializer.convert(context.getEventStream()));
 								
-								/// TODO .ConfigureAwait(false); @await
-								systemAsyncHelper.submit(
-									() -> resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence())
-								);
+								/// TODO .ConfigureAwait(false);
+								resetCommandMailBoxConsumingSequenceAsync(context, context.getProcessingCommand().getSequence());
 							}
 							break;
 							
@@ -239,12 +237,9 @@ public class DefaultEventService implements IEventService {
 		                    		"Persist event has duplicate command, eventStream: {}",
 		                    		jsonSerializer.convert(context.getEventStream()));
 		
-							/// TODO .ConfigureAwait(false); @await
-							systemAsyncHelper.submit(
-									() -> {
-					                    resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1);
-					                    tryToRepublishEventAsync(context);
-									});
+							/// TODO .ConfigureAwait(false);
+		                    resetCommandMailBoxConsumingSequenceAsync(context, context.getProcessingCommand().getSequence() + 1);
+		                    tryToRepublishEventAsync(context);
 							break;
 							
 						default:
@@ -274,11 +269,8 @@ public class DefaultEventService implements IEventService {
 
 		commandMailBox.pause();
 		try {
-			/// TODO @await
-			if(EJokerEnvironment.ASYNC_BASE)
-				refreshAggregateMemoryCacheToLatestVersionAsync(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId()).get();
-			else
-				refreshAggregateMemoryCacheToLatestVersion(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId());
+			// TODO @await
+			await(refreshAggregateMemoryCacheToLatestVersionAsync(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId()));
 			commandMailBox.resetConsumingSequence(consumingSequence);
 			eventMailBox.clear();
 			eventMailBox.exit();
@@ -352,7 +344,7 @@ public class DefaultEventService implements IEventService {
                         //有可能事件持久化成功了，但那时正好机器断电了，则发布事件都没有做；
     					if(commandId.equals(firstEventStream.getCommandId())) {
     						
-    						/// TODO .ConfigureAwait(false); @await
+    						/// TODO .ConfigureAwait(false);
     						systemAsyncHelper.submit(() -> {
     							resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1);
     							publishDomainEventAsync(context.getProcessingCommand(), firstEventStream);
@@ -368,7 +360,7 @@ public class DefaultEventService implements IEventService {
                                 firstEventStream.getAggregateRootTypeName());
                             logger.error(errorMessage);
 
-    						/// TODO .ConfigureAwait(false); @await
+    						/// TODO .ConfigureAwait(false);
     						systemAsyncHelper.submit(() -> {
     	                        resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1);
     	                        CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId, eventStream.getAggregateRootId(), "Duplicate aggregate creation.", String.class.getName());
@@ -385,7 +377,7 @@ public class DefaultEventService implements IEventService {
     	                        eventStream.getAggregateRootTypeName());
     					logger.error(errorMessage);
     					
-    					/// TODO .ConfigureAwait(false); @await
+    					/// TODO .ConfigureAwait(false);
     					systemAsyncHelper.submit(() -> {
     						resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1);
     						CommandResult commandResult = new CommandResult(

@@ -88,8 +88,7 @@ public class InMemoryEventStore implements IEventStore {
 		return eJokerAsyncHelper.submit(() -> queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
 	}
 
-	@Override
-	public EventAppendResult batchAppend(LinkedHashSet<DomainEventStream> eventStreams) {
+	private EventAppendResult batchAppend(LinkedHashSet<DomainEventStream> eventStreams) {
 		
 		if(!supportBatchAppendEvent)
 			throw new RuntimeException("Unsupport batch append event.");
@@ -105,25 +104,21 @@ public class InMemoryEventStore implements IEventStore {
 		return EventAppendResult.Success;
 	}
 
-	@Override
-	public EventAppendResult append(DomainEventStream eventStream) {
+	private EventAppendResult append(DomainEventStream eventStream) {
 		return appendSync(eventStream);
 	}
 
-	@Override
-	public DomainEventStream find(String aggregateRootId, long version) {
+	private DomainEventStream find(String aggregateRootId, long version) {
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		return aggregateEventStore.get("" +version);
 	}
 
-	@Override
-	public DomainEventStream find(String aggregateRootId, String commandId) {
+	private DomainEventStream find(String aggregateRootId, String commandId) {
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		return aggregateEventStore.get(commandId);
 	}
 
-	@Override
-	public Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
+	private Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
 			long minVersion, long maxVersion) {
 		
 		Set<DomainEventStream> resultSet = new LinkedHashSet<>();
@@ -171,7 +166,9 @@ public class InMemoryEventStore implements IEventStore {
 	
 	private long min = Long.MAX_VALUE, max = 0;
 
-	private AtomicLong atLong = new AtomicLong(0);
+	private AtomicLong esQueueHit = new AtomicLong(0);
+	
+	private AtomicLong businessES = new AtomicLong(0);
 	
 	private Thread monitor = new Thread(() -> {
 		while(true) {
@@ -179,8 +176,11 @@ public class InMemoryEventStore implements IEventStore {
 			DomainEventStream des;
 			while(null != (mb = queue.poll())) {
 				des = mb.domainEventStream;
-				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", atLong.incrementAndGet(), des.getAggregateRootId());
+				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", esQueueHit.incrementAndGet(), des.getAggregateRootId());
 				
+				if(des.getVersion()==1l && "pro.jiefzz.ejoker.demo.simple.transfer.domain.bankAccount.BankAccount".equals(des.getAggregateRootTypeName()))
+					continue;
+				businessES.incrementAndGet();
 				long ts = des.getTimestamp();
 				if(ts < min) {
 					min = ts;
@@ -203,12 +203,19 @@ public class InMemoryEventStore implements IEventStore {
 		return max;
 	}
 	
-	public long getESAmount() {
-		return atLong.get();
+	public long getESQueueHit() {
+		return esQueueHit.get();
 	}
-	
+
+	public long getBESAmount() {
+		return businessES.get();
+	}
+		
 	public long sizeOfMStore() {
-		return mStorage.size();
+		return 0l + mStorage.entrySet().parallelStream().map(e -> {
+			Map<String, DomainEventStream> value = e.getValue();
+			return value.size()/2;
+		}).reduce(0, Integer::sum);
 	}
 	
 	@EInitialize

@@ -116,7 +116,7 @@ public class EventMailBox {
     }
 	
 	public void clear() {
-//		while(null != messageQueue.poll());
+		// while(null != messageQueue.poll());
 		messageQueue.clear();
 	}
 

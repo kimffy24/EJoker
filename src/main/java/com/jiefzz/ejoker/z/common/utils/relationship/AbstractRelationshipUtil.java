@@ -1,10 +1,5 @@
 package com.jiefzz.ejoker.z.common.utils.relationship;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
-
 public abstract class AbstractRelationshipUtil {
 
 //	protected ThreadLocal<Queue<IVoidFunction>> taskQueueBox = ThreadLocal.withInitial(LinkedBlockingQueue::new);

@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.infrastructure;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -93,11 +94,8 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		try {
 			if (null != (processingMessage = messageQueue.poll())) {
 				
-				/// TODO @await
-				if(EJokerEnvironment.ASYNC_BASE)
-					messageHandler.handleAsync(processingMessage).get();
-				else
-					messageHandler.handle(processingMessage);
+				// TODO @await
+				await(messageHandler.handleAsync(processingMessage));
 				
 			}
 		} catch (RuntimeException ex) {

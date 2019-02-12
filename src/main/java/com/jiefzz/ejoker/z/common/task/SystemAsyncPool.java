@@ -24,8 +24,6 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	
 	private BlockingQueue<Runnable> taskQueue = null;
 	
-//	private AtomicLong aliveCount = new AtomicLong(0l);
-	
 	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
 				threadPoolSize,
@@ -33,27 +31,11 @@ public class SystemAsyncPool implements IAsyncEntrance {
 				0l,
 				TimeUnit.MILLISECONDS,
 				taskQueue = new LinkedBlockingQueue<Runnable>(1),
-				new ThreadPoolExecutor.CallerRunsPolicy())/* {
-
-					@Override
-					protected void beforeExecute(Thread t, Runnable r) {
-						aliveCount.getAndIncrement();
-					}
-
-					@Override
-					protected void afterExecute(Runnable r, Throwable t) {
-						aliveCount.decrementAndGet();
-					}
-			
-		} */;
+				new ThreadPoolExecutor.CallerRunsPolicy());
 		if(prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();
 		defaultThreadPool = threadPoolExecutor;
 	}
-
-//	public void debugInfo(String poolName) {
-//		logger.error("EjokerStatus => pool: {}, aliveThread: {}, waiting: {}", poolName, aliveCount.get(), null == taskQueue? 0 : taskQueue.size());
-//	}
 
 	@Override
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(QIFunction<TAsyncTaskResult> asyncTaskThread) {

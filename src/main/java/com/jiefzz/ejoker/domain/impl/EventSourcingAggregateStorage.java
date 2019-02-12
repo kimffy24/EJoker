@@ -1,11 +1,12 @@
 package com.jiefzz.ejoker.domain.impl;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateRootFactory;
 import com.jiefzz.ejoker.domain.IAggregateSnapshotter;
@@ -50,8 +51,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		return systemAsyncHelper.submit(() -> get(aggregateRootType, aggregateRootId));
 	}
 
-	@Override
-	public IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
+	private IAggregateRoot get(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
 		if (null == aggregateRootType)
 			throw new ArgumentNullException("aggregateRootType");
 		if (null == aggregateRootId)
@@ -62,19 +62,19 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		if (null != aggregateRoot)
 			return aggregateRoot;
 
-		Collection<DomainEventStream> eventStreams = eventStore.queryAggregateEvents(aggregateRootId,
-				aggregateRootType.getName(), minVersion, maxVersion);
-
-		return rebuildAggregateRoot(aggregateRootType, eventStreams);
+		AsyncTaskResult<Collection<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootType.getName(), minVersion, maxVersion));
+		if(AsyncTaskStatus.Success.equals(taskResult)) {
+			aggregateRoot = rebuildAggregateRoot(aggregateRootType, taskResult.getData());
+			return aggregateRoot;
+		}
+		return null;
 
 	}
 	
 	private IAggregateRoot tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		
 		// TODO @await
-		IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_BASE
-					? aggregateSnapshotter.restoreFromSnapshotAsync(aggregateRootType, aggregateRootId).get()
-							:aggregateSnapshotter.restoreFromSnapshot(aggregateRootType, aggregateRootId);
+		IAggregateRoot aggregateRoot = await(aggregateSnapshotter.restoreFromSnapshotAsync(aggregateRootType, aggregateRootId));
 		
 		if(null == aggregateRoot)
 			return null;
@@ -92,17 +92,11 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		String aggregateRootTypeName = aggregateRootType.getName();
 
 		// TODO @await
-		if(EJokerEnvironment.ASYNC_BASE) {
-			AsyncTaskResult<Collection<DomainEventStream>> taskResult = eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion).get();
-			if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
-                aggregateRoot.replayEvents(taskResult.getData());
-                return aggregateRoot;
-            }
-		} else {
-			Collection<DomainEventStream> queryAggregateEvents = eventStore.queryAggregateEvents(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion);
-			aggregateRoot.replayEvents(queryAggregateEvents);
+		AsyncTaskResult<Collection<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion));
+		if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
+            aggregateRoot.replayEvents(taskResult.getData());
             return aggregateRoot;
-		}
+        }
 		
 		return null;
 	}

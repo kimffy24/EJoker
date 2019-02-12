@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.commanding;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -117,7 +119,6 @@ public class ProcessingCommandMailbox {
 
 	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
 		LockWrapper.lock(asyncLock);
-		//lock(processingCommand, commandResult);
 		try {
 			lastActiveTime = System.currentTimeMillis();
 			long processingSequence = processingCommand.getSequence();
@@ -125,20 +126,14 @@ public class ProcessingCommandMailbox {
 			if (processingSequence == expectSequence) {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				if (EJokerEnvironment.ASYNC_BASE)
-					completeCommandAsync(processingCommand, commandResult).get();
-				else
-					completeCommand(processingCommand, commandResult);
+				await(completeCommandAsync(processingCommand, commandResult));
 				consumedSequence = processNextCompletedCommands(processingSequence);
 			} else if(processingSequence > expectSequence) {
 				requestToCompleteCommandDict.put(processingSequence, commandResult);
 			} else/* if (processingSequence < expectSequence)*/ {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				if (EJokerEnvironment.ASYNC_BASE)
-					completeCommandAsync(processingCommand, commandResult).get();
-				else
-					completeCommand(processingCommand, commandResult);
+				await(completeCommandAsync(processingCommand, commandResult));
 				requestToCompleteCommandDict.remove(processingSequence);
 			}
 		} catch (Exception ex) {
@@ -146,35 +141,8 @@ public class ProcessingCommandMailbox {
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
 		} finally {
 			LockWrapper.unlock(asyncLock);
-			//unlock();
 		}
 	}
-//	
-//	private void lock(final ProcessingCommand processingCommand, final CommandResult commandResult) {
-//		MittenWrapper currentExecuter = MittenWrapper.currentThread();
-//		
-//		WaitingNode tail = this.tail;
-//		
-//		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter)))
-//			tail = WaitingNode.nextUpdater.get(tail);
-//		
-//		if(!currentWaitingHeader.equals(tail)) {
-//			MittenWrapper.park();
-//		}
-//		
-//	}
-//	
-//	private void unlock() {
-//		WaitingNode waitingNodeExecuting = currentWaitingHeader.next;
-//		WaitingNode waitingNodeNext;
-//		if(WaitingNode.nextUpdater.compareAndSet(
-//				currentWaitingHeader,
-//				waitingNodeExecuting,
-//				waitingNodeNext = WaitingNode.nextUpdater.get(waitingNodeExecuting))) {
-//			if(null != waitingNodeNext)
-//				MittenWrapper.unpark(waitingNodeNext.executor);
-//		}
-//	}
 	
 	private final WaitingNode currentWaitingHeader = new WaitingNode(null);
 	
@@ -212,11 +180,7 @@ public class ProcessingCommandMailbox {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
 					// TODO @await
-					if (EJokerEnvironment.ASYNC_BASE) {
-						messageHandler.handleAsync(processingCommand).get();
-					} else {
-						messageHandler.handle(processingCommand);
-					}
+					await(messageHandler.handleAsync(processingCommand));
 				}
 				count++;
 				consumingSequence++;
@@ -272,16 +236,6 @@ public class ProcessingCommandMailbox {
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(),
 					ex.getMessage());
 			return EJokerFutureWrapperUtil.createCompleteFuture();
-		}
-	}
-
-	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
-		try {
-			processingCommand.complete(commandResult);
-		} catch (RuntimeException ex) {
-			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}",
-					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(),
-					ex.getMessage());
 		}
 	}
 

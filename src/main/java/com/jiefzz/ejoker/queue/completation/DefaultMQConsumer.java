@@ -88,25 +88,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		super(consumerGroup);
 	}
 	
-//	public void showLog(String x) {
-////		logger.error("EjokerStatus => {}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
-//		Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
-//		boolean onWorking = false;
-//		for(Entry<MessageQueue, ControlStruct> ety : entrySet) {
-//			ControlStruct cs = ety.getValue();
-//			long fetchPoint = cs.offsetFetchLocal.get();
-//			long consumedPoint = cs.offsetConsumedLocal.get();
-//			
-//			if(0 == fetchPoint - consumedPoint) {
-//				continue;
-//			}
-//			
-//			onWorking |= true;
-//			break;
-//		}
-//		logger.error("EjokerStatus => {}.DefaultMQConsumer -> onWorking: {}, currentTimestamp: {}", x, onWorking, System.currentTimeMillis());
-//	}
-
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
 		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.onRunning");
 		this.messageProcessor = vf;
@@ -209,9 +190,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			long consumedOffset;
 			try {
 				maxOffset = new AtomicLong(maxOffset(mq));
-//				if("EjokerCommandConsumerGroup".equals(getConsumerGroup())) {
-//					consumedOffset = 14990271;
-//				} else 
 				consumedOffset = fetchConsumeOffset(mq, false);
 			} catch (MQClientException e3) {
 				throw new RuntimeException(e3);

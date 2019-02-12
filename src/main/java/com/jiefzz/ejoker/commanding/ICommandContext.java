@@ -38,18 +38,6 @@ public interface ICommandContext {
     default public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz) {
     	return getAsync(id, clazz, true);
     }
-
-    public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache);
-    
-    /**
-     * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
-     * @param id
-     * @param clazz
-     * @return
-     */
-    default public <T extends IAggregateRoot> T get(Object id, Class<T> clazz) {
-    	return get(id, clazz, true);
-    }
     
     /**
      * 

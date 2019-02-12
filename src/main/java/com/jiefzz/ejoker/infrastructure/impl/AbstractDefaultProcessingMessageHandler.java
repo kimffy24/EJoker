@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
 import com.jiefzz.ejoker.infrastructure.IProcessingMessage;
@@ -25,8 +27,8 @@ public abstract class AbstractDefaultProcessingMessageHandler<X extends IProcess
 	@Override
 	public void handle(X processingMessage) {
 		Y message = processingMessage.getMessage();
-		/// TODO @await
-		messageDispatcher.dispatchMessageAsync(message).get();
+		// TODO @await
+		await(messageDispatcher.dispatchMessageAsync(message));
 		processingMessage.complete();
 	}
 

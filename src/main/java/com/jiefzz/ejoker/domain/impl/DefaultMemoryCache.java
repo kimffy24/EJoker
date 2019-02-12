@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.domain.impl;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,9 +83,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			if (aggregateRoot.getChanges().size() > 0) {
 
 				// TODO @await
-				IAggregateRoot lastestAggregateRoot = EJokerEnvironment.ASYNC_BASE
-						? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
-						: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
+				IAggregateRoot lastestAggregateRoot = await(aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()));
 				if (null != lastestAggregateRoot)
 					setInternal(lastestAggregateRoot);
 
@@ -104,10 +104,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 		try {
 			// TODO @await
-			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_BASE
-					? aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString())
-							.get()
-					: aggregateStorage.get((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString());
+			IAggregateRoot aggregateRoot = await(aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString()));
 			if (null != aggregateRoot) {
 				setInternal(aggregateRoot);
 			}

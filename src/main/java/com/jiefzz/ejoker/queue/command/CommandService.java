@@ -1,11 +1,10 @@
 package com.jiefzz.ejoker.queue.command;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.nio.charset.Charset;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.rocketmq.client.exception.MQClientException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
@@ -96,24 +95,17 @@ public class CommandService implements ICommandService, IWorkerService {
 
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
 		
-
-		RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
-		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
-		SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync = sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null);
-		
-		/// 如果这里能用协程，会更好，netty有吗？
-		/// TODO 一个优化点
 		return systemAsyncHelper.submit(() -> {
-					AsyncTaskResult<Void> result = sendMessageAsync.get();
-					if(AsyncTaskStatus.Success.equals(result.getStatus())) {
-						// 此线程会在这了盲等！
-						return remoteTaskCompletionSource.get();
-					} else {
-						commandResultProcessor.processFailedSendingCommand(command);
-						throw new RuntimeException(result.getErrorMessage());
-					}
+			RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
+			commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
+			AsyncTaskResult<Void> result = await(sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null));
+			if(AsyncTaskStatus.Success.equals(result.getStatus())) {
+				return remoteTaskCompletionSource.get();
+			} else {
+				commandResultProcessor.processFailedSendingCommand(command);
+				throw new RuntimeException(result.getErrorMessage());
 			}
-		);
+		});
 		
 	}
 

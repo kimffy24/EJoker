@@ -1,12 +1,13 @@
 package com.jiefzz.ejoker.commanding.impl;
 
+import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+
 import java.io.IOException;
 import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandRuntimeException;
 import com.jiefzz.ejoker.commanding.CommandStatus;
@@ -37,7 +38,6 @@ import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
@@ -94,7 +94,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 					"The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(),
 					message.getId());
 			logger.error(errorInfo);
-			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 		}
 
 		try {
@@ -114,7 +114,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		} catch (RuntimeException ex) {
 			logger.error(ex.getMessage());
 			ex.printStackTrace();
-			completeCommand(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
+			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
 		}
 
 	}
@@ -145,13 +145,9 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				commitAggregateChanges(processingCommand);
 			} catch (RuntimeException ex) {
 				logCommandExecuteException(processingCommand, commandHandler, ex);
-				/// TODO @await
-				if(EJokerEnvironment.ASYNC_BASE)
-						completeCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
-								"Unknow exception caught when committing changes of command.").get();
-				else 
-					completeCommand(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
-							"Unknow exception caught when committing changes of command.");
+				// TODO @await
+				await( completeCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(),
+						"Unknow exception caught when committing changes of command.") );
 			}
 		}
 
@@ -373,13 +369,6 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);
 		// TODO 完成传递
 		return processingCommand.getMailbox().completeMessageAsync(processingCommand, commandResult);
-	}
-
-	private void completeCommand(ProcessingCommand processingCommand,
-			CommandStatus commandStatus, String resultType, String result) {
-		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
-				processingCommand.getMessage().getAggregateRootId(), result, resultType);
-		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
 	}
 	
 }
