@@ -19,7 +19,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 /**
  * 默认的命令处理类<br>
@@ -40,7 +40,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	private IScheduleService scheduleService;
 
 	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
+	private SystemAsyncHelper systemAsyncHelper;
 
 	@EInitialize
 	private void init() {
@@ -57,7 +57,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         if (aggregateRootId==null || "".equals(aggregateRootId))
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());
 
-        ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, eJokerAsyncHelper));
+        ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
         mailbox.enqueueMessage(processingCommand);
 	}
 

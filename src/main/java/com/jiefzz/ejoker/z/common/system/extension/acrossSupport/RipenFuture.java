@@ -34,7 +34,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	@Override
 	@Deprecated
 	public boolean cancel(boolean mayInterruptIfRunning) {
-			/// TODO RipenFuture 无法实现取消线程的语义！
+			/// !!! RipenFuture 无法实现取消线程的语义 !!!
 		throw new RuntimeException("Unsupport Operation(\"cancle\") in RipenFuture!!!");
 	}
 

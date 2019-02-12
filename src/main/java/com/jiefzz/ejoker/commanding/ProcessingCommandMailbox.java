@@ -21,13 +21,14 @@ import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingCommandMailbox {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
 
-	private final EJokerTaskAsyncHelper eJokerAsyncHelper;
+	private final SystemAsyncHelper systemAsyncHelper;
 
 	private final IProcessingCommandHandler messageHandler;
 
@@ -70,12 +71,12 @@ public class ProcessingCommandMailbox {
 	}
 
 	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler,
-			EJokerTaskAsyncHelper eJokerAsyncHelper) {
+			SystemAsyncHelper systemAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.messageHandler = messageHandler;
 
-		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
-		this.eJokerAsyncHelper = eJokerAsyncHelper;
+		Ensure.notNull(systemAsyncHelper, "systemAsyncHelper");
+		this.systemAsyncHelper = systemAsyncHelper;
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
@@ -112,12 +113,12 @@ public class ProcessingCommandMailbox {
 		requestToCompleteCommandDict.clear();
 	}
 
-	public SystemFutureWrapper<AsyncTaskResult<Void>> completeMessageAsync(ProcessingCommand processingCommand,
+	public SystemFutureWrapper<Void> completeMessageAsync(ProcessingCommand processingCommand,
 			CommandResult commandResult) {
-		return eJokerAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
+		return systemAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
 	}
 
-	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
+	private void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
 		LockWrapper.lock(asyncLock);
 		try {
 			lastActiveTime = System.currentTimeMillis();
@@ -180,7 +181,7 @@ public class ProcessingCommandMailbox {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
 					// TODO @await
-					await(messageHandler.handleAsync(processingCommand));
+					await(messageHandler.handle(processingCommand));
 				}
 				count++;
 				consumingSequence++;
@@ -216,7 +217,6 @@ public class ProcessingCommandMailbox {
 			ProcessingCommand processingCommand;
 			if (null != (processingCommand = messageDict.remove(nextSequence))) {
 				CommandResult commandResult = requestToCompleteCommandDict.get(nextSequence);
-				// TODO async
 				completeCommandAsync(processingCommand, commandResult);
 			}
 			requestToCompleteCommandDict.remove(nextSequence);
@@ -228,7 +228,7 @@ public class ProcessingCommandMailbox {
 
 	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandResult commandResult) {
-		// TODO 完成传递
+		// Future传递
 		try {
 			return processingCommand.completeAsync(commandResult);
 		} catch (RuntimeException ex) {
@@ -241,7 +241,7 @@ public class ProcessingCommandMailbox {
 
 	private void tryRun() {
 		if (tryEnter()) {
-			eJokerAsyncHelper.submit(this::run);
+			systemAsyncHelper.submit(this::run);
 		}
 	}
 

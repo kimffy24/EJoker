@@ -69,7 +69,6 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		// @important		* 可能长时间存在游离线程一直被杀死，且提交线程不断重试的情况。
 		return defaultThreadPool.submit(asyncTaskThread::trigger);
 		
-		// TODO important
 		// @important 根治的解决方法使用coroutine方案，目前考虑使用 Quasar 方案
 	}
 

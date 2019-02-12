@@ -82,39 +82,32 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	@Override
-	public SystemFutureWrapper<Void> handleAsync(ProcessingCommand processingCommand) {
-		return systemAsyncHelper.submit(() -> handle(processingCommand));
-	}
-
-	@Override
-	public void handle(ProcessingCommand processingCommand) {
+	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(
 					"The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(),
 					message.getId());
 			logger.error(errorInfo);
-			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+			return completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 		}
 
 		try {
 			ICommandHandlerProxy handler = commandHandlerPrivider.getHandler(message.getClass());
 			if(null != handler) {
-				handleCommand(processingCommand, handler);
-				return;
+				return systemAsyncHelper.submit(() -> handleCommand(processingCommand, handler));
 			}
 			
 			ICommandAsyncHandlerProxy asyncHandler = commandAsyncHandlerPrivider.getHandler(message.getClass());
 			if(null != asyncHandler) {
-				handleCommandAsync(processingCommand, asyncHandler);
-				return;
+				return handleCommandAsync(processingCommand, asyncHandler);
 			}
 			
 			throw new CommandRuntimeException(message.getClass().getName() +" is no handler found for it!!!");
 		} catch (RuntimeException ex) {
 			logger.error(ex.getMessage());
 			ex.printStackTrace();
-			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
+			return completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
 		}
 
 	}
@@ -128,7 +121,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		//调用command handler执行当前command
 		boolean handleSuccess = false;
 		try {
-			/// TODO @await java直接同步实现
+			/// TODO @await 直接同步实现
+			/// 此处由本类的handle()方法通过异步的方式发起调用
 			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
 					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
@@ -141,7 +135,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		//如果command执行成功，则提交执行后的结果
 		if (handleSuccess) {
 			try {
-				// TOTO 事件过程的起点
+				// TODO 事件过程的起点
 				commitAggregateChanges(processingCommand);
 			} catch (RuntimeException ex) {
 				logCommandExecuteException(processingCommand, commandHandler, ex);
@@ -301,10 +295,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         logger.error(errorMessage, exception);
     }
 	
-	private SystemFutureWrapper<AsyncTaskResult<Void>> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
+	private SystemFutureWrapper<Void> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
-		return eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
+		return systemAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 					"HandleCommandAsync",
 					() ->  {
 						try {
@@ -363,11 +357,11 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				);
 	}
 
-	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandAsync(ProcessingCommand processingCommand,
+	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandStatus commandStatus, String resultType, String result) {
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);
-		// TODO 完成传递
+		// Future传递
 		return processingCommand.getMailbox().completeMessageAsync(processingCommand, commandResult);
 	}
 	

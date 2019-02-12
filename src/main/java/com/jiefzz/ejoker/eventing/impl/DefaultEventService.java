@@ -364,7 +364,7 @@ public class DefaultEventService implements IEventService {
     						systemAsyncHelper.submit(() -> {
     	                        resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1);
     	                        CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId, eventStream.getAggregateRootId(), "Duplicate aggregate creation.", String.class.getName());
-    	                        completeCommand(context.getProcessingCommand(), commandResult);
+    	                        completeCommandAsync(context.getProcessingCommand(), commandResult);
     						});
                             
     					}
@@ -386,7 +386,7 @@ public class DefaultEventService implements IEventService {
     								eventStream.getAggregateRootId(),
     								"Duplicate aggregate creation, but we cannot find the existing eventstream from eventstore.",
     								String.class.getName());
-    						completeCommand(context.getProcessingCommand(), commandResult);
+    						completeCommandAsync(context.getProcessingCommand(), commandResult);
     					});
     				}
         		},
@@ -478,12 +478,8 @@ public class DefaultEventService implements IEventService {
 		}
 	}
 
-	private SystemFutureWrapper<AsyncTaskResult<Void>> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
+	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
 		return processingCommand.getMailbox().completeMessageAsync(processingCommand, commandResult);
-	}
-
-	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
-		processingCommand.getMailbox().completeMessage(processingCommand, commandResult);
 	}
 
 	private void cleanInactiveMailbox() {

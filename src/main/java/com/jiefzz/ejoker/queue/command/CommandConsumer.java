@@ -192,9 +192,8 @@ public class CommandConsumer implements IWorkerService {
 				ripenFuture.trySetException(new ArgumentNullException("id"));
 				return new SystemFutureWrapper<>(ripenFuture);
 			}
-
-			// TODO 异步出错？？？
-			return EJokerFutureWrapperUtil.createCompleteFuture(get(id, clazz, tryFromCache));
+			
+			return systemAsyncHelper.submit(() -> get(id, clazz, tryFromCache));
 		}
 
 		@Override
