@@ -32,7 +32,8 @@ configurations.all {
 }
 
 dependencies {
-    compile "co.paralleluniverse:quasar-core:${quasarVer}${classifier}"
+	// https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core
+	compile group: 'co.paralleluniverse', name: 'quasar-core', version: "${quasarVer}"
     quasar "co.paralleluniverse:quasar-core:${quasarVer}${classifier}@jar"
     
     // mvn -Dmaven.test.skip=true clean \

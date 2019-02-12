@@ -73,7 +73,7 @@
 				<configuration>
 					<obfuscate>true</obfuscate>
 					<proguardInclude>${basedir}/proguard.conf</proguardInclude>
-					< ! - - 添加依赖，这里你可以按你的需要修改 - - >
+					添加依赖，这里你可以按你的需要修改
 					<libs>
 						<lib>${java.home}/lib/rt.jar</lib>
 						<lib>${java.home}/lib/jce.jar</lib>
@@ -81,7 +81,7 @@
 					<addMavenDescriptor>false</addMavenDescriptor>
 				</configuration>
 				<dependencies>
-					< ! - - 使用4.8版本来混淆 - - >
+					使用4.8版本来混淆
 					<dependency>
 						<groupId>net.sf.proguard</groupId>
 						<artifactId>proguard-base</artifactId>

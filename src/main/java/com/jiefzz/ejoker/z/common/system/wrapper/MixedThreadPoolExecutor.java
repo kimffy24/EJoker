@@ -1,11 +1,8 @@
 package com.jiefzz.ejoker.z.common.system.wrapper;
 
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadFactory;
@@ -14,12 +11,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 
 public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 
-	private final Map<Future<?>, Object> aWaitDict = new ConcurrentHashMap<>();
-	
 	public MixedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
 			BlockingQueue<Runnable> workQueue, RejectedExecutionHandler handler) {
 		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
@@ -43,24 +37,18 @@ public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 	@Override
 	protected void afterExecute(Runnable r, Throwable t) {
 		super.afterExecute(r, t);
-		Object handle;
-		if (null != (handle = aWaitDict.remove(r))) {
-			CountDownLatchWrapper.countDown(handle);
-		}
-
+		CountDownLatchWrapper.countDown(((FutureTask<?> )r).awaitHandle);
 	}
 
 	@Override
 	protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
-		RunnableFuture<T> newTask = new FutureTask<>(runnable, value);
-		aWaitDict.put(newTask, CountDownLatchWrapper.newCountDownLatch());
+		RunnableFuture<T> newTask = new FutureTask<>(CountDownLatchWrapper.newCountDownLatch(), runnable, value);
 		return newTask;
 	}
 
 	@Override
 	protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-		RunnableFuture<T> newTask = new FutureTask<>(callable);
-		aWaitDict.put(newTask, CountDownLatchWrapper.newCountDownLatch());
+		RunnableFuture<T> newTask = new FutureTask<>(CountDownLatchWrapper.newCountDownLatch(), callable);
 		return newTask;
 	}
 
@@ -71,27 +59,29 @@ public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 	 * @param <V>
 	 */
 	private final class FutureTask<V> extends java.util.concurrent.FutureTask<V> {
+		
+		public final Object awaitHandle;
 
-		public FutureTask(Callable<V> callable) {
+		public FutureTask(Object awaitHandle, Callable<V> callable) {
 			super(callable);
+			this.awaitHandle = awaitHandle;
 		}
 
-		public FutureTask(Runnable runnable, V result) {
+		public FutureTask(Object awaitHandle, Runnable runnable, V result) {
 			super(runnable, result);
+			this.awaitHandle = awaitHandle;
 		}
 
 		@Override
 		public V get() throws InterruptedException, ExecutionException {
-			Object handle = MixedThreadPoolExecutor.this.aWaitDict.get(FutureTask.this);
-			CountDownLatchWrapper.await(handle);
+			CountDownLatchWrapper.await(awaitHandle);
 			return super.get();
 		}
 
 		@Override
 		public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-			Object handle = MixedThreadPoolExecutor.this.aWaitDict.get(FutureTask.this);
 			try {
-				if(!CountDownLatchWrapper.await(handle, timeout, unit)) {
+				if(!CountDownLatchWrapper.await(awaitHandle, timeout, unit)) {
 					throw new TimeoutException();
 				}
 			} catch (AsyncWrapperException e) {

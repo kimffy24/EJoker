@@ -142,19 +142,18 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	private EventAppendResult appendSync(DomainEventStream eventStream) {
-		long s = System.currentTimeMillis();
 		String aggregateRootId = eventStream.getAggregateRootId();
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId,
 				ConcurrentHashMap::new);
 
 		boolean hasPrevous = false;
-		hasPrevous &= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream);
-		hasPrevous &= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream);
+		hasPrevous |= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream);
+		hasPrevous |= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream);
 
 		if (hasPrevous)
 			return EventAppendResult.DuplicateEvent;
 		else {
-			queue.offer(new MessageBox(eventStream, s, System.currentTimeMillis()));
+			queue.offer(new MessageBox(eventStream));
 			return EventAppendResult.Success;
 		}
 
@@ -165,21 +164,14 @@ public class InMemoryEventStore implements IEventStore {
 	
 	private final static class MessageBox {
 		public final DomainEventStream domainEventStream;
-		public final long timeStart, timeEnd;
-		public MessageBox(DomainEventStream domainEventStream, long timeStart, long timeEnd) {
+		public MessageBox(DomainEventStream domainEventStream) {
 			this.domainEventStream = domainEventStream;
-			this.timeStart = timeStart;
-			this.timeEnd = timeEnd;
 		}
 	}
 	
 	private long min = Long.MAX_VALUE, max = 0;
 
 	private AtomicLong atLong = new AtomicLong(0);
-	
-	private AtomicLong saveUse = new AtomicLong(0);
-	
-	private long maxDelta = 0;
 	
 	private Thread monitor = new Thread(() -> {
 		while(true) {
@@ -195,11 +187,6 @@ public class InMemoryEventStore implements IEventStore {
 				}
 				if(ts > max) {
 					max = ts;
-				}
-				long delta = mb.timeEnd - mb.timeStart;
-				saveUse.getAndAdd(delta);
-				if(delta > maxDelta) {
-					maxDelta = delta;
 				}
 			} 
 			if(null == mb){
@@ -222,13 +209,6 @@ public class InMemoryEventStore implements IEventStore {
 	
 	public long sizeOfMStore() {
 		return mStorage.size();
-	}
-	
-	public long getMaxSaveDelta() {
-		return maxDelta;
-	}
-	public long getSaveUse() {
-		return saveUse.get();
 	}
 	
 	@EInitialize
