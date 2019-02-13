@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +25,12 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction3;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction3;
 import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -45,7 +45,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 	private final AtomicBoolean onPasue = new AtomicBoolean(true);
 	
-	private final IVoidFunction1<Throwable> exHandler = e -> logger.error("Some exception occur!!!", e);
+	private final IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = (e, mq, d) -> {
+		logger.error(
+				String.format("Some exception occur!!! dashboard.offsetConsumedLocal: %d, dashboard.offsetFetchLocal: %d, mq: %s",
+					d.offsetConsumedLocal.get(),
+					d.offsetFetchLocal.get(),
+					mq.toString()),
+				e);
+	};
 
 	private IFunction1<Boolean, MessageQueue> queueMatcher = null;
 
@@ -67,7 +74,19 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 	});
 	
+	private boolean flowControlFlag = false;
+	
+	private final AtomicBoolean flowControlLoggerAccquired = new AtomicBoolean(false);
+	
 	private final AtomicInteger consumingAmount = new AtomicInteger(0);
+	
+	/**
+	 * 1 返回值boolean是否要求流控 true:是 false:不是
+	 * 参数1 当前队列
+	 * 参数2 在处理中消息数
+	 * 参数3 队列检查序数
+	 */
+	private IFunction3<Boolean, MessageQueue, Integer, Integer> flowControlSwitch = (mq, consumingAmount, n) -> false;
 	
 	public DefaultMQConsumer() {
 		super();
@@ -122,7 +141,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							try {
 								dashboard.messageHandlingJob.trigger();
 							} catch (RuntimeException ex) {
-								exHandler.trigger(ex);
+								exHandler.trigger(ex, mq, dashboard);
 							}
 						}
 					} finally {
@@ -139,6 +158,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			onPasue.set(false);
 		});
 		
+		// debug, provides a permit per 2 seconds.
+		new Thread(() -> {
+			while(true) {
+				try {
+					flowControlLoggerAccquired.compareAndSet(false, true);
+					SleepWrapper.sleep(TimeUnit.SECONDS, 2l);
+				} catch (Exception e) {}
+			}
+		}).start();
 	}
 	
 	public void shutdown() {
@@ -215,20 +243,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							case FOUND:
 								List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 								for (int i = 0; i<messageExtList.size(); i++) {
-									if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING) {
+									if(DefaultMQConsumer.this.flowControlFlag) {
 										// 流控,
-										int ca = consumingAmount.get();
 										int frezon = 0;
-										if(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-											int lastOnProcessing = ca;
-											while(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-												// 触发流控
-												if(frezon++ > 3 && ca == lastOnProcessing)
-													break;
-												logger.warn("触发流控！！！on consuming amount: {}", ca);
-												SleepWrapper.sleep(TimeUnit.MILLISECONDS, 25l);
-												ca = consumingAmount.get();
-											}
+										int cAmount = 0;
+										while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), frezon)) {
+											if(flowControlLoggerAccquired.compareAndSet(true, false))
+												logger.error("Flow control protected! Amount of on processing message is {}", cAmount);
+											LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100l));
+											frezon++;
 										}
 										consumingAmount.getAndIncrement();
 									}
@@ -314,7 +337,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				for(Long index : beforeSequence) {
 					aheadOffsetDict.remove(index);
 
-					if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING) {
+					if(DefaultMQConsumer.this.flowControlFlag) {
 						// 在处理消息数量步减
 						consumingAmount.decrementAndGet();
 					}
@@ -354,4 +377,17 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		this.sumbiter = sumbiter;
 	}
 	
+	public void configureFlowControl(boolean flag) {
+		this.flowControlFlag = flag;
+	}
+
+	/**
+	 * 1 返回值boolean是否要求流控 true:是 false:不是
+	 * 参数1 当前队列
+	 * 参数2 在处理中消息数
+	 * 参数3 队列检查序数
+	 */
+	public void useFlowControlSwitch(IFunction3<Boolean, MessageQueue, Integer, Integer> sw) {
+		this.flowControlSwitch = sw;
+	}
 }

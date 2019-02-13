@@ -174,12 +174,17 @@ public class InMemoryEventStore implements IEventStore {
 		while(true) {
 			MessageBox mb;
 			DomainEventStream des;
+			boolean batch = false;
 			while(null != (mb = queue.poll())) {
 				des = mb.domainEventStream;
-				logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", esQueueHit.incrementAndGet(), des.getAggregateRootId());
+				// logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", esQueueHit.incrementAndGet(), des.getAggregateRootId());
 				
-				if(des.getVersion()==1l && "pro.jiefzz.ejoker.demo.simple.transfer.domain.bankAccount.BankAccount".equals(des.getAggregateRootTypeName()))
-					continue;
+				if(!batch) {
+					if(des.getVersion()==1l && "pro.jiefzz.ejoker.demo.simple.transfer.domain.bankAccount.BankAccount".equals(des.getAggregateRootTypeName()))
+						continue;
+					batch = true;
+				}
+				
 				businessES.incrementAndGet();
 				long ts = des.getTimestamp();
 				if(ts < min) {

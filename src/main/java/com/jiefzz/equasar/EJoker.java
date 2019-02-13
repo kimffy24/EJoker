@@ -1,6 +1,7 @@
 package com.jiefzz.equasar;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
@@ -28,6 +29,12 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 		return instance;
 	}
 	
+	private final static AtomicInteger fiberAmount = new AtomicInteger(0);
+	
+	public final static int getFiberAmount() {
+		return fiberAmount.get();
+	}
+	
 	// prepare job for eQuasar
 	static {
 		
@@ -51,15 +58,16 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 			@Override
 			public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(QIFunction<TAsyncTaskResult> asyncTaskThread) throws SuspendExecution {
 				return new Fiber<>(() -> {
+					fiberAmount.getAndIncrement();
 					try {
 						return asyncTaskThread.trigger();
-					} catch (SuspendExecution s) {
-						throw s;
-					} catch (InterruptedException e) {
+					} catch (SuspendExecution|InterruptedException e) {
 						throw e;
 					} catch (Exception e) {
 						e.printStackTrace();
 						throw new AsyncWrapperException(e);
+					} finally {
+						fiberAmount.decrementAndGet();
 					}
 				}).start();
 			}
