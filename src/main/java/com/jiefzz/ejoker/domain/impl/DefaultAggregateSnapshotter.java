@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.domain.impl;
 
-import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
 
 import com.jiefzz.ejoker.domain.IAggregateRepositoryProvider;
 import com.jiefzz.ejoker.domain.IAggregateRepositoryProxy;

@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.eventing.impl;
 
-import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;

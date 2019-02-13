@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
-import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
 
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;

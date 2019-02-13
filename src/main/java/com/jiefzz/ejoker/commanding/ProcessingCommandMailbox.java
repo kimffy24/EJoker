@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.commanding;
 
-import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
 
 import java.util.HashMap;
 import java.util.Map;
