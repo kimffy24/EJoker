@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utils;
+package com.jiefzz.ejoker.z.common.system.helper;
 
 import java.util.List;
 import java.util.Map;
@@ -8,7 +8,7 @@ import java.util.Set;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 
-public class ForEachUtil {
+public class ForEachHelper {
 
 	public static <K, V> void processForEach(Map<K, V> targetMap, IVoidFunction2<K, V> vf) {
 		if(null == targetMap || 0 == targetMap.size())
@@ -19,6 +19,13 @@ public class ForEachUtil {
 	}
 	
 	public static <V> void processForEach(List<V> targetList, IVoidFunction1<V> vf) {
+		if(null == targetList || 0 == targetList.size())
+			return;
+		for(V item : targetList)
+			vf.trigger(item);
+	}
+	
+	public static <V> void processForEach(Set<V> targetList, IVoidFunction1<V> vf) {
 		if(null == targetList || 0 == targetList.size())
 			return;
 		for(V item : targetList)

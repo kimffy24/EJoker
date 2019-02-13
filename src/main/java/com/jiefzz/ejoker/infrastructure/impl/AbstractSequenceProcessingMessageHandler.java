@@ -9,10 +9,10 @@ import com.jiefzz.ejoker.infrastructure.IPublishedVersionStore;
 import com.jiefzz.ejoker.infrastructure.ISequenceMessage;
 import com.jiefzz.ejoker.infrastructure.ISequenceProcessingMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 public abstract class AbstractSequenceProcessingMessageHandler<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>

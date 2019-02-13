@@ -2,8 +2,8 @@ package com.jiefzz.ejoker.infrastructure;
 
 import java.util.Collection;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public interface IMessageDispatcher {
 

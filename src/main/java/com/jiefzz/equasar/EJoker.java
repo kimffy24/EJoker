@@ -8,7 +8,7 @@ import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;

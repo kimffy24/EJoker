@@ -20,6 +20,7 @@ import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.wrapper.MixedThreadPoolExecutor;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 /**
@@ -196,7 +197,7 @@ public class IOHelper {
 				}
 				return;
 			}
-			switch (result.status) {
+			switch (result.getStatus()) {
 			case Success:
 				externalContext.completeAction.trigger(result.getData());
 				break;
@@ -214,11 +215,11 @@ public class IOHelper {
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes,
-						result.errorMessage);
+						result.getErrorMessage());
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(externalContext, new RuntimeException(result.errorMessage));
+					executeFailedAction(externalContext, new RuntimeException(result.getErrorMessage()));
 				}
 				break;
 			default:

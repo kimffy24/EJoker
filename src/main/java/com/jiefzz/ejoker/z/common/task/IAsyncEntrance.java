@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.z.common.task;
 
 import java.util.concurrent.Future;
 
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 

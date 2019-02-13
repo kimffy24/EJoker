@@ -13,12 +13,12 @@ import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
 @EService

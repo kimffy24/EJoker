@@ -3,8 +3,8 @@ package com.jiefzz.ejoker.eventing;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public interface IEventStore {
 	

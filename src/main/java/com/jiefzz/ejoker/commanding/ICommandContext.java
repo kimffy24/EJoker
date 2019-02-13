@@ -1,8 +1,8 @@
 package com.jiefzz.ejoker.commanding;
 
 import com.jiefzz.ejoker.domain.IAggregateRoot;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public interface ICommandContext {
 

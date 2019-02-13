@@ -12,9 +12,9 @@ import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
-import com.jiefzz.ejoker.z.common.task.SystemAsyncPool;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction;
+import com.jiefzz.ejoker.z.common.task.defaultProvider.SystemAsyncPool;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;

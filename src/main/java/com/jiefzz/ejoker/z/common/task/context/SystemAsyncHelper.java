@@ -3,8 +3,8 @@ package com.jiefzz.ejoker.z.common.task.context;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
 
 /**
  * 创建EJoker内置的任务线程组，整个EJoker生命周期内的异步行为都可以提交到此处<br>

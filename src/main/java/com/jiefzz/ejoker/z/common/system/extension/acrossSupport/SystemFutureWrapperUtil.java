@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.z.common.system.extension.acrossSupport;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public final class SystemFutureWrapperUtil {
 

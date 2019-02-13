@@ -10,7 +10,7 @@ import java.util.Map;
 
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 
 /**
  * A Object contain some useful reflect info.<br>
@@ -100,7 +100,7 @@ public final class GenericDefination {
 
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
 			
-			ForEachUtil.processForEach(superDefination.exportGenericDeclares, (declareTuple, i) -> {
+			ForEachHelper.processForEach(superDefination.exportGenericDeclares, (declareTuple, i) -> {
 
 				Type typeArgument = actualTypeArguments[i];
 
@@ -133,7 +133,7 @@ public final class GenericDefination {
 				
 				Class<?> iface = (Class<?> )interfacePt.getRawType();
 				
-				ForEachUtil.processForEach(interfaceDefinations.get(iface).exportGenericDeclares, (declareTuple, i) -> {
+				ForEachHelper.processForEach(interfaceDefinations.get(iface).exportGenericDeclares, (declareTuple, i) -> {
 					Type typeArgument = actualTypeArguments[i];
 
 					if(typeArgument instanceof TypeVariable<?>) {
@@ -230,21 +230,21 @@ public final class GenericDefination {
 	public void forEachGenericDeclares(IVoidFunction1<GenericDeclare> vf) {
 		if(!hasGenericDeclare)
 			return;
-		ForEachUtil.processForEach(exportGenericDeclares, vf);
+		ForEachHelper.processForEach(exportGenericDeclares, vf);
 	}
 	
 	public void forEachGenericDeclares(IVoidFunction2<GenericDeclare, Integer> vf) {
 		if(!hasGenericDeclare)
 			return;
-		ForEachUtil.processForEach(exportGenericDeclares, vf);
+		ForEachHelper.processForEach(exportGenericDeclares, vf);
 	}
 	
 	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefination> vf) {
-		ForEachUtil.processForEach(interfaceDefinations, vf);
+		ForEachHelper.processForEach(interfaceDefinations, vf);
 	}
 	
 	public void forEachFieldDefinations(IVoidFunction2<String, GenericDefinedField> vf) {
-		ForEachUtil.processForEach(fieldDefinations, vf);
+		ForEachHelper.processForEach(fieldDefinations, vf);
 	}
 	
 	public int getGenericDeclareAmount() {

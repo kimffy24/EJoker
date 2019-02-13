@@ -14,8 +14,8 @@ import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
@@ -126,7 +126,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
 				if(((List )target).size()>0)
-					ForEachUtil.processForEach((List )target, (item) -> 
+					ForEachHelper.processForEach((List )target, (item) -> 
 						join( () -> 
 							assemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
@@ -152,7 +152,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
 				if(((Map )target).size()>0)
-					ForEachUtil.processForEach((Map )target, (k, v) -> {
+					ForEachHelper.processForEach((Map )target, (k, v) -> {
 						join(() -> assemblyStructure(
 								pass2TypeMeta,
 								v,
@@ -171,7 +171,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				join(()-> privateTypeForEach(target, definedClazz, createValueSet), subTaskQueue);
 			} else {
 				Object[] objArray = (Object[])target;
-				ForEachUtil.processForEach((Object[])target, (item, i) -> 
+				ForEachHelper.processForEach((Object[])target, (item, i) -> 
 					join( () -> 
 						assemblyStructure(
 								targetDefinedTypeMeta.componentTypeMeta,

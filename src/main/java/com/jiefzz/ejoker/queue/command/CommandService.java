@@ -18,12 +18,12 @@ import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 

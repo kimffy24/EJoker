@@ -1,6 +1,5 @@
-package com.jiefzz.ejoker.z.common.task;
+package com.jiefzz.ejoker.z.common.task.defaultProvider;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -10,10 +9,12 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
+import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 public class SystemAsyncPool implements IAsyncEntrance {
 	
+	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(SystemAsyncPool.class);
 
 	private ExecutorService defaultThreadPool;
@@ -22,15 +23,13 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		this(threadPoolSize, false);
 	}
 	
-	private BlockingQueue<Runnable> taskQueue = null;
-	
 	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
 				threadPoolSize,
 				threadPoolSize,
 				0l,
 				TimeUnit.MILLISECONDS,
-				taskQueue = new LinkedBlockingQueue<Runnable>(1),
+				new LinkedBlockingQueue<Runnable>(1),
 				new ThreadPoolExecutor.CallerRunsPolicy());
 		if(prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();

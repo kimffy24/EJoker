@@ -18,15 +18,15 @@ import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageHandler;
 import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
 
 /**
  * 由于message类型可以有多个handler，

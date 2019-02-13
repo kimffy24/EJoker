@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 
 public class GenericExpression {
@@ -276,7 +276,7 @@ public class GenericExpression {
 				fieldExpressions = null;
 			} else {
 				fieldExpressions = new HashMap<>();
-				ForEachUtil.processForEach(target.fieldExpressions, (fieldName, genericDefinedField) -> {
+				ForEachHelper.processForEach(target.fieldExpressions, (fieldName, genericDefinedField) -> {
 					GenericDefinedTypeMeta currentGenericDefinedTypeMeta;
 					if(genericDefinedField.isGenericVariable) {
 						/// 如果是泛型类型变量，则从 exportMapper 泛型导出表中获取对应具现化类型
@@ -342,18 +342,18 @@ public class GenericExpression {
 	}
 	
 	public void forEachImplementationsExpressions(IVoidFunction1<GenericExpression> vf) {
-		ForEachUtil.processForEach(implementationsExpressions, vf);
+		ForEachHelper.processForEach(implementationsExpressions, vf);
 	}
 	
 	public void forEachImplementationsExpressionsDeeply(IVoidFunction1<GenericExpression> vf) {
-		ForEachUtil.processForEach(implementationsExpressions, genericExpression -> {
+		ForEachHelper.processForEach(implementationsExpressions, genericExpression -> {
 			vf.trigger(genericExpression);
 			genericExpression.forEachImplementationsExpressionsDeeply(vf);
 		});
 	}
 	
 	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
-		ForEachUtil.processForEach(fieldExpressions, vf);
+		ForEachHelper.processForEach(fieldExpressions, vf);
 	}
 	
 	public void forEachFieldExpressionsDeeply(IVoidFunction2<String, GenericDefinedField> vf) {

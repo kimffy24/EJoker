@@ -4,12 +4,12 @@ import java.io.IOException;
 
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIFunction;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 

@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.z.common.system.wrapper;
 
 import java.util.concurrent.TimeUnit;
 
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction2;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction2;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;

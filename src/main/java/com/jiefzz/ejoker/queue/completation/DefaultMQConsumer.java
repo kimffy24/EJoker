@@ -31,9 +31,9 @@ import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
@@ -62,10 +62,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			} catch (InterruptedException e) { }
 		}
 		while (onRunning.get()) {
-			Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
-			for (Entry<MessageQueue, ControlStruct> entry : entrySet) {
-				processComsumedSequence(entry.getValue());
-			}
+			ForEachHelper.processForEach(dashboards, (q, d) -> processComsumedSequence(d));
 			LockSupport.park();
 		}
 	});
@@ -104,7 +101,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		onRunning.compareAndSet(false, true);
 		loadSubcribeInfoAndPrepareConsume();
 
-		ForEachUtil.processForEach(dashboards, (mq, dashboard) -> {
+		ForEachHelper.processForEach(dashboards, (mq, dashboard) -> {
 			dashboard.workThread = new Thread(() -> {
 				if(dashboard.isWorking.tryLock())
 					try {
@@ -150,7 +147,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		onPasue.compareAndSet(true, false);
 		
 		logger.debug("Waiting all comsumer Thread quit... ");
-		ForEachUtil.processForEach(dashboards, (mq, dashboard) -> {
+		ForEachHelper.processForEach(dashboards, (mq, dashboard) -> {
 			// try to get the acquire of the dashboard or wait.
 			dashboard.isWorking.lock();
 			try {

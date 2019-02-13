@@ -32,15 +32,15 @@ import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 @EService
 public class DefaultEventService implements IEventService {
@@ -138,7 +138,7 @@ public class DefaultEventService implements IEventService {
 	private void batchPersistEventAsync(List<EventCommittingContext> committingContexts) {
 
 		LinkedHashSet<DomainEventStream> domainEventStreams = new LinkedHashSet<>();
-		ForEachUtil.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
+		ForEachHelper.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
 		
 		ioHelper.tryAsyncAction2(
 				"BatchPersistEventAsync",
@@ -157,7 +157,7 @@ public class DefaultEventService implements IEventService {
 						);
 						
 						systemAsyncHelper.submit(() -> {
-								ForEachUtil.processForEach(committingContexts,
+								ForEachHelper.processForEach(committingContexts,
 										context -> publishDomainEventAsync(context.getProcessingCommand(), context.getEventStream()));
 						});
 						

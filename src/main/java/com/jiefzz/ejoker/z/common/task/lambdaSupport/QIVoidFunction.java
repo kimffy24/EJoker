@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.task.context.lambdaSupport;
+package com.jiefzz.ejoker.z.common.task.lambdaSupport;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 

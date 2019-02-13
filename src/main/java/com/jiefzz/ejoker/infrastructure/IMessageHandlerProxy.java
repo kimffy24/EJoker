@@ -1,9 +1,9 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.QIVoidFunction;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
 
 public interface IMessageHandlerProxy extends IObjectProxy {
 	

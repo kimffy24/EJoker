@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.io;
+package com.jiefzz.ejoker.z.common.task;
 
 public final class AsyncTaskResult<T> {
 

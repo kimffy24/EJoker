@@ -19,8 +19,8 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.utils.ClassNamesScanner;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedField;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
@@ -89,7 +89,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 				continue;
 			process(clazz);
 
-			ForEachUtil.processForEach(hookMap, (hookType, hook) -> hook.process(clazz));
+			ForEachHelper.processForEach(hookMap, (hookType, hook) -> hook.process(clazz));
 		}
 	}
 	
@@ -171,6 +171,6 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	}
 	
 	public void forEachEServiceExpressions(IVoidFunction2<Class<?>, GenericExpression> vf) {
-		ForEachUtil.processForEach(eServiceMiddleExpressions, vf);
+		ForEachHelper.processForEach(eServiceMiddleExpressions, vf);
 	}
 }
