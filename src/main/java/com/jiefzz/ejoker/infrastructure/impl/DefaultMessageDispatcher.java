@@ -16,7 +16,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
@@ -63,7 +63,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 			
 			CountDownLatchWrapper.await(countDownLatchHandle);
 		}
-		return EJokerFutureWrapperUtil.createCompleteFutureTask();
+		return SystemFutureWrapperUtil.createCompleteFutureTask();
 	}
 
 	@Override

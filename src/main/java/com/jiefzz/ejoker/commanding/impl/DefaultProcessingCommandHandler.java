@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.commanding.impl;
 
-import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -37,7 +37,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
@@ -309,7 +309,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		                            command.getId(),
 		                            command.getAggregateRootId());
 							
-							return EJokerFutureWrapperUtil.createCompleteFutureTask((IApplicationMessage )ressult);
+							return SystemFutureWrapperUtil.createCompleteFutureTask((IApplicationMessage )ressult);
 						} catch (Exception ex) {
 							
 							while(ex instanceof IOExceptionOnRuntime)
@@ -321,7 +321,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		                            command.getId(),
 		                            command.getAggregateRootId()), ex);
 
-		            		return EJokerFutureWrapperUtil.createCompleteFuture(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		            		return SystemFutureWrapperUtil.createCompleteFuture(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
 		                }
 					},
 					r -> commitChangesAsync(processingCommand, true, r, null),

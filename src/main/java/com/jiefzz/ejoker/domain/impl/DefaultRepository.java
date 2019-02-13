@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.domain.impl;
 
-import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
 
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
@@ -9,7 +9,7 @@ import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
@@ -35,9 +35,9 @@ public class DefaultRepository implements IRepository {
 		// TODO @await
 		IAggregateRoot aggregateRoot = await(memoryCache.getAsync(aggregateRootId, aggregateRootType));
 		if(null != aggregateRoot)
-			return EJokerFutureWrapperUtil.createCompleteFuture(aggregateRoot);
+			return SystemFutureWrapperUtil.createCompleteFuture(aggregateRoot);
 		aggregateRoot =  await(aggregateRootStorage.getAsync(aggregateRootType, aggregateRootId.toString()));
-		return EJokerFutureWrapperUtil.createCompleteFuture(aggregateRoot);
+		return SystemFutureWrapperUtil.createCompleteFuture(aggregateRoot);
 		
 	}
 

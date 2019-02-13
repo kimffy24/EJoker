@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.commanding;
 
-import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
@@ -235,7 +235,7 @@ public class ProcessingCommandMailbox {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(),
 					ex.getMessage());
-			return EJokerFutureWrapperUtil.createCompleteFuture();
+			return SystemFutureWrapperUtil.createCompleteFuture();
 		}
 	}
 

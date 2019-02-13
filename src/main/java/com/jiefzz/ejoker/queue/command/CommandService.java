@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.queue.command;
 
-import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
 
 import java.nio.charset.Charset;
 

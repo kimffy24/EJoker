@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
 
 import java.util.Map;
 import java.util.Queue;

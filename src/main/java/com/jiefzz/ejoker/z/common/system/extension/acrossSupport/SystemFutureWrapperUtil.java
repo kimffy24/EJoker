@@ -2,7 +2,7 @@ package com.jiefzz.ejoker.z.common.system.extension.acrossSupport;
 
 import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 
-public final class EJokerFutureWrapperUtil {
+public final class SystemFutureWrapperUtil {
 
 	public static <T> SystemFutureWrapper<T> createCompleteFuture(T result) {
 

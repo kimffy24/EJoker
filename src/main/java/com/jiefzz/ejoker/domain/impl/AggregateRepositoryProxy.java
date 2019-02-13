@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.domain.impl;
 import com.jiefzz.ejoker.domain.IAggregateRepository;
 import com.jiefzz.ejoker.domain.IAggregateRepositoryProxy;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 /**
@@ -26,7 +26,7 @@ public class AggregateRepositoryProxy implements IAggregateRepositoryProxy {
 
 	@Override
 	public SystemFutureWrapper<IAggregateRoot> getAsync(String aggregateRootId) {
-		return EJokerFutureWrapperUtil.createCompleteFuture(null);
+		return SystemFutureWrapperUtil.createCompleteFuture(null);
 	}
 
 }

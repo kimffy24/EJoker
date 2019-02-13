@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.queue.command;
 
-import static com.jiefzz.ejoker.z.common.utils.LangUtil.await;
+import static com.jiefzz.ejoker.z.common.system.extension.acrossSupport.LangUtil.await;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -33,7 +33,7 @@ import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
@@ -162,7 +162,7 @@ public class CommandConsumer implements IWorkerService {
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return EJokerFutureWrapperUtil.createCompleteFuture();
+				return SystemFutureWrapperUtil.createCompleteFuture();
 
 			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult,
 					commandMessage.replyAddress);
