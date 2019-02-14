@@ -70,8 +70,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(aggregateRootTypeName, aggregateRootId));
 	}
 
-	@Override
-	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
+	private IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		AggregateCacheInfo aggregateRootInfo;
 		if (null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString()))) {
@@ -94,8 +93,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		return null;
 	}
 
-	@Override
-	public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
+	private void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
 		Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
 		if (null == aggregateRootType) {
 			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);

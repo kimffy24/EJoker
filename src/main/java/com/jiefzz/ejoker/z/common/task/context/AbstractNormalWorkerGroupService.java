@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
-import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
 import com.jiefzz.ejoker.z.common.task.defaultProvider.SystemAsyncPool;
@@ -27,9 +26,6 @@ public abstract class AbstractNormalWorkerGroupService {
 
 	@Dependence
 	private Scavenger scavenger;
-
-	@Dependence
-	private IScheduleService scheduleService;
 
 	@EInitialize(priority = 5)
 	private void init() {

@@ -46,6 +46,7 @@ public class SendQueueMessageService {
 					}
 					return AsyncTaskResult.Success;
 				} catch (Exception e) {
+					e.printStackTrace();
 					logger.error(
 							"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
 							e.getMessage(), routingKey, messageId, version);
@@ -63,17 +64,17 @@ public class SendQueueMessageService {
 				try {
 					sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey,
 							message.getCode(), message.getBody(), true));
+					
+					if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+						logger.error(
+								"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
+								sendResult.toString(), routingKey, messageId, version);
+						throw new IOException(sendResult.toString());
+					}
 				} catch (Exception e) {
 					throw new IOException(e);
 				}
 				
-				if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-					logger.error(
-							"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-							sendResult.toString(), routingKey, messageId, version);
-					throw new IOException(sendResult.toString());
-				}
-					
 			});
 		}
 

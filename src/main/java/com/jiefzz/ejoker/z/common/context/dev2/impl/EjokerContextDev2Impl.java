@@ -114,7 +114,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public <T> T get(Class<T> clazz) {
 		
-		AcquireHelper.waitAcquire(onService, false, 50, count -> {
+		AcquireHelper.waitAcquire(onService, true, 50, count -> {
 			logger.warn("Context is not on service!!! Current retry {} times", count);
 		});
 		
@@ -124,7 +124,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public <T> T get(Class<T> clazz, Type... types) {
 
-		AcquireHelper.waitAcquire(onService, false, 50, count -> {
+		AcquireHelper.waitAcquire(onService, true, 50, count -> {
 			logger.warn("Context is not on service!!! Current retry {} times", count);
 		});
 		

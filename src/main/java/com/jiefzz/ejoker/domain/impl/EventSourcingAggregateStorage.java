@@ -63,7 +63,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 			return aggregateRoot;
 
 		AsyncTaskResult<Collection<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootType.getName(), minVersion, maxVersion));
-		if(AsyncTaskStatus.Success.equals(taskResult)) {
+		if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
 			aggregateRoot = rebuildAggregateRoot(aggregateRootType, taskResult.getData());
 			return aggregateRoot;
 		}

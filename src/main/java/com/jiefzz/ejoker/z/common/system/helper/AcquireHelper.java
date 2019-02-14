@@ -37,21 +37,21 @@ public final class AcquireHelper {
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop, IVoidFunction loopAction) {
-		while (expect == ab.get()) {
+		while (expect != ab.get()) {
 			loopAction.trigger();
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop) {
-		while (expect == ab.get()) {
+		while (expect != ab.get()) {
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop, IVoidFunction1<Integer> loopAction) {
 		int i = -1;
-		while (expect == ab.get()) {
+		while (expect != ab.get()) {
 			loopAction.trigger(++i);
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}

@@ -13,14 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
-import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
@@ -95,15 +93,17 @@ public class ProcessingCommandMailbox {
 
 	public void pause() {
 		lastActiveTime = System.currentTimeMillis();
-		if (onPaused.compareAndSet(false, true))
-			AcquireHelper.waitAcquire(isProcessingCommand, 1000l, () -> logger.info(
-					"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
-					aggregateRootId));
+		onPaused.set(true);
+		AcquireHelper.waitAcquire(
+				isProcessingCommand,
+				1000l,
+				() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", aggregateRootId)
+		);
 	}
 
 	public void resume() {
 		lastActiveTime = System.currentTimeMillis();
-		onPaused.compareAndSet(false, true);
+		onPaused.set(false);
 		tryRun();
 	}
 
@@ -144,33 +144,14 @@ public class ProcessingCommandMailbox {
 			LockWrapper.unlock(asyncLock);
 		}
 	}
-	
-	private final WaitingNode currentWaitingHeader = new WaitingNode(null);
-	
-	private WaitingNode tail = currentWaitingHeader;
-	
-	private final static class WaitingNode {
-		
-		public final MittenWrapper executor;
-		
-		private volatile WaitingNode next = null;
-		
-		public final static AtomicReferenceFieldUpdater<WaitingNode, WaitingNode> nextUpdater = 
-				AtomicReferenceFieldUpdater.newUpdater(WaitingNode.class, WaitingNode.class, "next");
-		
-		public WaitingNode(MittenWrapper executor) {
-			this.executor = executor;
-		}
-		
-		
-	}
 
 	public void run() {
 
 		lastActiveTime = System.currentTimeMillis();
+		
 		AcquireHelper.waitAcquire(onPaused, 1000l,
-				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}",
-						aggregateRootId));
+				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}", aggregateRootId)
+		);
 
 		ProcessingCommand processingCommand = null;
 

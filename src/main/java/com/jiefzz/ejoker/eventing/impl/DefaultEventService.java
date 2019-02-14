@@ -36,6 +36,7 @@ import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
@@ -233,9 +234,7 @@ public class DefaultEventService implements IEventService {
 							break;
 							
 						case DuplicateCommand:
-		                    logger.warn(
-		                    		"Persist event has duplicate command, eventStream: {}",
-		                    		jsonSerializer.convert(context.getEventStream()));
+		                    logger.warn("Persist event has duplicate command, eventStream: {}", jsonSerializer.convert(context.getEventStream()));
 		
 							/// TODO .ConfigureAwait(false);
 		                    resetCommandMailBoxConsumingSequenceAsync(context, context.getProcessingCommand().getSequence() + 1);
@@ -244,7 +243,6 @@ public class DefaultEventService implements IEventService {
 							
 						default:
 							assert false;
-							break;
 						}
 					},
 				() -> String.format("[eventStream: %s]", jsonSerializer.convert(context.getEventStream())),
@@ -416,19 +414,15 @@ public class DefaultEventService implements IEventService {
 	}
 
 	private SystemFutureWrapper<Void> refreshAggregateMemoryCacheToLatestVersionAsync(String aggregateRootTypeName, String aggregateRootId) {
-		return systemAsyncHelper.submit(() -> refreshAggregateMemoryCacheToLatestVersion(aggregateRootTypeName, aggregateRootId));
-	}
-	
-	private void refreshAggregateMemoryCacheToLatestVersion(String aggregateRootTypeName, String aggregateRootId) {
-		
 		try {
-			memoryCache.refreshAggregateFromEventStore(aggregateRootTypeName, aggregateRootId);
+			return memoryCache.refreshAggregateFromEventStoreAsync(aggregateRootTypeName, aggregateRootId);
 		} catch (RuntimeException e) {
             logger.error(String.format(
             		"Refresh aggregate memory cache to latest version has unknown exception, aggregateRootTypeName: %s, aggregateRootId: %s",
             		aggregateRootTypeName,
             		aggregateRootId),
             	e);
+            return SystemFutureWrapperUtil.createCompleteFuture();
 		}
 		
 	}
