@@ -96,7 +96,7 @@ public class ProcessingCommandMailbox {
 		onPaused.set(true);
 		AcquireHelper.waitAcquire(
 				isProcessingCommand,
-				1000l,
+				250l, // 1000l,
 				() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", aggregateRootId)
 		);
 	}

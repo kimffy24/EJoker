@@ -1,24 +1,15 @@
-	
-	# 系统内全部使用异步，默认为false
-	ASYNC_BASE = fasle
-	
-	# 消息异步发送
-	ASYNC_EJOKER_MESSAGE_SEND = false
-	
+
 	# 异步线程池大小
 	ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE = 256
 	
-	# 异步线程池线程是否开始时就全部实例化		
-	ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL = false
-	
 	# io失败重试线程池大小
 	ASYNC_IO_RETRY_THREADPOLL_SIZE = 64
+		
+	# 消息异步发送
+	ASYNC_EJOKER_MESSAGE_SEND = false
 	
-	# 消息异步发送线程池大小		
+	# 消息异步发送线程池大小
 	ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE = 128
-	
-	# 消息异步线程池线程是否开始时就全部实例化	
-	ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL = false
 	
 	# 控制在处理中消息数量
 	FLOW_CONTROL_ON_PROCESSING = false
