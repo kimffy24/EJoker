@@ -1,5 +1,9 @@
 package com.jiefzz.ejoker.commanding;
 
+import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+
 /**
  * Java could not multi-implement ICommandHandler.<br>
  * 使用直接重载。<br>
@@ -15,12 +19,12 @@ public abstract class AbstractCommandHandler implements ICommandHandler<ICommand
 	}
 
 	@Override
-	public Object handleAsync(ICommandContext context, ICommand command) {
+	public SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) {
 		throw new CommandRuntimeException("Do you forget to implement the async handler function to handle command which type is " +command.getClass().getName());
 	}
 
 	@Override
-	public Object handleAsync(ICommand command) {
+	public SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommand command) {
 		throw new CommandRuntimeException("Do you forget to implement the async handler function to handle command which type is " +command.getClass().getName());
 	}
 	

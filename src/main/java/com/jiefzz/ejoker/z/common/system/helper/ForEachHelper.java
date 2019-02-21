@@ -35,9 +35,11 @@ public class ForEachHelper {
 	public static <V> void processForEach(List<V> targetList, IVoidFunction2<V, Integer> vf) {
 		if(null == targetList || 0 == targetList.size())
 			return;
-		int size = targetList.size();
-		for(int i = 0; i<size; i++ )
-			vf.trigger(targetList.get(i), i);
+		// 尽量使用foreach和迭代器
+		// 如果使用ArrayList可以直接使用顺序迭代( for(int i=0; i<list.size(); i++) )
+		int index = 0;
+		for(V item : targetList)
+			vf.trigger(item, index++);
 	}
 
 	public static <V> void processForEach(V[] target, IVoidFunction2<V, Integer> vf) {

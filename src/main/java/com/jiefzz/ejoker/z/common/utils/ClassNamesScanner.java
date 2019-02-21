@@ -8,6 +8,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -21,8 +22,8 @@ public class ClassNamesScanner {
 	
 	public static List<Class<?>> scanClass(String packageName) throws ClassNotFoundException {
 		List<String> classNames = scan(packageName);
-		List<Class<?>> result = new ArrayList<Class<?>>();
-		for ( String item : classNames )
+		List<Class<?>> result = new LinkedList<Class<?>>();
+		for(String item : classNames)
 			result.add(Class.forName(item));
 		return result;
 	}
@@ -98,7 +99,9 @@ public class ClassNamesScanner {
 				return file.isDirectory() || (file.getName().endsWith(".class"));
 			}
 		});
-		for (File file : dirfiles) {
+		File file;
+		for (int i = 0; i<dirfiles.length; i++) {
+			file = dirfiles[i];
 			String fileName = file.getName();
 			if (!file.isDirectory()) {
 				// 跳过匿名类

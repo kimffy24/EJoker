@@ -35,14 +35,9 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage) {
-		return eJokerAsyncHelper.submit(() -> handle(processingMessage));
+		return eJokerAsyncHelper.submit(() -> handleMessageAsync(processingMessage));
 	}
 
-	@Override
-	public void handle(X processingMessage) {
-		handleMessageAsync(processingMessage);
-	}
-	
     private void handleMessageAsync(X processingMessage) {
     	
         Y message = processingMessage.getMessage();

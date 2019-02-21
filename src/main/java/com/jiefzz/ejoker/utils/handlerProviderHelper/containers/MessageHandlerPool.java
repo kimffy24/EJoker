@@ -3,9 +3,9 @@ package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,7 +77,7 @@ public class MessageHandlerPool {
 	}
 
 	public final static List<MessageHandlerReflectionTuple> getProxyAsyncHandlers(Class<? extends IMessage> messageType) {
-		return MapHelper.getOrAdd(handlerMapper, messageType, ArrayList::new);
+		return MapHelper.getOrAdd(handlerMapper, messageType, LinkedList::new);
 	}
 	
 	public static class MessageHandlerReflectionTuple implements IMessageHandlerProxy {

@@ -11,8 +11,11 @@ import com.jiefzz.ejoker.commanding.CommandRuntimeException;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
 import com.jiefzz.ejoker.commanding.ICommandContext;
+import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public class CommandAsyncHandlerPool {
 	
@@ -83,9 +86,11 @@ public class CommandAsyncHandlerPool {
 		}
 		
 		@Override
-		public Object handleAsync(ICommandContext context, ICommand command) throws Exception {
+		public SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception {
 				try {
-					return 1==asyncHandleReflectionMethod.getParameterCount() ? asyncHandleReflectionMethod.invoke(getInnerObject(), command) : asyncHandleReflectionMethod.invoke(getInnerObject(), context, command);
+					return (SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> )(1==asyncHandleReflectionMethod.getParameterCount()
+							? asyncHandleReflectionMethod.invoke(getInnerObject(), command)
+									: asyncHandleReflectionMethod.invoke(getInnerObject(), context, command));
 				} catch (IllegalAccessException|IllegalArgumentException e) {
 					e.printStackTrace();
 					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);

@@ -24,8 +24,7 @@ public abstract class AbstractDefaultProcessingMessageHandler<X extends IProcess
 		return eJokerAsyncHelper.submit(() -> handle(processingMessage));
 	}
 
-	@Override
-	public void handle(X processingMessage) {
+	private void handle(X processingMessage) {
 		Y message = processingMessage.getMessage();
 		// TODO @await
 		await(messageDispatcher.dispatchMessageAsync(message));

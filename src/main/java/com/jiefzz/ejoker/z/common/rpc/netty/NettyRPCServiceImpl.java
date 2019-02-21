@@ -60,8 +60,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 		scavenger.addFianllyJob(this::exitHook);
 		scheduleService.startTask(String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
 				this::cleanInactiveClient,
-				800l,
-				800l);
+				1000l,
+				1000l);
 	}
 	
 	// @unsafe
@@ -142,6 +142,11 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	@Override
 	public void remoteInvoke(String data, String host, int port) {
+		fetchNettySimpleClient(host, port);
+		remoteInvokeInternal(host, port, data);
+	}
+	
+	private NettySimpleClient fetchNettySimpleClient(String host, int port) {
 		String uniqueKey = host+":"+port;
 		NettySimpleClient nettySimpleClient = clientStore.get(uniqueKey);
 		if(null == nettySimpleClient) {
@@ -154,15 +159,14 @@ public class NettyRPCServiceImpl implements IRPCService {
 				while (loop++<3 && null == (nettySimpleClient = clientStore.get(uniqueKey)))
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
 				if(null == nettySimpleClient) {
-					remoteInvoke(data, host, port);
-					return;
+					return fetchNettySimpleClient(host, port);
 				}
 			}
 		}
-		remoteInvokeInternal(nettySimpleClient, data);
+		return nettySimpleClient;
 	}
 	
-	private void remoteInvokeInternal(NettySimpleClient client, String data) {
+	private void remoteInvokeInternal(String host, int port, String data) {
 		final String s;
 		int dIndexOf = data.lastIndexOf('\n');
 		if(data.length() - dIndexOf -1 != 0)
@@ -170,13 +174,12 @@ public class NettyRPCServiceImpl implements IRPCService {
 		else
 			s = data;
 		
-		
 		ioHelper.tryAsyncAction2(
 				"RemoteInvoke",
-				() -> eJokerAsyncHelper.submit(() -> client.sendMessage(s)),
+				() -> eJokerAsyncHelper.submit(() -> fetchNettySimpleClient(host, port).sendMessage(s)),
 				r -> {},
-				() -> String.format("remoteInvoke[target: %s]", client.toString()),
-				e -> logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s, data: %s", client.toString(), data)),
+				() -> String.format("remoteInvoke[target: %s:%d]", host, port),
+				e -> logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s:%d, data: %s", host, port, data)),
 				true);
 	}
 	
@@ -184,14 +187,16 @@ public class NettyRPCServiceImpl implements IRPCService {
 		Iterator<Entry<String, NettySimpleClient>> iterator = clientStore.entrySet().iterator();
 		while(iterator.hasNext()) {
 			Entry<String, NettySimpleClient> current = iterator.next();
-			if(!current.getValue().isInactive(clientInactiveMilliseconds))
+			String clientIdentify = current.getKey();
+			NettySimpleClient client = current.getValue();
+			if(!client.isInactive(clientInactiveMilliseconds))
 				continue;
 			iterator.remove();
-			AtomicBoolean ab = clientConnectionOccupation.get(current.getKey());
+			AtomicBoolean ab = clientConnectionOccupation.get(clientIdentify);
 			if(null != ab)
 				ab.set(false);
-			current.getValue().close();
-			logger.debug("Close rpc client: {}", current.getKey());
+			client.close();
+			logger.debug("Close rpc client: {}", clientIdentify);
 		}
 	}
 	

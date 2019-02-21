@@ -35,12 +35,11 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.helper.StringHelper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
@@ -78,9 +77,6 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
-	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
-	
 	@Override
 	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
 		ICommand message = processingCommand.getMessage();
@@ -298,37 +294,40 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private SystemFutureWrapper<Void> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
-		return systemAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
+		ioHelper.tryAsyncAction2(
 					"HandleCommandAsync",
 					() ->  {
 						try {
-							Object ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
+							SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
 							logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
 		                            commandHandler.toString(),
 		                            command.getClass().getName(),
 		                            command.getId(),
 		                            command.getAggregateRootId());
 							
-							return SystemFutureWrapperUtil.createCompleteFutureTask((IApplicationMessage )ressult);
+							return ressult;
 						} catch (Exception ex) {
 							
 							while(ex instanceof IOExceptionOnRuntime)
 								ex = (Exception )ex.getCause();
 							
-		                    logger.error(String.format("Handle command async has io exception. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
+							boolean isIOException = ex instanceof IOException;
+							
+		                    logger.error(String.format("Handle command async has%s exception occur. handler:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
+		                    		(isIOException ?  " io" : ""),
 		                    		commandHandler.toString(),
 		                            command.getClass().getName(),
 		                            command.getId(),
 		                            command.getAggregateRootId()), ex);
 
-		            		return SystemFutureWrapperUtil.createCompleteFuture(new AsyncTaskResult<>(ex instanceof IOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		            		return SystemFutureWrapperUtil.createCompleteFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
 		                }
 					},
 					r -> commitChangesAsync(processingCommand, true, r, null),
 					() -> String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString()),
 					ex -> commitChangesAsync(processingCommand, false, null, ex.getMessage())
-				)
 		);
+		return SystemFutureWrapperUtil.createCompleteFuture();
     }
 	
 	private void commitChangesAsync(ProcessingCommand processingCommand, boolean success, IApplicationMessage message,

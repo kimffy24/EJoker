@@ -18,25 +18,30 @@ import co.paralleluniverse.strands.concurrent.CountDownLatch;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
 
 public class EJoker extends com.jiefzz.ejoker.EJoker {
-	
-	public EJoker() {
-		super();
-	}
 
 	public static com.jiefzz.ejoker.EJoker getInstance(){
-		if ( instance == null )
+		if ( instance == null ) {
+			useQuasar();
 			instance = new EJoker();
+		}
 		return instance;
 	}
-	
-	private final static AtomicInteger fiberAmount = new AtomicInteger(0);
 	
 	public final static int getFiberAmount() {
 		return fiberAmount.get();
 	}
 	
-	// prepare job for eQuasar
-	static {
+	
+	protected EJoker() {
+		super();
+	}
+	
+	private final static AtomicInteger fiberAmount = new AtomicInteger(0);
+	
+	/**
+	 * prepare job for eQuasar
+	 */
+	private final static void useQuasar() {
 		
 		SleepWrapper.setProvider((u, l) -> {
 			try {

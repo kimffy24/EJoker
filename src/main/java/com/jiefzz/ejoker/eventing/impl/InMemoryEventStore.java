@@ -3,8 +3,9 @@ package com.jiefzz.ejoker.eventing.impl;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -121,7 +122,7 @@ public class InMemoryEventStore implements IEventStore {
 	private Collection<DomainEventStream> queryAggregateEvents(String aggregateRootId, String aggregateRootTypeName,
 			long minVersion, long maxVersion) {
 		
-		Set<DomainEventStream> resultSet = new LinkedHashSet<>();
+		List<DomainEventStream> resultSet = new LinkedList<>();
 		
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId, ConcurrentHashMap::new);
 		
@@ -198,7 +199,7 @@ public class InMemoryEventStore implements IEventStore {
 				SleepWrapper.sleep(TimeUnit.MILLISECONDS, 200l);
 			}
 		}
-	});
+	}, "InMemoryEventStore_monitor_" + System.currentTimeMillis());
 	
 	public long getMin() {
 		return min;
@@ -225,6 +226,7 @@ public class InMemoryEventStore implements IEventStore {
 	
 	@EInitialize
 	public void init() {
+		monitor.setDaemon(true);
 		monitor.start();
 	}
 }

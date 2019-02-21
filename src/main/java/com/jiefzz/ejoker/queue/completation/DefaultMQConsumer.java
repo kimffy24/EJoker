@@ -38,6 +38,10 @@ import com.jiefzz.ejoker.z.common.utils.Ensure;
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
+	
+	private final static AtomicInteger processComsumedSequenceThreadCounter = new AtomicInteger(0);
+
+	private final static AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
 
 	private String focusTopic = "";
 	
@@ -72,7 +76,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			ForEachHelper.processForEach(dashboards, (q, d) -> processComsumedSequence(d));
 			LockSupport.park();
 		}
-	});
+	}, "processComsumedSequenceThread-" + processComsumedSequenceThreadCounter.getAndIncrement());
 	
 	private boolean flowControlFlag = false;
 	
@@ -147,10 +151,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					} finally {
 						dashboard.isWorking.unlock();
 					}
-			});
+			}, "dashboardWorkThread-" + dashboardWorkThreadCounter.getAndIncrement());
+			dashboard.workThread.setDaemon(true);
 			dashboard.workThread.start(); 
 		});
 		
+		processComsumedSequenceThread.setDaemon(true);
 		processComsumedSequenceThread.start();
 		
 		sumbiter.trigger(() -> {
@@ -159,14 +165,16 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		});
 		
 		// debug, provides a permit per 2 seconds.
-		new Thread(() -> {
+		Thread monitorThread = new Thread(() -> {
 			while(true) {
 				try {
 					flowControlLoggerAccquired.compareAndSet(false, true);
 					SleepWrapper.sleep(TimeUnit.SECONDS, 2l);
 				} catch (Exception e) {}
 			}
-		}).start();
+		}, "monitorThread");
+		monitorThread.setDaemon(true);
+		monitorThread.start();
 	}
 	
 	public void shutdown() {
@@ -302,12 +310,23 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void syncOffsetToBroker() {
-		for(MessageQueue mq : matchQueue)
+		for(MessageQueue mq : matchQueue) {
+			ControlStruct controlStruct = dashboards.get(mq);
+			long localOffsetConsumed = controlStruct.offsetConsumedLocal.get();
+			if(!controlStruct.offsetDirty.compareAndSet(true, false))
+				continue;
+			boolean status = false;
 			try {
-				updateConsumeOffset(mq, dashboards.get(mq).offsetConsumedLocal.get());
+				updateConsumeOffset(mq, localOffsetConsumed);
+				logger.error("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
+				status = true;
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
+			} finally {
+				if(!status)
+					controlStruct.offsetDirty.compareAndSet(false, true);
 			}
+		}
 		getOffsetStore().persistAll(matchQueue);
 		
 	}
@@ -334,6 +353,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		nextIndex -= 1l;
 		if (0 < beforeSequence.size()) {
 			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
+				controlStruct.offsetDirty.set(true);
 				for(Long index : beforeSequence) {
 					aheadOffsetDict.remove(index);
 
@@ -354,6 +374,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 		public final AtomicLong offsetFetchLocal;
 		
+		public final AtomicBoolean offsetDirty;
+		
 		public final IVoidFunction messageHandlingJob;
 		
 		public final Lock isWorking = new ReentrantLock();
@@ -364,6 +386,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			this.offsetConsumedLocal = new AtomicLong(initOffset);
 			this.offsetFetchLocal = new AtomicLong(initOffset);
 			this.messageHandlingJob = messageHandlingJob;
+			this.offsetDirty = new AtomicBoolean(false);
 		}
 		
 	}

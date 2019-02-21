@@ -7,6 +7,4 @@ public interface IProcessingMessageHandler<X extends IProcessingMessage<X, Y>, Y
 
 	SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(X processingMessage);
 
-	void handle(X processingMessage);
-	
 }

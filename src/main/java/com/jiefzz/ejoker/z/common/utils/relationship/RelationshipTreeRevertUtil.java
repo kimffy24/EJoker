@@ -4,10 +4,10 @@ import static com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtil
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -144,7 +144,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
 			} else if (Collection.class.isAssignableFrom(definedClazz)) {
 				if(List.class.isAssignableFrom(definedClazz)) {
-					revertedResult = new ArrayList();
+					revertedResult = new LinkedList();
 				} else {
 					revertedResult = new HashSet();
 				}

@@ -21,7 +21,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	
 	private AtomicBoolean isFinishing = new AtomicBoolean(false);
 	
-	private AtomicBoolean isCompleted = new AtomicBoolean(false);
+	private AtomicBoolean isFutureReady = new AtomicBoolean(false);
 	
 	private boolean hasException = false;
 	
@@ -45,13 +45,13 @@ public class RipenFuture<TResult> implements Future<TResult> {
 
 	@Override
 	public boolean isDone() {
-		return isCompleted.get();
+		return isFutureReady.get();
 	}
 
 	@Override
 	public TResult get() {
 		
-		if(!isCompleted.get()) {
+		if(!isFutureReady.get()) {
 			CountDownLatchWrapper.await(syncHandle);
 		}
 		if (hasCanceled)
@@ -64,8 +64,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	@Override
 	public TResult get(long timeout, TimeUnit unit) throws TimeoutException {
 
-		final AtomicBoolean isTimeout = new AtomicBoolean(false);
-		if(!isCompleted.get()) {
+		if(!isFutureReady.get()) {
 			if(!CountDownLatchWrapper.await(syncHandle, timeout, unit)){
 				throw new TimeoutException();
 			}
@@ -80,7 +79,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	public boolean trySetCanceled() {
 		if (isFinishing.compareAndSet(false, true)) {
 			this.hasCanceled = true;
-			this.isCompleted.set(true);
+			this.isFutureReady.set(true);
 			enrollWaiting();
 			return true;
 		} else
@@ -91,7 +90,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 		if (isFinishing.compareAndSet(false, true)) {
 			this.hasException = true;
 			this.exception = exception;
-			this.isCompleted.set(true);
+			this.isFutureReady.set(true);
 			enrollWaiting();
 			return true;
 		} else
@@ -101,7 +100,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	public boolean trySetResult(TResult result) {
 		if (isFinishing.compareAndSet(false, true)) {
 			this.result = result;
-			this.isCompleted.set(true);
+			this.isFutureReady.set(true);
 			enrollWaiting();
 			return true;
 		} else
