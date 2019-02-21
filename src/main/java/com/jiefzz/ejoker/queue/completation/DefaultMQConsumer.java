@@ -413,4 +413,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	public void useFlowControlSwitch(IFunction3<Boolean, MessageQueue, Integer, Integer> sw) {
 		this.flowControlSwitch = sw;
 	}
+	
+	public void useQueueSelector(IFunction1<Boolean, MessageQueue> queueMatcher) {
+		this.queueMatcher = queueMatcher;
+	}
 }
