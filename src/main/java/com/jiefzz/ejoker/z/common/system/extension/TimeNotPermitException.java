@@ -1,5 +1,10 @@
 package com.jiefzz.ejoker.z.common.system.extension;
 
+/**
+ * 对异步结果封包的请求不被许可
+ * @author kimffy
+ *
+ */
 public class TimeNotPermitException extends RuntimeException {
 
 	private static final long serialVersionUID = 764917959494848130L;

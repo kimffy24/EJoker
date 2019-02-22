@@ -8,6 +8,11 @@
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
+        <properties>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        </properties>
+
 	<dependencies>
 
 		<!-- 日志组件 -->
@@ -28,7 +33,14 @@
 		<dependency>
 			<groupId>org.apache.rocketmq</groupId>
 			<artifactId>rocketmq-client</artifactId>
-			<version>4.3.0</version>
+			<version>4.4.0</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
+		<dependency>
+			<groupId>co.paralleluniverse</groupId>
+			<artifactId>quasar-core</artifactId>
+			<version>0.7.10</version>
 		</dependency>
 
 	</dependencies>
@@ -61,7 +73,7 @@
 				<configuration>
 					<obfuscate>true</obfuscate>
 					<proguardInclude>${basedir}/proguard.conf</proguardInclude>
-					< ! - - 添加依赖，这里你可以按你的需要修改 - - >
+					添加依赖，这里你可以按你的需要修改
 					<libs>
 						<lib>${java.home}/lib/rt.jar</lib>
 						<lib>${java.home}/lib/jce.jar</lib>
@@ -69,7 +81,7 @@
 					<addMavenDescriptor>false</addMavenDescriptor>
 				</configuration>
 				<dependencies>
-					< ! - - 使用4.8版本来混淆 - - >
+					使用4.8版本来混淆
 					<dependency>
 						<groupId>net.sf.proguard</groupId>
 						<artifactId>proguard-base</artifactId>
@@ -156,6 +168,29 @@
 					</execution>
 				</executions>
 			</plugin> -->
+			
+			<plugin>
+				<groupId>org.fortasoft</groupId>
+				<artifactId>gradle-maven-plugin</artifactId>
+				<version>1.0.8</version>
+				<configuration>
+					<tasks>
+						<!-- this would effectively call "gradle doSomething" -->
+						<task>scanSuspendables</task>
+						<task>compileJava</task>
+					</tasks>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- You can bind this to any phase you like -->
+						<phase>quasar-instrumentation</phase>
+						<goals>
+							<!-- goal must be "invoke" -->
+							<goal>invoke</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

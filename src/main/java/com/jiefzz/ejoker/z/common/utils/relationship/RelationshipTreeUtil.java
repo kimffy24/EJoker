@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +14,8 @@ import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.GenericTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
@@ -47,6 +48,8 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 	
 	public ContainerKVP getTreeStructure(Object target) {
 		
+		Queue<IVoidFunction> queue = new LinkedBlockingQueue<>();
+		
 		Class<?> targetClazz = target.getClass();
 		if(ParameterizedTypeUtil.hasSublevel(targetClazz)) {
 			throw new RuntimeException("Unsupport getTreeStructure() action on java collection util!!!");
@@ -75,19 +78,20 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 							genericDefinedField.genericDefinedTypeMeta,
 							fieldValue,
 							(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
-							() -> fieldName
+							() -> fieldName,
+							queue
 					);
 					
-				}));
+				}, queue));
 		IVoidFunction task;
-		while(null != (task = taskQueueBox.get().poll())) {
+		while(null != (task = queue.poll())) {
 			task.trigger();
 		};
 		
 		return createNode;
 	}
 	
-	private void assemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object target, IVoidFunction1<Object> effector, IFunction<String> keyAccesser) {
+	private void assemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object target, IVoidFunction1<Object> effector, IFunction<String> keyAccesser, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == target) {
 			effector.trigger(null);
@@ -122,14 +126,16 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
 				if(((List )target).size()>0)
-					ForEachUtil.processForEach((List )target, (item) -> 
+					ForEachHelper.processForEach((List )target, (item) -> 
 						join( () -> 
 							assemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
 									item,
 									(result) -> eval.addToValueSet(createValueSet, result),
-									() -> key + "(#foreach in list)"
-							)
+									() -> key + "(#foreach in list)",
+									subTaskQueue
+							),
+							subTaskQueue
 						)
 					);
 			} else if (target instanceof Map) {
@@ -146,12 +152,14 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
 				if(((Map )target).size()>0)
-					ForEachUtil.processForEach((Map )target, (k, v) -> {
+					ForEachHelper.processForEach((Map )target, (k, v) -> {
 						join(() -> assemblyStructure(
 								pass2TypeMeta,
 								v,
 								(result) -> eval.addToKeyValueSet(createNode, result, k.toString()),
-								() -> k.toString()));
+								() -> k.toString(),
+								subTaskQueue),
+							subTaskQueue);
 					});
 			}
 		} else if (targetDefinedTypeMeta.isArray) {
@@ -160,17 +168,19 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			node = createValueSet;
 			
 			if(definedClazz.isPrimitive()) {
-				join(()-> privateTypeForEach(target, definedClazz, createValueSet));
+				join(()-> privateTypeForEach(target, definedClazz, createValueSet), subTaskQueue);
 			} else {
 				Object[] objArray = (Object[])target;
-				ForEachUtil.processForEach((Object[])target, (item, i) -> 
+				ForEachHelper.processForEach((Object[])target, (item, i) -> 
 					join( () -> 
 						assemblyStructure(
 								targetDefinedTypeMeta.componentTypeMeta,
 								objArray[i],
 								(result) -> eval.addToValueSet(createValueSet, result),
-								() -> key + i
-						)
+								() -> key + i,
+								subTaskQueue
+						),
+						subTaskQueue
 					)
 				);
 			}
@@ -211,17 +221,18 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 								genericDefinedField.genericDefinedTypeMeta,
 								fieldValue,
 								(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
-								() -> fieldName
+								() -> fieldName,
+								subTaskQueue
 						);
 						
-					}));
+					}, subTaskQueue));
 		}
 		// 当作普通对象处理
 		effector.trigger(node);
 	}
 	
-	private void join(IVoidFunction task) {
-		if(!taskQueueBox.get().offer(task)) {
+	private void join(IVoidFunction task, Queue<IVoidFunction> subTaskQueue) {
+		if(!subTaskQueue.offer(task)) {
 			throw new RuntimeException("Task Queue has no more capacity!!!");
 		}
 	}

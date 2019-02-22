@@ -2,11 +2,13 @@ package com.jiefzz.ejoker.z.common.task;
 
 import java.util.concurrent.Future;
 
-import com.jiefzz.ejoker.z.common.task.context.lambdaSupport.IFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
+
+import co.paralleluniverse.fibers.SuspendExecution;
 
 public interface IAsyncEntrance {
 
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread);
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(QIFunction<TAsyncTaskResult> asyncTaskThread) throws SuspendExecution;
 	
 	public void shutdown();
 	

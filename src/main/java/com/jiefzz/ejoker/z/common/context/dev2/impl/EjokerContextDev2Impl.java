@@ -22,14 +22,16 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.dev2.EJokerInstanceBuilder;
 import com.jiefzz.ejoker.z.common.context.dev2.EjokerRootDefinationStore;
+import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerClazzScannerHook;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
+import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedField;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
@@ -97,24 +99,34 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			return o1.intValue() - o2.intValue();
 		}});
 	
-	private final AtomicBoolean onService = new AtomicBoolean(false);
+	private final AtomicBoolean onService = new AtomicBoolean(true);
 	
 	private final static Object defaultInstance = new Object();
+	
+	public EjokerContextDev2Impl() {
+
+		instanceMap.put(IEJokerSimpleContext.class.getName(), this);
+		instanceMap.put(IEjokerContextDev2.class.getName(), this);
+		instanceMap.put(EjokerContextDev2Impl.class.getName(), this);
+		
+	}
 	
 	@Override
 	public <T> T get(Class<T> clazz) {
 		
-		if(!onService.get())
-			throw new ContextRuntimeException("context is not on service!!!");
+		AcquireHelper.waitAcquire(onService, true, 50, count -> {
+			logger.warn("Context is not on service!!! Current retry {} times", count);
+		});
 		
 		return (T )instanceMap.get(clazz.getName());
 	}
 
 	@Override
 	public <T> T get(Class<T> clazz, Type... types) {
-		
-		if(!onService.get())
-			throw new ContextRuntimeException("context is not on service!!!");
+
+		AcquireHelper.waitAcquire(onService, true, 50, count -> {
+			logger.warn("Context is not on service!!! Current retry {} times", count);
+		});
 		
 		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz, types);
 		
@@ -148,6 +160,16 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	}
 
 	@Override
+	public void shallowRegister(Object instance) {
+		String instanceTypeName = instance.getClass().getName();
+		
+		if(instanceMap.containsKey(instanceTypeName))
+			throw new ContextRuntimeException("It seems another instance type of " + instanceTypeName + " has registered!!!");
+		
+		instanceMap.put(instanceTypeName, instance);
+	}
+
+	@Override
 	public void scanPackage(String javaPackage) {
 		defaultRootDefinationStore.scanPackage(javaPackage);
 	}
@@ -160,11 +182,11 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void refresh() {
 		
-		assert !onService.get();
+		onService.set(false);
 		
 		refreshContextRecord();
 		
-		ForEachUtil.processForEach(conflictMapperRecord, (clazz, conflictSet) -> {
+		ForEachHelper.processForEach(conflictMapperRecord, (clazz, conflictSet) -> {
 			StringBuilder sb = new StringBuilder();
 			for(Class<?> cClazz : conflictSet) {
 				sb.append("\n\tCondidate class:\t\t");
@@ -175,6 +197,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		preparePreviouslyLoad();
 		completeInstanceInitMethod();
+		
 		onService.compareAndSet(false, true);
 	}
 	
@@ -317,7 +340,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			}
 		});
 
-		ForEachUtil.processForEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
+		ForEachHelper.processForEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
 			instanceCandidateGenericTypeMap.remove(expressionSignature);
 		});
 		
@@ -340,7 +363,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private void preparePreviouslyLoad() {
 		
-		ForEachUtil.processForEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
+		ForEachHelper.processForEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
 			
 			GenericExpression eServiceClazzMiddleStatementGenericExpression = GenericExpressionFactory.getMiddleStatementGenericExpression(eServiceClazz);
 			/// 预加载
@@ -367,7 +390,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 
 			Object instance = instanceMap.get(clazz.getName());
 			
-			ForEachUtil.processForEach(
+			ForEachHelper.processForEach(
 					defaultRootDefinationStore.getEDependenceRecord(clazz),
 					(fieldName, genericDefinedField) -> injectDependence(
 							fieldName,
@@ -449,7 +472,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private void enqueueInitMethod(Object instance) {
 		final Class<?> instanceClazz = instance.getClass();
-		ForEachUtil.processForEach(
+		ForEachHelper.processForEach(
 				defaultRootDefinationStore.getEInitializeRecord(instanceClazz),
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);

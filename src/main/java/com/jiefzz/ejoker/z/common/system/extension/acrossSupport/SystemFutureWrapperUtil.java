@@ -1,8 +1,8 @@
 package com.jiefzz.ejoker.z.common.system.extension.acrossSupport;
 
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
-public final class EJokerFutureWrapperUtil {
+public final class SystemFutureWrapperUtil {
 
 	public static <T> SystemFutureWrapper<T> createCompleteFuture(T result) {
 
@@ -22,7 +22,7 @@ public final class EJokerFutureWrapperUtil {
 
 	public static <T> SystemFutureWrapper<AsyncTaskResult<T>> createCompleteFutureTask(T result) {
 
-        return new SystemFutureWrapper<>(EJokerFutureTaskUtil.createFutureDirectly(result));
+        return new SystemFutureWrapper<>(EJokerFutureTaskUtil.completeTask(result));
         
 	}
 

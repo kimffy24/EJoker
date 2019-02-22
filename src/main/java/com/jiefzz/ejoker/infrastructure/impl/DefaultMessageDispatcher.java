@@ -3,7 +3,6 @@ package com.jiefzz.ejoker.infrastructure.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +13,14 @@ import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
 public class DefaultMessageDispatcher implements IMessageDispatcher {
@@ -33,18 +33,21 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
 
 		List<? extends IMessageHandlerProxy> handlers = MessageHandlerPool.getProxyAsyncHandlers(message.getClass());
 		if(null != handlers && 0 < handlers.size()) {
-			CountDownLatch cdl = new CountDownLatch(handlers.size());
+			Object countDownLatchHandle = CountDownLatchWrapper.newCountDownLatch(handlers.size());
 			
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
 				eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 							"HandleSingleMessageAsync",
-							() -> proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit),
-							r -> cdl.countDown(),
+							() -> proxyAsyncHandler.handleAsync(message, systemAsyncHelper::submit),
+							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
 							() -> String.format(
 									"[messages: [%s], handlerType: %s]",
 									String.format(
@@ -62,13 +65,9 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 				);
 			}
 			
-			try {
-				cdl.await();
-			} catch (InterruptedException e) {
-				throw new AsyncWrapperException(e);
-			}
+			CountDownLatchWrapper.await(countDownLatchHandle);
 		}
-		return EJokerFutureWrapperUtil.createCompleteFutureTask();
+		return SystemFutureWrapperUtil.createCompleteFutureTask();
 	}
 
 	@Override

@@ -91,7 +91,7 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 
 			componentTypeMeta = new GenericDefinedTypeMeta(genericComponentType, referMeta, level + 1);
 			{
-				// TODO check the component type is WildcardType!!!!
+				// !!! check the component type is WildcardType !!!
 				if(componentTypeMeta.isWildcardType) {
 					throw new RuntimeException("Unsupport a wildcard type on array declare!!!");
 				}
@@ -173,8 +173,6 @@ public class GenericDefinedTypeMeta extends GenericDefinationRef {
 		isWildcardType = targetGenericDefinedTypeMeta.isWildcardType;
 		final AtomicInteger unmaterializedCounter = new AtomicInteger(0);
 		
-		// TODO 此控制块没得到测试
-		// TODO 此控制块没得到测试
 		// TODO 此控制块没得到测试
 		if(null != targetGenericDefinedTypeMeta.componentTypeMeta) {
 			

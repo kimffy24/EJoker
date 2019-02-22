@@ -1,8 +1,8 @@
 package com.jiefzz.ejoker.commanding;
 
 import com.jiefzz.ejoker.domain.IAggregateRoot;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public interface ICommandContext {
 
@@ -37,18 +37,6 @@ public interface ICommandContext {
      */
     default public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz) {
     	return getAsync(id, clazz, true);
-    }
-
-    public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache);
-    
-    /**
-     * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
-     * @param id
-     * @param clazz
-     * @return
-     */
-    default public <T extends IAggregateRoot> T get(Object id, Class<T> clazz) {
-    	return get(id, clazz, true);
     }
     
     /**

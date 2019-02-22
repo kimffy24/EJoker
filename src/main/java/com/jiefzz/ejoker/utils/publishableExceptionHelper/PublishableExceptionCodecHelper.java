@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.z.common.context.dev2.EJokerInstanceBuilder;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 
 public final class PublishableExceptionCodecHelper {
@@ -18,7 +18,7 @@ public final class PublishableExceptionCodecHelper {
 		Map<String, String> rMap = new HashMap<>();
 		
 		Map<String, Field> reflectFields = getReflectFields(exception.getClass());
-		ForEachUtil.processForEach(reflectFields, (n, f) -> {
+		ForEachHelper.processForEach(reflectFields, (n, f) -> {
 
 			Object fValue;
 			try {
@@ -38,7 +38,7 @@ public final class PublishableExceptionCodecHelper {
 		return (IPublishableException )(new EJokerInstanceBuilder(exceptionClazz).doCreate((e) -> {
 			
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
-			ForEachUtil.processForEach(reflectFields, (n, f) -> {
+			ForEachHelper.processForEach(reflectFields, (n, f) -> {
 				
 				Object dValue = dValue(f.getType(), pMap.get(n));
 				try {
@@ -62,7 +62,7 @@ public final class PublishableExceptionCodecHelper {
 					!RuntimeException.class.equals(current);
 					current = current.getSuperclass()) {
 				
-				ForEachUtil.processForEach(current.getDeclaredFields(), (field) -> {
+				ForEachHelper.processForEach(current.getDeclaredFields(), (field) -> {
 					
 					String fieldName = field.getName();
 					Class<?> fieldType = field.getType();

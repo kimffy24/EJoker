@@ -37,7 +37,7 @@ public class Scavenger {
 				try {
 					cleanJob.trigger();
 					amountOfJob.decrementAndGet();
-				} catch (RuntimeException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}

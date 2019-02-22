@@ -12,23 +12,14 @@ import org.slf4j.LoggerFactory;
 public final class EJokerEnvironment {
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerEnvironment.class);
-	
-	public final static boolean ASYNC_BASE;
-	
-	public final static boolean ASYNC_EJOKER_MESSAGE_SEND;
-	
 
 	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;
-
-	public final static boolean ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL;
-	
 	
 	public final static int ASYNC_IO_RETRY_THREADPOLL_SIZE;
-	
+
+	public final static boolean ASYNC_EJOKER_MESSAGE_SEND;
 	
 	public final static int ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE;
-
-	public final static boolean ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL;
 	
 	public final static boolean FLOW_CONTROL_ON_PROCESSING;
 	
@@ -65,26 +56,17 @@ public final class EJokerEnvironment {
 		}
 		// ## region end
 		
-		ASYNC_BASE =
-				Boolean.valueOf(props.getProperty("ASYNC_ALL", "false"));
-		
 		ASYNC_EJOKER_MESSAGE_SEND =
 				Boolean.valueOf(props.getProperty("ASYNC_EJOKER_MESSAGE_SEND", "false"));
 
 		ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE =
 				Integer.valueOf(props.getProperty("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE", "256"));
-		
-		ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL =
-				Boolean.valueOf(props.getProperty("ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL", "false"));
 
 		ASYNC_IO_RETRY_THREADPOLL_SIZE =
 				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "64"));
 		
 		ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE =
 				Integer.valueOf(props.getProperty("ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE", "128"));
-		
-		ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL =
-				Boolean.valueOf(props.getProperty("ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL", "false"));
 
 		FLOW_CONTROL_ON_PROCESSING =
 				Boolean.valueOf(props.getProperty("FLOW_CONTROL_ON_PROCESSING", "false"));
@@ -110,13 +92,10 @@ public final class EJokerEnvironment {
 		MAX_BATCH_EVENTS =
 				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "32"));
 
-		logger.debug("ASYNC_BASE: {}", ASYNC_BASE);
-		logger.debug("ASYNC_EJOKER_MESSAGE_SEND: {}", ASYNC_EJOKER_MESSAGE_SEND);
 		logger.debug("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE: {}", ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE);
-		logger.debug("ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL: {}", ASYNC_INTERNAL_EXECUTE_THREADPOLL_PRESTART_ALL);
 		logger.debug("ASYNC_IO_RETRY_THREADPOLL_SIZE: {}", ASYNC_IO_RETRY_THREADPOLL_SIZE);
+		logger.debug("ASYNC_EJOKER_MESSAGE_SEND: {}", ASYNC_EJOKER_MESSAGE_SEND);
 		logger.debug("ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE: {}", ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE);
-		logger.debug("ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL: {}", ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL);
 		logger.debug("MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE: {}", MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE);
 		logger.debug("MAILBOX_IDLE_TIMEOUT: {}", MAILBOX_IDLE_TIMEOUT);
 		logger.debug("AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT: {}", AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT);

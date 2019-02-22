@@ -24,9 +24,5 @@ public interface IMemoryCache {
          * @param aggregateRootId
          */
         public SystemFutureWrapper<Void> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName, String aggregateRootId);
-    	
-        public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType);
-        
-        public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId);
         
 }

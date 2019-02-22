@@ -4,18 +4,20 @@ import static com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeUtil
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -24,6 +26,8 @@ import com.jiefzz.ejoker.z.common.utils.ParameterizedTypeUtil;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
+
+import co.paralleluniverse.fibers.Suspendable;
 
 /**
  * 对象关系二维化工具类
@@ -51,11 +55,13 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	}
 	
 	public <T> T revert(ContainerKVP kvDataSet, Class<T> clazz) {
-		
-		T revertValue = (T )revertInternal(kvDataSet, GenericExpressionFactory.getGenericExpress(clazz));
+
+		Queue<IVoidFunction> queue = new ConcurrentLinkedQueue<>();
+//		Queue<IVoidFunction> queue = taskQueueBox.get();
+		T revertValue = (T )revertInternal(kvDataSet, GenericExpressionFactory.getGenericExpress(clazz), queue);
 
 		IVoidFunction task;
-		while(null != (task = taskQueueBox.get().poll())) {
+		while(null != (task = queue.poll())) {
 			task.trigger();
 		};
 		
@@ -63,7 +69,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		
 	}
 	
-	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression) { 
+	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression, Queue<IVoidFunction> subTaskQueue) { 
 		Object instance = (new InstanceBuilder(expression.getDeclarePrototype())).doCreate();
 		expression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> { 
@@ -75,18 +81,20 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 						disassemblyStructure(
 							genericDefinedField.genericDefinedTypeMeta,
 							disassemblyEval.getValue(kvDataSet, fieldName),
-							result -> setField(genericDefinedField.field, instance, result)
+							result -> setField(genericDefinedField.field, instance, result.trigger()),
+							subTaskQueue
 						);
 				}
 		);
 		return instance;
 	}
 	
-	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<Object> effector) {
+	@Suspendable
+	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == serializedValue) {
 			if(!targetDefinedTypeMeta.rawClazz.isPrimitive())
-				effector.trigger(null);
+				effector.trigger(() -> null);
 			return;
 		}
 		
@@ -111,8 +119,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.componentTypeMeta,
 									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
-									result -> newArray[idx] = result
-									)
+									result -> newArray[idx] = result.trigger(),
+									subTaskQueue
+									),
+							subTaskQueue
 					);
 				}
 			}
@@ -134,7 +144,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
 			} else if (Collection.class.isAssignableFrom(definedClazz)) {
 				if(List.class.isAssignableFrom(definedClazz)) {
-					revertedResult = new ArrayList();
+					revertedResult = new LinkedList();
 				} else {
 					revertedResult = new HashSet();
 				}
@@ -145,8 +155,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
 									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
-									result -> ((Collection )revertedResult).add(result)
-								)
+									result -> ((Collection )revertedResult).add(result.trigger()),
+									subTaskQueue
+								),
+							subTaskQueue
 					);
 				}
 			} else {
@@ -160,8 +172,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							() -> disassemblyStructure(
 									valueTypeMeta,
 									disassemblyEval.getValue((ContainerKVP )serializedValue, (String )key),
-									result -> ((Map )revertedResult).put((String )key, result)
-								)
+									result -> ((Map )revertedResult).put((String )key, result.trigger()),
+									subTaskQueue
+								),
+							subTaskQueue
 					);
 				}
 			}
@@ -179,13 +193,13 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							"(# lose in foreach)"));
 				}
 			}
-			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable));
+			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
 		}
-		effector.trigger(revertedResult);
+		effector.trigger(() -> revertedResult);
 	}
 	
-	private void join(IVoidFunction task) {
-		if(!taskQueueBox.get().offer(task)) {
+	private void join(IVoidFunction task, Queue<IVoidFunction> subTaskQueue) {
+		if(!subTaskQueue.offer(task)) {
 			throw new RuntimeException("Task Queue has no more capacity!!!");
 		}
 	}

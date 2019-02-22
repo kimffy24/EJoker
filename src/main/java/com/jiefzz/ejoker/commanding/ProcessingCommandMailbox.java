@@ -1,38 +1,38 @@
 package com.jiefzz.ejoker.commanding;
 
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
-import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
-import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingCommandMailbox {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
 
-	private final EJokerTaskAsyncHelper eJokerAsyncHelper;
+	private final SystemAsyncHelper systemAsyncHelper;
 
 	private final IProcessingCommandHandler messageHandler;
 
-	private final Lock enqueueLock = new ReentrantLock();
+	private final Object enqueueLock = LockWrapper.createLock();
 
-	private final Lock asyncLock = new ReentrantLock();
+	private final Object asyncLock = LockWrapper.createLock();
 
 	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
@@ -69,23 +69,23 @@ public class ProcessingCommandMailbox {
 	}
 
 	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler,
-			EJokerTaskAsyncHelper eJokerAsyncHelper) {
+			SystemAsyncHelper systemAsyncHelper) {
 		this.aggregateRootId = aggregateRootId;
 		this.messageHandler = messageHandler;
 
-		Ensure.notNull(eJokerAsyncHelper, "eJokerAsyncHelper");
-		this.eJokerAsyncHelper = eJokerAsyncHelper;
+		Ensure.notNull(systemAsyncHelper, "systemAsyncHelper");
+		this.systemAsyncHelper = systemAsyncHelper;
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-		enqueueLock.lock();
+		LockWrapper.lock(enqueueLock);
 		try {
 			message.setSequence(nextSequence);
 			message.setMailbox(this);
 			if (null == messageDict.putIfAbsent(message.getSequence(), message))
 				nextSequence++;
 		} finally {
-			enqueueLock.unlock();
+			LockWrapper.unlock(enqueueLock);
 		}
 		lastActiveTime = System.currentTimeMillis();
 		tryRun();
@@ -93,15 +93,17 @@ public class ProcessingCommandMailbox {
 
 	public void pause() {
 		lastActiveTime = System.currentTimeMillis();
-		if (onPaused.compareAndSet(false, true))
-			AcquireHelper.waitAcquire(isProcessingCommand, 1000l, () -> logger.info(
-					"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
-					aggregateRootId));
+		onPaused.set(true);
+		AcquireHelper.waitAcquire(
+				isProcessingCommand,
+				250l, // 1000l,
+				() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", aggregateRootId)
+		);
 	}
 
 	public void resume() {
 		lastActiveTime = System.currentTimeMillis();
-		onPaused.compareAndSet(false, true);
+		onPaused.set(false);
 		tryRun();
 	}
 
@@ -111,14 +113,13 @@ public class ProcessingCommandMailbox {
 		requestToCompleteCommandDict.clear();
 	}
 
-	public SystemFutureWrapper<AsyncTaskResult<Void>> completeMessageAsync(ProcessingCommand processingCommand,
+	public SystemFutureWrapper<Void> completeMessageAsync(ProcessingCommand processingCommand,
 			CommandResult commandResult) {
-		return eJokerAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
+		return systemAsyncHelper.submit(() -> completeMessage(processingCommand, commandResult));
 	}
 
-	public void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
-		asyncLock.lock();
-		//lock(processingCommand, commandResult);
+	private void completeMessage(ProcessingCommand processingCommand, CommandResult commandResult) {
+		LockWrapper.lock(asyncLock);
 		try {
 			lastActiveTime = System.currentTimeMillis();
 			long processingSequence = processingCommand.getSequence();
@@ -126,83 +127,31 @@ public class ProcessingCommandMailbox {
 			if (processingSequence == expectSequence) {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				if (EJokerEnvironment.ASYNC_BASE)
-					completeCommandAsync(processingCommand, commandResult).get();
-				else
-					completeCommand(processingCommand, commandResult);
+				await(completeCommandAsync(processingCommand, commandResult));
 				consumedSequence = processNextCompletedCommands(processingSequence);
 			} else if(processingSequence > expectSequence) {
 				requestToCompleteCommandDict.put(processingSequence, commandResult);
 			} else/* if (processingSequence < expectSequence)*/ {
 				messageDict.remove(processingSequence);
 				// TODO @await
-				if (EJokerEnvironment.ASYNC_BASE)
-					completeCommandAsync(processingCommand, commandResult).get();
-				else
-					completeCommand(processingCommand, commandResult);
+				await(completeCommandAsync(processingCommand, commandResult));
 				requestToCompleteCommandDict.remove(processingSequence);
 			}
 		} catch (Exception ex) {
 			logger.error(String.format("Command mailbox complete command failed, commandId: %s, aggregateRootId: %s",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId()), ex);
 		} finally {
-			asyncLock.unlock();
-			//unlock();
+			LockWrapper.unlock(asyncLock);
 		}
-	}
-	
-	private void lock(final ProcessingCommand processingCommand, final CommandResult commandResult) {
-		Thread currentExecuter = Thread.currentThread();
-		
-		WaitingNode tail = this.tail;
-		
-		while(!WaitingNode.nextUpdater.compareAndSet(tail, null, new WaitingNode(currentExecuter)))
-			tail = WaitingNode.nextUpdater.get(tail);
-		
-		if(!currentWaitingHeader.equals(tail)) {
-			LockSupport.park();
-		}
-		
-	}
-	
-	private void unlock() {
-		WaitingNode waitingNodeExecuting = currentWaitingHeader.next;
-		WaitingNode waitingNodeNext;
-		if(WaitingNode.nextUpdater.compareAndSet(
-				currentWaitingHeader,
-				waitingNodeExecuting,
-				waitingNodeNext = WaitingNode.nextUpdater.get(waitingNodeExecuting))) {
-			if(null != waitingNodeNext)
-				LockSupport.unpark(waitingNodeNext.executor);
-		}
-	}
-	
-	private final WaitingNode currentWaitingHeader = new WaitingNode(null);
-	
-	private WaitingNode tail = currentWaitingHeader;
-	
-	private final static class WaitingNode {
-		
-		public final Thread executor;
-		
-		private volatile WaitingNode next = null;
-		
-		public final static AtomicReferenceFieldUpdater<WaitingNode, WaitingNode> nextUpdater = 
-				AtomicReferenceFieldUpdater.newUpdater(WaitingNode.class, WaitingNode.class, "next");
-		
-		public WaitingNode(Thread executor) {
-			this.executor = executor;
-		}
-		
-		
 	}
 
 	public void run() {
 
 		lastActiveTime = System.currentTimeMillis();
+		
 		AcquireHelper.waitAcquire(onPaused, 1000l,
-				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}",
-						aggregateRootId));
+				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}", aggregateRootId)
+		);
 
 		ProcessingCommand processingCommand = null;
 
@@ -213,11 +162,7 @@ public class ProcessingCommandMailbox {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
 					// TODO @await
-					if (EJokerEnvironment.ASYNC_BASE) {
-						messageHandler.handleAsync(processingCommand).get();
-					} else {
-						messageHandler.handle(processingCommand);
-					}
+					await(messageHandler.handle(processingCommand));
 				}
 				count++;
 				consumingSequence++;
@@ -253,7 +198,6 @@ public class ProcessingCommandMailbox {
 			ProcessingCommand processingCommand;
 			if (null != (processingCommand = messageDict.remove(nextSequence))) {
 				CommandResult commandResult = requestToCompleteCommandDict.get(nextSequence);
-				// TODO async
 				completeCommandAsync(processingCommand, commandResult);
 			}
 			requestToCompleteCommandDict.remove(nextSequence);
@@ -265,30 +209,20 @@ public class ProcessingCommandMailbox {
 
 	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandResult commandResult) {
-		// TODO 完成传递
+		// Future传递
 		try {
 			return processingCommand.completeAsync(commandResult);
 		} catch (RuntimeException ex) {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(),
 					ex.getMessage());
-			return EJokerFutureWrapperUtil.createCompleteFuture();
-		}
-	}
-
-	private void completeCommand(ProcessingCommand processingCommand, CommandResult commandResult) {
-		try {
-			processingCommand.complete(commandResult);
-		} catch (RuntimeException ex) {
-			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}",
-					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(),
-					ex.getMessage());
+			return SystemFutureWrapperUtil.createCompleteFuture();
 		}
 	}
 
 	private void tryRun() {
 		if (tryEnter()) {
-			eJokerAsyncHelper.submit(this::run);
+			systemAsyncHelper.submit(this::run);
 		}
 	}
 

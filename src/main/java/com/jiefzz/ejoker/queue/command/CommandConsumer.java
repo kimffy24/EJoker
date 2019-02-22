@@ -1,16 +1,16 @@
 package com.jiefzz.ejoker.queue.command;
 
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
+
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.commanding.AggregateRootAlreadyExistException;
 import com.jiefzz.ejoker.commanding.CommandResult;
 import com.jiefzz.ejoker.commanding.CommandReturnType;
@@ -29,19 +29,20 @@ import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
 public class CommandConsumer implements IWorkerService {
 
+	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
@@ -85,11 +86,6 @@ public class CommandConsumer implements IWorkerService {
 		return this;
 	}
 	
-	public void d1() {
-		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
-			this.consumer.showLog("CommandConsumer");
-	}
-
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		// Here QueueMessage is a carrier of Command
 		// separate it from QueueMessage；
@@ -166,7 +162,7 @@ public class CommandConsumer implements IWorkerService {
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return EJokerFutureWrapperUtil.createCompleteFuture();
+				return SystemFutureWrapperUtil.createCompleteFuture();
 
 			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult,
 					commandMessage.replyAddress);
@@ -196,9 +192,8 @@ public class CommandConsumer implements IWorkerService {
 				ripenFuture.trySetException(new ArgumentNullException("id"));
 				return new SystemFutureWrapper<>(ripenFuture);
 			}
-
+			
 			return systemAsyncHelper.submit(() -> get(id, clazz, tryFromCache));
-
 		}
 
 		@Override
@@ -222,8 +217,7 @@ public class CommandConsumer implements IWorkerService {
 			return result;
 		}
 
-		@Override
-		public <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
+		private <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
 
 			RipenFuture<T> ripenFuture = new RipenFuture<>();
 			if (id == null) {
@@ -239,14 +233,10 @@ public class CommandConsumer implements IWorkerService {
 
 			if (tryFromCache)
 				// TODO @await
-				aggregateRoot = EJokerEnvironment.ASYNC_BASE
-						? repository.getAsync((Class<IAggregateRoot>) clazz, id).get()
-						: repository.get((Class<IAggregateRoot>) clazz, id);
+				aggregateRoot = await(repository.getAsync((Class<IAggregateRoot>) clazz, id));
 			else
 				// TODO @await
-				aggregateRoot = EJokerEnvironment.ASYNC_BASE
-						? aggregateRootStorage.getAsync((Class<IAggregateRoot>) clazz, aggregateRootId).get()
-						: aggregateRootStorage.get((Class<IAggregateRoot>) clazz, aggregateRootId);
+				aggregateRoot = await(aggregateRootStorage.getAsync((Class<IAggregateRoot>) clazz, aggregateRootId));
 			if (aggregateRoot != null) {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
 				return (T) aggregateRoot;

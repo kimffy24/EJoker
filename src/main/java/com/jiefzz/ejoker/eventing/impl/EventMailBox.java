@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
-import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
@@ -116,7 +116,7 @@ public class EventMailBox {
     }
 	
 	public void clear() {
-//		while(null != messageQueue.poll());
+		// while(null != messageQueue.poll());
 		messageQueue.clear();
 	}
 

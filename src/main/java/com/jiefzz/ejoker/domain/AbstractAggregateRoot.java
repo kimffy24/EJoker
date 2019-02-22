@@ -85,7 +85,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		// creating new aggregate root.
 		if ( this.id == null && domainEvent.getVersion() == 1 ) {
 			// 这里有个由String类型Id转换为实际泛型类型的id的逻辑。
-//			this.id = domainEvent.getAggregateRootStringId();
+			// this.id = domainEvent.getAggregateRootStringId();
 			IDHelper.setAggregateRootId(this, domainEvent.getAggregateRootStringId());
 			
 		}

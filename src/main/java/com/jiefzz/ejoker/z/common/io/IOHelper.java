@@ -1,19 +1,26 @@
 package com.jiefzz.ejoker.z.common.io;
 
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
-import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
-import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
+import com.jiefzz.ejoker.z.common.system.wrapper.MixedThreadPoolExecutor;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 /**
@@ -24,27 +31,62 @@ import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
  *
  */
 @EService
-public class IOHelper extends AbstractNormalWorkerGroupService {
+public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
-
-	@Override
-	protected int usePoolSize() {
-		return EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE;
-	}
 	
-	@Override
-	protected boolean prestartAll() {
-		return false;
-	}
+	private final static AtomicInteger poolIndex = new AtomicInteger(0);
+	
+	private final ThreadPoolExecutor retryExecutorService = new MixedThreadPoolExecutor(
+			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
+			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
+			0l, TimeUnit.MICROSECONDS,
+			new LinkedBlockingQueue<Runnable>(),
+			new ThreadFactory() {
+
+				private final AtomicInteger threadIndex = new AtomicInteger(0);
+
+				private final ThreadGroup group;
+
+				private final String namePrefix;
+
+				 {
+
+					SecurityManager s = System.getSecurityManager();
+					group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+					namePrefix = "EJokerIORetry-" + poolIndex.incrementAndGet() + "-thread-";
+				}
+
+				@Override
+				public Thread newThread(Runnable r) {
+					Thread t = new Thread(null, r, namePrefix + threadIndex.getAndIncrement(), 0);
+					if (t.isDaemon())
+						t.setDaemon(false);
+					if (t.getPriority() != Thread.NORM_PRIORITY)
+						t.setPriority(Thread.NORM_PRIORITY);
+
+					return t;
+				}
+
+			});
 
 	/**
-	 * ioHelper自身继承了线程组服务，但是主要目的还是为了IO重试<br>
+	 * ioHelper自身线程池服務主要目的还是为了IO重试<br>
 	 * 其余异步委托还是使用系统异步助手
 	 */
-	
 	@Dependence
 	protected SystemAsyncHelper systemAsyncHelper;
+
+	@Dependence
+	private Scavenger scavenger;
+	
+	/**
+	 * 要不要考慮下，如果有重試任務正在進行的話，保存關鍵信息？還是給出異常日誌？還是阻止關閉？
+	 */
+	@EInitialize
+	private void init() {
+		scavenger.addFianllyJob(retryExecutorService::shutdown);
+	}
 
 	public <T> void tryAsyncAction2(
 			String actionName,
@@ -64,7 +106,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-			IVoidFunction1<Integer> loopAction,
+			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction) {
@@ -78,6 +120,15 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				faildAction));
 	}
 	
+	/**
+	 * Task Executor and Monitor
+	 * @param actionName 
+	 * @param mainAction - The closure of the task.
+	 * @param completeAction - The closure will be executed while main action got success.
+	 * @param contextInfo - The closure about get context info.
+	 * @param faildAction - The closure will be executed while main action got timeout or exception.
+	 * @param retryWhenFailed - The flag about whether do retry while main action got failed.
+	 */
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
@@ -98,7 +149,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-			IVoidFunction1<Integer> loopAction,
+			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction,
@@ -114,7 +165,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				retryWhenFailed));
 	}
 
-	private <T> void taskContinueAction(IOHelperContext<T> externalContext) {
+	public <T> void taskContinueAction(IOHelperContext<T> externalContext) {
 		
 		SystemFutureWrapper<AsyncTaskResult<T>> task;
 		
@@ -155,7 +206,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				}
 				return;
 			}
-			switch (result.status) {
+			switch (result.getStatus()) {
 			case Success:
 				externalContext.completeAction.trigger(result.getData());
 				break;
@@ -173,11 +224,11 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes,
-						result.errorMessage);
+						result.getErrorMessage());
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(externalContext, new RuntimeException(result.errorMessage));
+					executeFailedAction(externalContext, new RuntimeException(result.getErrorMessage()));
 				}
 				break;
 			default:
@@ -219,16 +270,16 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		}
 	}
 
-	private void executeRetryAction(IOHelperContext<?> externalContext) {
+	private <T> void executeRetryAction(IOHelperContext<T> externalContext) {
 		externalContext.currentRetryTimes++;
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
-				submitInternal(() -> {
+				retryExecutorService.submit(() -> {
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
-					externalContext.loopAction.trigger(externalContext.currentRetryTimes);
+					externalContext.loopAction.trigger(externalContext);
 					});
 			} else {
-				externalContext.loopAction.trigger(externalContext.currentRetryTimes);
+				externalContext.loopAction.trigger(externalContext);
 			}
 		} catch (RuntimeException ex) {
 			logger.error(
@@ -280,7 +331,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 		
 		protected final IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction;
 		
-		protected final IVoidFunction1<Integer> loopAction;
+		protected final IVoidFunction1<IOHelperContext<T>> loopAction;
 		
 		protected final IVoidFunction1<T> completeAction;
 		
@@ -294,7 +345,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
@@ -303,7 +354,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 			this.actionName = actionName;
 			this.mainAction = mainAction;
 			this.loopAction = null == loopAction
-					? r -> this.ioHelper.taskContinueAction(this)
+					? r -> r.ioHelper.taskContinueAction(r)
 					: loopAction;
 			this.completeAction = completeAction;
 			this.contextInfo = contextInfo;
@@ -318,7 +369,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
@@ -331,7 +382,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
@@ -344,7 +395,7 @@ public class IOHelper extends AbstractNormalWorkerGroupService {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction) {

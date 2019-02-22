@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -26,18 +25,23 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction3;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
-import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction3;
+import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
-import com.jiefzz.ejoker.z.common.utils.ForEachUtil;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
+	
+	private final static AtomicInteger processComsumedSequenceThreadCounter = new AtomicInteger(0);
+
+	private final static AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
 
 	private String focusTopic = "";
 	
@@ -45,7 +49,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 	private final AtomicBoolean onPasue = new AtomicBoolean(true);
 	
-	private final IVoidFunction1<Throwable> exHandler = e -> logger.error("Some exception occur!!!", e);
+	private final IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = (e, mq, d) -> {
+		logger.error(
+				String.format("Some exception occur!!! dashboard.offsetConsumedLocal: %d, dashboard.offsetFetchLocal: %d, mq: %s",
+					d.offsetConsumedLocal.get(),
+					d.offsetFetchLocal.get(),
+					mq.toString()),
+				e);
+	};
 
 	private IFunction1<Boolean, MessageQueue> queueMatcher = null;
 
@@ -62,15 +73,24 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			} catch (InterruptedException e) { }
 		}
 		while (onRunning.get()) {
-			Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
-			for (Entry<MessageQueue, ControlStruct> entry : entrySet) {
-				processComsumedSequence(entry.getValue());
-			}
+			ForEachHelper.processForEach(dashboards, (q, d) -> processComsumedSequence(d));
 			LockSupport.park();
 		}
-	});
+	}, "processComsumedSequenceThread-" + processComsumedSequenceThreadCounter.getAndIncrement());
+	
+	private boolean flowControlFlag = false;
+	
+	private final AtomicBoolean flowControlLoggerAccquired = new AtomicBoolean(false);
 	
 	private final AtomicInteger consumingAmount = new AtomicInteger(0);
+	
+	/**
+	 * 1 返回值boolean是否要求流控 true:是 false:不是
+	 * 参数1 当前队列
+	 * 参数2 在处理中消息数
+	 * 参数3 队列检查序数
+	 */
+	private IFunction3<Boolean, MessageQueue, Integer, Integer> flowControlSwitch = (mq, consumingAmount, n) -> false;
 	
 	public DefaultMQConsumer() {
 		super();
@@ -88,11 +108,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		super(consumerGroup);
 	}
 	
-	public void showLog(String x) {
-		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
-			logger.debug("EjokerStatus => {}.DefaultMQConsumer -> consumingAmount: {}", x, consumingAmount.get());
-	}
-
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
 		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.onRunning");
 		this.messageProcessor = vf;
@@ -109,7 +124,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		onRunning.compareAndSet(false, true);
 		loadSubcribeInfoAndPrepareConsume();
 
-		ForEachUtil.processForEach(dashboards, (mq, dashboard) -> {
+		ForEachHelper.processForEach(dashboards, (mq, dashboard) -> {
 			dashboard.workThread = new Thread(() -> {
 				if(dashboard.isWorking.tryLock())
 					try {
@@ -126,19 +141,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 								if(!onRunning.get())
 									return;
 							}
+							
 							try {
 								dashboard.messageHandlingJob.trigger();
 							} catch (RuntimeException ex) {
-								exHandler.trigger(ex);
+								exHandler.trigger(ex, mq, dashboard);
 							}
 						}
 					} finally {
 						dashboard.isWorking.unlock();
 					}
-			});
+			}, "dashboardWorkThread-" + dashboardWorkThreadCounter.getAndIncrement());
+			dashboard.workThread.setDaemon(true);
 			dashboard.workThread.start(); 
 		});
 		
+		processComsumedSequenceThread.setDaemon(true);
 		processComsumedSequenceThread.start();
 		
 		sumbiter.trigger(() -> {
@@ -146,6 +164,17 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			onPasue.set(false);
 		});
 		
+		// debug, provides a permit per 2 seconds.
+		Thread monitorThread = new Thread(() -> {
+			while(true) {
+				try {
+					flowControlLoggerAccquired.compareAndSet(false, true);
+					SleepWrapper.sleep(TimeUnit.SECONDS, 2l);
+				} catch (Exception e) {}
+			}
+		}, "monitorThread");
+		monitorThread.setDaemon(true);
+		monitorThread.start();
 	}
 	
 	public void shutdown() {
@@ -154,7 +183,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		onPasue.compareAndSet(true, false);
 		
 		logger.debug("Waiting all comsumer Thread quit... ");
-		ForEachUtil.processForEach(dashboards, (mq, dashboard) -> {
+		ForEachHelper.processForEach(dashboards, (mq, dashboard) -> {
 			// try to get the acquire of the dashboard or wait.
 			dashboard.isWorking.lock();
 			try {
@@ -194,9 +223,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			long consumedOffset;
 			try {
 				maxOffset = new AtomicLong(maxOffset(mq));
-//				if("EjokerCommandConsumerGroup".equals(getConsumerGroup())) {
-//					consumedOffset = 14990271;
-//				} else 
 				consumedOffset = fetchConsumeOffset(mq, false);
 			} catch (MQClientException e3) {
 				throw new RuntimeException(e3);
@@ -225,31 +251,29 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							case FOUND:
 								List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 								for (int i = 0; i<messageExtList.size(); i++) {
-									if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING) {
+									if(DefaultMQConsumer.this.flowControlFlag) {
 										// 流控,
-										int ca = consumingAmount.get();
 										int frezon = 0;
-										if(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-											int lastOnProcessing = ca;
-											while(ca - EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE > 0) {
-												// 触发流控
-												if(frezon++ > 3 && ca == lastOnProcessing)
-													break;
-												logger.warn("触发流控！！！on consuming amount: {}", ca);
-												SleepWrapper.sleep(TimeUnit.MILLISECONDS, 25l);
-												ca = consumingAmount.get();
-											}
+										int cAmount = 0;
+										while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), frezon)) {
+											if(flowControlLoggerAccquired.compareAndSet(true, false))
+												logger.error("Flow control protected! Amount of on processing message is {}", cAmount);
+											LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100l));
+											frezon++;
 										}
 										consumingAmount.getAndIncrement();
 									}
 									final long consumingOffset = currentOffset + i + 1;
 									MessageExt rmqMsg = messageExtList.get(i);
-									EJokerQueueMessage queueMessage = new EJokerQueueMessage(
+									final EJokerQueueMessage queueMessage = new EJokerQueueMessage(
 										rmqMsg.getTopic(),
 										rmqMsg.getFlag(),
 										rmqMsg.getBody(),
 										rmqMsg.getTags());
-									messageProcessor.trigger(queueMessage, message -> tryMarkCompletion(mq, consumingOffset));
+									sumbiter.trigger(() -> 
+									messageProcessor.trigger(queueMessage, message -> tryMarkCompletion(mq, consumingOffset))
+									)
+									;
 								}
 								controlStruct.offsetFetchLocal.getAndSet(pullResult.getNextBeginOffset());
 								maxOffset.getAndSet(pullResult.getMaxOffset());
@@ -286,12 +310,23 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void syncOffsetToBroker() {
-		for(MessageQueue mq : matchQueue)
+		for(MessageQueue mq : matchQueue) {
+			ControlStruct controlStruct = dashboards.get(mq);
+			long localOffsetConsumed = controlStruct.offsetConsumedLocal.get();
+			if(!controlStruct.offsetDirty.compareAndSet(true, false))
+				continue;
+			boolean status = false;
 			try {
-				updateConsumeOffset(mq, dashboards.get(mq).offsetConsumedLocal.get());
+				updateConsumeOffset(mq, localOffsetConsumed);
+				logger.error("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
+				status = true;
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
+			} finally {
+				if(!status)
+					controlStruct.offsetDirty.compareAndSet(false, true);
 			}
+		}
 		getOffsetStore().persistAll(matchQueue);
 		
 	}
@@ -318,10 +353,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		nextIndex -= 1l;
 		if (0 < beforeSequence.size()) {
 			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
+				controlStruct.offsetDirty.set(true);
 				for(Long index : beforeSequence) {
 					aheadOffsetDict.remove(index);
 
-					if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING) {
+					if(DefaultMQConsumer.this.flowControlFlag) {
 						// 在处理消息数量步减
 						consumingAmount.decrementAndGet();
 					}
@@ -338,6 +374,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 		public final AtomicLong offsetFetchLocal;
 		
+		public final AtomicBoolean offsetDirty;
+		
 		public final IVoidFunction messageHandlingJob;
 		
 		public final Lock isWorking = new ReentrantLock();
@@ -348,6 +386,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			this.offsetConsumedLocal = new AtomicLong(initOffset);
 			this.offsetFetchLocal = new AtomicLong(initOffset);
 			this.messageHandlingJob = messageHandlingJob;
+			this.offsetDirty = new AtomicBoolean(false);
 		}
 		
 	}
@@ -355,10 +394,27 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	/**
 	 * 默认异步策略
 	 */
-	private IVoidFunction1<IVoidFunction> sumbiter = (c) -> new Thread(c::trigger).start();
+	private IVoidFunction1<IVoidFunction> sumbiter = c -> new Thread(c::trigger).start();
 	
 	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
 		this.sumbiter = sumbiter;
 	}
 	
+	public void configureFlowControl(boolean flag) {
+		this.flowControlFlag = flag;
+	}
+
+	/**
+	 * 1 返回值boolean是否要求流控 true:是 false:不是
+	 * 参数1 当前队列
+	 * 参数2 在处理中消息数
+	 * 参数3 队列检查序数
+	 */
+	public void useFlowControlSwitch(IFunction3<Boolean, MessageQueue, Integer, Integer> sw) {
+		this.flowControlSwitch = sw;
+	}
+	
+	public void useQueueSelector(IFunction1<Boolean, MessageQueue> queueMatcher) {
+		this.queueMatcher = queueMatcher;
+	}
 }

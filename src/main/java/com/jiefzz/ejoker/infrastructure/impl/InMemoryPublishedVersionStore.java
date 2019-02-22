@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.jiefzz.ejoker.infrastructure.IPublishedVersionStore;
-import com.jiefzz.ejoker.z.common.io.AsyncTaskResult;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
 /**
@@ -17,7 +17,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 
 	private final SystemFutureWrapper<AsyncTaskResult<Void>> successTask
-		= EJokerFutureWrapperUtil.createCompleteFutureTask();
+		= SystemFutureWrapperUtil.createCompleteFutureTask();
 
 	private final Map<String, Long> versionDict = new ConcurrentHashMap<>();
 
@@ -31,7 +31,7 @@ public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId) {
-		return EJokerFutureWrapperUtil.createCompleteFutureTask(getPublishedVersion(processorName, aggregateRootTypeName, aggregateRootId));
+		return SystemFutureWrapperUtil.createCompleteFutureTask(getPublishedVersion(processorName, aggregateRootTypeName, aggregateRootId));
 		
 	}
 

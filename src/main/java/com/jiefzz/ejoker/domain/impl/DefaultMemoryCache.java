@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.domain.impl;
 
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,8 +70,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(aggregateRootTypeName, aggregateRootId));
 	}
 
-	@Override
-	public IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
+	private IAggregateRoot get(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		AggregateCacheInfo aggregateRootInfo;
 		if (null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString()))) {
@@ -81,9 +82,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			if (aggregateRoot.getChanges().size() > 0) {
 
 				// TODO @await
-				IAggregateRoot lastestAggregateRoot = EJokerEnvironment.ASYNC_BASE
-						? aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()).get()
-						: aggregateStorage.get(aggregateRootType, aggregateRootId.toString());
+				IAggregateRoot lastestAggregateRoot = await(aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()));
 				if (null != lastestAggregateRoot)
 					setInternal(lastestAggregateRoot);
 
@@ -94,8 +93,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		return null;
 	}
 
-	@Override
-	public void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
+	private void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
 		Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
 		if (null == aggregateRootType) {
 			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
@@ -104,10 +102,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 		try {
 			// TODO @await
-			IAggregateRoot aggregateRoot = EJokerEnvironment.ASYNC_BASE
-					? aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString())
-							.get()
-					: aggregateStorage.get((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString());
+			IAggregateRoot aggregateRoot = await(aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString()));
 			if (null != aggregateRoot) {
 				setInternal(aggregateRoot);
 			}

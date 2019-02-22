@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.z.common.utils;
+package com.jiefzz.ejoker.z.common.system.helper;
 
 import java.util.List;
 import java.util.Map;
@@ -8,7 +8,7 @@ import java.util.Set;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 
-public class ForEachUtil {
+public class ForEachHelper {
 
 	public static <K, V> void processForEach(Map<K, V> targetMap, IVoidFunction2<K, V> vf) {
 		if(null == targetMap || 0 == targetMap.size())
@@ -25,12 +25,21 @@ public class ForEachUtil {
 			vf.trigger(item);
 	}
 	
+	public static <V> void processForEach(Set<V> targetList, IVoidFunction1<V> vf) {
+		if(null == targetList || 0 == targetList.size())
+			return;
+		for(V item : targetList)
+			vf.trigger(item);
+	}
+	
 	public static <V> void processForEach(List<V> targetList, IVoidFunction2<V, Integer> vf) {
 		if(null == targetList || 0 == targetList.size())
 			return;
-		int size = targetList.size();
-		for(int i = 0; i<size; i++ )
-			vf.trigger(targetList.get(i), i);
+		// 尽量使用foreach和迭代器
+		// 如果使用ArrayList可以直接使用顺序迭代( for(int i=0; i<list.size(); i++) )
+		int index = 0;
+		for(V item : targetList)
+			vf.trigger(item, index++);
 	}
 
 	public static <V> void processForEach(V[] target, IVoidFunction2<V, Integer> vf) {

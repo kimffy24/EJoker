@@ -1,19 +1,19 @@
 package com.jiefzz.ejoker.infrastructure;
 
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
+
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.z.common.system.wrapper.threadSleep.SleepWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
@@ -24,7 +24,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 
 	private volatile Map<Long, X> waitingMessageDict = null;
 	
-	private final Lock waitingMessageDictCreate = new ReentrantLock();
+	private final Object waitingMessageDictCreate = LockWrapper.createLock();
 
 	private final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
 
@@ -64,13 +64,13 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		Ensure.notNull(sequenceMessage, "sequenceMessage");
 		
 		if(null == waitingMessageDict) {
-			waitingMessageDictCreate.lock();
+			LockWrapper.lock(waitingMessageDictCreate);
 			try {
 				while(null == waitingMessageDict) {
 					waitingMessageDict = new ConcurrentHashMap<>();
 				}
 			} finally {
-				waitingMessageDictCreate.unlock();
+				LockWrapper.unlock(waitingMessageDictCreate);
 			}
 		}
 
@@ -94,11 +94,8 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		try {
 			if (null != (processingMessage = messageQueue.poll())) {
 				
-				/// TODO @await
-				if(EJokerEnvironment.ASYNC_BASE)
-					messageHandler.handleAsync(processingMessage).get();
-				else
-					messageHandler.handle(processingMessage);
+				// TODO @await
+				await(messageHandler.handleAsync(processingMessage));
 				
 			}
 		} catch (RuntimeException ex) {

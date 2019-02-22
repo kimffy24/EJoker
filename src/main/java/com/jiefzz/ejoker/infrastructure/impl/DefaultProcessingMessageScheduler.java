@@ -25,7 +25,7 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 
 	@Override
 	public void scheduleMessage(final X processingMessage) {
-		systemAsyncHelper.submit(() -> messageHandler.handle(processingMessage));
+		systemAsyncHelper.submit(() -> messageHandler.handleAsync(processingMessage));
 	}
 
 	@Override
