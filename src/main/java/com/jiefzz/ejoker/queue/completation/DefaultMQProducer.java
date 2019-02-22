@@ -1,5 +1,6 @@
 package com.jiefzz.ejoker.queue.completation;
 
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -7,12 +8,17 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.RPCHook;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction3;
 import com.jiefzz.ejoker.z.common.system.wrapper.MixedThreadPoolExecutor;
 
 public class DefaultMQProducer extends org.apache.rocketmq.client.producer.DefaultMQProducer {
@@ -37,16 +43,18 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		init();
 	}
 	
-	@Deprecated
-	public Future<SendResult> sendAsync(Message msg) {
-		return threadPoolExecutor.submit(() -> this.defaultMQProducerImpl.send(msg));
+	@Override
+	public SendResult send(Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+		if(mqSelectorFlag) {
+			return super.send(msg, this.mqSelector::trigger, null);
+		} else {
+			return super.send(msg);
+		}
 	}
 	
 	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
 		return threadPoolExecutor.submit(vf::trigger);
 	}
-	
-	private ThreadPoolExecutor threadPoolExecutor;
 	
 	@Override
 	public void shutdown() {
@@ -55,6 +63,17 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		}
 		super.shutdown();
 	}
+	
+	public void configureMQSelector(IFunction3<MessageQueue, List<MessageQueue>, Message, Object> selector) {
+		this.mqSelector = selector;
+		this.mqSelectorFlag = true;
+	}
+	
+	private ThreadPoolExecutor threadPoolExecutor;
+	
+	private boolean mqSelectorFlag = false;
+	
+	private IFunction3<MessageQueue, List<MessageQueue>, Message, Object> mqSelector = null;
 
 	private void init() {
 		threadPoolExecutor = new MixedThreadPoolExecutor(

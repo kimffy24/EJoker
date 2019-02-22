@@ -106,7 +106,7 @@ public class IOHelper {
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-			IVoidFunction1<Integer> loopAction,
+			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction) {
@@ -120,6 +120,15 @@ public class IOHelper {
 				faildAction));
 	}
 	
+	/**
+	 * Task Executor and Monitor
+	 * @param actionName 
+	 * @param mainAction - The closure of the task.
+	 * @param completeAction - The closure will be executed while main action got success.
+	 * @param contextInfo - The closure about get context info.
+	 * @param faildAction - The closure will be executed while main action got timeout or exception.
+	 * @param retryWhenFailed - The flag about whether do retry while main action got failed.
+	 */
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
@@ -140,7 +149,7 @@ public class IOHelper {
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-			IVoidFunction1<Integer> loopAction,
+			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction,
@@ -156,7 +165,7 @@ public class IOHelper {
 				retryWhenFailed));
 	}
 
-	private <T> void taskContinueAction(IOHelperContext<T> externalContext) {
+	public <T> void taskContinueAction(IOHelperContext<T> externalContext) {
 		
 		SystemFutureWrapper<AsyncTaskResult<T>> task;
 		
@@ -261,16 +270,16 @@ public class IOHelper {
 		}
 	}
 
-	private void executeRetryAction(IOHelperContext<?> externalContext) {
+	private <T> void executeRetryAction(IOHelperContext<T> externalContext) {
 		externalContext.currentRetryTimes++;
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
 				retryExecutorService.submit(() -> {
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
-					externalContext.loopAction.trigger(externalContext.currentRetryTimes);
+					externalContext.loopAction.trigger(externalContext);
 					});
 			} else {
-				externalContext.loopAction.trigger(externalContext.currentRetryTimes);
+				externalContext.loopAction.trigger(externalContext);
 			}
 		} catch (RuntimeException ex) {
 			logger.error(
@@ -322,7 +331,7 @@ public class IOHelper {
 		
 		protected final IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction;
 		
-		protected final IVoidFunction1<Integer> loopAction;
+		protected final IVoidFunction1<IOHelperContext<T>> loopAction;
 		
 		protected final IVoidFunction1<T> completeAction;
 		
@@ -336,7 +345,7 @@ public class IOHelper {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
@@ -345,7 +354,7 @@ public class IOHelper {
 			this.actionName = actionName;
 			this.mainAction = mainAction;
 			this.loopAction = null == loopAction
-					? r -> this.ioHelper.taskContinueAction(this)
+					? r -> r.ioHelper.taskContinueAction(r)
 					: loopAction;
 			this.completeAction = completeAction;
 			this.contextInfo = contextInfo;
@@ -360,7 +369,7 @@ public class IOHelper {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
@@ -373,7 +382,7 @@ public class IOHelper {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
@@ -386,7 +395,7 @@ public class IOHelper {
 				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<Integer> loopAction,
+				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction) {

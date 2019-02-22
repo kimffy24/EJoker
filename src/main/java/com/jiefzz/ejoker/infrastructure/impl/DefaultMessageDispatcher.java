@@ -20,6 +20,7 @@ import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 @EService
 public class DefaultMessageDispatcher implements IMessageDispatcher {
@@ -32,6 +33,9 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
+	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
 
@@ -42,7 +46,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
 				eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 							"HandleSingleMessageAsync",
-							() -> proxyAsyncHandler.handleAsync(message, eJokerAsyncHelper::submit),
+							() -> proxyAsyncHandler.handleAsync(message, systemAsyncHelper::submit),
 							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
 							() -> String.format(
 									"[messages: [%s], handlerType: %s]",

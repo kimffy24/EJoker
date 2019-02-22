@@ -29,14 +29,16 @@ public class SendQueueMessageService {
 	public SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync(DefaultMQProducer producer,
 			EJokerQueueMessage message, String routingKey, String messageId, String version) {
 
+		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey,
+				message.getCode(), message.getBody(), true);
+		
 		if(EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
 			
 			// use producer inner executor service to execute aSync task and wrap the result with type SystemFutureWrapper.
 			return new SystemFutureWrapper<>(producer.submitWithInnerExector(() -> {
 				
 				try {
-					SendResult sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey,
-							message.getCode(), message.getBody(), true));
+					SendResult sendResult = producer.send(rMessage);
 					
 					if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
 						logger.error(
@@ -62,8 +64,7 @@ public class SendQueueMessageService {
 				
 				SendResult sendResult;
 				try {
-					sendResult = producer.send(new Message(message.getTopic(), message.getTag(), routingKey,
-							message.getCode(), message.getBody(), true));
+					sendResult = producer.send(rMessage);
 					
 					if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
 						logger.error(

@@ -3,12 +3,15 @@ package com.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +23,15 @@ import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
+import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 /**
  * 由于message类型可以有多个handler，
@@ -59,11 +64,45 @@ public class MessageHandlerPool {
 				if (method.getParameterCount() != PARAMETER_AMOUNT)
 					throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", actuallyHandlerName, method.getName()));
 				Class<?>[] parameterTypes = method.getParameterTypes();
+				if(PARAMETER_TYPE_SUPER_0.equals(parameterTypes[0]))
+					continue;
 				if (!PARAMETER_TYPE_SUPER_0.isAssignableFrom(parameterTypes[0]))
 					throw new InfrastructureRuntimeException(String.format(
 							"%s#%s( %s ) first parameters is not accept!!!", actuallyHandlerName,
 							HANDLER_METHOD_NAME, parameterTypes[0].getName()));
 				Class<? extends IMessage> messageType = (Class<? extends IMessage> )parameterTypes[0];
+				{
+					// 约束返回类型。 java无法在编译时约束，那就推到运行时上约束吧
+					// 这里就是检查返回类型(带泛型)为 SystemFutureWrapper<AsyncTaskResult<Void>>
+					boolean isOK = false;
+					Type genericReturnType = method.getGenericReturnType();
+					if(genericReturnType instanceof ParameterizedType) {
+						ParameterizedType parameterizedType = (ParameterizedType )genericReturnType;
+						if(parameterizedType.getRawType().equals(SystemFutureWrapper.class)) {
+							Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+							if(null != actualTypeArguments && 1 == actualTypeArguments.length) {
+								Type type = actualTypeArguments[0];
+								if(type instanceof ParameterizedType) {
+									ParameterizedType parameterizedTypeInnerLv1 = (ParameterizedType )type;
+									if(parameterizedTypeInnerLv1.getRawType().equals(AsyncTaskResult.class)) {
+										Type[] actualTypeArgumentsLv1 = parameterizedTypeInnerLv1.getActualTypeArguments();
+										if(null != actualTypeArgumentsLv1 && 1 == actualTypeArgumentsLv1.length) {
+											Type typeLv2 = actualTypeArgumentsLv1[0];
+											if(Void.class.equals(typeLv2)) {
+												isOK = true;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					if(!isOK) {
+						String errorDesc = String.format("%s#%s should return SystemFutureWrapper<AsyncTaskResult<Void>> !!!", actuallyHandlerName, HANDLER_METHOD_NAME);
+						logger.error(errorDesc);
+						throw new RuntimeException(errorDesc);
+					}
+				}
 				if(coverSet.contains(messageType.getName()))
 					continue;
 				coverSet.add(messageType.getName());
@@ -109,8 +148,7 @@ public class MessageHandlerPool {
 				RipenFuture<AsyncTaskResult<Void>> ripenFuture = new RipenFuture<>();
 				new Thread(() -> {
 						try {
-							c.trigger();
-							ripenFuture.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, null, null));
+							ripenFuture.trySetResult(c.trigger());
 						} catch (Exception ex) {
 							logger.debug("Message async handler execute faild!!!", ex);
 							ripenFuture.trySetResult(new AsyncTaskResult<>(
@@ -128,15 +166,19 @@ public class MessageHandlerPool {
 		 * submitter为异步任务执行器的调度封装方法
 		 */
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, QIVoidFunction> submitter) {
+		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, QIFunction<AsyncTaskResult<Void>>> submitter) {
 			return submitter.trigger(() -> {
 					try {
-						handleReflectionMethod.invoke(getInnerObject(), message);
+						@SuppressWarnings("unchecked")
+						SystemFutureWrapper<AsyncTaskResult<Void>> result =
+								(SystemFutureWrapper<AsyncTaskResult<Void>> )handleReflectionMethod.invoke(getInnerObject(), message);
+						return result.get();
 					} catch (IllegalAccessException|IllegalArgumentException e) {
-						throw new AsyncWrapperException(e);
+						logger.error("Message handle async faild", e);
+						return new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage(), null);
 					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-						throw (Exception )e.getCause();
+						logger.error("Message handle async faild", e);
+						return new AsyncTaskResult<>(AsyncTaskStatus.Failed, ((Exception )e.getCause()).getMessage(), null);
 					}
 			});
 		}
