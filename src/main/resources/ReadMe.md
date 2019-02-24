@@ -1,11 +1,11 @@
 
-	# 异步线程池大小
+	# 异步线程池大小(Quasar模式下无效)
 	ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE = 256
 	
 	# io失败重试线程池大小
 	ASYNC_IO_RETRY_THREADPOLL_SIZE = 64
 		
-	# 消息异步发送
+	# 消息异步发送(Quasar模式下请置为true)
 	ASYNC_EJOKER_MESSAGE_SEND = false
 	
 	# 消息异步发送线程池大小

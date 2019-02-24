@@ -63,8 +63,6 @@ public class InMemoryEventStore implements IEventStore {
 
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> batchAppendAsync(LinkedHashSet<DomainEventStream> eventStreams) {
-		if(!supportBatchAppendEvent)
-			throw new RuntimeException("Unsupport batch append event.");
 		return eJokerAsyncHelper.submit(() -> batchAppend(eventStreams));
 	}
 
@@ -90,9 +88,6 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	private EventAppendResult batchAppend(LinkedHashSet<DomainEventStream> eventStreams) {
-		
-		if(!supportBatchAppendEvent)
-			throw new RuntimeException("Unsupport batch append event.");
 		
 		Iterator<DomainEventStream> iterator = eventStreams.iterator();
 		while (iterator.hasNext()) {

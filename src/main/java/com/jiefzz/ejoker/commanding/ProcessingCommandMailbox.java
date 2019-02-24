@@ -149,7 +149,7 @@ public class ProcessingCommandMailbox {
 
 		lastActiveTime = System.currentTimeMillis();
 		
-		AcquireHelper.waitAcquire(onPaused, 1000l,
+		AcquireHelper.waitAcquire(onPaused, 200l,
 				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}", aggregateRootId)
 		);
 
