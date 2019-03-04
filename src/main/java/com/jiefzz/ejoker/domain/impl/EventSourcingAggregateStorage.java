@@ -13,6 +13,7 @@ import com.jiefzz.ejoker.domain.IAggregateSnapshotter;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.IEventStore;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -46,6 +47,9 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
+	
 	@Override
 	public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
 		return systemAsyncHelper.submit(() -> get(aggregateRootType, aggregateRootId));
@@ -61,8 +65,10 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 
 		if (null != aggregateRoot)
 			return aggregateRoot;
+		
+		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRootType);
 
-		AsyncTaskResult<Collection<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootType.getName(), minVersion, maxVersion));
+		AsyncTaskResult<Collection<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
 		if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
 			aggregateRoot = rebuildAggregateRoot(aggregateRootType, taskResult.getData());
 			return aggregateRoot;
@@ -89,7 +95,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 					aggregateRootId)
 			);
 		
-		String aggregateRootTypeName = aggregateRootType.getName();
+		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRootType);
 
 		// TODO @await
 		AsyncTaskResult<Collection<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion));

@@ -27,6 +27,7 @@ import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
@@ -76,6 +77,9 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 
 	@Override
 	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
@@ -198,10 +202,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		if(null!=result)
 			processingCommand.getItems().put("CommandResult", result);
 		
+		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRoot.getClass());
+		
 		return new DomainEventStream(
 				processingCommand.getMessage().getId(),
 				aggregateRoot.getUniqueId(),
-				aggregateRoot.getClass().getName(),
+				aggregateRootTypeName,
 				aggregateRoot.getVersion()+1,
 				System.currentTimeMillis(),
 				changeEvents,

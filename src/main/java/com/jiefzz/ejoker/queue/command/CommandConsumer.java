@@ -92,8 +92,7 @@ public class CommandConsumer implements IWorkerService {
 		HashMap<String, String> commandItems = new HashMap<>();
 		String messageBody = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
-		Class<? extends ICommand> commandType = (Class<? extends ICommand>) typeNameProvider
-				.getType(queueMessage.getTag());
+		Class<? extends ICommand> commandType = (Class<? extends ICommand>) typeNameProvider.getType(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);
 		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(queueMessage, context, commandMessage);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
@@ -187,8 +186,8 @@ public class CommandConsumer implements IWorkerService {
 		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz,
 				boolean tryFromCache) {
 
-			RipenFuture<T> ripenFuture = new RipenFuture<>();
 			if (id == null) {
+				RipenFuture<T> ripenFuture = new RipenFuture<>();
 				ripenFuture.trySetException(new ArgumentNullException("id"));
 				return new SystemFutureWrapper<>(ripenFuture);
 			}
@@ -220,9 +219,10 @@ public class CommandConsumer implements IWorkerService {
 		private <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
 
 			RipenFuture<T> ripenFuture = new RipenFuture<>();
-			if (id == null) {
-				throw new ArgumentNullException("id");
-			}
+			// getAsync已做了检查
+			// if (id == null) {
+			// 	throw new ArgumentNullException("id");
+			// }
 
 			String aggregateRootId = id.toString();
 			IAggregateRoot aggregateRoot = null;

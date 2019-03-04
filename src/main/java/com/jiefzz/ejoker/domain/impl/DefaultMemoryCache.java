@@ -131,7 +131,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			AggregateCacheInfo aggregateCacheInfo = current.getValue();
 			if (aggregateCacheInfo.isExpired(EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT)) {
 				it.remove();
-				logger.debug("Removed inactive aggregate root, id: {}", current.getKey());
+				logger.debug("Removed inactive aggregate root, id: {}, type: {}", current.getKey(), aggregateCacheInfo.aggregateRoot.getClass().getName());
 			}
 		}
 	}
