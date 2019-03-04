@@ -75,13 +75,13 @@ public class PublishableExceptionConsumer {
 	
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		
-        Class<? extends IPublishableException> applicationMessageType = (Class<? extends IPublishableException> )typeNameProvider.getType(queueMessage.getTag());
+        Class<? extends IPublishableException> publishableExceptionType = (Class<? extends IPublishableException> )typeNameProvider.getType(queueMessage.getTag());
         PublishableExceptionMessage exceptionMessage = jsonSerializer.revert(new String(queueMessage.getBody(), Charset.forName("UTF-8")), PublishableExceptionMessage.class);
         QueueProcessingContext processContext = new QueueProcessingContext(queueMessage, context);
         IPublishableException exception = null;
         {
         	// PublishableExceptionMessage exceptionMessage => IPublishableException exception
-        	exception =  PublishableExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), applicationMessageType);
+        	exception =  PublishableExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), publishableExceptionType);
         }
         ProcessingPublishableExceptionMessage processingMessage = new ProcessingPublishableExceptionMessage(exception, processContext);
 
