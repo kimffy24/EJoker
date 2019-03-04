@@ -23,7 +23,7 @@ public final class IDHelper {
 	
 	public static <S> void applyCodec(Class<S> type, IDCodec<S> codec) {
 		if(null != codecStore.putIfAbsent(type, codec)) {
-			logger.error("Cann't replace Aggregate root Id codec, current codec: {}", codec.getClass().getName());
+			logger.error("Cannot replace Aggregate root Id codec, current codec: {}", codec.getClass().getName());
 		}
 	}
 	

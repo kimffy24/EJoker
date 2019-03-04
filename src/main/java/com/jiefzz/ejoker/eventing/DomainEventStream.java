@@ -82,5 +82,33 @@ public class DomainEventStream {
 	public long getTimestamp() {
 		return timestamp;
 	}
+	
+	@Override
+	public String toString() {
+        String format = "[commandId=%s, aggregateRootTypeName=%s, aggregateRootId=%s, version=%d, timestamp=%d, events=%s, items=%s]";
+        StringBuffer eventSB = new StringBuffer();
+        StringBuffer itemSB = new StringBuffer();
+
+        if(null != events) {
+        	eventSB.append('[');
+        	events.forEach(evt -> eventSB.append(evt.getClass().getName()).append("|"));
+        	eventSB.append(']');
+        }
+
+        if(null != items) {
+        	itemSB.append('[');
+        	items.forEach((k, v) -> itemSB.append(k).append(": ").append(v).append("|"));
+        	itemSB.append(']');
+        }
+        
+        return String.format(format,
+        		commandId,
+        		aggregateRootTypeName,
+            	aggregateRootId,
+            	version,
+            	timestamp,
+            	eventSB.toString(),
+            	itemSB.toString());
+    }
 
 }

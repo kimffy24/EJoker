@@ -35,14 +35,12 @@ public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 		
 	}
 
-	@Override
-	public void updatePublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId,
+	private void updatePublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId,
 			long publishedVersion) {
 		versionDict.put(buildKey(processorName, aggregateRootId), publishedVersion);
 	}
 
-	@Override
-	public long getPublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId) {
+	private long getPublishedVersion(String processorName, String aggregateRootTypeName, String aggregateRootId) {
 		return versionDict.getOrDefault(buildKey(processorName, aggregateRootId), 0l);
 	}
 
