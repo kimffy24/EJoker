@@ -80,8 +80,15 @@ public class PublishableExceptionConsumer {
         QueueProcessingContext processContext = new QueueProcessingContext(queueMessage, context);
         IPublishableException exception = null;
         {
+        	try {
+        		
         	// PublishableExceptionMessage exceptionMessage => IPublishableException exception
         	exception =  PublishableExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), publishableExceptionType);
+
+    		
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
         }
         ProcessingPublishableExceptionMessage processingMessage = new ProcessingPublishableExceptionMessage(exception, processContext);
 

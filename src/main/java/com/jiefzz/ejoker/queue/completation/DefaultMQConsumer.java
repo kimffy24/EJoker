@@ -198,7 +198,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			boolean status = false;
 			try {
 				updateConsumeOffset(mq, localOffsetConsumed);
-				logger.error("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
+				logger.debug("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
 				status = true;
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
@@ -326,7 +326,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						int cAmount = 0;
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), frezon)) {
 							if(flowControlLoggerAccquired.compareAndSet(true, false))
-								logger.error("Flow control protected! Amount of on processing message is {}", cAmount);
+								logger.warn("Flow control protected! Amount of on processing message is {}", cAmount);
 							LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100l));
 							frezon++;
 						}

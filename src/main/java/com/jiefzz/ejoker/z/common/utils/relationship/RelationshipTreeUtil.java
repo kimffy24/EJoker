@@ -117,7 +117,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			node = target;
 		} else if (definedClazz.isEnum()) {
 			// 枚举类型
-			node = ((Enum )target).name();
+			node = ((Enum<?> )target).name();
 		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
 			// Java集合类型
 			if (target instanceof Queue) {

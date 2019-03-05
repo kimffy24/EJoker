@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.utils.publishableExceptionHelper;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +68,14 @@ public final class PublishableExceptionCodecHelper {
 					String fieldName = field.getName();
 					Class<?> fieldType = field.getType();
 					
-					if(!ParameterizedTypeUtil.isDirectSerializableType(fieldType))
+					// 略过Java规范中的一些非业务字段
+					if("serialVersionUID".equals(fieldName))
+						return;
+					
+					if(Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
+						return;
+					
+					if(!ParameterizedTypeUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
 						throw new RuntimeException(String.format("Unsupport non-basic field in PublishableException!!! type: %s, field: %s", exceptionClazz.getName(), fieldName));
 					
 					field.setAccessible(true);
@@ -102,6 +110,8 @@ public final class PublishableExceptionCodecHelper {
 			return ((boolean )value) ? "true" : "false";
 		} else if(String.class.equals(type)) {
 			return (String )value;
+		} else if(type.isEnum()) {
+			return ((Enum<?> )value).name();
 		}
 		throw new RuntimeException(String.format("Unsupport type[%s] on PublishableException!!!", type.getName()));
 	}
@@ -126,7 +136,37 @@ public final class PublishableExceptionCodecHelper {
 			return Boolean.valueOf(tValue);
 		} else if(String.class.equals(type)) {
 			return tValue;
+		} else if (type.isEnum()) {
+			return revertIntoEnumType(type, tValue);
 		}
 		throw new RuntimeException(String.format("Unsupport type[%s] on PublishableException!!!", type.getName()));
 	}
+
+	//// 以下代码引自 com.jiefzz.ejoker.z.common.utils.relationship.RelationshipTreeRevertUtil #219
+	/**
+	 * 还原枚举类型，通过枚举的表现字符值
+	 */
+	private static <TEnum> TEnum revertIntoEnumType(Class<TEnum> enumType, String represent){
+		Object value = null;
+		if(enumType.isEnum()) {
+			Map<String, Enum<?>> eInfoMap;
+			if(eMapItemPlaceHolder.equals(eInfoMap = eMap.getOrDefault(enumType, eMapItemPlaceHolder))) {
+				eInfoMap = new HashMap<>();
+				TEnum[] enumConstants = enumType.getEnumConstants();
+				for(TEnum obj:enumConstants) {
+					eInfoMap.put(obj.toString(), (Enum<?> )obj);
+				}
+				eMap.putIfAbsent((Class<Enum<?>> )enumType, eInfoMap);
+			};
+			value = eInfoMap.get(represent);
+		} else {
+			throw new RuntimeException(String.format("[%s] is not a Enum type!!!", enumType.getName()));
+		}
+		if(null == value) {
+			throw new RuntimeException(String.format("[%s] has not such a value[%s]!!!", enumType.getName(), represent));
+		}
+		return (TEnum )value;
+	}
+	private static Map<Class<Enum<?>>, Map<String, Enum<?>>> eMap = new HashMap<>();
+	private final static Map<String, Enum<?>> eMapItemPlaceHolder = new HashMap<>();
 }

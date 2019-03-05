@@ -105,8 +105,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			
 			throw new CommandRuntimeException(message.getClass().getName() +" is no handler found for it!!!");
 		} catch (RuntimeException ex) {
-			logger.error(ex.getMessage());
-			ex.printStackTrace();
+			logger.error(ex.getMessage(), ex);
 			return completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
 		}
 
@@ -281,7 +280,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				() -> exceptionPublisher.publishAsync(exception),
 				r -> completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
 				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionCodecHelper.serialize(exception)),
-				ex -> logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
+				ex -> logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex),
 				true
 				);
 	}
