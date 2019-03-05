@@ -34,9 +34,8 @@ public class DefaultRepository implements IRepository {
 
 		// TODO @await
 		IAggregateRoot aggregateRoot = await(memoryCache.getAsync(aggregateRootId, aggregateRootType));
-		if(null != aggregateRoot)
-			return SystemFutureWrapperUtil.createCompleteFuture(aggregateRoot);
-		aggregateRoot =  await(aggregateRootStorage.getAsync(aggregateRootType, aggregateRootId.toString()));
+		if(null == aggregateRoot)
+			aggregateRoot =  await(aggregateRootStorage.getAsync(aggregateRootType, aggregateRootId.toString()));
 		return SystemFutureWrapperUtil.createCompleteFuture(aggregateRoot);
 		
 	}

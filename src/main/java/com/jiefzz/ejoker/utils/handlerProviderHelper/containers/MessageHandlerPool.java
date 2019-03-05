@@ -11,22 +11,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJoker;
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageHandler;
 import com.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import com.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
@@ -51,7 +48,7 @@ public class MessageHandlerPool {
 
 	private final static Map<Class<? extends IMessage>, List<MessageHandlerReflectionTuple>> handlerMapper = new HashMap<>();
 
-	public final static void regist(Class<? extends IMessageHandler> implementationHandlerClazz) {
+	public final static void regist(Class<? extends IMessageHandler> implementationHandlerClazz, IFunction<IEjokerContextDev2> ejokerProvider) {
 		
 		Set<String> coverSet = new HashSet<>();
 		String actuallyHandlerName = implementationHandlerClazz.getName();
@@ -109,7 +106,7 @@ public class MessageHandlerPool {
 				if (!method.isAccessible())
 					method.setAccessible(true);
 				List<MessageHandlerReflectionTuple> handlerInvokerList = getProxyAsyncHandlers(messageType);
-				handlerInvokerList.add(new MessageHandlerReflectionTuple(method));
+				handlerInvokerList.add(new MessageHandlerReflectionTuple(method, ejokerProvider));
 			}
 		}
 		
@@ -127,17 +124,24 @@ public class MessageHandlerPool {
 		
 		public final String identification;
 		
-		public MessageHandlerReflectionTuple(Method handleReflectionMethod) {
+		public final IEjokerContextDev2 ejokerContext;
+		
+		private IMessageHandler realHandler = null;
+		
+		public MessageHandlerReflectionTuple(Method handleReflectionMethod, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
 			identification = String.format("Proxy[ forward: %s#%s(%s) ]", handlerClass.getSimpleName(),
 					MessageHandlerPool.HANDLER_METHOD_NAME, parameterTypes[0].getSimpleName());
+			this.ejokerContext = ejokerProvider.trigger();
 		}
 
 		@Override
 		public IMessageHandler getInnerObject() {
-			return EJoker.getInstance().getEJokerContext().get(handlerClass);
+			if(null == realHandler)
+				return realHandler = ejokerContext.get(handlerClass);
+			return realHandler;
 		}
 
 		@Deprecated // 此处是使用原生线程来执行任务。

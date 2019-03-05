@@ -5,16 +5,22 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.commanding.AbstractCommandHandler;
 import com.jiefzz.ejoker.commanding.CommandExecuteTimeoutException;
 import com.jiefzz.ejoker.commanding.CommandRuntimeException;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandContext;
 import com.jiefzz.ejoker.commanding.ICommandHandlerProxy;
+import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.z.common.context.dev2.IEjokerContextDev2;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 
 public class CommandHandlerPool {
+	
+	private final static Logger logger = LoggerFactory.getLogger(CommandHandlerPool.class);
 	
 	private final Map<Class<? extends ICommand>, HandlerReflectionMapper> handlerMapper =
 			new HashMap<>();
@@ -53,23 +59,21 @@ public class CommandHandlerPool {
 		
 		private AbstractCommandHandler handler = null;
 		
-		private IFunction<IEjokerContextDev2> ejokerProvider = null;
+		private final IEjokerContextDev2 ejokerContext;
 
 		private HandlerReflectionMapper(Method handleReflectionMethod, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends AbstractCommandHandler> )handleReflectionMethod.getDeclaringClass();
-			this.ejokerProvider = ejokerProvider;
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
 			identification = String.format("Proxy[ forward: %s#%s(%s, %s)]", handlerClass.getSimpleName(), handleReflectionMethod.getName(), parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
+			this.ejokerContext = ejokerProvider.trigger();
 		}
 		
 		@Override
 		public AbstractCommandHandler getInnerObject() {
-			if (null == handler) {
-				handler = ejokerProvider.trigger().get(handlerClass);
-				return handler;
-			} else
-				return handler;
+			if (null == handler)
+				return handler = ejokerContext.get(handlerClass);
+			return handler;
 		}
 		
 		@Override
@@ -77,14 +81,14 @@ public class CommandHandlerPool {
 				try {
 					handleReflectionMethod.invoke(getInnerObject(), context, command);
 				} catch (IllegalAccessException|IllegalArgumentException e) {
-					e.printStackTrace();
-					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
+					logger.error("Command execute failed!!! ", e);
+					throw new RuntimeException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
-					if(null != e.getCause() && e.getCause() instanceof Exception) {
-						e.printStackTrace();
-						throw (Exception )e.getCause();
-					} else
-						throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
+					if(!IPublishableException.class.isAssignableFrom(((Exception )e.getCause()).getClass())) {
+						String eMsg = "Command execute failed!!! " +command.toString();
+						logger.error(eMsg, (Exception )e.getCause());
+					}
+					throw (Exception )e.getCause();
 				}
 		}
 		

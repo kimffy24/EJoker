@@ -27,6 +27,7 @@ import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
@@ -76,6 +77,9 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 
 	@Override
 	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
@@ -101,8 +105,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			
 			throw new CommandRuntimeException(message.getClass().getName() +" is no handler found for it!!!");
 		} catch (RuntimeException ex) {
-			logger.error(ex.getMessage());
-			ex.printStackTrace();
+			logger.error(ex.getMessage(), ex);
 			return completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), ex.getMessage());
 		}
 
@@ -198,10 +201,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		if(null!=result)
 			processingCommand.getItems().put("CommandResult", result);
 		
+		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRoot.getClass());
+		
 		return new DomainEventStream(
 				processingCommand.getMessage().getId(),
 				aggregateRoot.getUniqueId(),
-				aggregateRoot.getClass().getName(),
+				aggregateRootTypeName,
 				aggregateRoot.getVersion()+1,
 				System.currentTimeMillis(),
 				changeEvents,
@@ -275,7 +280,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				() -> exceptionPublisher.publishAsync(exception),
 				r -> completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
 				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionCodecHelper.serialize(exception)),
-				ex -> logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
+				ex -> logger.error(String.format("Publish event has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex),
 				true
 				);
 	}

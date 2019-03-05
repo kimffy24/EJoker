@@ -30,17 +30,17 @@ public class DefaultEventSerializer implements IEventSerializer {
 	
 	@Override
 	public Map<String, String> serializer(Collection<IDomainEvent<?>> events) {
-		Map<String, String> dict = new LinkedHashMap<String, String>();
+		Map<String, String> dict = new LinkedHashMap<>();
 		for(IDomainEvent<?> event:events)
-			dict.put(event.getClass().getName(), jsonSerializer.convert(event));
+			dict.put(typeNameProvider.getTypeName(event.getClass()), jsonSerializer.convert(event));
 		return dict;
 	}
 
 	@Override
 	public List<IDomainEvent<?>> deserializer(Map<String, String> data) {
 		List<IDomainEvent<?>> list = new ArrayList<IDomainEvent<?>>();
-		Set<Entry<String,String>> entrySet = data.entrySet();
-		for(Entry<String,String> entry:entrySet) {
+		Set<Entry<String, String>> entrySet = data.entrySet();
+		for(Entry<String, String> entry:entrySet) {
 			Class<?> eventType = typeNameProvider.getType(entry.getKey());
 			Object revert = jsonSerializer.revert(entry.getValue(), eventType);
 			list.add((IDomainEvent<?> )revert);

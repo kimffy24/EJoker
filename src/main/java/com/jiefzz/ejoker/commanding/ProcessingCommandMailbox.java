@@ -169,7 +169,7 @@ public class ProcessingCommandMailbox {
 			}
 		} catch (RuntimeException ex) {
 			logger.error(
-					String.format("Command mailbox run has unknown exception, aggregateRootId: {}, commandId: {}",
+					String.format("Command mailbox run has unknown exception, aggregateRootId: %s, commandId: %s",
 							aggregateRootId, processingCommand != null ? processingCommand.getMessage().getId() : ""),
 					ex);
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1l);

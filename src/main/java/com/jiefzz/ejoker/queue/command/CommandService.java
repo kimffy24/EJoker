@@ -11,6 +11,7 @@ import com.jiefzz.ejoker.commanding.CommandReturnType;
 import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandRoutingKeyProvider;
 import com.jiefzz.ejoker.commanding.ICommandService;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
@@ -54,6 +55,9 @@ public class CommandService implements ICommandService, IWorkerService {
 	
 	@Dependence
 	private CommandResultProcessor commandResultProcessor;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 
 	private DefaultMQProducer producer;
 
@@ -119,10 +123,11 @@ public class CommandService implements ICommandService, IWorkerService {
         String topic = commandTopicProvider.getTopic(command);
         String replyAddress = needReply && (null!=commandResultProcessor) ? commandResultProcessor.getBindingAddress() : null;
         String messageData = jsonConverter.convert(new CommandMessage(commandData, replyAddress));
+        String tag = typeNameProvider.getTypeName(command.getClass());
         return new EJokerQueueMessage(
             topic,
             QueueMessageTypeCode.CommandMessage.ordinal(),
             messageData.getBytes(Charset.forName("UTF-8")),
-            command.getClass().getName());
+            tag);
 	}
 }

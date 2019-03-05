@@ -7,9 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +16,11 @@ import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
 import com.jiefzz.ejoker.eventing.IEventStore;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
-import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 
@@ -48,6 +44,9 @@ public class InMemoryEventStore implements IEventStore {
 	
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 	
 	private boolean supportBatchAppendEvent = EJokerEnvironment.SUPPORT_BATCH_APPEND_EVENT;
 	
@@ -144,84 +143,8 @@ public class InMemoryEventStore implements IEventStore {
 		if (hasPrevous)
 			return EventAppendResult.DuplicateEvent;
 		else {
-			queue.offer(new MessageBox(eventStream));
 			return EventAppendResult.Success;
 		}
-
 	}
 	
-	// for time test
-	private ConcurrentLinkedQueue<MessageBox> queue = new ConcurrentLinkedQueue<>();
-	
-	private final static class MessageBox {
-		public final DomainEventStream domainEventStream;
-		public MessageBox(DomainEventStream domainEventStream) {
-			this.domainEventStream = domainEventStream;
-		}
-	}
-	
-	private long min = Long.MAX_VALUE, max = 0;
-
-	private AtomicLong esQueueHit = new AtomicLong(0);
-	
-	private AtomicLong businessES = new AtomicLong(0);
-	
-	private Thread monitor = new Thread(() -> {
-		while(true) {
-			MessageBox mb;
-			DomainEventStream des;
-			boolean batch = false;
-			while(null != (mb = queue.poll())) {
-				des = mb.domainEventStream;
-				// logger.debug(" ==> 模拟io! 执行次数: {}, EventStreamAggreageteId: {}.", esQueueHit.incrementAndGet(), des.getAggregateRootId());
-				
-				if(!batch) {
-					if(des.getVersion()==1l && "pro.jiefzz.ejoker.demo.simple.transfer.domain.bankAccount.BankAccount".equals(des.getAggregateRootTypeName()))
-						continue;
-					batch = true;
-				}
-				
-				businessES.incrementAndGet();
-				long ts = des.getTimestamp();
-				if(ts < min) {
-					min = ts;
-				}
-				if(ts > max) {
-					max = ts;
-				}
-			} 
-			if(null == mb){
-				SleepWrapper.sleep(TimeUnit.MILLISECONDS, 200l);
-			}
-		}
-	}, "InMemoryEventStore_monitor_" + System.currentTimeMillis());
-	
-	public long getMin() {
-		return min;
-	}
-	
-	public long getMax() {
-		return max;
-	}
-	
-	public long getESQueueHit() {
-		return esQueueHit.get();
-	}
-
-	public long getBESAmount() {
-		return businessES.get();
-	}
-		
-	public long sizeOfMStore() {
-		return 0l + mStorage.entrySet().parallelStream().map(e -> {
-			Map<String, DomainEventStream> value = e.getValue();
-			return value.size()/2;
-		}).reduce(0, Integer::sum);
-	}
-	
-	@EInitialize
-	public void init() {
-		monitor.setDaemon(true);
-		monitor.start();
-	}
 }

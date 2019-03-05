@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import org.apache.rocketmq.client.exception.MQClientException;
 
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
@@ -36,6 +37,9 @@ public class ApplicationMessagePublisher implements IMessagePublisher<IApplicati
 	
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 	
 	private DefaultMQProducer producer;
 
@@ -76,6 +80,6 @@ public class ApplicationMessagePublisher implements IMessagePublisher<IApplicati
 		String topic = messageTopicProvider.getTopic(message);
 		String data = jsonConverter.convert(message);
 		return new EJokerQueueMessage(topic, QueueMessageTypeCode.ApplicationMessage.ordinal(),
-				data.getBytes(Charset.forName("UTF-8")), message.getClass().getName());
+				data.getBytes(Charset.forName("UTF-8")), typeNameProvider.getTypeName(message.getClass()));
 	}
 }

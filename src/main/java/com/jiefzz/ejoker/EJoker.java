@@ -51,7 +51,7 @@ public class EJoker {
 					RegistCommandAsyncHandlerHelper.checkAndRegistCommandAsyncHandler(context, clazz);
 					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 				}
-				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz);
+				RegistMessageHandlerHelper.checkAndRegistMessageHandler(context, clazz);
 				
 				// register StringId to GenericId codec.
 				if(IAggregateRoot.class.isAssignableFrom(clazz))

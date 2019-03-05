@@ -73,6 +73,10 @@ public class SendQueueMessageService {
 						throw new IOException(sendResult.toString());
 					}
 				} catch (Exception e) {
+					e.printStackTrace();
+					logger.error(
+							"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
+							e.getMessage(), routingKey, messageId, version);
 					throw new IOException(e);
 				}
 				

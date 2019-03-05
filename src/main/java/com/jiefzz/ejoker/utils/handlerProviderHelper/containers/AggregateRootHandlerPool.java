@@ -5,11 +5,16 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.domain.AbstractAggregateRoot;
 import com.jiefzz.ejoker.eventing.IDomainEvent;
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 
 public class AggregateRootHandlerPool {
+	
+	private final static Logger logger = LoggerFactory.getLogger(AggregateRootHandlerPool.class);
 	
 	private final static Map<Class<? extends IDomainEvent<?>>, HandlerReflectionMapper> handlerMapper = new HashMap<>();
 	
@@ -62,8 +67,9 @@ public class AggregateRootHandlerPool {
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				throw new AsyncWrapperException(e);
 			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-				throw new RuntimeException("Command execute failed!!! " +domainEvent.toString(), (Exception )e.getCause());
+				String eMsg = "Command execute failed!!! " +domainEvent.toString();
+				logger.error(eMsg, (Exception )e.getCause());
+				throw new RuntimeException(eMsg, (Exception )e.getCause());
 			}
 		}
 		

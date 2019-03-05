@@ -7,6 +7,7 @@ import org.apache.rocketmq.client.exception.MQClientException;
 
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.ISequenceMessage;
+import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
@@ -39,6 +40,9 @@ public class PublishableExceptionPublisher implements IMessagePublisher<IPublish
 	
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
+	
+	@Dependence
+	private ITypeNameProvider typeNameProvider;
 	
 	private DefaultMQProducer producer;
 
@@ -78,14 +82,25 @@ public class PublishableExceptionPublisher implements IMessagePublisher<IPublish
 	private EJokerQueueMessage createEQueueMessage(IPublishableException exception) {
 		String topic = messageTopicProvider.getTopic(exception);
 		final Map<String, String> serializableInfo = PublishableExceptionCodecHelper.serialize(exception);
-		String data = jsonConverter.convert(new PublishableExceptionMessage() {{
+		PublishableExceptionMessage pMsg = new PublishableExceptionMessage();
+		{
 			boolean isSequenceMessage = exception instanceof ISequenceMessage;
-			this.setUniqueId(exception.getId());
-			this.setAggregateRootTypeName(isSequenceMessage ? ((ISequenceMessage )exception).getAggregateRootTypeName() : null);
-			this.setAggregateRootId(isSequenceMessage ? ((ISequenceMessage )exception).getAggregateRootStringId() : null);
-			this.setSerializableInfo(serializableInfo);
-		}});
+			pMsg.setUniqueId(exception.getId());
+			pMsg.setAggregateRootTypeName(isSequenceMessage ? ((ISequenceMessage )exception).getAggregateRootTypeName() : null);
+			pMsg.setAggregateRootId(isSequenceMessage ? ((ISequenceMessage )exception).getAggregateRootStringId() : null);
+			pMsg.setSerializableInfo(serializableInfo);
+			
+		}
+		String data = jsonConverter.convert(pMsg);
+		// 按照eNode的匿名内部类写法如下，喜欢的话可以替换
+//		String data = jsonConverter.convert(new PublishableExceptionMessage() {{
+//			boolean isSequenceMessage = exception instanceof ISequenceMessage;
+//			this.setUniqueId(exception.getId());
+//			this.setAggregateRootTypeName(isSequenceMessage ? ((ISequenceMessage )exception).getAggregateRootTypeName() : null);
+//			this.setAggregateRootId(isSequenceMessage ? ((ISequenceMessage )exception).getAggregateRootStringId() : null);
+//			this.setSerializableInfo(serializableInfo);
+//		}});
 		return new EJokerQueueMessage(topic, QueueMessageTypeCode.ExceptionMessage.ordinal(),
-				data.getBytes(Charset.forName("UTF-8")), exception.getClass().getName());
+				data.getBytes(Charset.forName("UTF-8")), typeNameProvider.getTypeName(exception.getClass()));
 	}
 }

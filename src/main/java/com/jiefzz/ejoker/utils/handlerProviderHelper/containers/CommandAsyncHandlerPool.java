@@ -5,6 +5,9 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jiefzz.ejoker.commanding.AbstractCommandHandler;
 import com.jiefzz.ejoker.commanding.CommandExecuteTimeoutException;
 import com.jiefzz.ejoker.commanding.CommandRuntimeException;
@@ -18,6 +21,8 @@ import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public class CommandAsyncHandlerPool {
+	
+	private final static Logger logger = LoggerFactory.getLogger(CommandAsyncHandlerPool.class);
 	
 	private final Map<Class<? extends ICommand>, AsyncHandlerReflectionMapper> asyncHandlerMapper =
 			new HashMap<>();
@@ -66,23 +71,21 @@ public class CommandAsyncHandlerPool {
 		
 		private AbstractCommandHandler asyncHandler = null;
 		
-		private IFunction<IEjokerContextDev2> ejokerProvider = null;
+		private final IEjokerContextDev2 ejokerContext;
 
 		private AsyncHandlerReflectionMapper(Method asyncHandleReflectionMethod, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.asyncHandleReflectionMethod = asyncHandleReflectionMethod;
 			this.asyncHandlerClass = (Class<? extends AbstractCommandHandler> )asyncHandleReflectionMethod.getDeclaringClass();
-			this.ejokerProvider = ejokerProvider;
 			Class<?>[] parameterTypes = asyncHandleReflectionMethod.getParameterTypes();
 			identification = String.format("Proxy[ forward: %s#%s(%s, %s)]", asyncHandlerClass.getSimpleName(), asyncHandleReflectionMethod.getName(), parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
+			this.ejokerContext = ejokerProvider.trigger();
 		}
 		
 		@Override
 		public AbstractCommandHandler getInnerObject() {
-			if (null == asyncHandler) {
-				asyncHandler = ejokerProvider.trigger().get(asyncHandlerClass);
-				return asyncHandler;
-			} else
-				return asyncHandler;
+			if (null == asyncHandler)
+				return asyncHandler = ejokerContext.get(asyncHandlerClass);
+			return asyncHandler;
 		}
 		
 		@Override
@@ -95,11 +98,9 @@ public class CommandAsyncHandlerPool {
 					e.printStackTrace();
 					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
-					if(null != e.getCause() && e.getCause() instanceof Exception) {
-						e.printStackTrace();
-						throw (Exception )e.getCause();
-					} else
-						throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
+					String eMsg = "Command execute failed!!! " +command.toString();
+					logger.error(eMsg, (Exception )e.getCause());
+					throw (Exception )e.getCause();
 				}
 		}
 		
