@@ -83,8 +83,8 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 				TimeUnit.MILLISECONDS,
 				new LinkedBlockingQueue<Runnable>(),
 				new SendThreadFactory());
-		//if(EJokerEnvironment.ASYNC_MESSAGE_SENDER_THREADPOLL_PRESTART_ALL)
-		//	threadPoolExecutor.prestartAllCoreThreads();
+		if(EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND)
+			threadPoolExecutor.prestartAllCoreThreads();
 	}
 	
 	private final static class SendThreadFactory implements ThreadFactory {

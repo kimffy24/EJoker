@@ -181,7 +181,7 @@ public class MessageHandlerPool {
 						logger.error("Message handle async faild", e);
 						return new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage(), null);
 					} catch (InvocationTargetException e) {
-						logger.error("Message handle async faild", e);
+						logger.error("Message handle async faild", (Exception )e.getCause());
 						return new AsyncTaskResult<>(AsyncTaskStatus.Failed, ((Exception )e.getCause()).getMessage(), null);
 					}
 			});

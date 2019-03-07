@@ -2,9 +2,12 @@ package com.jiefzz.ejoker.queue;
 
 import java.io.IOException;
 
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,60 +32,52 @@ public class SendQueueMessageService {
 	public SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync(DefaultMQProducer producer,
 			EJokerQueueMessage message, String routingKey, String messageId, String version) {
 
-		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey,
-				message.getCode(), message.getBody(), true);
-		
-		if(EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
-			
-			// use producer inner executor service to execute aSync task and wrap the result with type SystemFutureWrapper.
+		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(),
+				message.getBody(), true);
+
+		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
+
+			// use producer inner executor service to execute aSync task and wrap the result
+			// with type SystemFutureWrapper.
 			return new SystemFutureWrapper<>(producer.submitWithInnerExector(() -> {
-				
 				try {
-					SendResult sendResult = producer.send(rMessage);
-					
-					if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-						logger.error(
-								"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-								sendResult.toString(), routingKey, messageId, version);
-						return new AsyncTaskResult<>(AsyncTaskStatus.IOException, sendResult.toString(), null);
-					}
+					sendSync(producer, rMessage, messageId, version);
 					return AsyncTaskResult.Success;
 				} catch (Exception e) {
-					e.printStackTrace();
-					logger.error(
-							"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
-							e.getMessage(), routingKey, messageId, version);
 					return new AsyncTaskResult<>(AsyncTaskStatus.IOException, e.getMessage(), null);
 				}
-				
 			}));
-			
+
 		} else {
-			
+
 			// use eJoker inner executor service
-			return eJokerAsyncHelper.submit(() -> {
-				
-				SendResult sendResult;
-				try {
-					sendResult = producer.send(rMessage);
-					
-					if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-						logger.error(
-								"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-								sendResult.toString(), routingKey, messageId, version);
-						throw new IOException(sendResult.toString());
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-					logger.error(
-							"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
-							e.getMessage(), routingKey, messageId, version);
-					throw new IOException(e);
-				}
-				
-			});
+			return eJokerAsyncHelper.submit(() -> sendSync(producer, rMessage, messageId, version));
+			
 		}
 
+	}
+
+	private void sendSync(DefaultMQProducer producer, Message rMessage, String messageId, String version)
+			throws RemotingException, MQBrokerException, InterruptedException, MQClientException, IOException {
+
+		SendResult sendResult;
+		try {
+			sendResult = producer.send(rMessage);
+
+			if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+				logger.error(
+						"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
+						sendResult.toString(), rMessage.getKeys(), messageId, version);
+				throw new IOException(sendResult.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(
+					"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
+					e.getMessage(), rMessage.getKeys(), messageId, version);
+			throw new IOException(e);
+		}
+		
 	}
 
 }

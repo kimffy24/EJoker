@@ -183,7 +183,7 @@
 				<executions>
 					<execution>
 						<!-- You can bind this to any phase you like -->
-						<phase>quasar-instrumentation</phase>
+						<phase></phase>
 						<goals>
 							<!-- goal must be "invoke" -->
 							<goal>invoke</goal>

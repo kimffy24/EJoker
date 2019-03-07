@@ -1,25 +1,14 @@
-buildscript {
-    repositories {
-        mavenLocal() // cache (USER_HOME/.m2 folder)
-        mavenCentral()
-    }
-}
-
-
-repositories {
-    mavenCentral()
-    mavenLocal() // cache (USER_HOME/.m2 folder)
-
-}
-
 apply plugin: 'java'
-apply plugin: 'application'
+// apply plugin: 'application'
 
 //设置 Java 兼容版本
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 ext.classifier      = ':jdk8' // ':'
 ext.quasarVer       = '0.7.10'
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 configurations {
     quasar
@@ -29,6 +18,15 @@ configurations.all {
     resolutionStrategy {
         failOnVersionConflict()
     }
+}
+
+repositories {
+    mavenLocal() // cache (USER_HOME/.m2 folder)
+    maven{ //2.其次查找aliyun maven库
+        url 'http://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    mavenCentral()
+
 }
 
 dependencies {
@@ -48,28 +46,31 @@ dependencies {
     // gradle这里依赖同版本的ejoker库，与mvn构建命令中的两次install对应,
     // 前一个install构建一个没有instrumentation的包，里面会提供相关依赖关系，
     // gradle会继承这些关系。
+    // !!! 如果不要继承这些关系的话，那么需要把所有maven的pom.xml声明的依赖包全部写到这里。依赖升级时也要逐一对应
+    // !!! 相比之下，还是继承一个没有instrumentation的包来的方便。
     // 如果不需要使用quasar，则前4个声明周期即可构建功能完备的ejoker
     // gradle-maven-plugin:invoke 就是调用此gradle任务的起点。
-    // 后一个instal则是构建已经instrumentation的包的。
-    compile "com.jiefzz:ejoker:0.3.3-SNAPSHOT"
+    // 后一个instal则是安装已经instrumentation的包的。
+    compile "com.jiefzz:ejoker:1.0.0-BETA"
     
 }
 
-//改变项目默认结构，使其与与maven目录结构一致
+// 改变项目默认结构，使其与与maven目录结构一致
 sourceSets {
-    //设置源代码所在目录
+    // 设置源代码所在目录
     main {
         java {
             srcDirs = ['src/main/java']
         }
         resources {
-            srcDirs = ['src/main/resources'] //资源目录
+            srcDirs = ['src/main/resources'] // 资源目录
         }
         output.classesDir = file('target/classes')
         output.resourcesDir = file('target/classes')
     }
 }
-//改变编译目录
+
+// 改变编译目录
 buildDir = 'target'
 
 task scanSuspendables() {

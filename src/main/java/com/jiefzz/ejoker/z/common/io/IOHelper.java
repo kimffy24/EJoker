@@ -15,6 +15,7 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
+import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
@@ -50,7 +51,7 @@ public class IOHelper {
 
 				private final String namePrefix;
 
-				 {
+				{
 
 					SecurityManager s = System.getSecurityManager();
 					group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
@@ -175,8 +176,13 @@ public class IOHelper {
 			try {
 				result = task.get();
 			} catch (Exception ex) {
-				Exception cause = (Exception )ex.getCause();
-				processTaskException(externalContext, cause);
+				Exception cause;
+				if(ex instanceof AsyncWrapperException) {
+					cause = AsyncWrapperException.getActuallyCause(ex);
+				} else {
+					cause = (Exception )ex.getCause();
+				}
+				processTaskException(externalContext, null == cause ? ex : cause);
 				return;
 			}
 			if (task.isCancelled()) {
