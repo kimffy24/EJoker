@@ -9,12 +9,10 @@ import co.paralleluniverse.fibers.Suspendable;
 
 public final class LangUtil {
 
-	@Suspendable
 	public static <T> T await(SystemFutureWrapper<T> sfw) {
 		return sfw.get();
 	}
 
-	@Suspendable
 	public static <T> T await(Future<T> sfw) {
 		try {
 			return sfw.get();

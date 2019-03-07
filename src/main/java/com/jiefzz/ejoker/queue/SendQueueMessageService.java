@@ -16,6 +16,7 @@ import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
 import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
+import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
@@ -57,8 +58,7 @@ public class SendQueueMessageService {
 
 	}
 
-	private void sendSync(DefaultMQProducer producer, Message rMessage, String messageId, String version)
-			throws RemotingException, MQBrokerException, InterruptedException, MQClientException, IOException {
+	private void sendSync(DefaultMQProducer producer, Message rMessage, String messageId, String version) {
 
 		SendResult sendResult;
 		try {
@@ -68,14 +68,14 @@ public class SendQueueMessageService {
 				logger.error(
 						"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
 						sendResult.toString(), rMessage.getKeys(), messageId, version);
-				throw new IOException(sendResult.toString());
+				throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error(
 					"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
 					e.getMessage(), rMessage.getKeys(), messageId, version);
-			throw new IOException(e);
+			throw new IOExceptionOnRuntime(new IOException(e));
 		}
 		
 	}

@@ -89,7 +89,6 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		return instance;
 	}
 	
-	@Suspendable
 	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == serializedValue) {

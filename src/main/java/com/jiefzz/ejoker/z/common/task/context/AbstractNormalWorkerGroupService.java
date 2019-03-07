@@ -9,14 +9,11 @@ import org.slf4j.LoggerFactory;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
+import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
 import com.jiefzz.ejoker.z.common.task.defaultProvider.SystemAsyncPool;
-import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
-import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIVoidFunction;
-
-import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
 
 public abstract class AbstractNormalWorkerGroupService {
 
@@ -45,25 +42,15 @@ public abstract class AbstractNormalWorkerGroupService {
 
 	protected abstract boolean prestartAll();
 
-	@Suspendable
-	protected <T> Future<T> submitInternal(QIFunction<T> vf) {
-		try {
-			return asyncPool.execute(vf::trigger);
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
-		}
+	protected <T> Future<T> submitInternal(IFunction<T> vf) {
+		return asyncPool.execute(vf::trigger);
 	}
 
-	@Suspendable
-	protected Future<Void> submitInternal(QIVoidFunction vf) {
-		try {
-			return asyncPool.execute(() -> {
-				vf.trigger();
-				return null;
-			});
-		} catch (SuspendExecution s) {
-			throw new AssertionError(s);
-		}
+	protected Future<Void> submitInternal(IVoidFunction vf) {
+		return asyncPool.execute(() -> {
+			vf.trigger();
+			return null;
+		});
 	}
 
 	protected static IAsyncEntrance getDefaultThreadPool(AbstractNormalWorkerGroupService service) {

@@ -28,7 +28,6 @@ import com.jiefzz.ejoker.z.common.system.functional.IFunction1;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
-import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 /**
  * 由于message类型可以有多个handler，
@@ -170,7 +169,7 @@ public class MessageHandlerPool {
 		 * submitter为异步任务执行器的调度封装方法
 		 */
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, QIFunction<AsyncTaskResult<Void>>> submitter) {
+		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, IFunction<AsyncTaskResult<Void>>> submitter) {
 			return submitter.trigger(() -> {
 					try {
 						@SuppressWarnings("unchecked")

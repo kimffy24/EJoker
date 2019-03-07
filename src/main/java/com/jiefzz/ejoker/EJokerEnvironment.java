@@ -19,7 +19,7 @@ public final class EJokerEnvironment {
 
 	public final static boolean ASYNC_EJOKER_MESSAGE_SEND;
 	
-	public final static int ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE;
+	public final static int ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE;
 	
 	public final static boolean FLOW_CONTROL_ON_PROCESSING;
 	
@@ -35,8 +35,6 @@ public final class EJokerEnvironment {
 	 * 处理器数量
 	 */
 	public final static int NUMBER_OF_PROCESSOR = Runtime.getRuntime().availableProcessors();
-	
-	public final static boolean SUPPORT_BATCH_APPEND_EVENT;
 	
 	public final static int MAX_BATCH_COMMANDS;
 	
@@ -65,8 +63,8 @@ public final class EJokerEnvironment {
 		ASYNC_IO_RETRY_THREADPOLL_SIZE =
 				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "64"));
 		
-		ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE =
-				Integer.valueOf(props.getProperty("ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE", "128"));
+		ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE =
+				Integer.valueOf(props.getProperty("ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE", "128"));
 
 		FLOW_CONTROL_ON_PROCESSING =
 				Boolean.valueOf(props.getProperty("FLOW_CONTROL_ON_PROCESSING", "false"));
@@ -83,9 +81,6 @@ public final class EJokerEnvironment {
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
 		
-		SUPPORT_BATCH_APPEND_EVENT = 
-				Boolean.valueOf(props.getProperty("SUPPORT_BATCH_APPEND_EVENT", "false"));
-
 		MAX_BATCH_COMMANDS =
 				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "16"));
 
@@ -95,12 +90,11 @@ public final class EJokerEnvironment {
 		logger.debug("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE: {}", ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE);
 		logger.debug("ASYNC_IO_RETRY_THREADPOLL_SIZE: {}", ASYNC_IO_RETRY_THREADPOLL_SIZE);
 		logger.debug("ASYNC_EJOKER_MESSAGE_SEND: {}", ASYNC_EJOKER_MESSAGE_SEND);
-		logger.debug("ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE: {}", ASYNC_MESSAGE_SENDER_THREADPOLL_SIZE);
+		logger.debug("ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE: {}", ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE);
 		logger.debug("MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE: {}", MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE);
 		logger.debug("MAILBOX_IDLE_TIMEOUT: {}", MAILBOX_IDLE_TIMEOUT);
 		logger.debug("AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT: {}", AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT);
 		logger.debug("REPLY_PORT: {}", REPLY_PORT);
-		logger.debug("SUPPORT_BATCH_APPEND_EVENT: {}", SUPPORT_BATCH_APPEND_EVENT);
 		logger.debug("MAX_BATCH_COMMANDS: {}", MAX_BATCH_COMMANDS);
 		logger.debug("MAX_BATCH_EVENTS: {}", MAX_BATCH_EVENTS);
 	}

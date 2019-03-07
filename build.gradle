@@ -86,7 +86,6 @@ task scanSuspendables() {
 		}
 	}
 	doLast {
-		return
 		File iSrcFile = new File("src/main/resources/metaInf/suspendables")
 		File iDestFile = new File("$sourceSets.main.output.resourcesDir/META-INF/suspendables")
 		iDestFile << iSrcFile.text

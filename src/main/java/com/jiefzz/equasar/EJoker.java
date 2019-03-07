@@ -4,12 +4,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
 import com.jiefzz.ejoker.z.common.task.context.AbstractNormalWorkerGroupService;
-import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
@@ -47,7 +47,7 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 			try {
 				Strand.sleep(l, u);
 			} catch (SuspendExecution s) {
-				throw s;
+				throw new AssertionError(s);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -61,13 +61,13 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 			}
 			
 			@Override
-			public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(QIFunction<TAsyncTaskResult> asyncTaskThread) throws SuspendExecution {
+			public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 				return new Fiber<>(() -> {
 					fiberAmount.getAndIncrement();
 					try {
 						return asyncTaskThread.trigger();
-					} catch (SuspendExecution|InterruptedException e) {
-						throw e;
+//					} catch (SuspendExecution|InterruptedException e) {
+//						throw e;
 					} catch (Exception e) {
 						e.printStackTrace();
 						throw new AsyncWrapperException(e);
