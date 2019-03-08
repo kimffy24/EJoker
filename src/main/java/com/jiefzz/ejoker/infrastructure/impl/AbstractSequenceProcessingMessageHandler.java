@@ -1,5 +1,8 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,8 +15,11 @@ import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
+
+import co.paralleluniverse.fibers.Fiber;
 
 public abstract class AbstractSequenceProcessingMessageHandler<X extends IProcessingMessage<X, Y> & ISequenceProcessingMessage , Y extends ISequenceMessage>
 		implements IProcessingMessageHandler<X, Y> {
@@ -74,17 +80,16 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
     private void dispatchProcessingMessageAsyncInternal(X processingMessage) {
 
 		Y message = processingMessage.getMessage();
-        IFunction<String> contextInfo = () -> String.format(
-				"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
-				message.getId(),
-				message.getClass().getName(),
-				message.getAggregateRootStringId(),
-				message.getVersion());
     	ioHelper.tryAsyncAction2(
     			"DispatchProcessingMessageAsync",
     			() -> dispatchProcessingMessageAsync(processingMessage),
     			r -> updatePublishedVersionAsync(processingMessage),
-    			contextInfo,
+    			() -> String.format(
+    					"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
+    					message.getId(),
+    					message.getClass().getName(),
+    					message.getAggregateRootStringId(),
+    					message.getVersion()),
     			ex -> logger.error(String.format(
 						"Dispatching message has unknown exception, the code should not be run to here, errorMessage: %s",
 						ex.getMessage()),
@@ -92,23 +97,24 @@ public abstract class AbstractSequenceProcessingMessageHandler<X extends IProces
     			true
     			);
     }
+    
     private void updatePublishedVersionAsync(X processingMessage) {
     	
 		Y message = processingMessage.getMessage();
-        IFunction<String> contextInfo = () -> String.format(
-				"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
-				message.getId(),
-				message.getClass().getName(),
-				message.getAggregateRootStringId(),
-				message.getVersion());
-        ioHelper.tryAsyncAction2(
-        		"UpdatePublishedVersionAsync",
-        		() -> publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion()),
-        		r -> processingMessage.complete(),
-        		contextInfo,
-        		ex -> logger.error(String.format("Update published version has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage())),
-        		true
-        		);
+		ioHelper.tryAsyncAction2(
+				"UpdatePublishedVersionAsync",
+				() -> publishedVersionStore.updatePublishedVersionAsync(getName(), message.getAggregateRootTypeName(), message.getAggregateRootStringId(), message.getVersion()),
+				r -> processingMessage.complete(),
+				() -> String.format(
+						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
+						message.getId(),
+						message.getClass().getName(),
+						message.getAggregateRootStringId(),
+						message.getVersion()),
+				ex -> logger.error(String.format("Update published version has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage())),
+				true
+				)
+		;
     }
     
 }

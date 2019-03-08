@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.jiefzz</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>1.0.0-ALPHA</version>
+	<version>1.0.0-BETA</version>
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
@@ -183,7 +183,7 @@
 				<executions>
 					<execution>
 						<!-- You can bind this to any phase you like -->
-						<phase>quasar-instrumentation</phase>
+						<phase></phase>
 						<goals>
 							<!-- goal must be "invoke" -->
 							<goal>invoke</goal>

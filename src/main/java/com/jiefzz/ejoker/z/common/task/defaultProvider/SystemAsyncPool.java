@@ -15,11 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
+import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.task.IAsyncEntrance;
-import com.jiefzz.ejoker.z.common.task.lambdaSupport.QIFunction;
 
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
 
 public class SystemAsyncPool implements IAsyncEntrance {
 	
@@ -68,17 +67,16 @@ public class SystemAsyncPool implements IAsyncEntrance {
 		defaultThreadPool = threadPoolExecutor;
 	}
 
-	@Suspendable
 	@Override
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(QIFunction<TAsyncTaskResult> asyncTaskThread) {
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 		if(threadSet.contains(Thread.currentThread()) || null != workQueue.peek()) {
 			// @important 1. 如果当前提交线程本来就是线程池中的线程，则由当前线程直接执行
 			// @important 2. 如果当前线程池的任务队列中有等待的任务，则由当前线程直接执行（可以视为线程池满载了，在提交任务前直接执行CallerRunsPolicy策略）
 			RipenFuture<TAsyncTaskResult> future = new RipenFuture<>();
 			try {
 				future.trySetResult(asyncTaskThread.trigger());
-			} catch (SuspendExecution s) {
-				throw new AssertionError(s);
+//			} catch (SuspendExecution s) {
+//				throw new AssertionError(s);
 			} catch (Exception e) {
 				future.trySetException(e);
 			}

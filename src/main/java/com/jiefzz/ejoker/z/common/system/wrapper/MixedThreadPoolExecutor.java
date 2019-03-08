@@ -54,12 +54,13 @@ public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 
 	/**
 	 * 重寫兩個get方法讓他們能支持thread和quasar fiber的同步
+	 * 
 	 * @author JiefzzLon
 	 *
 	 * @param <V>
 	 */
 	private final class FutureTask<V> extends java.util.concurrent.FutureTask<V> {
-		
+
 		public final Object awaitHandle;
 
 		public FutureTask(Object awaitHandle, Callable<V> callable) {
@@ -80,18 +81,12 @@ public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 
 		@Override
 		public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-			try {
-				if(!CountDownLatchWrapper.await(awaitHandle, timeout, unit)) {
-					throw new TimeoutException();
-				}
-			} catch (AsyncWrapperException e) {
-				if(InterruptedException.class.equals(AsyncWrapperException.getActuallyCause(e).getClass()))
-					throw (InterruptedException )AsyncWrapperException.getActuallyCause(e);
-				throw e;
+			if (!CountDownLatchWrapper.await(awaitHandle, timeout, unit)) {
+				throw new TimeoutException();
 			}
 			return super.get();
 		}
 
 	}
-	
+
 }

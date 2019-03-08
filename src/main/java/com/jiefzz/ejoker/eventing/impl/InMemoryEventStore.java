@@ -8,10 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
@@ -32,8 +28,6 @@ import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 //@EService
 public class InMemoryEventStore implements IEventStore {
 
-	private final static Logger logger = LoggerFactory.getLogger(InMemoryEventStore.class);
-
 	private Map<String, Map<String, DomainEventStream>> mStorage = new ConcurrentHashMap<>();
 
 	@Dependence
@@ -48,7 +42,7 @@ public class InMemoryEventStore implements IEventStore {
 	@Dependence
 	private ITypeNameProvider typeNameProvider;
 	
-	private boolean supportBatchAppendEvent = EJokerEnvironment.SUPPORT_BATCH_APPEND_EVENT;
+	private boolean supportBatchAppendEvent = false;
 	
 	@Override
 	public boolean isSupportBatchAppendEvent() {
