@@ -4,12 +4,8 @@ import java.io.Serializable;
 
 import org.apache.rocketmq.common.message.Message;
 
-import com.jiefzz.ejoker.z.common.context.annotation.persistent.PersistentIgnore;
-import com.jiefzz.ejoker.z.common.utils.Ensure;
-
 public class EJokerQueueMessage implements Serializable {
 
-	@PersistentIgnore
 	private static final long serialVersionUID = 8472364779319333477L;
 
 	public String topic;
@@ -34,9 +30,12 @@ public class EJokerQueueMessage implements Serializable {
 	}
 
 	public EJokerQueueMessage(String topic, int code, byte[] body, long createdTime, String tag) {
-		Ensure.notNull(topic, "topic");
-		Ensure.nonnegative(code, "code");
-		Ensure.notNull(body, "body");
+		if(null == topic || "".equals(topic))
+			throw new NullPointerException("topic");
+		if(null == body || 0 == body.length)
+			throw new NullPointerException("body");
+		if(0 > code)
+			throw new IllegalArgumentException("code should be non negative.");
 		this.topic = topic;
 		this.code = code;
 		this.body = body;

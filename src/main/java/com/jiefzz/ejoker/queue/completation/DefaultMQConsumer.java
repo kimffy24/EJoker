@@ -31,9 +31,6 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction3;
-import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
-import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
-import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
@@ -106,12 +103,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
-		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.onRunning");
+		if(onRunning.get())
+			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.messageProcessor = vf;
 	}
 
 	public void subscribe(String topic, String subExpression) {
-		Ensure.equal(false, onRunning.get(), "DefaultMQConsumer.onRunning");
+		if(onRunning.get())
+			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.focusTopic = topic;
 	}
 	
@@ -125,14 +124,18 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 		processComsumedSequenceThread.start();
 
-		ForEachHelper.processForEach(dashboards, (mq, dashboard) -> {
+		dashboards.forEach((mq, dashboard) -> {
 			dashboard.workThread = new Thread(() -> {
 				if(dashboard.isWorking.tryLock())
 					try {
 						final AtomicInteger waitingTimes = new AtomicInteger(0);
 						while(onRunning.get()) {
 							while(onPasue.get()) {
-								SleepWrapper.sleep(TimeUnit.MILLISECONDS, 200l);
+								try {
+									TimeUnit.MILLISECONDS.sleep(200l);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
 								if(0 == (waitingTimes.getAndIncrement()%35))
 									logger.debug("The consumer has been pause, waiting resume... ");
 							}
@@ -158,7 +161,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		});
 		
 		sumbiter.trigger(() -> {
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
+			try {
+				TimeUnit.MILLISECONDS.sleep(600l);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			onPasue.set(false);
 		});
 	}
@@ -169,13 +176,17 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		onPasue.compareAndSet(true, false);
 		
 		logger.debug("Waiting all comsumer Thread quit... ");
-		ForEachHelper.processForEach(dashboards, (mq, dashboard) -> {
+		dashboards.forEach((mq, dashboard) -> {
 			// try to get the acquire of the dashboard or wait.
 			dashboard.isWorking.lock();
 			try {
 				while(dashboard.workThread.isAlive()) {
 					logger.debug("Waitting work thread for queue[{}] to exit ... ", mq.toString());
-					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
+					try {
+						TimeUnit.MILLISECONDS.sleep(600l);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 				logger.debug("Work thread for queue[{}] is exit.", mq.toString());
 			} finally {
@@ -184,8 +195,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		});
 		logger.debug("All comsumer Thread has quit... ");
 
-		SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
-		
 		super.shutdown();
 	}
 	
@@ -241,7 +250,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				} catch (InterruptedException e) { }
 			}
 			while (onRunning.get()) {
-				ForEachHelper.processForEach(dashboards, (q, d) -> processComsumedSequence(d));
+				dashboards.forEach((q, d) -> processComsumedSequence(d));
 				// 流控日志打印的许可检查，
 				// 每完成一个获得1个许可，同一时间最多1个许可，多于1个无效
 				flowControlLoggerAccquired.compareAndSet(false, true);
@@ -340,7 +349,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						rmqMsg.getBody(),
 						rmqMsg.getTags());
 					sumbiter.trigger(() -> 
-					messageProcessor.trigger(queueMessage, message -> tryMarkCompletion(mq, consumingOffset))
+					messageProcessor.trigger(queueMessage, new EJokerQueueMessageContextImpl(mq, consumingOffset))
 					)
 					;
 				}
@@ -432,4 +441,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 		
 	}
+	
+	public final class EJokerQueueMessageContextImpl implements IEJokerQueueMessageContext {
+		
+		public final MessageQueue mq;
+		public final long comsumedOffset;
+
+		public EJokerQueueMessageContextImpl(MessageQueue mq, long comsumedOffset) {
+			this.mq = mq;
+			this.comsumedOffset = comsumedOffset;
+		}
+		
+		@Override
+		public void onMessageHandled() {
+			DefaultMQConsumer.this.tryMarkCompletion(mq, comsumedOffset);
+		}
+		
+	}
+	
 }
