@@ -27,8 +27,6 @@ import com.jiefzz.ejoker.z.common.utils.genericity.GenericDefinedTypeMeta;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpression;
 import com.jiefzz.ejoker.z.common.utils.genericity.GenericExpressionFactory;
 
-import co.paralleluniverse.fibers.Suspendable;
-
 /**
  * 对象关系二维化工具类
  * 

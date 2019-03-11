@@ -10,8 +10,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.jiefzz.ejoker.z.common.system.extension.AsyncWrapperException;
-
+/**
+ * 此类仅仅是包装一下让QuasarFiber能够等待线程池中的原生线程。如果没有这个需求，可以直接替换为父类ThreadPoolExecutor<br>
+ * 
+ * @author kimffy
+ *
+ */
 public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 
 	public MixedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,

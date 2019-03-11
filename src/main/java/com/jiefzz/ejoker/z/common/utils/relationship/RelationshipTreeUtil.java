@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.z.common.utils.relationship;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -292,9 +293,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 	}
 	
 	public static boolean checkIgnoreField(Field field) {
+		int modifiers = field.getModifiers();
 		return (
-				false ||
 				field.isAnnotationPresent(PersistentIgnore.class)
+				|| Modifier.isStatic(modifiers)
+				|| Modifier.isFinal(modifiers)
 		);
 	}
 }

@@ -3,7 +3,7 @@ package com.jiefzz.ejoker.z.common.io;
 import java.io.IOException;
 
 /**
- * Because IOExceotion must catch in jvm, we sue a new class extend RuntimeException instant of it.
+ * Because IOExceotion must catch in jvm, we use a new class extend RuntimeException instant of it.
  * @author kimffy
  *
  */

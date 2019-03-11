@@ -17,7 +17,7 @@ public class QueueProcessingContext implements IMessageProcessContext {
 	
 	@Override
 	public void notifyMessageProcessed() {
-		messageContext.onMessageHandled(queueMessage);
+		messageContext.onMessageHandled(/*queueMessage*/);
 	}
 
 }

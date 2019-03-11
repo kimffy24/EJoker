@@ -158,7 +158,7 @@ public class CommandConsumer implements IWorkerService {
 		@Override
 		public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult) {
 
-			messageContext.onMessageHandled(message);
+			messageContext.onMessageHandled(/*message*/);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return SystemFutureWrapperUtil.createCompleteFuture();
@@ -248,7 +248,7 @@ public class CommandConsumer implements IWorkerService {
 		@Override
 		public void onCommandExecuted(CommandResult commandResult) {
 
-			messageContext.onMessageHandled(message);
+			messageContext.onMessageHandled(/*message*/);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return;
