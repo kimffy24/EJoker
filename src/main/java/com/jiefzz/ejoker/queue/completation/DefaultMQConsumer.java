@@ -11,10 +11,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.rocketmq.client.consumer.MessageQueueListener;
 import org.apache.rocketmq.client.consumer.PullResult;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -76,7 +75,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	 * 参数2 在处理中消息数
 	 * 参数3 队列检查序数
 	 */
-	private IFunction3<Boolean, MessageQueue, Integer, Integer> flowControlSwitch = (mq, consumingAmount, n) -> false;
+	private IFunction3<Boolean, MessageQueue, Integer, Integer> flowControlSwitch = (m, c, n) -> false;
 	
 	private final AtomicBoolean flowControlLoggerAccquired = new AtomicBoolean(false);
 	
@@ -115,48 +114,16 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void start() throws MQClientException {
-		super.start();
-		
 		if(!onRunning.compareAndSet(false, true))
 			throw new RuntimeException("Consumer has been started before!!!");
+		
+		super.start();
 		
 		loadSubcribeInfoAndPrepareConsume();
 		
 		processComsumedSequenceThread.start();
 
 		dashboards.forEach((mq, dashboard) -> {
-			dashboard.workThread = new Thread(() -> {
-				if(dashboard.isWorking.tryLock())
-					try {
-						final AtomicInteger waitingTimes = new AtomicInteger(0);
-						while(onRunning.get()) {
-							while(onPasue.get()) {
-								try {
-									TimeUnit.MILLISECONDS.sleep(200l);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
-								if(0 == (waitingTimes.getAndIncrement()%35))
-									logger.debug("The consumer has been pause, waiting resume... ");
-							}
-							if(waitingTimes.get() > 0) {
-								logger.debug("The consumer has been resume... ");
-								waitingTimes.set(0);
-								if(!onRunning.get())
-									return;
-							}
-							
-							try {
-								dashboard.messageHandlingJob.trigger();
-							} catch (RuntimeException ex) {
-								exHandler.trigger(ex, mq, dashboard);
-							}
-						}
-					} finally {
-						dashboard.isWorking.unlock();
-					}
-			}, this.getConsumerGroup() + "-dashboardWorkThread-" + dashboardWorkThreadCounter.getAndIncrement());
-			dashboard.workThread.setDaemon(true);
 			dashboard.workThread.start(); 
 		});
 		
@@ -176,28 +143,16 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		onPasue.compareAndSet(true, false);
 		
 		logger.debug("Waiting all comsumer Thread quit... ");
-		dashboards.forEach((mq, dashboard) -> {
-			// try to get the acquire of the dashboard or wait.
-			dashboard.isWorking.lock();
-			try {
-				while(dashboard.workThread.isAlive()) {
-					logger.debug("Waitting work thread for queue[{}] to exit ... ", mq.toString());
-					try {
-						TimeUnit.MILLISECONDS.sleep(600l);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-				logger.debug("Work thread for queue[{}] is exit.", mq.toString());
-			} finally {
-				dashboard.isWorking.unlock();
-			}
-		});
 		logger.debug("All comsumer Thread has quit... ");
 
 		super.shutdown();
 	}
 	
+	@Override
+	public void registerMessageQueueListener(String topic, MessageQueueListener listener) {
+		super.registerMessageQueueListener(topic, listener);
+	}
+
 	public void syncOffsetToBroker() {
 		for(MessageQueue mq : matchQueue) {
 			ControlStruct controlStruct = dashboards.get(mq);
@@ -221,24 +176,27 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
+		if(onRunning.get())
+			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.sumbiter = sumbiter;
 	}
 	
-	public void configureFlowControl(boolean flag) {
-		this.flowControlFlag = flag;
-	}
-
 	/**
 	 * 1 返回值boolean是否要求流控 true:是 false:不是
 	 * 参数1 当前队列
 	 * 参数2 在处理中消息数
-	 * 参数3 队列检查序数
+	 * 参数3 队列检查序数（自当前流控开始后第几次检查是否要流控，初始为0）
 	 */
 	public void useFlowControlSwitch(IFunction3<Boolean, MessageQueue, Integer, Integer> sw) {
+		if(onRunning.get())
+			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
+		this.flowControlFlag = true;
 		this.flowControlSwitch = sw;
 	}
 	
 	public void useQueueSelector(IFunction1<Boolean, MessageQueue> queueMatcher) {
+		if(onRunning.get())
+			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.queueMatcher = queueMatcher;
 	}
 	
@@ -297,6 +255,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 			matchQueue.add(mq);
 			dashboards.put(mq, new ControlStruct(
+					mq,
 					consumedOffset,
 					maxOffset,
 					() -> queueConsume(mq)
@@ -425,24 +384,65 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		public final AtomicLong offsetMax;
 		
 		public final AtomicBoolean offsetDirty;
+
+		public final AtomicBoolean shutdown;
 		
 		public final IVoidFunction messageHandlingJob;
 		
-		public final Lock isWorking = new ReentrantLock();
+		public final Thread workThread;
 		
-		public Thread workThread = null;
-		
-		public ControlStruct(long initOffset, long maxOffsetCurrent,IVoidFunction messageHandlingJob) {
+		public ControlStruct(MessageQueue mq, long initOffset, long maxOffsetCurrent,IVoidFunction messageHandlingJob) {
 			this.offsetConsumedLocal = new AtomicLong(initOffset);
 			this.offsetFetchLocal = new AtomicLong(initOffset);
 			this.messageHandlingJob = messageHandlingJob;
 			this.offsetDirty = new AtomicBoolean(false);
+			this.shutdown = new AtomicBoolean(false);
 			this.offsetMax = new AtomicLong(maxOffsetCurrent);
+			
+			this.workThread = new Thread(() -> {
+				final AtomicInteger waitingTimes = new AtomicInteger(0);
+				while (onRunning.get()) {
+					while (onPasue.get()) {
+						try {
+							TimeUnit.MILLISECONDS.sleep(200l);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						if (0 == (waitingTimes.getAndIncrement() % 35))
+							logger.debug("The consumer has been pause, waiting resume... ");
+					}
+					if (waitingTimes.get() > 0) {
+						logger.debug("The consumer has been resume... ");
+						waitingTimes.set(0);
+						if (!onRunning.get())
+							return;
+					}
+					
+					if(this.shutdown.get())
+						return;
+
+					try {
+						getMessageHandlingJob().trigger();
+					} catch (RuntimeException ex) {
+						if(null != exHandler)
+							exHandler.trigger(ex, mq, ControlStruct.this);
+						else
+							ex.getMessage();
+					}
+				}
+			}, DefaultMQConsumer.this.getConsumerGroup() + "-dashboardWorkThread-"
+					+ dashboardWorkThreadCounter.getAndIncrement());
+			this.workThread.setDaemon(true);
+
 		}
-		
+
+		public IVoidFunction getMessageHandlingJob() {
+			return messageHandlingJob;
+		}
+
 	}
 	
-	public final class EJokerQueueMessageContextImpl implements IEJokerQueueMessageContext {
+	private final class EJokerQueueMessageContextImpl implements IEJokerQueueMessageContext {
 		
 		public final MessageQueue mq;
 		public final long comsumedOffset;
