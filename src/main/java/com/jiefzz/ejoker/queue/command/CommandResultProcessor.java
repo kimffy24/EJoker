@@ -16,9 +16,11 @@ import com.jiefzz.ejoker.queue.IReplyHandler;
 import com.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import com.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
+import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.rpc.IClientNodeIPAddressProvider;
 import com.jiefzz.ejoker.z.common.rpc.IRPCService;
+import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
@@ -31,6 +33,9 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
 	@Dependence
+	private Scavenger scavenger;
+	
+	@Dependence
 	private IRPCService rpcService;
 
 	@Dependence
@@ -42,6 +47,11 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<>();
 
 	private AtomicBoolean start = new AtomicBoolean(false);
+	
+	@EInitialize
+	private void init() {
+		scavenger.addFianllyJob(this::shutdown);
+	}
 
 	@Override
 	public CommandResultProcessor start() {

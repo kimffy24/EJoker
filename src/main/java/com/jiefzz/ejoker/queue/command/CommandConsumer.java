@@ -128,6 +128,10 @@ public class CommandConsumer implements IWorkerService {
 
 		return this;
 	}
+	
+	public Object getDeeplyConsumer() {
+		return consumer;
+	}
 
 	/**
 	 * commandHandler处理过程中，使用的上下文就是这个上下文。<br>
@@ -241,6 +245,9 @@ public class CommandConsumer implements IWorkerService {
 				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
 				return (T) aggregateRoot;
 			}
+			
+			if(null == aggregateRoot)
+				System.err.println(String.format("======================== aggregate is null!!! id: %s, type: %s, tryFromCache: %s", id.toString(), clazz.getName(), (tryFromCache?"true":"false")));
 
 			return null;
 		}
