@@ -2,12 +2,9 @@ package com.jiefzz.ejoker.queue;
 
 import java.io.IOException;
 
-import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +35,8 @@ public class SendQueueMessageService {
 
 		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
 
-			// use producer inner executor service to execute aSync task and wrap the result
-			// with type SystemFutureWrapper.
+			// use producer inner executor service to execute aSync task 
+			// and wrap the result with type SystemFutureWrapper.
 			return new SystemFutureWrapper<>(producer.submitWithInnerExector(() -> {
 				try {
 					sendSync(producer, rMessage, messageId, version);

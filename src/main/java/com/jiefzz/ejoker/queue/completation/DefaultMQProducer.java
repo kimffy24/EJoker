@@ -1,10 +1,11 @@
 package com.jiefzz.ejoker.queue.completation;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -12,7 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -28,9 +29,11 @@ import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.algorithm.ConsistentHashShard;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction;
-import com.jiefzz.ejoker.z.common.system.functional.IFunction3;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
+import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
+import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.MixedThreadPoolExecutor;
+import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 
 /**
  * Use consistent hash algorithm to select a queue, as default.<br>
@@ -65,7 +68,8 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 	
 	@Override
 	public SendResult send(Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-		return super.send(msg, mqCustomSelectorFlag ? this.mqSelector::trigger : this::selectQueue, null);
+		// 使用一致性hash选择队列
+		return super.send(msg, this::selectQueue, null);
 	}
 	
 	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
@@ -85,20 +89,11 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		super.shutdown();
 	}
 	
-	public void configureMQSelector(IFunction3<MessageQueue, List<MessageQueue>, Message, Object> selector) {
-		this.mqSelector = selector;
-		this.mqCustomSelectorFlag = true;
-	}
-	
 	private final AtomicInteger noKeysIndex = new AtomicInteger(0);
 	
 	private Map<String, PredispatchControl> dispatcherDashboard = new ConcurrentHashMap<>();
 	
 	private ThreadPoolExecutor threadPoolExecutor;
-	
-	private boolean mqCustomSelectorFlag = false;
-	
-	private IFunction3<MessageQueue, List<MessageQueue>, Message, Object> mqSelector = null;
 	
 	private void init() {
 		threadPoolExecutor = new MixedThreadPoolExecutor(
@@ -139,15 +134,15 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 					e.printStackTrace();
 				} finally {
 					// 无论哈希环更新/创建成功与否，都要释放等待线程
-					predispatchControl.reset();
+					predispatchControl.release();
 				}
 			} else {
 				// 抢占失败
-				// 把自己注册到等待列表中，并自我park掉
-				predispatchControl.wait4ResumeList.set(predispatchControl.waitingIndex.getAndIncrement(), Thread.currentThread());
-				LockSupport.park();
+				// 等待释放
+				predispatchControl.awaitPredispatch();
 			}
 		}
+		
 		if(null == predispatchControl.chShard) {
 			// 没能建立哈希环的统一视为IO异常，这里包装成运行时IO异常
 			throw new IOExceptionOnRuntime(new IOException("ConsistentHashShard create faild!!!"));
@@ -158,30 +153,37 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		// 		这段时间差内刚好有消息发送到被离线的queue上可能会收到失败的结果，这种情况应该由消息的提交者控制重试过程。
 		// 3. 如果是异常情况（整个系统的那种），从nameSrv得到broker还在正常工作的信息，但事实上broker已经处于不可用状态了，
 		//		这个本该是nameSrv的职责，但是这个的一致性哈希算法会一直路由到这个不可用节点的queue上。TODO 没有实际测试，有这种情况再说吧。
-		return predispatchControl.chShard.getShardInfo(msg.getKeys());
+		MessageQueue selectedMq = predispatchControl.chShard.getShardInfo(msg.getKeys());
+		logger.error("base of key: {}, selected message queue: {}", msg.getKeys(), selectedMq.toString());
+		return selectedMq;
+		
 	}
 	
 	private static class PredispatchControl {
+		
+		public final static AtomicReferenceFieldUpdater<PredispatchControl, Object> cdlHandleAccesser =
+				AtomicReferenceFieldUpdater.newUpdater(PredispatchControl.class, Object.class, "cdlHandle");
 		
 		public final AtomicInteger lastMqsHashCode = new AtomicInteger(0);
 		
 		public final AtomicBoolean onPasue4RepreparePredispatch = new AtomicBoolean(false);
 		
-		public final List<Thread> wait4ResumeList = new ArrayList<>();
-		
-		public final AtomicInteger waitingIndex = new AtomicInteger(0);
-	
 		public ConsistentHashShard<MessageQueue> chShard = null;
 		
-		public void reset() {
+		@SuppressWarnings("unused")
+		private volatile Object cdlHandle = CountDownLatchWrapper.newCountDownLatch();
+		
+		public void release() {
 			
+			CountDownLatchWrapper.countDown(cdlHandleAccesser.get(this));
 			onPasue4RepreparePredispatch.set(false);
-			for(Thread waitingThread:wait4ResumeList) {
-				LockSupport.unpark(waitingThread);
-			}
 			
-			wait4ResumeList.clear();
-			waitingIndex.set(0);
+			// waiting for a moment
+			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
+		}
+		
+		public void awaitPredispatch() {
+			CountDownLatchWrapper.await(cdlHandleAccesser.get(this));
 		}
 	}
 	
