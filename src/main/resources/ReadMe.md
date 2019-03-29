@@ -11,7 +11,7 @@
 	# 消息异步发送线程池大小
 	ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE = 128
 	
-	# 控制在处理中消息数量
+	# 限制在处理中的消息数量
 	FLOW_CONTROL_ON_PROCESSING = false
 	
 	# 最大处理中消息数
@@ -27,8 +27,11 @@
 	REPLY_PORT = 65056
 	
 	# 最大单次批处理命令数
-	MAX_BATCH_COMMANDS = 16
+	MAX_BATCH_COMMANDS = 32
 			
 	# 最大单次批处理事件数
 	MAX_BATCH_EVENTS = 32
+	
+	# 使用的re-balance策略
+	REBALANCE_STRATEGY = 1
 
