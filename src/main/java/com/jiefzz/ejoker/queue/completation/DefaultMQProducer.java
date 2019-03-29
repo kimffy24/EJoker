@@ -153,9 +153,7 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		// 		这段时间差内刚好有消息发送到被离线的queue上可能会收到失败的结果，这种情况应该由消息的提交者控制重试过程。
 		// 3. 如果是异常情况（整个系统的那种），从nameSrv得到broker还在正常工作的信息，但事实上broker已经处于不可用状态了，
 		//		这个本该是nameSrv的职责，但是这个的一致性哈希算法会一直路由到这个不可用节点的queue上。TODO 没有实际测试，有这种情况再说吧。
-		MessageQueue selectedMq = predispatchControl.chShard.getShardInfo(msg.getKeys());
-		logger.error("base of key: {}, selected message queue: {}", msg.getKeys(), selectedMq.toString());
-		return selectedMq;
+		return predispatchControl.chShard.getShardInfo(msg.getKeys());
 		
 	}
 	
