@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +16,6 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
-import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
@@ -58,6 +56,14 @@ public class ProcessingCommandMailbox {
 
 	public boolean onRunning() {
 		return onRunning.get();
+	}
+	
+	public long getMaxMessageSequence() {
+		return nextSequence - 1;
+	}
+	
+	public long getTotalUnConsumedMessageCount() {
+    	return nextSequence - 1 - consumingSequence;
 	}
 
 	public String getAggregateRootId() {
