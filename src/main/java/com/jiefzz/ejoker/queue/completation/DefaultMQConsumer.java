@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.rocketmq.client.consumer.PullResult;
 import org.apache.rocketmq.client.exception.MQBrokerException;
@@ -26,15 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.z.common.system.functional.IFunction3;
-import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
-import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction1;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction3;
-import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
+
+	/**
+	 * use to match the case of decrease RocketMq's readQueueNum.
+	 */
+	private final static Pattern dgPattern = Pattern.compile("CODE:[\\s\\S\\t\\d]*DESC:[\\s\\S\\t]+queueId\\[\\d+\\] is illegal, topic:\\[[a-zA-Z0-9-_]+\\] topicConfig\\.readQueueNums:\\[\\d+\\] consumer:");
 	
 	
 	private final AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
@@ -62,10 +66,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	private IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = null;
 
 	
-	/**
-	 * 默认异步策略
-	 */
-	private IVoidFunction1<IVoidFunction> sumbiter = c -> new Thread(c::trigger).start();
+//	/**
+//	 * 默认异步策略
+//	 */
+//	private IVoidFunction1<IVoidFunction> sumbiter = c -> new Thread(c::trigger).start();
 	
 	
 	private boolean flowControlFlag = false;
@@ -129,17 +133,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		for (final MessageQueue mq : messageQueues)
 			createControlStruct(mq);
 		
+		onPasue.set(false);
+		
 		dashboards.forEach((mq, dashboard) -> {
 			dashboard.workThread.start(); 
-		});
-		
-		sumbiter.trigger(() -> {
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 600l);
-			onPasue.set(false);
 		});
 
 		processComsumedSequenceThread.start();
 		rebalanceMonitor.start();
+		
 	}
 	
 	public void shutdown() {
@@ -182,12 +184,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		getOffsetStore().persistAll(matchQueue);
 		
 	}
-	
-	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
-		if(onRunning.get())
-			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
-		this.sumbiter = sumbiter;
-	}
+//	
+//	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
+//		if(onRunning.get())
+//			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
+//		this.sumbiter = sumbiter;
+//	}
 	
 	/**
 	 * 1 返回值boolean是否要求流控 true:是 false:不是
@@ -205,9 +207,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	private void postInit() {
 		processComsumedSequenceThread = new Thread(() -> {
 			while (null == dashboards) {
-				try {
-					TimeUnit.SECONDS.sleep(1l);
-				} catch (InterruptedException e) { }
+				sleepmilliSecWrapper(1000l);
 			}
 			while (onRunning.get()) {
 				dashboards.forEach((q, d) -> processComsumedSequence(d));
@@ -224,17 +224,21 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		// @Important may be we can use java scheduler
 		rebalanceMonitor = new Thread(() -> {
 			Set<MessageQueue> fetchMessageQueuesInBalance = null;
-			while(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size()) {
-				logger.debug("waiting rebalance ...");
-				SleepWrapper.sleep(TimeUnit.SECONDS, 2l);
+			int loop = 0;
+			do {
+				sleepmilliSecWrapper(1000l);
+				if(loop++%30 == 0)
+					logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
 					e.printStackTrace();
 				}
-			}
+			} while(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size());
 			while (DefaultMQConsumer.this.onRunning.get()) {
-				SleepWrapper.sleep(TimeUnit.SECONDS, 2l);
+
+				sleepmilliSecWrapper(2000l);
+				
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
@@ -329,15 +333,32 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		try {
 			pullResult = pullBlockIfNotFound(mq, null, currentOffset, 32);
 		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
+			if(e instanceof MQBrokerException) {
+				// 1. 判断RocketMq在收缩readQueueNum过程中
+
+				//		a. 可能是非法的拉取，pull中参数指定的队列一直就不存在的
+				// 			解决办法: 需要开发者自己处理。
+				//		b. 当前处于运维在收缩readQueueNum过程
+				// 			解决办法: 等待下一次re-balance过程生效
+				
+				String errDesc = e.getMessage();
+				Matcher matcher = dgPattern.matcher(errDesc);
+				if(matcher.find()) {
+					// RocketMq在收缩readQueueNum过程中，这个异常等到下一次re-balance就会被解决
+					sleepmilliSecWrapper(5000l);
+					return;
+				}
+			}
+			
 			throw new RuntimeException(e);
 		}
 
 		if(0 == DefaultMQConsumer.this.queueHash.get()) {
 			// waiting for re-balance...
-			SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+			sleepmilliSecWrapper(1000l);
 			return;
 		} else if (this.queueHash.get() != controlStruct.currentMatchHash.get()) {
-			SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+			sleepmilliSecWrapper(1000l);
 			return;
 		}
 		
@@ -353,21 +374,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), ++ frezon)) {
 							if(flowControlLoggerAccquired.compareAndSet(true, false))
 								logger.warn("Flow control protected! Amount of on processing message is {}", cAmount);
-							LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100l));
+							sleepmilliSecWrapper(100l);
 						}
 						consumingAmount.getAndIncrement();
 					}
 					final long consumingOffset = currentOffset + i + 1;
 					MessageExt rmqMsg = messageExtList.get(i);
-					final EJokerQueueMessage queueMessage = new EJokerQueueMessage(
-						rmqMsg.getTopic(),
-						rmqMsg.getFlag(),
-						rmqMsg.getBody(),
-						rmqMsg.getTags());
-					sumbiter.trigger(() -> 
-						messageProcessor.trigger(queueMessage, new EJokerQueueMessageContextImpl(mq, consumingOffset))
-					)
-					;
+					dispatchMessage(
+							new EJokerQueueMessage(rmqMsg.getTopic(), rmqMsg.getFlag(), rmqMsg.getBody(), rmqMsg.getTags()),
+							new EJokerQueueMessageContextImpl(mq, consumingOffset));
 				}
 				controlStruct.offsetFetchLocal.getAndSet(pullResult.getNextBeginOffset());
 				controlStruct.offsetMax.getAndSet(pullResult.getMaxOffset());
@@ -379,8 +394,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				logger.debug("[state: NO_NEW_MSG, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
 				break;
 			case OFFSET_ILLEGAL:
-				logger.debug("[state: OFFSET_ILLEGAL, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
-				throw new RuntimeException("OFFSET_ILLEGAL");
+				// TODO 在rocketmq堆积量特别大的时候，偶尔会出现这个错误。
+				//		例如当期的queue的comsumedOffset=14325，而生产者持续堆积消息，
+				//		另到maxOffset到达1947760，在这个非常大的offset差的时候，broker可能丢弃并跳过中间堆积的消息
+				//		导致消费者跟不上，而这个情况又不知道如何对付。
+				logger.warn("[state: OFFSET_ILLEGAL, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
+				sleepmilliSecWrapper(500l);
 			default:
 				assert false;
 		}
@@ -431,6 +450,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 	}
 	
+	private void sleepmilliSecWrapper(long dist) {
+		try {
+			TimeUnit.MILLISECONDS.sleep(dist);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void dispatchMessage(final EJokerQueueMessage queueMessage, final EJokerQueueMessageContextImpl context) {
+
+//		sumbiter.trigger(() -> 
+			messageProcessor.trigger(queueMessage, context)
+//		)
+		;
+	}
+
 	private final class ControlStruct {
 		
 		private final MessageQueue mq;
@@ -478,10 +513,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				if(!isFirstProcess) {
 					if(0 == DefaultMQConsumer.this.queueHash.get()) {
 						// waiting for re-balance...
-						SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
 						continue;
 					} else if (DefaultMQConsumer.this.queueHash.get() != ControlStruct.this.currentMatchHash.get()) {
-						SleepWrapper.sleep(TimeUnit.SECONDS, 1l);
+						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
 						continue;
 					}
 				} else {
@@ -490,7 +525,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				
 				int waitingTimes = 0;
 				while (onPasue.get()) {
-					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 200l);
+					DefaultMQConsumer.this.sleepmilliSecWrapper(200l);
+					
 					if (0 == (++waitingTimes % 35))
 						logger.debug("The consumer has been pause, waiting resume... ");
 				}
@@ -509,6 +545,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						DefaultMQConsumer.this.exHandler.trigger(ex, ControlStruct.this.mq, ControlStruct.this);
 					else
 						logger.error(ex.getMessage(), ex);
+					// 若拉取过程抛出异常，则暂缓一段时间
+					sleepmilliSecWrapper(1000l);
 				}
 			}
 		}

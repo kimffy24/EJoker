@@ -69,7 +69,10 @@ public class SendReplyService {
 		String[] split = replyAddress.split(":");
 		if(split.length == 2)
 			return Integer.valueOf(split[1]);
-		return EJokerEnvironment.REPLY_PORT;
+		
+		// 不应该返回配置中的值，应该返回不受配置影响的固定值
+		// return EJokerEnvironment.REPLY_PORT;
+		return 65056;
 	}
 	
 }

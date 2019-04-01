@@ -6,7 +6,6 @@ import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueConsist
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
-import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
 public class MQInstanceHelper {
 
@@ -14,12 +13,10 @@ public class MQInstanceHelper {
 			IEJokerSimpleContext eContext) {
 
 		Scavenger scavenger = eContext.get(Scavenger.class);
-		SystemAsyncHelper systemAsyncHelper = eContext.get(SystemAsyncHelper.class);
 
 		DefaultMQConsumer defaultMQConsumer = new DefaultMQConsumer(groupName);
 
 		defaultMQConsumer.setNamesrvAddr(nameServ);
-		defaultMQConsumer.useSubmiter(vf -> systemAsyncHelper.submit(vf::trigger));
 
 		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
 			defaultMQConsumer.useFlowControlSwitch((mq, amount, round) -> amount >= EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE);
