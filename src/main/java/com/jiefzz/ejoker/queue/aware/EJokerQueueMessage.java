@@ -1,8 +1,6 @@
-package com.jiefzz.ejoker.queue.completation;
+package com.jiefzz.ejoker.queue.aware;
 
 import java.io.Serializable;
-
-import org.apache.rocketmq.common.message.Message;
 
 public class EJokerQueueMessage implements Serializable {
 
@@ -41,10 +39,6 @@ public class EJokerQueueMessage implements Serializable {
 		this.body = body;
 		this.createdTime = createdTime;
 		this.tag = tag;
-	}
-	
-	public EJokerQueueMessage(Message message) {
-		this(message.getTopic(), message.getFlag(), message.getBody(), message.getTags());
 	}
 
 	public String getTopic() {

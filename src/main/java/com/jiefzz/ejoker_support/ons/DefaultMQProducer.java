@@ -1,38 +1,35 @@
-package com.jiefzz.ejoker.queue.completation;
+package com.jiefzz.ejoker_support.ons;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.remoting.RPCHook;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.EJokerEnvironment;
+import com.aliyun.openservices.ons.api.ONSFactory;
+import com.aliyun.openservices.ons.api.Producer;
+import com.aliyun.openservices.ons.api.PropertyKeyConst;
+import com.aliyun.openservices.ons.api.impl.rocketmq.ProducerImpl;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.exception.MQBrokerException;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.exception.MQClientException;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.producer.SendResult;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.producer.SendStatus;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.MessageQueue;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.RemotingException;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
 import com.jiefzz.ejoker.z.common.algorithm.ConsistentHashShard;
 import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
-import com.jiefzz.ejoker.z.common.system.functional.IFunction;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
-import com.jiefzz.ejoker.z.common.system.wrapper.MittenWrapper;
-import com.jiefzz.ejoker.z.common.system.wrapper.MixedThreadPoolExecutor;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 
 /**
@@ -41,71 +38,67 @@ import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
  * @author kimffy
  *
  */
-public class DefaultMQProducer extends org.apache.rocketmq.client.producer.DefaultMQProducer {
+public class DefaultMQProducer implements IProducerWrokerAware {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQProducer.class);
 	
+	private final Producer onsProducer;
+	
+	private final com.aliyun.openservices.shade.com.alibaba.rocketmq.client.producer.DefaultMQProducer producer;
 
-	public DefaultMQProducer() {
-		super();
-		init();
-	}
-
-	public DefaultMQProducer(RPCHook rpcHook) {
-		super(rpcHook);
-		init();
-	}
-
-	public DefaultMQProducer(String producerGroup, RPCHook rpcHook) {
-		super(producerGroup, rpcHook);
-		init();
-	}
-
-	public DefaultMQProducer(String producerGroup) {
-		super(producerGroup);
-		init();
+	public DefaultMQProducer(String groupName) {
+		
+		Properties producerProperties = new Properties();
+        producerProperties.setProperty(PropertyKeyConst.GROUP_ID, "");
+        producerProperties.setProperty(PropertyKeyConst.AccessKey, "");
+        producerProperties.setProperty(PropertyKeyConst.SecretKey, "");
+        producerProperties.setProperty(PropertyKeyConst.NAMESRV_ADDR, "");
+        onsProducer = ONSFactory.createProducer(producerProperties);
+        producer = ((ProducerImpl )onsProducer).getDefaultMQProducer();
+        
 	}
 	
+	public com.aliyun.openservices.shade.com.alibaba.rocketmq.client.producer.DefaultMQProducer getRealProducer() {
+		return producer;
+	}
+
 	@Override
-	public SendResult send(Message msg) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
-		// 使用一致性hash选择队列
-		return super.send(msg, this::selectQueue, null);
-	}
-	
-	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
-		return threadPoolExecutor.submit(vf::trigger);
+	public void send(final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
+
+		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(), message.getBody(), true);
+		try {
+			// 使用一致性hash选择队列
+			SendResult sendResult = producer.send(rMessage, this::selectQueue, null);
+			if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+				logger.error(
+						"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
+						sendResult.toString(), rMessage.getKeys(), messageId, version);
+				throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
+			}
+		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
+			e.printStackTrace();
+			logger.error(
+					"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
+					e.getMessage(), rMessage.getKeys(), messageId, version);
+			throw new IOExceptionOnRuntime(new IOException(e));
+		}
 	}
 	
 	@Override
 	public void start() throws MQClientException {
-		super.start();
+		onsProducer.start();
+//		producer.start();
 	}
 
 	@Override
 	public void shutdown() {
-		if(null!=threadPoolExecutor) {
-			threadPoolExecutor.shutdown();
-		}
-		super.shutdown();
+		onsProducer.shutdown();
+//		producer.shutdown();
 	}
 	
 	private final AtomicInteger noKeysIndex = new AtomicInteger(0);
 	
 	private Map<String, PredispatchControl> dispatcherDashboard = new ConcurrentHashMap<>();
-	
-	private ThreadPoolExecutor threadPoolExecutor;
-	
-	private void init() {
-		threadPoolExecutor = new MixedThreadPoolExecutor(
-				EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE,
-				EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE,
-				0l,
-				TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>(),
-				new SendThreadFactory());
-		if(EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND)
-			threadPoolExecutor.prestartAllCoreThreads();
-	}
 	
 	private MessageQueue selectQueue(List<MessageQueue> mqs, Message msg, Object arg) {
 		
@@ -125,7 +118,7 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 				// 抢占成功
 				try {
 					// 获取生产者队列
-					List<MessageQueue> fetchPublishMessageQueues = this.fetchPublishMessageQueues(topic);
+					List<MessageQueue> fetchPublishMessageQueues = producer.fetchPublishMessageQueues(topic);
 					// 建立哈希环，并更新mqs的hashCode
 					predispatchControl.chShard = new ConsistentHashShard<>(fetchPublishMessageQueues);
 					predispatchControl.lastMqsHashCode.set(mqsHashCode);
@@ -185,34 +178,4 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		}
 	}
 	
-	private final static class SendThreadFactory implements ThreadFactory {
-
-		private final static AtomicInteger poolIndex = new AtomicInteger(0);
-
-		private final AtomicInteger threadIndex = new AtomicInteger(0);
-
-		private final ThreadGroup group;
-
-		private final String namePrefix;
-
-		public SendThreadFactory() {
-
-			SecurityManager s = System.getSecurityManager();
-			group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-			namePrefix = "EJokerSender-" + poolIndex.incrementAndGet() + "-thread-";
-		}
-
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread t = new Thread(null, r, namePrefix + threadIndex.getAndIncrement(), 0);
-			if (t.isDaemon())
-				t.setDaemon(false);
-			if (t.getPriority() != Thread.NORM_PRIORITY)
-				t.setPriority(Thread.NORM_PRIORITY);
-
-			return t;
-		}
-
-	}
-
 }

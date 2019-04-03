@@ -1,8 +1,7 @@
-package com.jiefzz.ejoker.queue.completation;
+package com.jiefzz.ejoker_support.ons;
 
-import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
-import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueConsistentHash;
-
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.rebalance.AllocateMessageQueueConsistentHash;
 import com.jiefzz.ejoker.EJokerEnvironment;
 import com.jiefzz.ejoker.z.common.context.dev2.IEJokerSimpleContext;
 import com.jiefzz.ejoker.z.common.scavenger.Scavenger;
@@ -16,7 +15,7 @@ public class MQInstanceHelper {
 
 		DefaultMQConsumer defaultMQConsumer = new DefaultMQConsumer(groupName);
 
-		defaultMQConsumer.setNamesrvAddr(nameServ);
+		defaultMQConsumer.getRealConsumer().setNamesrvAddr(nameServ);
 
 		if(EJokerEnvironment.FLOW_CONTROL_ON_PROCESSING)
 			defaultMQConsumer.useFlowControlSwitch((mq, amount, round) -> amount >= EJokerEnvironment.MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE);
@@ -24,10 +23,10 @@ public class MQInstanceHelper {
 		// re-balance策略配置，如果不需要则整个switch语句块删掉，默认rocketmq使用的就是AllocateMessageQueueAveragely策略
 		switch (EJokerEnvironment.REBALANCE_STRATEGY) {
 		case 1:
-			defaultMQConsumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragely());
+			defaultMQConsumer.getRealConsumer().setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragely());
 			break;
 		case 2:
-			defaultMQConsumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueConsistentHash());
+			defaultMQConsumer.getRealConsumer().setAllocateMessageQueueStrategy(new AllocateMessageQueueConsistentHash());
 			break;
 		default:
 			throw new RuntimeException("Invalid value of REBALANCE_STRATEGY!!!");
@@ -45,7 +44,7 @@ public class MQInstanceHelper {
 
 		DefaultMQProducer defaultMQProducer = new DefaultMQProducer(groupName);
 
-		defaultMQProducer.setNamesrvAddr(nameServ);
+		defaultMQProducer.getRealProducer().setNamesrvAddr(nameServ);
 
 		scavenger.addFianllyJob(defaultMQProducer::shutdown);
 

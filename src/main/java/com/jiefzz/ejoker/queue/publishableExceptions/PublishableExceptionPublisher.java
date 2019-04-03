@@ -3,8 +3,6 @@ package com.jiefzz.ejoker.queue.publishableExceptions;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import org.apache.rocketmq.client.exception.MQClientException;
-
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.infrastructure.ISequenceMessage;
 import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
@@ -12,8 +10,8 @@ import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IP
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
-import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
 import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -44,22 +42,18 @@ public class PublishableExceptionPublisher implements IMessagePublisher<IPublish
 	@Dependence
 	private ITypeNameProvider typeNameProvider;
 	
-	private DefaultMQProducer producer;
+	private IProducerWrokerAware producer;
 
-	public PublishableExceptionPublisher useProducer(DefaultMQProducer producer) {
+	public PublishableExceptionPublisher useProducer(IProducerWrokerAware producer) {
 		this.producer = producer;
 		return this;
 	}
 
-	public DefaultMQProducer getProducer() {
-		return producer;
-	}
-	
 	@Override
 	public PublishableExceptionPublisher start() {
 		try {
 			producer.start();
-		} catch (MQClientException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -68,7 +62,11 @@ public class PublishableExceptionPublisher implements IMessagePublisher<IPublish
 
 	@Override
 	public PublishableExceptionPublisher shutdown() {
-		producer.shutdown();
+		try {
+			producer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 

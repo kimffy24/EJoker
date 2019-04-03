@@ -1,4 +1,4 @@
-package com.jiefzz.ejoker.queue.completation;
+package com.jiefzz.ejoker_support.ons;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -17,28 +18,32 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.rocketmq.client.consumer.PullResult;
-import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.common.message.MessageExt;
-import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.remoting.RPCHook;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.aliyun.openservices.ons.api.PropertyKeyConst;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.PullResult;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.exception.MQBrokerException;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.exception.MQClientException;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.MessageExt;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.MessageQueue;
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.RemotingException;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
+import com.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.system.functional.IFunction3;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction3;
+import com.jiefzz.ejoker_support.ons.extension.ONSPullConsumer;
 
-public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer {
+public class DefaultMQConsumer implements IConsumerWrokerAware {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
 
 	/**
 	 * use to match the case of decrease RocketMq's readQueueNum.
 	 */
-	private final static Pattern dgPattern = Pattern.compile("CODE:[\\s\\S\\t\\d]*DESC:[\\s\\S\\t]+queueId\\[\\d+\\] is illegal, topic:\\[[a-zA-Z0-9-_]+\\] topicConfig\\.readQueueNums:\\[\\d+\\] consumer:");
+	private final static Pattern dgPattern = Pattern.compile("CODE:[\\s\\S\\t]*1[\\s\\S\\t]*DESC:[\\s\\S\\t]+queueId\\[\\d+\\] is illegal, topic:\\[[a-zA-Z0-9-_]+\\] topicConfig\\.readQueueNums:\\[\\d+\\] consumer:");
 	
 	
 	private final AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
@@ -84,25 +89,26 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private final AtomicBoolean flowControlLoggerAccquired = new AtomicBoolean(false);
 	
+	private final com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.DefaultMQPullConsumer consumer;
 	
-	public DefaultMQConsumer() {
-		super();
-		postInit();
-	}
-
-	public DefaultMQConsumer(RPCHook rpcHook) {
-		super(rpcHook);
-		postInit();
-	}
-
-	public DefaultMQConsumer(String consumerGroup, RPCHook rpcHook) {
-		super(consumerGroup, rpcHook);
-		postInit();
-	}
-
+	private final ONSPullConsumer ONSPullConsumer;
+	
 	public DefaultMQConsumer(String consumerGroup) {
-		super(consumerGroup);
+		super();
+		
+		Properties consumerProperties = new Properties();
+        consumerProperties.setProperty(PropertyKeyConst.GROUP_ID, "");
+        consumerProperties.setProperty(PropertyKeyConst.AccessKey, "");
+        consumerProperties.setProperty(PropertyKeyConst.SecretKey, "");
+        consumerProperties.setProperty(PropertyKeyConst.NAMESRV_ADDR, "");
+        ONSPullConsumer = new ONSPullConsumer(consumerProperties);
+        consumer = ONSPullConsumer.getDefaultMQPullConsumer();
+
 		postInit();
+	}
+	
+	public com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.DefaultMQPullConsumer getRealConsumer() {
+		return this.consumer;
 	}
 	
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
@@ -123,9 +129,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		if(!onRunning.compareAndSet(false, true))
 			throw new RuntimeException("Consumer has been started before!!!");
 		
-		super.start();
+		ONSPullConsumer.start();
 
-		Set<MessageQueue> messageQueues = fetchSubscribeMessageQueues(focusTopic);
+		Set<MessageQueue> messageQueues = consumer.fetchSubscribeMessageQueues(focusTopic);
 		
 		matchQueue.clear();
 		dashboards.clear();
@@ -152,7 +158,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		logger.debug("Waiting all comsumer Thread quit... ");
 		logger.debug("All comsumer Thread has quit... ");
 
-		super.shutdown();
+		ONSPullConsumer.shutdown();
 	}
 	
 	public void syncOffsetToBroker() {
@@ -171,7 +177,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			}
 			boolean status = false;
 			try {
-				updateConsumeOffset(mq, localOffsetConsumed);
+				consumer.updateConsumeOffset(mq, localOffsetConsumed);
 				logger.debug("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
 				status = true;
 			} catch (MQClientException e) {
@@ -181,7 +187,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					controlStruct.offsetDirty.compareAndSet(false, true);
 			}
 		}
-		getOffsetStore().persistAll(matchQueue);
+		consumer.getOffsetStore().persistAll(matchQueue);
 		
 	}
 //	
@@ -217,7 +223,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				// thread will be unPark while end of the call to method `tryMarkCompletion`
 				LockSupport.park();
 			}
-		}, "processComsumedSequenceThread-" + this.getConsumerGroup());
+		}, "processComsumedSequenceThread-" + consumer.getConsumerGroup());
 		processComsumedSequenceThread.setDaemon(true);
 
 		// @Important the re-balance processing will panic if this thread is crash.
@@ -228,9 +234,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			do {
 				sleepmilliSecWrapper(1000l);
 				if(loop++%30 == 0)
-					logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
+					logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.consumer.getConsumerGroup(), DefaultMQConsumer.this.consumer.getInstanceName());
 				try {
-					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
+					fetchMessageQueuesInBalance = DefaultMQConsumer.this.consumer.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
 					e.printStackTrace();
 				}
@@ -240,7 +246,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				sleepmilliSecWrapper(2000l);
 				
 				try {
-					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
+					fetchMessageQueuesInBalance = DefaultMQConsumer.this.consumer.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
 					e.printStackTrace();
 				}
@@ -303,8 +309,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		long maxOffset;
 		long consumedOffset;
 		try {
-			maxOffset = maxOffset(mq);
-			consumedOffset = fetchConsumeOffset(mq, false);
+			maxOffset = consumer.maxOffset(mq);
+			consumedOffset = consumer.fetchConsumeOffset(mq, false);
 		} catch (MQClientException e3) {
 			throw new RuntimeException(e3);
 		}
@@ -331,7 +337,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 		PullResult pullResult;
 		try {
-			pullResult = pullBlockIfNotFound(mq, null, currentOffset, 32);
+			pullResult = consumer.pullBlockIfNotFound(mq, null, currentOffset, 32);
 		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
 			if(e instanceof MQBrokerException) {
 				// 1. 判断RocketMq在收缩readQueueNum过程中
@@ -498,7 +504,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			this.removedFlag = new AtomicBoolean(false);
 			
 			this.workThread = new Thread(ControlStruct.this::process,
-					String.format("DashboardWorkThread-%s-%d", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
+					String.format("DashboardWorkThread-%s-%d", DefaultMQConsumer.this.consumer.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
 			this.workThread.setDaemon(true);
 
 		}

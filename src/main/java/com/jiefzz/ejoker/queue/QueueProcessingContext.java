@@ -1,8 +1,8 @@
 package com.jiefzz.ejoker.queue;
 
 import com.jiefzz.ejoker.infrastructure.IMessageProcessContext;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
-import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
 
 public class QueueProcessingContext implements IMessageProcessContext {
 

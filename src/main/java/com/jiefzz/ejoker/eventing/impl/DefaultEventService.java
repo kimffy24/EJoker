@@ -254,7 +254,7 @@ public class DefaultEventService implements IEventService {
 	}
 
 	/**
-	 * * 这里是有CompletableFuture提供的任务链功能
+	 * * 这里是由CompletableFuture提供的任务链功能
 	 * @param context
 	 * @param consumingSequence
 	 * @return

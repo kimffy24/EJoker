@@ -1,4 +1,4 @@
-package com.jiefzz.equasar;
+package com.jiefzz.ejoker_support.equasar;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;

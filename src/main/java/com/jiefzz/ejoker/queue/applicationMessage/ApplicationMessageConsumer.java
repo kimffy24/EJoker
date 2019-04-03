@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.queue.applicationMessage;
 
 import java.nio.charset.Charset;
 
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +10,9 @@ import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
 import com.jiefzz.ejoker.infrastructure.varieties.applicationMessage.ProcessingApplicationMessage;
 import com.jiefzz.ejoker.queue.QueueProcessingContext;
-import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
-import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
+import com.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
@@ -36,9 +35,9 @@ public class ApplicationMessageConsumer {
 	@Dependence
 	private IScheduleService scheduleService;
 
-	private DefaultMQConsumer consumer;
+	private IConsumerWrokerAware consumer;
 
-	public ApplicationMessageConsumer useConsumer(DefaultMQConsumer consumer) {
+	public ApplicationMessageConsumer useConsumer(IConsumerWrokerAware consumer) {
 		this.consumer = consumer;
 		return this;
 	}
@@ -48,7 +47,7 @@ public class ApplicationMessageConsumer {
 		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
-		} catch (MQClientException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -68,7 +67,11 @@ public class ApplicationMessageConsumer {
 	}
 
 	public ApplicationMessageConsumer shutdown() {
-		consumer.shutdown();
+		try {
+			consumer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 	

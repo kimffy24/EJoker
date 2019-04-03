@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.queue.domainEvent;
 
 import java.nio.charset.Charset;
 
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +12,9 @@ import com.jiefzz.ejoker.infrastructure.IMessageProcessor;
 import com.jiefzz.ejoker.infrastructure.varieties.domainEventStreamMessage.ProcessingDomainEventStreamMessage;
 import com.jiefzz.ejoker.queue.QueueProcessingContext;
 import com.jiefzz.ejoker.queue.SendReplyService;
-import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
-import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
+import com.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
@@ -51,13 +50,9 @@ public class DomainEventConsumer implements IWorkerService {
 
 	private final boolean sendEventHandledMessage = true;
 
-	private DefaultMQConsumer consumer;
+	private IConsumerWrokerAware consumer;
 
-	public DefaultMQConsumer getConsumer() {
-		return consumer;
-	}
-
-	public DomainEventConsumer useConsumer(DefaultMQConsumer consumer) {
+	public DomainEventConsumer useConsumer(IConsumerWrokerAware consumer) {
 		this.consumer = consumer;
 		return this;
 	}
@@ -66,7 +61,7 @@ public class DomainEventConsumer implements IWorkerService {
 		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
-		} catch (MQClientException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -86,7 +81,11 @@ public class DomainEventConsumer implements IWorkerService {
 	}
 
 	public DomainEventConsumer shutdown() {
-		consumer.shutdown();
+		try {
+			consumer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		/// #fix 180920 register sync offset task
 		{

@@ -2,7 +2,6 @@ package com.jiefzz.ejoker.queue.publishableExceptions;
 
 import java.nio.charset.Charset;
 
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +10,9 @@ import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
 import com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.ProcessingPublishableExceptionMessage;
 import com.jiefzz.ejoker.queue.QueueProcessingContext;
-import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
-import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
+import com.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
@@ -37,9 +36,9 @@ public class PublishableExceptionConsumer {
 	@Dependence
 	private IScheduleService scheduleService;
 
-	private DefaultMQConsumer consumer;
+	private IConsumerWrokerAware consumer;
 
-	public PublishableExceptionConsumer useConsumer(DefaultMQConsumer consumer) {
+	public PublishableExceptionConsumer useConsumer(IConsumerWrokerAware consumer) {
 		this.consumer = consumer;
 		return this;
 	}
@@ -49,7 +48,7 @@ public class PublishableExceptionConsumer {
 		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
-		} catch (MQClientException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -69,7 +68,11 @@ public class PublishableExceptionConsumer {
 	}
 
 	public PublishableExceptionConsumer shutdown() {
-		consumer.shutdown();
+		try {
+			consumer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 	

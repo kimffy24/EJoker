@@ -3,7 +3,6 @@ package com.jiefzz.ejoker.queue.domainEvent;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +13,8 @@ import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.queue.ITopicProvider;
 import com.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import com.jiefzz.ejoker.queue.SendQueueMessageService;
-import com.jiefzz.ejoker.queue.completation.DefaultMQProducer;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
@@ -41,13 +40,9 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	@Dependence
 	private SendQueueMessageService sendQueueMessageService;
 	
-	private DefaultMQProducer producer;
+	private IProducerWrokerAware producer;
 	
-	public DefaultMQProducer getProducer() {
-		return producer;
-	}
-	
-	public DomainEventPublisher useProducer(DefaultMQProducer producer) {
+	public DomainEventPublisher useProducer(IProducerWrokerAware producer) {
 		this.producer = producer;
 		return this;
 	}
@@ -55,7 +50,7 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	public DomainEventPublisher start() {
 		try {
 			producer.start();
-		} catch (MQClientException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -63,7 +58,11 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	}
 
 	public DomainEventPublisher shutdown() {
-		producer.shutdown();
+		try {
+			producer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 

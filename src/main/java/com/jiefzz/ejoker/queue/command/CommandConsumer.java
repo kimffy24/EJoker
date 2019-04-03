@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,18 +22,18 @@ import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
 import com.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import com.jiefzz.ejoker.queue.SendReplyService;
-import com.jiefzz.ejoker.queue.completation.DefaultMQConsumer;
-import com.jiefzz.ejoker.queue.completation.EJokerQueueMessage;
-import com.jiefzz.ejoker.queue.completation.IEJokerQueueMessageContext;
+import com.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
+import com.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
+import com.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
 import com.jiefzz.ejoker.z.common.ArgumentNullException;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.service.IWorkerService;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.RipenFuture;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
@@ -75,13 +74,9 @@ public class CommandConsumer implements IWorkerService {
 
 	///
 
-	private DefaultMQConsumer consumer;
+	private IConsumerWrokerAware consumer;
 
-	public DefaultMQConsumer getConsumer() {
-		return consumer;
-	}
-
-	public CommandConsumer useConsumer(DefaultMQConsumer consumer) {
+	public CommandConsumer useConsumer(IConsumerWrokerAware consumer) {
 		this.consumer = consumer;
 		return this;
 	}
@@ -103,7 +98,7 @@ public class CommandConsumer implements IWorkerService {
 		consumer.registerEJokerCallback(this::handle);
 		try {
 			consumer.start();
-		} catch (MQClientException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -124,7 +119,11 @@ public class CommandConsumer implements IWorkerService {
 	}
 
 	public CommandConsumer shutdown() {
-		consumer.shutdown();
+		try {
+			consumer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return this;
 	}
@@ -246,9 +245,6 @@ public class CommandConsumer implements IWorkerService {
 				return (T) aggregateRoot;
 			}
 			
-			if(null == aggregateRoot)
-				System.err.println(String.format("======================== aggregate is null!!! id: %s, type: %s, tryFromCache: %s", id.toString(), clazz.getName(), (tryFromCache?"true":"false")));
-
 			return null;
 		}
 
