@@ -248,20 +248,6 @@ public class CommandConsumer implements IWorkerService {
 			return null;
 		}
 
-		@Override
-		public void onCommandExecuted(CommandResult commandResult) {
-
-			messageContext.onMessageHandled(/*message*/);
-
-			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return;
-
-			sendReplyService
-					.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult, commandMessage.replyAddress)
-					.get();
-
-		}
-
 	}
 
 }

@@ -179,12 +179,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		getOffsetStore().persistAll(matchQueue);
 		
 	}
-//	
-//	public void useSubmiter(IVoidFunction1<IVoidFunction> sumbiter) {
-//		if(onRunning.get())
-//			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
-//		this.sumbiter = sumbiter;
-//	}
 	
 	/**
 	 * 1 返回值boolean是否要求流控 true:是 false:不是
@@ -408,7 +402,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 		if(null != controlStruct.aheadCompletion.putIfAbsent(comsumedOffset, ""))
 			throw new RuntimeException();
-		logger.error("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
+		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
 		
 		LockSupport.unpark(processComsumedSequenceThread);
 		
@@ -454,11 +448,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	private void dispatchMessage(final EJokerQueueMessage queueMessage, final EJokerQueueMessageContextImpl context) {
-
-//		sumbiter.trigger(() -> 
-			messageProcessor.trigger(queueMessage, context)
-//		)
-		;
+		messageProcessor.trigger(queueMessage, context);
 	}
 
 	private final class ControlStruct {

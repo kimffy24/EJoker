@@ -12,5 +12,4 @@ public interface ICommandExecuteContext extends ICommandContext, ITrackingContex
 
 	public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult);
 
-	public void onCommandExecuted(CommandResult commandResult);
 }
