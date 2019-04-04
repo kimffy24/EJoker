@@ -37,7 +37,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 				threadPoolSize,
 				0l,
 				TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>(1),
+				new LinkedBlockingQueue<Runnable>(threadPoolSize),
 				new ThreadFactory() {
 					private final AtomicLong threadIndex = new AtomicLong(0);
 					private final String threadNamePrefix;

@@ -39,7 +39,7 @@ public class ProcessingCommandMailbox {
 
 	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 
-	private final AtomicLong nextSequence = new AtomicLong(0l);
+	private long nextSequence = 0l;
 
 	private long consumingSequence = 0l;
 
@@ -60,11 +60,11 @@ public class ProcessingCommandMailbox {
 	}
 	
 	public long getMaxMessageSequence() {
-		return nextSequence.get() - 1;
+		return nextSequence - 1;
 	}
 	
 	public long getTotalUnConsumedMessageCount() {
-    	return nextSequence.get() - 1 - consumingSequence;
+    	return nextSequence - 1 - consumingSequence;
 	}
 
 	public String getAggregateRootId() {
@@ -87,10 +87,10 @@ public class ProcessingCommandMailbox {
 	public void enqueueMessage(ProcessingCommand message) {
 		LockWrapper.lock(enqueueLock);
 		try {
-			message.setSequence(nextSequence.get());
+			message.setSequence(nextSequence);
 			message.setMailbox(this);
 			if (null == messageDict.putIfAbsent(message.getSequence(), message))
-				nextSequence.incrementAndGet();
+				nextSequence++;
 		} finally {
 			LockWrapper.unlock(enqueueLock);
 		}
@@ -165,7 +165,7 @@ public class ProcessingCommandMailbox {
 		try {
 			isProcessingCommand.set(true);
 			int count = 0;
-			while (consumingSequence < nextSequence.get() && count < batchSize) {
+			while (consumingSequence < nextSequence && count < batchSize) {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
 					// TODO @await
@@ -183,7 +183,7 @@ public class ProcessingCommandMailbox {
 		} finally {
 			isProcessingCommand.set(false);
 			exit();
-			if (consumingSequence < nextSequence.get()) {
+			if (consumingSequence < nextSequence) {
 				tryRun();
 			}
 		}
