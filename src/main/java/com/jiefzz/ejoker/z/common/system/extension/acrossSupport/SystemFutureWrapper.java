@@ -53,6 +53,7 @@ public class SystemFutureWrapper<TResult> {
 			Throwable cause = ee.getCause();
 			if(null == cause) {
 				ee.printStackTrace();
+				throw new AsyncWrapperException(ee);
 			}
 			throw new AsyncWrapperException(cause);
 		}
@@ -63,8 +64,15 @@ public class SystemFutureWrapper<TResult> {
 	public TResult get(long timeout, TimeUnit unit) {
 		try {
 			return refFuture.get(timeout, unit);
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+		} catch (InterruptedException | TimeoutException e) {
 			throw new AsyncWrapperException(e);
+		} catch (ExecutionException ee) {
+			Throwable cause = ee.getCause();
+			if(null == cause) {
+				ee.printStackTrace();
+				throw new AsyncWrapperException(ee);
+			}
+			throw new AsyncWrapperException(cause);
 		}
 	}
 

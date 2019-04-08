@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import com.jiefzz.ejoker.commanding.ICommand;
 import com.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import com.jiefzz.ejoker.commanding.ICommandProcessor;
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
+import com.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
 import com.jiefzz.ejoker.domain.IAggregateStorage;
 import com.jiefzz.ejoker.domain.IRepository;
@@ -41,7 +43,6 @@ import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 @EService
 public class CommandConsumer implements IWorkerService {
 
-	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
@@ -81,7 +82,14 @@ public class CommandConsumer implements IWorkerService {
 		return this;
 	}
 	
+	private AtomicLong al1 = new AtomicLong(), al2 = new AtomicLong(), al3 = new AtomicLong(), al4 = new AtomicLong();
+	
+	public void D1() {
+		logger.error("pre process: {}, post process: {}, cmdProcess: {}, pre onComplete: {}, post onComplete: {}", al1.get(), al2.get(), ProcessingCommandMailbox.alx.get(), al3.get(), al4.get());
+	}
+	
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
+		al1.incrementAndGet();
 		// Here QueueMessage is a carrier of Command
 		// separate it from QueueMessage；
 		HashMap<String, String> commandItems = new HashMap<>();
@@ -92,6 +100,7 @@ public class CommandConsumer implements IWorkerService {
 		CommandExecuteContext commandExecuteContext = new CommandExecuteContext(queueMessage, context, commandMessage);
 		commandItems.put("CommandReplyAddress", commandMessage.replyAddress);
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
+		al2.incrementAndGet();
 	}
 
 	public CommandConsumer start() {
@@ -160,8 +169,9 @@ public class CommandConsumer implements IWorkerService {
 
 		@Override
 		public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult) {
-
+			CommandConsumer.this.al3.incrementAndGet();
 			messageContext.onMessageHandled(/*message*/);
+			CommandConsumer.this.al4.incrementAndGet();
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return SystemFutureWrapperUtil.createCompleteFuture();

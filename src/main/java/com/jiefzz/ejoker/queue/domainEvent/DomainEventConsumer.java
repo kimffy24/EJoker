@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.queue.domainEvent;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +96,19 @@ public class DomainEventConsumer implements IWorkerService {
 		
 		return this;
 	}
+	
+	public Object getDeeplyConsumer() {
+		return consumer;
+	}
+	
+	private AtomicLong dex0 = new AtomicLong(0l), dex1 = new AtomicLong(0l), dex2 = new AtomicLong(0l), dex3 = new AtomicLong(0l);
+	
+	public void D1() {
+		logger.error("pre process dex0: {}, post process dex1: {}, pre onComplete: {}, post onComplete: {}", dex0.get(), dex1.get(), dex2.get(), dex3.get());
+	}
 
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
+		dex0.incrementAndGet();
 		String messageBody = new String(queueMessage.body, Charset.forName("UTF-8"));
 		EventStreamMessage message = jsonSerializer.revert(messageBody, EventStreamMessage.class);
 		DomainEventStreamMessage domainEventStreamMessage = convertToDomainEventStream(message);
@@ -109,6 +121,7 @@ public class DomainEventConsumer implements IWorkerService {
 				domainEventStreamMessage.getAggregateRootTypeName(),
 				domainEventStreamMessage.getVersion());
 		processor.process(processingMessage);
+		dex1.incrementAndGet();
 	}
 
 	private DomainEventStreamMessage convertToDomainEventStream(EventStreamMessage message) {
@@ -120,7 +133,7 @@ public class DomainEventConsumer implements IWorkerService {
 		return domainEventStreamMessage;
 	}
 
-	public final static class DomainEventStreamProcessContext extends QueueProcessingContext {
+	public final class DomainEventStreamProcessContext extends QueueProcessingContext {
 
 		private final DomainEventConsumer eventConsumer;
 		
@@ -136,7 +149,9 @@ public class DomainEventConsumer implements IWorkerService {
 
 		@Override
 		public void notifyMessageProcessed() {
+			dex2.incrementAndGet();
 			super.notifyMessageProcessed();
+			dex3.incrementAndGet();
 
 			if (!eventConsumer.sendEventHandledMessage)
 				return;

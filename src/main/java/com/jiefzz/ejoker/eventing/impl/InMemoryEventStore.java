@@ -130,15 +130,13 @@ public class InMemoryEventStore implements IEventStore {
 		Map<String, DomainEventStream> aggregateEventStore = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId,
 				ConcurrentHashMap::new);
 
-		boolean hasPrevous = false;
-		hasPrevous |= null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream);
-		hasPrevous |= null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream);
-
-		if (hasPrevous)
+		if (null != aggregateEventStore.putIfAbsent(eventStream.getCommandId(), eventStream))
+			return EventAppendResult.DuplicateCommand;
+		if (null != aggregateEventStore.putIfAbsent("" + eventStream.getVersion(), eventStream)) {
+			aggregateEventStore.remove(eventStream.getCommandId());
 			return EventAppendResult.DuplicateEvent;
-		else {
-			return EventAppendResult.Success;
 		}
+		return EventAppendResult.Success;
 	}
 	
 }

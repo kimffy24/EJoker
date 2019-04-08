@@ -35,7 +35,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	private final static Logger logger = LoggerFactory.getLogger(NettyRPCServiceImpl.class);
 
-	private final static long clientInactiveMilliseconds = 15000l;
+//	private final static long clientInactiveMilliseconds = 15000l;
+	private final static long clientInactiveMilliseconds = Long.MAX_VALUE;
 	
 	@Dependence
 	private Scavenger scavenger;

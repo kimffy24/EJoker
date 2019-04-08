@@ -29,34 +29,42 @@ public class ProcessingCommandMailbox {
 
 	private final IProcessingCommandHandler messageHandler;
 
-	private final Object enqueueLock = LockWrapper.createLock();
+	public final Object enqueueLock = LockWrapper.createLock();
 
-	private final Object asyncLock = LockWrapper.createLock();
+	public final Object asyncLock = LockWrapper.createLock();
 
-	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
+	public final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
-	private final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<>();
+	public final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<>();
 
 	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 
-	private long nextSequence = 0l;
+	public long nextSequence = 0l;
 
-	private long consumingSequence = 0l;
+	public long consumingSequence = 0l;
 
-	private long consumedSequence = -1l;
+	public long consumedSequence = -1l;
 
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
-	private AtomicBoolean onPaused = new AtomicBoolean(false);
+	public AtomicBoolean onPaused = new AtomicBoolean(false);
 
-	private AtomicBoolean isProcessingCommand = new AtomicBoolean(false);
+	private AtomicBoolean onProcessing = new AtomicBoolean(false);
 
 	private final String aggregateRootId;
 
-	private long lastActiveTime = System.currentTimeMillis();
+	public long lastActiveTime = System.currentTimeMillis();
+	
+	public final static AtomicLong alx = new AtomicLong(0l);
+
+	public final static AtomicLong aly = new AtomicLong(0l);
 
 	public boolean onRunning() {
 		return onRunning.get();
+	}
+	
+	public AtomicBoolean onProcessingFlag() {
+		return onProcessing;
 	}
 	
 	public long getMaxMessageSequence() {
@@ -89,8 +97,10 @@ public class ProcessingCommandMailbox {
 		try {
 			message.setSequence(nextSequence);
 			message.setMailbox(this);
-			if (null == messageDict.putIfAbsent(message.getSequence(), message))
+			if (null == messageDict.putIfAbsent(message.getSequence(), message)) {
+				aly.incrementAndGet();
 				nextSequence++;
+			}
 		} finally {
 			LockWrapper.unlock(enqueueLock);
 		}
@@ -101,11 +111,11 @@ public class ProcessingCommandMailbox {
 	public void pause() {
 		lastActiveTime = System.currentTimeMillis();
 		onPaused.set(true);
-		AcquireHelper.waitAcquire(
-				isProcessingCommand,
-				250l, // 1000l,
-				() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", aggregateRootId)
-		);
+		// AcquireHelper.waitAcquire(
+		// 		onProcessing,
+		// 		250l, // 1000l,
+		// 		() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", aggregateRootId)
+		// );
 	}
 
 	public void resume() {
@@ -163,11 +173,12 @@ public class ProcessingCommandMailbox {
 		ProcessingCommand processingCommand = null;
 
 		try {
-			isProcessingCommand.set(true);
+			onProcessing.set(true);
 			int count = 0;
 			while (consumingSequence < nextSequence && count < batchSize) {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
+					alx.incrementAndGet();
 					// TODO @await
 					await(messageHandler.handle(processingCommand));
 				}
@@ -181,7 +192,7 @@ public class ProcessingCommandMailbox {
 					ex);
 			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 1l);
 		} finally {
-			isProcessingCommand.set(false);
+			onProcessing.set(false);
 			exit();
 			if (consumingSequence < nextSequence) {
 				tryRun();
@@ -193,7 +204,7 @@ public class ProcessingCommandMailbox {
 	 * 单位：毫秒
 	 */
 	public boolean isInactive(long timeoutMilliseconds) {
-		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+		return (!messageDict.isEmpty()) && System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 
 	/* ========================== */
@@ -227,7 +238,7 @@ public class ProcessingCommandMailbox {
 		}
 	}
 
-	private void tryRun() {
+	public void tryRun() {
 		if (tryEnter()) {
 			systemAsyncHelper.submit(this::run);
 		}

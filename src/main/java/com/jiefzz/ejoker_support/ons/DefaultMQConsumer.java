@@ -472,7 +472,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		;
 	}
 
-	private final class ControlStruct {
+	public final class ControlStruct {
 		
 		private final MessageQueue mq;
 		

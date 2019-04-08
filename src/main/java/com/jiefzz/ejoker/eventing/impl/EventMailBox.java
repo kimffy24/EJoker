@@ -25,7 +25,7 @@ public class EventMailBox {
 	
 	private final String aggregateRootId;
 	
-	private final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<>();
+	public final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<>();
 	
 	private final IVoidFunction1<List<EventCommittingContext>> handleMessageAction;
 	
@@ -124,7 +124,7 @@ public class EventMailBox {
 	 * 单位：毫秒
 	 */
 	public boolean isInactive(long timeoutMilliseconds) {
-		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+		return null == messageQueue.peek() && System.currentTimeMillis() - lastActiveTime > timeoutMilliseconds;
 	}
 
     private boolean tryEnter() {

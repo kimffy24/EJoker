@@ -5,7 +5,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,40 +38,46 @@ public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
 	
-	private final static AtomicInteger poolIndex = new AtomicInteger(0);
+//	private final static AtomicInteger poolIndex = new AtomicInteger(0);
 	
-	private final ThreadPoolExecutor retryExecutorService = new MixedThreadPoolExecutor(
-			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
-			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
-			0l, TimeUnit.MICROSECONDS,
-			new LinkedBlockingQueue<Runnable>(),
-			new ThreadFactory() {
-
-				private final AtomicInteger threadIndex = new AtomicInteger(0);
-
-				private final ThreadGroup group;
-
-				private final String namePrefix;
-
-				{
-
-					SecurityManager s = System.getSecurityManager();
-					group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-					namePrefix = "EJokerIORetry-" + poolIndex.incrementAndGet() + "-thread-";
-				}
-
-				@Override
-				public Thread newThread(Runnable r) {
-					Thread t = new Thread(null, r, namePrefix + threadIndex.getAndIncrement(), 0);
-					if (t.isDaemon())
-						t.setDaemon(false);
-					if (t.getPriority() != Thread.NORM_PRIORITY)
-						t.setPriority(Thread.NORM_PRIORITY);
-
-					return t;
-				}
-
-			});
+	public AtomicLong cc = new AtomicLong(0l);
+	
+	public AtomicLong dd = new AtomicLong(0l);
+	
+//	private final ThreadPoolExecutor retryExecutorService = new MixedThreadPoolExecutor(
+//			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
+//			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
+//			0l, TimeUnit.MICROSECONDS,
+//			new LinkedBlockingQueue<Runnable>(),
+//			new ThreadFactory() {
+//
+//				private final AtomicInteger threadIndex = new AtomicInteger(0);
+//
+//				private final ThreadGroup group;
+//
+//				private final String namePrefix;
+//
+//				{
+//
+//					SecurityManager s = System.getSecurityManager();
+//					group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+//					namePrefix = "EJokerIORetry-" + poolIndex.incrementAndGet() + "-thread-";
+//				}
+//
+//				@Override
+//				public Thread newThread(Runnable r) {
+//					Thread t = new Thread(null, r, namePrefix + threadIndex.getAndIncrement(), 0);
+//					if (t.isDaemon())
+//						t.setDaemon(false);
+//					if (t.getPriority() != Thread.NORM_PRIORITY)
+//						t.setPriority(Thread.NORM_PRIORITY);
+//
+//					return t;
+//				}
+//
+//			},
+//			new ThreadPoolExecutor.CallerRunsPolicy());
+	
 
 	/**
 	 * ioHelper自身线程池服務主要目的还是为了IO重试<br>
@@ -86,7 +94,7 @@ public class IOHelper {
 	 */
 	@EInitialize
 	private void init() {
-		scavenger.addFianllyJob(retryExecutorService::shutdown);
+//		scavenger.addFianllyJob(retryExecutorService::shutdown);
 	}
 
 	public <T> void tryAsyncAction2(
@@ -95,30 +103,33 @@ public class IOHelper {
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction) {
-		tryAsyncAction2(
+//		tryAsyncAction2(
+//				actionName,
+//				mainAction,
+//				null,
+//				completeAction,
+//				contextInfo,
+//				faildAction);
+//	}
+//
+//	public <T> void tryAsyncAction2(
+//			String actionName,
+//			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+//			IVoidFunction1<IOHelperContext<T>> loopAction,
+//			IVoidFunction1<T> completeAction,
+//			IFunction<String> contextInfo,
+//			IVoidFunction1<Exception> faildAction) {
+		IOHelperContext<T> ioHelperContext = new IOHelperContext<>(
+//				this,
 				actionName,
 				mainAction,
-				null,
+//				loopAction,
 				completeAction,
 				contextInfo,
 				faildAction);
-	}
-
-	public <T> void tryAsyncAction2(
-			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-			IVoidFunction1<IOHelperContext<T>> loopAction,
-			IVoidFunction1<T> completeAction,
-			IFunction<String> contextInfo,
-			IVoidFunction1<Exception> faildAction) {
-		taskContinueAction(new IOHelperContext<>(
-				this,
-				actionName,
-				mainAction,
-				loopAction,
-				completeAction,
-				contextInfo,
-				faildAction));
+		do {
+			taskContinueAction(ioHelperContext);
+		} while(!ioHelperContext.isFinish());
 	}
 	
 	/**
@@ -137,33 +148,36 @@ public class IOHelper {
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction,
 			boolean retryWhenFailed) {
-		tryAsyncAction2(
+//		tryAsyncAction2(
+//				actionName,
+//				mainAction,
+//				null,
+//				completeAction,
+//				contextInfo,
+//				faildAction,
+//				retryWhenFailed);
+//	}
+//
+//	public <T> void tryAsyncAction2(
+//			String actionName,
+//			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+//			IVoidFunction1<IOHelperContext<T>> loopAction,
+//			IVoidFunction1<T> completeAction,
+//			IFunction<String> contextInfo,
+//			IVoidFunction1<Exception> faildAction,
+//			boolean retryWhenFailed) {
+		IOHelperContext<T> ioHelperContext = new IOHelperContext<>(
+//				this,
 				actionName,
 				mainAction,
-				null,
+//				loopAction,
 				completeAction,
 				contextInfo,
 				faildAction,
 				retryWhenFailed);
-	}
-
-	public <T> void tryAsyncAction2(
-			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-			IVoidFunction1<IOHelperContext<T>> loopAction,
-			IVoidFunction1<T> completeAction,
-			IFunction<String> contextInfo,
-			IVoidFunction1<Exception> faildAction,
-			boolean retryWhenFailed) {
-		taskContinueAction(new IOHelperContext<>(
-				this,
-				actionName,
-				mainAction,
-				loopAction,
-				completeAction,
-				contextInfo,
-				faildAction,
-				retryWhenFailed));
+		do {
+			taskContinueAction(ioHelperContext);
+		} while(!ioHelperContext.isFinish());
 	}
 
 	public <T> void taskContinueAction(IOHelperContext<T> externalContext) {
@@ -215,6 +229,7 @@ public class IOHelper {
 			switch (result.getStatus()) {
 			case Success:
 				externalContext.completeAction.trigger(result.getData());
+				externalContext.markFinish();
 				break;
 			case IOException:
 				logger.error(
@@ -278,14 +293,15 @@ public class IOHelper {
 
 	private <T> void executeRetryAction(IOHelperContext<T> externalContext) {
 		externalContext.currentRetryTimes++;
+		cc.getAndIncrement();
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
-				retryExecutorService.submit(() -> {
+//				retryExecutorService.submit(() -> {
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
-					externalContext.loopAction.trigger(externalContext);
-					});
+//					externalContext.loopAction.trigger(externalContext);
+//					});
 			} else {
-				externalContext.loopAction.trigger(externalContext);
+//				externalContext.loopAction.trigger(externalContext);
 			}
 		} catch (RuntimeException ex) {
 			logger.error(
@@ -307,7 +323,10 @@ public class IOHelper {
 	        				externalContext.actionName,
 	        				externalContext.contextInfo.trigger()),
 	        		ex);
-	    }
+	    } finally {
+			dd.getAndIncrement();
+			externalContext.markFinish();
+		}
 	}
 	
 	private static class IOHelperContext<T> {
@@ -337,7 +356,7 @@ public class IOHelper {
 		
 		protected final IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction;
 		
-		protected final IVoidFunction1<IOHelperContext<T>> loopAction;
+//		protected final IVoidFunction1<IOHelperContext<T>> loopAction;
 		
 		protected final IVoidFunction1<T> completeAction;
 		
@@ -345,23 +364,25 @@ public class IOHelper {
 		
 		protected final IVoidFunction1<Exception> faildAction;
 		
-		private IOHelper ioHelper = null;
+//		private IOHelper ioHelper = null;
+		
+		private final AtomicBoolean finishFlag = new AtomicBoolean(false);
 		
 		public IOHelperContext(
-				IOHelper ioHelper,
+//				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<IOHelperContext<T>> loopAction,
+//				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
 				boolean retryWhenFailed, int maxRetryTimes, long retryInterval) {
-			this.ioHelper = ioHelper;
+//			this.ioHelper = ioHelper;
 			this.actionName = actionName;
 			this.mainAction = mainAction;
-			this.loopAction = null == loopAction
-					? r -> r.ioHelper.taskContinueAction(r)
-					: loopAction;
+//			this.loopAction = null == loopAction
+//					? r -> r.ioHelper.taskContinueAction(r)
+//					: loopAction;
 			this.completeAction = completeAction;
 			this.contextInfo = contextInfo;
 			this.faildAction = faildAction;
@@ -372,41 +393,49 @@ public class IOHelper {
 		}
 
 		public IOHelperContext(
-				IOHelper ioHelper,
+//				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<IOHelperContext<T>> loopAction,
+//				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
 				boolean retryWhenFailed, int maxRetryTimes) {
-			this(ioHelper, actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
+			this(/*ioHelper, */actionName, mainAction, /*loopAction, */completeAction, contextInfo, faildAction,
 					retryWhenFailed, maxRetryTimes, 1000l);
 		}
 
 		public IOHelperContext(
-				IOHelper ioHelper,
+//				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<IOHelperContext<T>> loopAction,
+//				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction,
 				boolean retryWhenFailed) {
-			this(ioHelper, actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
+			this(/*ioHelper, */actionName, mainAction, /*loopAction, */completeAction, contextInfo, faildAction,
 					retryWhenFailed, 3);
 		}
 
 		public IOHelperContext(
-				IOHelper ioHelper,
+//				IOHelper ioHelper,
 				String actionName,
 				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
-				IVoidFunction1<IOHelperContext<T>> loopAction,
+//				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
 				IVoidFunction1<Exception> faildAction) {
-			this(ioHelper, actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
+			this(/*ioHelper, */actionName, mainAction, /*loopAction, */completeAction, contextInfo, faildAction,
 					false);
+		}
+		
+		public boolean isFinish() {
+			return this.finishFlag.get();
+		}
+		
+		protected void markFinish() {
+			this.finishFlag.set(true);
 		}
 	}
 }

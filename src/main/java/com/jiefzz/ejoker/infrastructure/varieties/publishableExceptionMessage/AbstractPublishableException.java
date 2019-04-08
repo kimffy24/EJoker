@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage;
 
-import com.jiefzz.ejoker.utils.EObjectId;
+import com.jiefzz.ejoker.utils.MObjectId;
 
 public abstract class AbstractPublishableException extends RuntimeException implements IPublishableException {
 
@@ -13,7 +13,7 @@ public abstract class AbstractPublishableException extends RuntimeException impl
 	private int sequence;
 	
 	public AbstractPublishableException() {
-        id = EObjectId.generateHexStringId();
+        id = MObjectId.get().toHexString();
         timestamp = System.currentTimeMillis();
         sequence = 1;
     }

@@ -69,8 +69,7 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 						sendResult.toString(), rMessage.getKeys(), messageId, version);
 				throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
 			}
-		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
 			logger.error(
 					"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
 					e.getMessage(), rMessage.getKeys(), messageId, version);
@@ -116,7 +115,6 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 					predispatchControl.lastMqsHashCode.set(mqsHashCode);
 				} catch (Exception e) {
 					logger.error(String.format("Create ConsistentHashShard faild for topic[name=%s]!!!", topic), e);
-					e.printStackTrace();
 				} finally {
 					// 无论哈希环更新/创建成功与否，都要释放等待线程
 					predispatchControl.release();

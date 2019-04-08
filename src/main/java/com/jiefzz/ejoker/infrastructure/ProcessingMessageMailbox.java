@@ -20,21 +20,21 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingMessageMailbox.class);
 
-	private final String routingKey;
+	public final String routingKey;
 
-	private volatile Map<Long, X> waitingMessageDict = null;
+	public volatile Map<Long, X> waitingMessageDict = null;
 	
-	private final Object waitingMessageDictCreate = LockWrapper.createLock();
+	public final Object waitingMessageDictCreate = LockWrapper.createLock();
 
-	private final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
+	public final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
 
 	private final IProcessingMessageScheduler<X, Y> scheduler;
 
 	private final IProcessingMessageHandler<X, Y> messageHandler;
 
-	private final AtomicBoolean onRunning = new AtomicBoolean(false);
+	public final AtomicBoolean onRunning = new AtomicBoolean(false);
 	
-	private long lastActiveTime = System.currentTimeMillis();
+	public long lastActiveTime = System.currentTimeMillis();
 	
 	public ProcessingMessageMailbox(final String routingKey, final IProcessingMessageScheduler<X, Y> scheduler,
 			final IProcessingMessageHandler<X, Y> messageHandler) {
@@ -116,7 +116,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	 * 单位：毫秒
 	 */
 	public boolean isInactive(long timeoutMilliseconds) {
-		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+		return null == messageQueue.peek() && System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 	
     private boolean tryExecuteWaitingMessage(X currentCompletedMessage) {

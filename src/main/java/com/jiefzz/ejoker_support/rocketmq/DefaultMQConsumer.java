@@ -61,9 +61,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 	private IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> messageProcessor = null;
 	
-	private Thread rebalanceMonitor = null;
+	public Thread rebalanceMonitor = null;
 
-	private Thread processComsumedSequenceThread = null;
+	public Thread processComsumedSequenceThread = null;
 	
 	private IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = null;
 
@@ -76,9 +76,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	 * 参数3 队列检查序数
 	 */
 	private IFunction3<Boolean, MessageQueue, Integer, Integer> flowControlSwitch = (m, c, n) -> false;
-	
-	private final AtomicBoolean flowControlLoggerAccquired = new AtomicBoolean(false);
-	
 	
 	public DefaultMQConsumer() {
 		super();
@@ -200,9 +197,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			}
 			while (onRunning.get()) {
 				dashboards.forEach((q, d) -> processComsumedSequence(d));
-				// 流控日志打印的许可检查，
-				// 每完成一个获得1个许可，同一时间最多1个许可，多于1个无效
-				flowControlLoggerAccquired.compareAndSet(false, true);
 				// thread will be unPark while end of the call to method `tryMarkCompletion`
 				LockSupport.park();
 			}
@@ -361,8 +355,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						int frezon = -1;
 						int cAmount = 0;
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), ++ frezon)) {
-							if(flowControlLoggerAccquired.compareAndSet(true, false))
-								logger.warn("Flow control protected! Amount of on processing message is {}", cAmount);
+							if(System.currentTimeMillis() % 30000l < 101l)
+								logger.warn("Flow control protected! queue: {}, processing message amount: {}, protect round: {}", mq.toString(), cAmount, frezon);
 							sleepmilliSecWrapper(100l);
 						}
 						consumingAmount.getAndIncrement();
@@ -387,7 +381,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				//		例如当期的queue的comsumedOffset=14325，而生产者持续堆积消息，
 				//		另到maxOffset到达1947760，在这个非常大的offset差的时候，broker可能丢弃并跳过中间堆积的消息
 				//		导致消费者跟不上，而这个情况又不知道如何对付。
-				logger.warn("[state: OFFSET_ILLEGAL, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
+				logger.warn("[state: OFFSET_ILLEGAL, queue: {}, offsetFetchLocal: {}, pullResult.getNextBeginOffset(): {}]", mq.toString(), currentOffset, pullResult.getNextBeginOffset());
 				sleepmilliSecWrapper(500l);
 			default:
 				assert false;
@@ -451,7 +445,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		messageProcessor.trigger(queueMessage, context);
 	}
 
-	private final class ControlStruct {
+	public final class ControlStruct {
 		
 		private final MessageQueue mq;
 		

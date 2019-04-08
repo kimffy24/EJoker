@@ -89,7 +89,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 			for(SystemFutureWrapper<AsyncTaskResult<Void>> f : futures) {
 				AsyncTaskResult<Void> future = f.get();
 				if (!AsyncTaskStatus.Success.equals(future.getStatus()))
-					throw new RuntimeException("");
+					throw new RuntimeException(future.getErrorMessage());
 			};
 		});
 	}
