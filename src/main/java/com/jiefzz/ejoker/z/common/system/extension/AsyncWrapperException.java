@@ -1,7 +1,7 @@
 package com.jiefzz.ejoker.z.common.system.extension;
 
 /**
- * 对异步任务中执行时出现的异常进行包装
+ * 对异步任务中执行时出现的异常进行包装<br>
  * * 这样吧所以checked和unchecked的异常都封装起来
  * @author kimffy
  *

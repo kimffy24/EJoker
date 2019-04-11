@@ -266,21 +266,23 @@ public class DefaultEventService implements IEventService {
 		final ICommand command = processingCommand.getMessage();
 		final ProcessingCommandMailbox commandMailBox = processingCommand.getMailbox();
 		
-		commandMailBox.pause();
-		
+		commandMailBox.pauseOnly();
+
 		// commandMailBox.pause() 与 commandMailBox.resume() 并不在成对的try-finally过程中
 		// 会不会出问题？
 		return CompletableFuture.supplyAsync(() -> {
 
-			AcquireHelper.waitAcquire(
-					commandMailBox.onProcessingFlag(),
-					250l, // 1000l,
-					() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", commandMailBox.getAggregateRootId())
-			);
-
+//			commandMailBox.pause();
+			
+			AcquireHelper.waitAcquire(commandMailBox.onProcessingFlag(), 10l, // 1000l,
+					r -> {
+						if (0 == r % 50)
+							logger.info(
+									"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
+									commandMailBox.getAggregateRootId());
+					});
 
 			DomainEventStream eventStream = context.getEventStream();
-
 			try {
 				// TODO @await
 				await(refreshAggregateMemoryCacheToLatestVersionAsync(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId()));

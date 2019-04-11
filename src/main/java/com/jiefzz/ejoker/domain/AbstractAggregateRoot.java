@@ -140,7 +140,8 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@Override
 	public List<IDomainEvent<?>> getChanges() {
 		List<IDomainEvent<?>> changes = new ArrayList<>();
-		changes.addAll(uncommittedEvents);
+		if(null != uncommittedEvents)
+			changes.addAll(uncommittedEvents);
 		return changes;
 	}
 

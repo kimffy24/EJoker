@@ -25,7 +25,7 @@ public class EventMailBox {
 	
 	private final String aggregateRootId;
 	
-	public final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<>();
+	private final Queue<EventCommittingContext> messageQueue = new ConcurrentLinkedQueue<>();
 	
 	private final IVoidFunction1<List<EventCommittingContext>> handleMessageAction;
 	
@@ -116,8 +116,8 @@ public class EventMailBox {
     }
 	
 	public void clear() {
-		// while(null != messageQueue.poll());
-		messageQueue.clear();
+		 while(null != messageQueue.poll())
+			 ;
 	}
 
 	/**

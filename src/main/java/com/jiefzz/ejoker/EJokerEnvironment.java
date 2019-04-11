@@ -140,7 +140,7 @@ public final class EJokerEnvironment {
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
 		
 		MAX_BATCH_COMMANDS =
-				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "16"));
+				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "1"));
 
 		MAX_BATCH_EVENTS =
 				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "32"));

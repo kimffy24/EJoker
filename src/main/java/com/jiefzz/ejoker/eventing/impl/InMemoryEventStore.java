@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.aliyun.openservices.shade.com.alibaba.rocketmq.logging.inner.Logger;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
@@ -117,7 +118,9 @@ public class InMemoryEventStore implements IEventStore {
 		for(long cursor = minVersion; cursor <= maxVersion; cursor++) {
 			DomainEventStream previous = aggregateEventStore.get("" + cursor);
 			if(null == previous) {
-				throw new RuntimeException(String.format("Event[aggregateId=%s, version=%d] is not exist!!!", aggregateRootId, cursor));
+				// 如果抛出异常，那么在处理重复命令或者事件的补偿时，无法对聚合重放以及更新更新内存版本
+				// throw new RuntimeException(String.format("Event[aggregateId=%s, version=%d] is not exist!!!", aggregateRootId, cursor));
+				break;
 			}
 			resultSet.add(previous);
 		}

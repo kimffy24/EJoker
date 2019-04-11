@@ -29,25 +29,25 @@ public class ProcessingCommandMailbox {
 
 	private final IProcessingCommandHandler messageHandler;
 
-	public final Object enqueueLock = LockWrapper.createLock();
+	private final Object enqueueLock = LockWrapper.createLock();
 
-	public final Object asyncLock = LockWrapper.createLock();
+	private final Object asyncLock = LockWrapper.createLock();
 
-	public final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
+	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
-	public final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<>();
+	private final Map<Long, CommandResult> requestToCompleteCommandDict = new HashMap<>();
 
 	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 
-	public long nextSequence = 0l;
+	private long nextSequence = 0l;
 
-	public long consumingSequence = 0l;
+	private long consumingSequence = 0l;
 
-	public long consumedSequence = -1l;
+	private long consumedSequence = -1l;
 
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
-	public AtomicBoolean onPaused = new AtomicBoolean(false);
+	private AtomicBoolean onPaused = new AtomicBoolean(false);
 
 	private AtomicBoolean onProcessing = new AtomicBoolean(false);
 
@@ -111,11 +111,18 @@ public class ProcessingCommandMailbox {
 	public void pause() {
 		lastActiveTime = System.currentTimeMillis();
 		onPaused.set(true);
-		// AcquireHelper.waitAcquire(
-		// 		onProcessing,
-		// 		250l, // 1000l,
-		// 		() -> logger.info("Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}", aggregateRootId)
-		// );
+		AcquireHelper.waitAcquire(onProcessing, 10l, // 1000l,
+				r -> {
+					if (0 == r % 50)
+						logger.info(
+								"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
+								aggregateRootId);
+				});
+	}
+
+	public void pauseOnly() {
+		lastActiveTime = System.currentTimeMillis();
+		onPaused.set(true);
 	}
 
 	public void resume() {
@@ -166,8 +173,11 @@ public class ProcessingCommandMailbox {
 
 		lastActiveTime = System.currentTimeMillis();
 		
-		AcquireHelper.waitAcquire(onPaused, 200l,
-				() -> logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}", aggregateRootId)
+		AcquireHelper.waitAcquire(onPaused, 11l,
+				r -> {
+					if(0 == r%49)
+						logger.info("Command mailbox is pausing and we should wait for a while, aggregateRootId: {}", aggregateRootId);
+				}
 		);
 
 		ProcessingCommand processingCommand = null;

@@ -40,10 +40,6 @@ public class IOHelper {
 	
 //	private final static AtomicInteger poolIndex = new AtomicInteger(0);
 	
-	public AtomicLong cc = new AtomicLong(0l);
-	
-	public AtomicLong dd = new AtomicLong(0l);
-	
 //	private final ThreadPoolExecutor retryExecutorService = new MixedThreadPoolExecutor(
 //			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
 //			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
@@ -293,7 +289,6 @@ public class IOHelper {
 
 	private <T> void executeRetryAction(IOHelperContext<T> externalContext) {
 		externalContext.currentRetryTimes++;
-		cc.getAndIncrement();
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
 //				retryExecutorService.submit(() -> {
@@ -324,7 +319,6 @@ public class IOHelper {
 	        				externalContext.contextInfo.trigger()),
 	        		ex);
 	    } finally {
-			dd.getAndIncrement();
 			externalContext.markFinish();
 		}
 	}

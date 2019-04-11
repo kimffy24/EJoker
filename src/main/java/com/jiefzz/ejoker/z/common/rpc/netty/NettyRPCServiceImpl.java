@@ -35,8 +35,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	private final static Logger logger = LoggerFactory.getLogger(NettyRPCServiceImpl.class);
 
-//	private final static long clientInactiveMilliseconds = 15000l;
-	private final static long clientInactiveMilliseconds = Long.MAX_VALUE;
+	private final static long clientInactiveMilliseconds = 15000l;
+//	private final static long clientInactiveMilliseconds = Long.MAX_VALUE;
 	
 	@Dependence
 	private Scavenger scavenger;
@@ -65,7 +65,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 				1000l);
 	}
 	
-	// @unsafe
+	// @unsafe on multiple thread process
 	@Override
 	public void export(IVoidFunction1<String> action, int port, boolean waitFinished) {
 		if (portMap.containsKey(port)) {
@@ -116,22 +116,21 @@ public class NettyRPCServiceImpl implements IRPCService {
 			portMap.put(port, currentTuple = new RPCTuple(action, ioThread));
 			// sync: start一定要放在注册portMap之后进行。
 			ioThread.start();
+			if(waitFinished)
+				currentTuple.initialFuture.get();
 		} else {
 			if(waitFinished) {
 				while(null == (currentTuple = portMap.get(port)))
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 10l);
 			}
 		}
-		
-		if(waitFinished)
-			currentTuple.initialFuture.get();
 			
 	}
 
-	// @unsafe
+	// @unsafe on multiple thread process
 	@Override
 	public void removeExport(int port) {
-		AtomicBoolean atomicBoolean = serverPortOccupation.get(port);
+		AtomicBoolean atomicBoolean = MapHelper.getOrAdd(serverPortOccupation, port, AtomicBoolean::new);
 		if(!atomicBoolean.compareAndSet(true, false))
 			return;
 		IVoidFunction closeAction = closeHookTrigger.remove(port);
@@ -157,7 +156,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 				clientStore.put(host+":"+port, nettySimpleClient);
 			} else {
 				int loop = 0;
-				while (loop++<3 && null == (nettySimpleClient = clientStore.get(uniqueKey)))
+				while (loop++<5 && null == (nettySimpleClient = clientStore.get(uniqueKey)))
 					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
 				if(null == nettySimpleClient) {
 					return fetchNettySimpleClient(host, port);

@@ -60,7 +60,11 @@ public class SendQueueMessageService {
 		}
 
 	}
-
+	
+	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
+		return threadPoolExecutor.submit(vf::trigger);
+	}
+	
 	private ThreadPoolExecutor threadPoolExecutor;
 	
 	@EInitialize
@@ -76,10 +80,6 @@ public class SendQueueMessageService {
 			threadPoolExecutor.prestartAllCoreThreads();
 			scavenger.addFianllyJob(threadPoolExecutor::shutdown);
 		}
-	}
-	
-	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
-		return threadPoolExecutor.submit(vf::trigger);
 	}
 
 	private final static class SendThreadFactory implements ThreadFactory {

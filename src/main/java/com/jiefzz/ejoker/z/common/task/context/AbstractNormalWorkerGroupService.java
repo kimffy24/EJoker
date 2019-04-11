@@ -52,6 +52,17 @@ public abstract class AbstractNormalWorkerGroupService {
 			return null;
 		});
 	}
+	
+	protected <T> Future<T> submitInternal(IFunction<T> vf, boolean forceNewTask) {
+		return asyncPool.execute(vf::trigger, forceNewTask);
+	}
+
+	protected Future<Void> submitInternal(IVoidFunction vf, boolean forceNewTask) {
+		return asyncPool.execute(() -> {
+			vf.trigger();
+			return null;
+		}, forceNewTask);
+	}
 
 	protected static IAsyncEntrance getDefaultThreadPool(AbstractNormalWorkerGroupService service) {
 		return new SystemAsyncPool(service.usePoolSize(), service.prestartAll());

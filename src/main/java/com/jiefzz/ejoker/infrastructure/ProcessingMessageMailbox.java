@@ -12,21 +12,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingMessageMailbox.class);
-
-	public final String routingKey;
-
-	public volatile Map<Long, X> waitingMessageDict = null;
 	
-	public final Object waitingMessageDictCreate = LockWrapper.createLock();
+	private final String routingKey;
 
-	public final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
+	private final Map<Long, X> waitingMessageDict = new ConcurrentHashMap<>();
+	
+	private final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
 
 	private final IProcessingMessageScheduler<X, Y> scheduler;
 
@@ -63,17 +60,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		ISequenceMessage sequenceMessage = (message instanceof ISequenceMessage) ? (ISequenceMessage )message : null;
 		Ensure.notNull(sequenceMessage, "sequenceMessage");
 		
-		if(null == waitingMessageDict) {
-			LockWrapper.lock(waitingMessageDictCreate);
-			try {
-				while(null == waitingMessageDict) {
-					waitingMessageDict = new ConcurrentHashMap<>();
-				}
-			} finally {
-				LockWrapper.unlock(waitingMessageDictCreate);
-			}
-		}
-
 		lastActiveTime = System.currentTimeMillis();
 		waitingMessageDict.putIfAbsent(sequenceMessage.getVersion(), waitingMessage);
 		exit();

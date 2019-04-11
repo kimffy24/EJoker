@@ -138,17 +138,34 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	public void shutdown() {
 
-		onRunning.compareAndSet(true, false);
-		onPasue.compareAndSet(true, false);
-		
-		logger.debug("Waiting all comsumer Thread quit... ");
-		logger.debug("All comsumer Thread has quit... ");
-
-		super.shutdown();
+		Thread shutdownHook = new Thread(() -> {
+			if(onRunning.compareAndSet(true, false)) {
+				
+				super.shutdown();
+				
+				onPasue.compareAndSet(true, false);
+				
+				logger.debug("Waiting all comsumer Thread quit... [{}]", focusTopic);
+				dashboards.entrySet().stream().forEach(e -> {
+					ControlStruct dashboard = e.getValue();
+					while(dashboard.workThread.isAlive()) {
+						try {
+							TimeUnit.MILLISECONDS.sleep(50l);
+						} catch (InterruptedException e1) {
+						}
+					}
+				});
+				logger.debug("All comsumer Thread has quit... [{}]", focusTopic);
+			}
+		});
+		shutdownHook.setDaemon(true);
+		shutdownHook.start();
 	}
 	
 	public void syncOffsetToBroker() {
 		
+		if(!this.onRunning.get())
+			return;
 		if(this.onPasue.get())
 			return;
 		
@@ -215,12 +232,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
-					e.printStackTrace();
+					if(onRunning.get())
+						e.printStackTrace();
 				}
 			} while(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size());
 			while (DefaultMQConsumer.this.onRunning.get()) {
-
-				sleepmilliSecWrapper(2000l);
 				
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
@@ -228,42 +244,54 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					e.printStackTrace();
 				}
 
-				if (queueHash.get() == fetchMessageQueuesInBalance.hashCode())
-					continue;
-
-				onPasue.set(true);
-				int matchHashAfterReBalance = fetchMessageQueuesInBalance.hashCode();
-				for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
-					if (matchQueue.contains(rbmq)) {
-						// re-balance 选中 且本有的
-						ControlStruct current = dashboards.get(rbmq);
-						current.currentMatchHash.set(matchHashAfterReBalance);
-					} else {
-						// re-balance 选中 但本地没有的 (新增队列的情况)
-						ControlStruct current = createControlStruct(rbmq);
-						current.currentMatchHash.set(matchHashAfterReBalance);
-						current.workThread.start();
-					}
-				}
-				{
-					// 找出re-balance放弃的队列 并移除相关对象
-					Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
-					Iterator<Entry<MessageQueue, ControlStruct>> iterator = entrySet.iterator();
-					while (iterator.hasNext()) {
-						Entry<MessageQueue, ControlStruct> currentEntry = iterator.next();
-						ControlStruct current = currentEntry.getValue();
-						if (current.currentMatchHash.get() != matchHashAfterReBalance) {
-							// 从matchQueue中移除
-							matchQueue.remove(currentEntry.getKey());
-							// 从dashboards中移除
-							iterator.remove();
-							// 设置对应的worker退出标识
-							current.removedFlag.set(true);
+				if (queueHash.get() != fetchMessageQueuesInBalance.hashCode()) {
+					onPasue.set(true);
+					int matchHashAfterReBalance = fetchMessageQueuesInBalance.hashCode();
+					for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
+						if (matchQueue.contains(rbmq)) {
+							// re-balance 选中 且本有的
+							ControlStruct current = dashboards.get(rbmq);
+							current.currentMatchHash.set(matchHashAfterReBalance);
+						} else {
+							// re-balance 选中 但本地没有的 (新增队列的情况)
+							ControlStruct current = createControlStruct(rbmq);
+							current.currentMatchHash.set(matchHashAfterReBalance);
+							current.workThread.start();
 						}
 					}
+					{
+						// 找出re-balance放弃的队列 并移除相关对象
+						Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
+						Iterator<Entry<MessageQueue, ControlStruct>> iterator = entrySet.iterator();
+						while (iterator.hasNext()) {
+							Entry<MessageQueue, ControlStruct> currentEntry = iterator.next();
+							ControlStruct current = currentEntry.getValue();
+							if (current.currentMatchHash.get() != matchHashAfterReBalance) {
+								// 从matchQueue中移除
+								matchQueue.remove(currentEntry.getKey());
+								// 从dashboards中移除
+								iterator.remove();
+								// 设置对应的worker退出标识
+								current.removedFlag.set(true);
+							}
+						}
+					}
+					queueHash.set(fetchMessageQueuesInBalance.hashCode());
+					onPasue.set(false);
+					
+					{
+						if(logger.isInfoEnabled()) {
+							String queueAll = "";
+							for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
+								queueAll += String.format("[broker=%s, qId=%s], ", rbmq.getBrokerName(), rbmq.getQueueId());
+							}
+							logger.info("Topoc[topic={}] rbalance allocate: {}", focusTopic, queueAll);
+						}
+					}
+					
 				}
-				queueHash.set(fetchMessageQueuesInBalance.hashCode());
-				onPasue.set(false);
+				
+				sleepmilliSecWrapper(2000l);
 			}
 		});
 		rebalanceMonitor.setDaemon(true);
@@ -316,6 +344,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		try {
 			pullResult = pullBlockIfNotFound(mq, null, currentOffset, 32);
 		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
+			if(!onRunning.get()) {
+				// close.
+				return;
+			}
 			if(e instanceof MQBrokerException) {
 				// 1. 判断RocketMq在收缩readQueueNum过程中
 
@@ -534,8 +566,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	
 	private final class EJokerQueueMessageContextImpl implements IEJokerQueueMessageContext {
 		
-		public final MessageQueue mq;
-		public final long comsumedOffset;
+		private final MessageQueue mq;
+		
+		private final long comsumedOffset;
 
 		public EJokerQueueMessageContextImpl(MessageQueue mq, long comsumedOffset) {
 			this.mq = mq;
@@ -544,7 +577,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 		@Override
 		public void onMessageHandled() {
-			DefaultMQConsumer.this.tryMarkCompletion(mq, comsumedOffset);
+			DefaultMQConsumer.this.tryMarkCompletion(this.mq, this.comsumedOffset);
 		}
 		
 	}
