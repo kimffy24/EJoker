@@ -158,7 +158,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				logger.debug("All comsumer Thread has quit... [{}]", focusTopic);
 			}
 		});
-		shutdownHook.setDaemon(true);
 		shutdownHook.start();
 	}
 	

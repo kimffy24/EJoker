@@ -61,10 +61,8 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	}
 
 	@Override
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread,
-			boolean forceNewTask) {
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 		if (
-				(!forceNewTask) &&
 				Thread.currentThread().getName().startsWith(SystemAsyncPool.threadNamePrefix)
 				) {
 			// @important 1. 如果当前提交线程本来就是线程池中的线程，则由当前线程直接执行
@@ -99,11 +97,6 @@ public class SystemAsyncPool implements IAsyncEntrance {
 
 	public void shutdown() {
 		defaultThreadPool.shutdown();
-	}
-
-	@Override
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
-		return execute(asyncTaskThread, false);
 	}
 
 }

@@ -53,12 +53,8 @@ public class ProcessingCommandMailbox {
 
 	private final String aggregateRootId;
 
-	public long lastActiveTime = System.currentTimeMillis();
+	private long lastActiveTime = System.currentTimeMillis();
 	
-	public final static AtomicLong alx = new AtomicLong(0l);
-
-	public final static AtomicLong aly = new AtomicLong(0l);
-
 	public boolean onRunning() {
 		return onRunning.get();
 	}
@@ -98,7 +94,6 @@ public class ProcessingCommandMailbox {
 			message.setSequence(nextSequence);
 			message.setMailbox(this);
 			if (null == messageDict.putIfAbsent(message.getSequence(), message)) {
-				aly.incrementAndGet();
 				nextSequence++;
 			}
 		} finally {
@@ -123,6 +118,16 @@ public class ProcessingCommandMailbox {
 	public void pauseOnly() {
 		lastActiveTime = System.currentTimeMillis();
 		onPaused.set(true);
+	}
+	
+	public void waitAcquireOnProcessing() {
+		AcquireHelper.waitAcquire(onProcessing, 10l, // 1000l,
+				r -> {
+					if (0 == r % 50)
+						logger.info(
+								"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
+								aggregateRootId);
+				});
 	}
 
 	public void resume() {
@@ -188,7 +193,6 @@ public class ProcessingCommandMailbox {
 			while (consumingSequence < nextSequence && count < batchSize) {
 				processingCommand = messageDict.get(consumingSequence);
 				if (null != processingCommand) {
-					alx.incrementAndGet();
 					// TODO @await
 					await(messageHandler.handle(processingCommand));
 				}
@@ -248,7 +252,7 @@ public class ProcessingCommandMailbox {
 		}
 	}
 
-	public void tryRun() {
+	private void tryRun() {
 		if (tryEnter()) {
 			systemAsyncHelper.submit(this::run);
 		}

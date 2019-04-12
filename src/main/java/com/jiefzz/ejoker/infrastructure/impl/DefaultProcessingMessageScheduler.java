@@ -1,5 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.jiefzz.ejoker.infrastructure.IMessage;
 import com.jiefzz.ejoker.infrastructure.IMessageDispatcher;
 import com.jiefzz.ejoker.infrastructure.IProcessingMessage;
@@ -30,7 +32,7 @@ public class DefaultProcessingMessageScheduler<X extends IProcessingMessage<X, Y
 
 	@Override
 	public void scheduleMailbox(final ProcessingMessageMailbox<X, Y> mailbox) {
-		systemAsyncHelper.submit(mailbox::run);
+		CompletableFuture.runAsync(() -> systemAsyncHelper.submit(mailbox::run));
 	}
 
 }

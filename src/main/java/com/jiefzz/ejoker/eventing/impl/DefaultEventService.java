@@ -270,17 +270,11 @@ public class DefaultEventService implements IEventService {
 
 		// commandMailBox.pause() 与 commandMailBox.resume() 并不在成对的try-finally过程中
 		// 会不会出问题？
+		// #fix 把pause过程拆解为pauseOnly 和 waitAcquireOnProcessing两个过程 更符合java
 		return CompletableFuture.supplyAsync(() -> {
 
 //			commandMailBox.pause();
-			
-			AcquireHelper.waitAcquire(commandMailBox.onProcessingFlag(), 10l, // 1000l,
-					r -> {
-						if (0 == r % 50)
-							logger.info(
-									"Request to pause the command mailbox, but the mailbox is currently processing command, so we should wait for a while, aggregateRootId: {}",
-									commandMailBox.getAggregateRootId());
-					});
+			commandMailBox.waitAcquireOnProcessing();
 
 			DomainEventStream eventStream = context.getEventStream();
 			try {

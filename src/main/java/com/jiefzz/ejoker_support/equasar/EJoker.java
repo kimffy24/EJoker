@@ -76,12 +76,7 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 					}
 				}).start();
 			}
-
-			@Override
-			public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread,
-					boolean forceNewTask) {
-				return execute(asyncTaskThread);
-			}
+			
 		});
 		
 		LockWrapper.setProvider(

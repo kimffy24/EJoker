@@ -29,9 +29,9 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 
 	private final IProcessingMessageHandler<X, Y> messageHandler;
 
-	public final AtomicBoolean onRunning = new AtomicBoolean(false);
+	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 	
-	public long lastActiveTime = System.currentTimeMillis();
+	private long lastActiveTime = System.currentTimeMillis();
 	
 	public ProcessingMessageMailbox(final String routingKey, final IProcessingMessageScheduler<X, Y> scheduler,
 			final IProcessingMessageHandler<X, Y> messageHandler) {

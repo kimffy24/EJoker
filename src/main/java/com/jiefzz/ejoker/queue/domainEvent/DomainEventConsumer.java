@@ -124,7 +124,7 @@ public class DomainEventConsumer implements IWorkerService {
 		return domainEventStreamMessage;
 	}
 
-	public final class DomainEventStreamProcessContext extends QueueProcessingContext {
+	public final static class DomainEventStreamProcessContext extends QueueProcessingContext {
 
 		private final DomainEventConsumer eventConsumer;
 		

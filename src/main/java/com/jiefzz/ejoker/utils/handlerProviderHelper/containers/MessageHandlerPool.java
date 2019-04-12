@@ -176,7 +176,7 @@ public class MessageHandlerPool {
 						SystemFutureWrapper<AsyncTaskResult<Void>> result =
 								(SystemFutureWrapper<AsyncTaskResult<Void>> )handleReflectionMethod.invoke(getInnerObject(), message);
 						return result.get();
-					}catch (IllegalAccessException|IllegalArgumentException e) {
+					} catch (IllegalAccessException|IllegalArgumentException e) {
 						logger.error("Message handle async faild", e);
 						return new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage(), null);
 					} catch (InvocationTargetException e) {
