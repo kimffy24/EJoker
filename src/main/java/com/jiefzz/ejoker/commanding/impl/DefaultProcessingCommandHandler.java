@@ -86,7 +86,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(
-					"The aggregateId of commmandis null or empty! commandType=%s commandId=%s.", message.getTypeName(),
+					"The aggregateId of commmand is null or empty! commandType=%s commandId=%s.", message.getTypeName(),
 					message.getId());
 			logger.error(errorInfo);
 			return completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
@@ -355,7 +355,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishApplicationMessageAsync",
 				() -> applicationMessagePublisher.publishAsync(message),
 				r -> completeCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
-				() -> String.format("[application message:[id: %, type: %s],command:[id: %s, type: %s]]", message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
+				() -> String.format("[application message:[id: %s, type: %s],command:[id: %s, type: %s]]", message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
 				ex -> logger.error(String.format("Publish application message has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
 				true
 				);

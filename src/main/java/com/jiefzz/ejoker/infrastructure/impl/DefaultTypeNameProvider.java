@@ -33,7 +33,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 		
 		String postTypeName = null != decorator ? decorator.preGetType(typeName) : typeName;
 		
-		return MapHelper.getOrAdd(typeDict, postTypeName, () -> {
+		return MapHelper.getOrAdd(typeDict, typeName, () -> {
 			try {
 				return Class.forName(postTypeName);
 			} catch (ClassNotFoundException e) {

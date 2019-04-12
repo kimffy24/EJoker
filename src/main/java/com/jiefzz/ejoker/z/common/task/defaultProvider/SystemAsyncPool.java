@@ -24,20 +24,17 @@ public class SystemAsyncPool implements IAsyncEntrance {
 
 	private final ExecutorService defaultThreadPool;
 
-	private final int corePollSize;
-
 	public SystemAsyncPool(int threadPoolSize) {
 		this(threadPoolSize, false);
 	}
 
 	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
-		corePollSize = threadPoolSize;
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
 				threadPoolSize,
 				threadPoolSize,
 				0l,
 				TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>(1),
+				new LinkedBlockingQueue<>(),
 				new ThreadFactory() {
 					private final AtomicLong threadIndex = new AtomicLong(0);
 					private final String threadNamePrefix;
@@ -67,7 +64,6 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 		if (
 				Thread.currentThread().getName().startsWith(SystemAsyncPool.threadNamePrefix)
-				|| ((ThreadPoolExecutor) defaultThreadPool).getActiveCount() >= corePollSize
 				) {
 			// @important 1. 如果当前提交线程本来就是线程池中的线程，则由当前线程直接执行
 			// @important 2. 如果当前线程池的任务队列中有等待的任务，则由当前线程直接执行（可以视为线程池满载了，在提交任务前直接执行CallerRunsPolicy策略）

@@ -11,8 +11,6 @@ import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
 
-import co.paralleluniverse.fibers.SuspendExecution;
-
 /**
  * 包装一下使异步任务返回AsyncTaskResult&lt;T&gt;结构
  * @author kimffy
@@ -29,8 +27,6 @@ public class EJokerTaskAsyncHelper {
 			try {
 				vf.trigger();
 				return new AsyncTaskResult<>(AsyncTaskStatus.Success);
-//			} catch(SuspendExecution s) {
-//			      throw new AssertionError(s);
 			} catch (Exception ex) {
 				return new AsyncTaskResult<>(
 						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
@@ -46,8 +42,6 @@ public class EJokerTaskAsyncHelper {
 			try {
 				T r = vf.trigger();
 				return new AsyncTaskResult<>(AsyncTaskStatus.Success, null, r);
-//			} catch(SuspendExecution s) {
-//				throw new AssertionError(s);
 			} catch (Exception ex) {
 				return new AsyncTaskResult<>(
 						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),

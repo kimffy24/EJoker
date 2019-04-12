@@ -1,6 +1,7 @@
 package com.jiefzz.ejoker.infrastructure.impl;
 
-import java.util.ArrayList;
+import static com.jiefzz.ejoker.z.common.system.extension.LangUtil.await;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -14,8 +15,8 @@ import com.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPo
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EService;
 import com.jiefzz.ejoker.z.common.io.IOHelper;
-import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
+import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.AsyncTaskStatus;
@@ -78,19 +79,18 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 		/// 还是执行到此就返回?
 		return eJokerAsyncHelper.submit(() -> {
 
-			List<SystemFutureWrapper<AsyncTaskResult<Void>>> futures = new ArrayList<>();
-
 			// 对每个message寻找单独的handler进行单独调用。
 			for (IMessage msg : messages) {
-				SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessageResultSource = dispatchMessageAsync(msg);
-				futures.add(dispatchMessageResultSource);
-			}
 
-			for(SystemFutureWrapper<AsyncTaskResult<Void>> f : futures) {
-				AsyncTaskResult<Void> future = f.get();
-				if (!AsyncTaskStatus.Success.equals(future.getStatus()))
-					throw new RuntimeException("");
+				AsyncTaskResult<Void> result = await(dispatchMessageAsync(msg));
+				if (!AsyncTaskStatus.Success.equals(result.getStatus()))
+					throw new RuntimeException(result.getErrorMessage());
+				
 			};
+			
+			// 适配多个message的handler
+			// ...
+			
 		});
 	}
 }

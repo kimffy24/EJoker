@@ -76,6 +76,7 @@ public class EJoker extends com.jiefzz.ejoker.EJoker {
 					}
 				}).start();
 			}
+			
 		});
 		
 		LockWrapper.setProvider(

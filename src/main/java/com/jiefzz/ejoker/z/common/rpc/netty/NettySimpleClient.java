@@ -1,7 +1,13 @@
 package com.jiefzz.ejoker.z.common.rpc.netty;
 
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.jiefzz.ejoker.z.common.io.IOExceptionOnRuntime;
+import com.jiefzz.ejoker.z.common.system.wrapper.CountDownLatchWrapper;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -30,44 +36,67 @@ public class NettySimpleClient {
 	private SocketChannel socketChannel;
 
 	public NettySimpleClient(String host, int port) {
-		
-		eventLoopGroup = new NioEventLoopGroup();
-		Bootstrap bootstrap = new Bootstrap();
-		bootstrap.channel(NioSocketChannel.class)
-				// 保持连接
-				.option(ChannelOption.SO_KEEPALIVE, true)
-				// 有数据立即发送
-				.option(ChannelOption.TCP_NODELAY, true)
-				// 绑定处理group
-				.group(eventLoopGroup).remoteAddress(host, port).handler(new ChannelInitializer<SocketChannel>() {
-					@Override
-					protected void initChannel(SocketChannel socketChannel) throws Exception {
-
-						ChannelPipeline pipeline = socketChannel.pipeline();
-
-				        // 以("\n" or "\r\n")为结尾分割的 解码器
-						pipeline.addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
-
-						// 字符串解码 和 编码
-						pipeline.addLast("decoder", new StringDecoder());
-						pipeline.addLast("encoder", new StringEncoder());
-
-						pipeline.addLast("handler", new Handler4RpcClient());
-					}
-				});
-		// 进行连接
-		ChannelFuture future = bootstrap.connect(host, port).awaitUninterruptibly();
-		// 判断是否连接成功
-		if (future.isSuccess()) {
-			logger.debug("Client[to: {}:{} ] create success ...", host, port);
-			// 得到管道，便于通信
-			socketChannel = (SocketChannel) future.channel();
-		} else {
-			logger.debug("Client[to: {}:{} ] create faild ...", host, port);
-		}
 
 		clientDesc = host + ":" + port;
+		
+		eventLoopGroup = new NioEventLoopGroup();
+		
+		AtomicBoolean ready = new AtomicBoolean(false);
+		Object countDownLatch = CountDownLatchWrapper.newCountDownLatch();
+		
+		Thread clientHolder = new Thread(() -> {
+			try {
+				Bootstrap bootstrap = new Bootstrap();
+				bootstrap.channel(NioSocketChannel.class)
+						// 保持连接
+						.option(ChannelOption.SO_KEEPALIVE, true)
+						// 有数据立即发送
+						.option(ChannelOption.TCP_NODELAY, true)
+						// 绑定处理group
+						.group(eventLoopGroup).remoteAddress(host, port).handler(new ChannelInitializer<SocketChannel>() {
+							@Override
+							protected void initChannel(SocketChannel socketChannel) throws Exception {
+	
+								ChannelPipeline pipeline = socketChannel.pipeline();
+	
+						        // 以("\n" or "\r\n")为结尾分割的 解码器
+								pipeline.addLast("framer", new DelimiterBasedFrameDecoder(8192, Delimiters.lineDelimiter()));
+	
+								// 字符串解码 和 编码
+								pipeline.addLast("decoder", new StringDecoder());
+								pipeline.addLast("encoder", new StringEncoder());
+	
+								pipeline.addLast("handler", new Handler4RpcClient());
+							}
+						});
+				// 进行连接
+				ChannelFuture future = bootstrap.connect(host, port).awaitUninterruptibly();
+				lastInvokeTime = System.currentTimeMillis();
+				// 判断是否连接成功
+				if (future.isSuccess()) {
+					logger.debug("Client[to: {}:{} ] create success ...", host, port);
+					// 得到管道，便于通信
+					socketChannel = (SocketChannel )future.channel();
+					ready.set(true);
+					CountDownLatchWrapper.countDown(countDownLatch);
+					socketChannel.closeFuture().awaitUninterruptibly();
+				} else {
+					logger.debug("Client[to: {}:{} ] create faild ...", host, port);
+					CountDownLatchWrapper.countDown(countDownLatch);
+				}
+			} finally {
+				eventLoopGroup.shutdownGracefully();
+			}
+		}, "rpc:client:" + clientDesc);
+		clientHolder.setDaemon(true);
+		clientHolder.start();
+
 		lastInvokeTime = System.currentTimeMillis();
+		
+		CountDownLatchWrapper.await(countDownLatch);
+		if(!ready.get()) {
+			throw new IOExceptionOnRuntime(new IOException(String.format("Clien[to: %s] create faild!!!", clientDesc)));
+		}
 	}
 
 	public void sendMessage(Object msg) {
@@ -79,12 +108,9 @@ public class NettySimpleClient {
 	}
 
 	public void close() {
-		if (socketChannel == null) {
-			throw new RuntimeException("Not avaliable!!!");
+		if (socketChannel != null) {
+			socketChannel.close();
 		}
-		socketChannel.closeFuture().awaitUninterruptibly();
-		// 优雅地退出，释放相关资源
-		eventLoopGroup.shutdownGracefully();
 	}
 	
 	@Override

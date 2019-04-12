@@ -1,6 +1,6 @@
 package com.jiefzz.ejoker.infrastructure;
 
-import com.jiefzz.ejoker.utils.EObjectId;
+import com.jiefzz.ejoker.utils.MObjectId;
 
 public abstract class AbstractMessage implements  IMessage {
 
@@ -9,7 +9,7 @@ public abstract class AbstractMessage implements  IMessage {
 	private long timestamp;
 	
 	public AbstractMessage() {
-		id=EObjectId.generateHexStringId();
+		id=MObjectId.get().toHexString();
 		timestamp=System.currentTimeMillis();
 		sequence=1;
 	}

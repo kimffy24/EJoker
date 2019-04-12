@@ -23,10 +23,6 @@ public class ProcessingCommand {
     	this.items = (null != items ? items : new HashMap<>());
     }
 
-    public void complete(CommandResult commandResult) {
-    	commandExecuteContext.onCommandExecuted(commandResult);
-    }
-
     public SystemFutureWrapper<Void> completeAsync(CommandResult commandResult) {
     	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }

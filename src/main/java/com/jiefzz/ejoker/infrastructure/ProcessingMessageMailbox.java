@@ -12,20 +12,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.utils.Ensure;
 
 public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y extends IMessage> {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingMessageMailbox.class);
-
+	
 	private final String routingKey;
 
-	private volatile Map<Long, X> waitingMessageDict = null;
+	private final Map<Long, X> waitingMessageDict = new ConcurrentHashMap<>();
 	
-	private final Object waitingMessageDictCreate = LockWrapper.createLock();
-
 	private final Queue<X> messageQueue = new ConcurrentLinkedQueue<X>();
 
 	private final IProcessingMessageScheduler<X, Y> scheduler;
@@ -63,17 +60,6 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 		ISequenceMessage sequenceMessage = (message instanceof ISequenceMessage) ? (ISequenceMessage )message : null;
 		Ensure.notNull(sequenceMessage, "sequenceMessage");
 		
-		if(null == waitingMessageDict) {
-			LockWrapper.lock(waitingMessageDictCreate);
-			try {
-				while(null == waitingMessageDict) {
-					waitingMessageDict = new ConcurrentHashMap<>();
-				}
-			} finally {
-				LockWrapper.unlock(waitingMessageDictCreate);
-			}
-		}
-
 		lastActiveTime = System.currentTimeMillis();
 		waitingMessageDict.putIfAbsent(sequenceMessage.getVersion(), waitingMessage);
 		exit();
@@ -116,7 +102,7 @@ public class ProcessingMessageMailbox<X extends IProcessingMessage<X, Y>, Y exte
 	 * 单位：毫秒
 	 */
 	public boolean isInactive(long timeoutMilliseconds) {
-		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+		return null == messageQueue.peek() && System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 	
     private boolean tryExecuteWaitingMessage(X currentCompletedMessage) {

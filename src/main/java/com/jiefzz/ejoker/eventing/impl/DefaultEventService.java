@@ -38,9 +38,9 @@ import com.jiefzz.ejoker.z.common.schedule.IScheduleService;
 import com.jiefzz.ejoker.z.common.service.IJSONConverter;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.helper.ForEachHelper;
 import com.jiefzz.ejoker.z.common.system.helper.MapHelper;
-import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 import com.jiefzz.ejoker.z.common.task.context.EJokerTaskAsyncHelper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
@@ -224,7 +224,7 @@ public class DefaultEventService implements IEventService {
 							break;
 							
 						case DuplicateEvent:
-							if(context.getEventStream().getVersion() - 1 == 0) {
+							if(context.getEventStream().getVersion() - 1l == 0l) {
 								handleFirstEventDuplicationAsync(context);
 							} else {
 								logger.warn("Persist event has concurrent version conflict, eventStream: {}", jsonSerializer.convert(context.getEventStream()));
@@ -238,7 +238,7 @@ public class DefaultEventService implements IEventService {
 		                    logger.warn("Persist event has duplicate command, eventStream: {}", jsonSerializer.convert(context.getEventStream()));
 		
 							/// TODO .ConfigureAwait(false);
-		                    resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1);
+		                    resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1l);
 		                    tryToRepublishEventAsync(context);
 							break;
 							
@@ -261,16 +261,22 @@ public class DefaultEventService implements IEventService {
 	 */
 	private CompletableFuture<Void> resetCommandMailBoxConsumingSequence(EventCommittingContext context, long consumingSequence) {
 
+		final EventMailBox eventMailBox = context.eventMailBox;
+		final ProcessingCommand processingCommand = context.getProcessingCommand();
+		final ICommand command = processingCommand.getMessage();
+		final ProcessingCommandMailbox commandMailBox = processingCommand.getMailbox();
+		
+		commandMailBox.pauseOnly();
+
+		// commandMailBox.pause() 与 commandMailBox.resume() 并不在成对的try-finally过程中
+		// 会不会出问题？
+		// #fix 把pause过程拆解为pauseOnly 和 waitAcquireOnProcessing两个过程 更符合java
 		return CompletableFuture.supplyAsync(() -> {
 
-			EventMailBox eventMailBox = context.eventMailBox;
-			ProcessingCommand processingCommand = context.getProcessingCommand();
-			ICommand command = processingCommand.getMessage();
-			ProcessingCommandMailbox commandMailBox = processingCommand.getMailbox();
+//			commandMailBox.pause();
+			commandMailBox.waitAcquireOnProcessing();
 
 			DomainEventStream eventStream = context.getEventStream();
-
-			commandMailBox.pause();
 			try {
 				// TODO @await
 				await(refreshAggregateMemoryCacheToLatestVersionAsync(eventStream.getAggregateRootTypeName(), eventStream.getAggregateRootId()));

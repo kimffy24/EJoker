@@ -116,15 +116,15 @@ public class EventMailBox {
     }
 	
 	public void clear() {
-		// while(null != messageQueue.poll());
-		messageQueue.clear();
+		 while(null != messageQueue.poll())
+			 ;
 	}
 
 	/**
 	 * 单位：毫秒
 	 */
 	public boolean isInactive(long timeoutMilliseconds) {
-		return 0 <= (System.currentTimeMillis() - lastActiveTime - timeoutMilliseconds);
+		return null == messageQueue.peek() && System.currentTimeMillis() - lastActiveTime > timeoutMilliseconds;
 	}
 
     private boolean tryEnter() {

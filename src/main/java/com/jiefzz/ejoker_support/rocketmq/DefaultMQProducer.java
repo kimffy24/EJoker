@@ -9,14 +9,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.RPCHook;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,24 +55,23 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 
 	@Override
 	public void send(final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
-
 		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(),
 				message.getBody(), true);
+		// 使用一致性hash选择队列
+		SendResult sendResult;
 		try {
-			// 使用一致性hash选择队列
-			SendResult sendResult = super.send(rMessage, this::selectQueue, null);
-			if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-				logger.error(
-						"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-						sendResult.toString(), rMessage.getKeys(), messageId, version);
-				throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
-			}
-		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
-			e.printStackTrace();
+			sendResult = super.send(rMessage, this::selectQueue, null);
+		} catch (Exception e) {
 			logger.error(
 					"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
 					e.getMessage(), rMessage.getKeys(), messageId, version);
 			throw new IOExceptionOnRuntime(new IOException(e));
+		}
+		if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+			logger.error(
+					"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
+					sendResult.toString(), rMessage.getKeys(), messageId, version);
+			throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
 		}
 	}
 	
@@ -116,7 +113,6 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 					predispatchControl.lastMqsHashCode.set(mqsHashCode);
 				} catch (Exception e) {
 					logger.error(String.format("Create ConsistentHashShard faild for topic[name=%s]!!!", topic), e);
-					e.printStackTrace();
 				} finally {
 					// 无论哈希环更新/创建成功与否，都要释放等待线程
 					predispatchControl.release();

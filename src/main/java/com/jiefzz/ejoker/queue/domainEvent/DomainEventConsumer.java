@@ -95,7 +95,11 @@ public class DomainEventConsumer implements IWorkerService {
 		
 		return this;
 	}
-
+	
+	public Object getDeeplyConsumer() {
+		return consumer;
+	}
+	
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		String messageBody = new String(queueMessage.body, Charset.forName("UTF-8"));
 		EventStreamMessage message = jsonSerializer.revert(messageBody, EventStreamMessage.class);

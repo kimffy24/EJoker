@@ -31,13 +31,13 @@ public interface IRPCService {
 		
 		public final Thread ioThread;
 		
-		public final IVoidFunction1<String> closeAction;
+		public final IVoidFunction1<String> handleAction;
 		
 		public final RipenFuture<Void> initialFuture;
 		
-		public RPCTuple(IVoidFunction1<String> closeAction, Thread ioThread) {
+		public RPCTuple(IVoidFunction1<String> handleAction, Thread ioThread) {
 			this.ioThread = ioThread;
-			this.closeAction = closeAction;
+			this.handleAction = handleAction;
 			this.initialFuture = new RipenFuture<>();
 		}
 		

@@ -94,13 +94,14 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	private void refreshAggregateFromEventStore(String aggregateRootTypeName, String aggregateRootId) {
-		Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
-		if (null == aggregateRootType) {
-			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
-			return;
-		}
-
 		try {
+			
+			Class<?> aggregateRootType = typeNameProvider.getType(aggregateRootTypeName);
+			if (null == aggregateRootType) {
+				logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
+				return;
+			}
+			
 			// TODO @await
 			IAggregateRoot aggregateRoot = await(aggregateStorage.getAsync((Class<IAggregateRoot>) aggregateRootType, aggregateRootId.toString()));
 			if (null != aggregateRoot) {
