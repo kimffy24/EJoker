@@ -138,8 +138,10 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			}
 		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
 			if (Queue.class.isAssignableFrom(definedClazz)) {
-				throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
-			} else if (Collection.class.isAssignableFrom(definedClazz)) {
+				if(!definedClazz.getSimpleName().endsWith("List"))
+					throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
+			}
+			if (Collection.class.isAssignableFrom(definedClazz)) {
 				if(List.class.isAssignableFrom(definedClazz)) {
 					revertedResult = new LinkedList();
 				} else {

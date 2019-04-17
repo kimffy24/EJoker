@@ -122,8 +122,10 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
 			// Java集合类型
 			if (target instanceof Queue) {
-				throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
-			} else if (target instanceof Collection) {
+				if(!target.getClass().getSimpleName().endsWith("List"))
+					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
+			}
+			if (target instanceof Collection) {
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
 				if(((List )target).size()>0)
