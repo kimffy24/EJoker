@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.aliyun.openservices.shade.com.alibaba.rocketmq.logging.inner.Logger;
 import com.jiefzz.ejoker.eventing.DomainEventStream;
 import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.IEventSerializer;
