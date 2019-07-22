@@ -20,8 +20,9 @@ import com.jiefzz.ejoker.z.common.system.helper.AcquireHelper;
 import com.jiefzz.ejoker.z.common.system.wrapper.LockWrapper;
 import com.jiefzz.ejoker.z.common.system.wrapper.SleepWrapper;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
+import com.jiefzz.ejoker.z.common.utils.Ensure;
 
-public class AbstractAggregateMessageMailBox<TMessage extends IAggregateMessageMailBoxMessage<TMessage, TMessageProcessResult>, TMessageProcessResult>
+public abstract class AbstractAggregateMessageMailBox<TMessage extends IAggregateMessageMailBoxMessage<TMessage, TMessageProcessResult>, TMessageProcessResult>
 		implements IAggregateMessageMailBox<TMessage, TMessageProcessResult> {
 
 	// 需要注入或第三方组件直接提供的属性
@@ -120,7 +121,8 @@ public class AbstractAggregateMessageMailBox<TMessage extends IAggregateMessageM
 		} else if (!isBatchMessageProcess && null == messageHandler) {
 			throw new InfrastructureRuntimeException("Parameter messageHandler cannot be null");
 		}
-		
+
+		Ensure.notNull(systemAsyncHelper, "systemAsyncHelper");
 		this.systemAsyncHelper = systemAsyncHelper;
 		
 	}
@@ -225,12 +227,14 @@ public class AbstractAggregateMessageMailBox<TMessage extends IAggregateMessageM
 				});
 		lastActiveTime = System.currentTimeMillis();
 	}
-	
+
+	@Override
 	public void pauseOnly() {
 		onPaused.set(true);
 	}
-	
-	public void waitAcquireOnProcessing() {
+
+	@Override
+	public void acquireOnProcessing() {
 		AcquireHelper.waitAcquire(onProcessing, 10l, // 1000l,
 				r -> {
 					if (0 == r % 100)

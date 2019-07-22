@@ -31,8 +31,16 @@ public interface IAggregateMessageMailBox<TMessage extends IAggregateMessageMail
     void tryRun(boolean exitFirst);
     
     SystemFutureWrapper<Void> run();
-    
+
+    /**
+     * 使用pauseOnly() 和 acquireOnProcessing() 组合的解析在pause实现的方法写了注释。
+     */
+	@Deprecated
     void pause();
+	
+	void pauseOnly();
+	
+	void acquireOnProcessing();
     
     void resume();
     

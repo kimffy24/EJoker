@@ -366,7 +366,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);
 		// Future传递
-		return processingCommand.getMailbox().completeMessageAsync(processingCommand, commandResult);
+		return processingCommand.getMailBox().completeMessage(processingCommand, commandResult);
 	}
 	
 }

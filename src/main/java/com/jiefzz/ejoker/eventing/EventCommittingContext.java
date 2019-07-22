@@ -2,9 +2,14 @@ package com.jiefzz.ejoker.eventing;
 
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
-import com.jiefzz.ejoker.eventing.impl.EventMailBox;
+import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBox;
+import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBoxMessage;
 
-public class EventCommittingContext {
+public class EventCommittingContext implements IAggregateMessageMailBoxMessage<EventCommittingContext, Void>{
+	
+	private IAggregateMessageMailBox<EventCommittingContext, Void>  mailBox;
+	
+	private long sequence;
 	
 	private IAggregateRoot aggregateRoot;
 	
@@ -12,14 +17,26 @@ public class EventCommittingContext {
 	
 	private ProcessingCommand processingCommand;
 	
-	public EventMailBox eventMailBox = null;
-	
-	public EventCommittingContext next = null;
+	public EventCommittingContext next = null; // { get, set }
 
-	public EventCommittingContext(IAggregateRoot aggregateRoot, DomainEventStream eventSteam, ProcessingCommand processingCommand) {
-		this.aggregateRoot = aggregateRoot;
-		this.eventStream = eventSteam;
-		this.processingCommand = processingCommand;
+	@Override
+	public IAggregateMessageMailBox<EventCommittingContext, Void> getMailBox() {
+		return mailBox;
+	}
+
+	@Override
+	public void setMailBox(IAggregateMessageMailBox<EventCommittingContext, Void> mailbox) {
+		this.mailBox = mailbox;
+	}
+	
+	@Override
+	public long getSequence() {
+		return sequence;
+	}
+
+	@Override
+	public void setSequence(long sequence) {
+		this.sequence = sequence;
 	}
 
 	public IAggregateRoot getAggregateRoot() {
@@ -32,6 +49,12 @@ public class EventCommittingContext {
 
 	public ProcessingCommand getProcessingCommand() {
 		return processingCommand;
+	}
+
+	public EventCommittingContext(IAggregateRoot aggregateRoot, DomainEventStream eventSteam, ProcessingCommand processingCommand) {
+		this.aggregateRoot = aggregateRoot;
+		this.eventStream = eventSteam;
+		this.processingCommand = processingCommand;
 	}
 	
 }

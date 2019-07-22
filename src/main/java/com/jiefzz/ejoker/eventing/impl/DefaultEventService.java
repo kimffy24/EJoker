@@ -29,6 +29,7 @@ import com.jiefzz.ejoker.eventing.EventAppendResult;
 import com.jiefzz.ejoker.eventing.EventCommittingContext;
 import com.jiefzz.ejoker.eventing.IEventService;
 import com.jiefzz.ejoker.eventing.IEventStore;
+import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBox;
 import com.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import com.jiefzz.ejoker.z.common.context.annotation.context.Dependence;
 import com.jiefzz.ejoker.z.common.context.annotation.context.EInitialize;
@@ -147,7 +148,8 @@ public class DefaultEventService implements IEventService {
 				appendResult -> {
 
 					EventCommittingContext firstEventCommittingContext = committingContexts.get(0);
-					EventMailBox eventMailBox = firstEventCommittingContext.eventMailBox;
+//					EventMailBox eventMailBox = firstEventCommittingContext.eventMailBox;
+					IAggregateMessageMailBox<EventCommittingContext, Void> eventMailBox = firstEventCommittingContext.getMailBox();
 					
 					if(EventAppendResult.Success.equals(appendResult)) {
 						
@@ -218,7 +220,7 @@ public class DefaultEventService implements IEventService {
 							if (null != context.next)
 								persistEventAsync(context.next);
 							else
-								context.eventMailBox.tryRun(true);
+								context.getMailBox().tryRun(true);
 							
 							break;
 							
@@ -260,10 +262,11 @@ public class DefaultEventService implements IEventService {
 	 */
 	private CompletableFuture<Void> resetCommandMailBoxConsumingSequence(EventCommittingContext context, long consumingSequence) {
 
-		final EventMailBox eventMailBox = context.eventMailBox;
+//		final EventMailBox eventMailBox = context.eventMailBox;
+		IAggregateMessageMailBox<EventCommittingContext, Void> eventMailBox = context.getMailBox();
 		final ProcessingCommand processingCommand = context.getProcessingCommand();
 		final ICommand command = processingCommand.getMessage();
-		final ProcessingCommandMailbox commandMailBox = processingCommand.getMailbox();
+		final IAggregateMessageMailBox<ProcessingCommand, CommandResult> commandMailBox = processingCommand.getMailBox();
 		
 		commandMailBox.pauseOnly();
 
@@ -273,7 +276,7 @@ public class DefaultEventService implements IEventService {
 		return CompletableFuture.supplyAsync(() -> {
 
 //			commandMailBox.pause();
-			commandMailBox.waitAcquireOnProcessing();
+			commandMailBox.acquireOnProcessing();
 
 			DomainEventStream eventStream = context.getEventStream();
 			try {
@@ -488,7 +491,7 @@ public class DefaultEventService implements IEventService {
 	}
 
 	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
-		return processingCommand.getMailbox().completeMessageAsync(processingCommand, commandResult);
+		return processingCommand.getMailBox().completeMessage(processingCommand, commandResult);
 	}
 
 	private void cleanInactiveMailbox() {

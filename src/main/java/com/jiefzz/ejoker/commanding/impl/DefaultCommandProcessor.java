@@ -70,7 +70,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 		while(it.hasNext()) {
 			Entry<String, ProcessingCommandMailbox> current = it.next();
 			ProcessingCommandMailbox mailbox = current.getValue();
-			if(!mailbox.onRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
+			if(!mailbox.isRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
 				it.remove();
 				logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
 			}
