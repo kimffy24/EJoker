@@ -26,7 +26,7 @@ public class AggregateRepositoryProxy implements IAggregateRepositoryProxy {
 
 	@Override
 	public SystemFutureWrapper<IAggregateRoot> getAsync(String aggregateRootId) {
-		return SystemFutureWrapperUtil.createCompleteFuture(null);
+		return SystemFutureWrapperUtil.completeFuture(null);
 	}
 
 }

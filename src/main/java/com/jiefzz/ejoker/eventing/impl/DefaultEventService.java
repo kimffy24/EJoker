@@ -437,7 +437,7 @@ public class DefaultEventService implements IEventService {
             		aggregateRootTypeName,
             		aggregateRootId),
             	e);
-            return SystemFutureWrapperUtil.createCompleteFuture();
+            return SystemFutureWrapperUtil.completeFuture();
 		}
 		
 	}

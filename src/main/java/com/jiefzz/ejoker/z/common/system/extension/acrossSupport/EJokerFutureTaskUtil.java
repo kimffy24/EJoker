@@ -18,7 +18,7 @@ public final class EJokerFutureTaskUtil {
 	 * @param status
 	 * @return
 	 */
-	public static Future<AsyncTaskResult<Void>> createFutureDirectly(AsyncTaskStatus status) {
+	public static Future<AsyncTaskResult<Void>> newFutureTask(AsyncTaskStatus status) {
 
 		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
 		rf.trySetResult(new AsyncTaskResult<>(status));
@@ -33,7 +33,7 @@ public final class EJokerFutureTaskUtil {
 	 * @param typeConstraint
 	 * @return
 	 */
-	public static <T> Future<AsyncTaskResult<T>> createFutureDirectly(AsyncTaskStatus status, String errorMessage, Class<T> typeConstraint) {
+	public static <T> Future<AsyncTaskResult<T>> newFutureTask(AsyncTaskStatus status, String errorMessage, Class<T> typeConstraint) {
 
 		RipenFuture<AsyncTaskResult<T>> rf = new RipenFuture<>();
 		rf.trySetResult(new AsyncTaskResult<>(status, errorMessage));
@@ -48,7 +48,7 @@ public final class EJokerFutureTaskUtil {
 	 * @param typeConstraint
 	 * @return
 	 */
-	public static Future<AsyncTaskResult<Void>> createFutureDirectly(AsyncTaskStatus status, String errorMessage) {
+	public static Future<AsyncTaskResult<Void>> newFutureTask(AsyncTaskStatus status, String errorMessage) {
 
 		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
 		rf.trySetResult(new AsyncTaskResult<>(status, errorMessage, null));
@@ -62,7 +62,7 @@ public final class EJokerFutureTaskUtil {
 	 * @param typeConstraint
 	 * @return
 	 */
-	public static <T> Future<AsyncTaskResult<T>> createFutureDirectly(Throwable exception, Class<T> typeConstraint) {
+	public static <T> Future<AsyncTaskResult<T>> newFutureTask(Throwable exception, Class<T> typeConstraint) {
 
 		RipenFuture<AsyncTaskResult<T>> rf = new RipenFuture<>();
 		rf.trySetException(exception);
@@ -76,7 +76,7 @@ public final class EJokerFutureTaskUtil {
 	 * @param typeConstraint
 	 * @return
 	 */
-	public static Future<AsyncTaskResult<Void>> createFutureDirectly(Throwable exception) {
+	public static Future<AsyncTaskResult<Void>> newFutureTask(Throwable exception) {
 		RipenFuture<AsyncTaskResult<Void>> rf = new RipenFuture<>();
 		rf.trySetException(exception);
 		return rf;

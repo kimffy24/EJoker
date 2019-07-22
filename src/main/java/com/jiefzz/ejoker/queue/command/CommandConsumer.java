@@ -163,7 +163,7 @@ public class CommandConsumer implements IWorkerService {
 			messageContext.onMessageHandled(/*message*/);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return SystemFutureWrapperUtil.createCompleteFuture();
+				return SystemFutureWrapperUtil.completeFuture();
 
 			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult,
 					commandMessage.replyAddress);

@@ -17,7 +17,7 @@ import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWra
 public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 
 	private final SystemFutureWrapper<AsyncTaskResult<Void>> successTask
-		= SystemFutureWrapperUtil.createCompleteFutureTask();
+		= SystemFutureWrapperUtil.completeFutureTask();
 
 	private final Map<String, Long> versionDict = new ConcurrentHashMap<>();
 
@@ -31,7 +31,7 @@ public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId) {
-		return SystemFutureWrapperUtil.createCompleteFutureTask(getPublishedVersion(processorName, aggregateRootTypeName, aggregateRootId));
+		return SystemFutureWrapperUtil.completeFutureTask(getPublishedVersion(processorName, aggregateRootTypeName, aggregateRootId));
 		
 	}
 

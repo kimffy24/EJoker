@@ -68,7 +68,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 			
 			CountDownLatchWrapper.await(countDownLatchHandle);
 		}
-		return SystemFutureWrapperUtil.createCompleteFutureTask();
+		return SystemFutureWrapperUtil.completeFutureTask();
 	}
 
 	@Override

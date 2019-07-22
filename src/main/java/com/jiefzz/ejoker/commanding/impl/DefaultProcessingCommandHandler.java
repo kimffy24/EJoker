@@ -325,14 +325,14 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		                            command.getId(),
 		                            command.getAggregateRootId()), ex);
 
-		            		return SystemFutureWrapperUtil.createCompleteFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		            		return SystemFutureWrapperUtil.completeFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
 		                }
 					},
 					r -> commitChangesAsync(processingCommand, true, r, null),
 					() -> String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString()),
 					ex -> commitChangesAsync(processingCommand, false, null, ex.getMessage())
 		);
-		return SystemFutureWrapperUtil.createCompleteFuture();
+		return SystemFutureWrapperUtil.completeFuture();
     }
 	
 	private void commitChangesAsync(ProcessingCommand processingCommand, boolean success, IApplicationMessage message,

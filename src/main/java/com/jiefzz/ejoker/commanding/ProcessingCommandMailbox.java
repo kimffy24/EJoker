@@ -248,7 +248,7 @@ public class ProcessingCommandMailbox {
 			logger.error("Failed to complete command, commandId: {}, aggregateRootId: {}, exception: {}",
 					processingCommand.getMessage().getId(), processingCommand.getMessage().getAggregateRootId(),
 					ex.getMessage());
-			return SystemFutureWrapperUtil.createCompleteFuture();
+			return SystemFutureWrapperUtil.completeFuture();
 		}
 	}
 

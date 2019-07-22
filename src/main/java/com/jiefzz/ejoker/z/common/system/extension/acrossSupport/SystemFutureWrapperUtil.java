@@ -4,31 +4,42 @@ import com.jiefzz.ejoker.z.common.task.AsyncTaskResult;
 
 public final class SystemFutureWrapperUtil {
 
-	public static <T> SystemFutureWrapper<T> createCompleteFuture(T result) {
+	public static <T> SystemFutureWrapper<T> completeFuture(T result) {
 
 		RipenFuture<T> rf = new RipenFuture<>();
 		rf.trySetResult(result);
         return new SystemFutureWrapper<>(rf);
         
 	}
-
-	public static SystemFutureWrapper<Void> createCompleteFuture() {
+	
+	// 优化，固定返回避免多次new对象
+	private final static SystemFutureWrapper<Void> defaultCompletedVoidFuture;
+	private final static SystemFutureWrapper<AsyncTaskResult<Void>> defaultCompletedVoidFutureTask;
+	static {
 
 		RipenFuture<Void> rf = new RipenFuture<>();
 		rf.trySetResult(null);
-        return new SystemFutureWrapper<>(rf);
+		defaultCompletedVoidFuture = new SystemFutureWrapper<>(rf);
+		
+		defaultCompletedVoidFutureTask = new SystemFutureWrapper<>(EJokerFutureTaskUtil.completeTask());
+		
+	}
+
+	public static SystemFutureWrapper<Void> completeFuture() {
+
+		return defaultCompletedVoidFuture;
         
 	}
 
-	public static <T> SystemFutureWrapper<AsyncTaskResult<T>> createCompleteFutureTask(T result) {
+	public static <T> SystemFutureWrapper<AsyncTaskResult<T>> completeFutureTask(T result) {
 
         return new SystemFutureWrapper<>(EJokerFutureTaskUtil.completeTask(result));
         
 	}
 
-	public static SystemFutureWrapper<AsyncTaskResult<Void>> createCompleteFutureTask() {
+	public static SystemFutureWrapper<AsyncTaskResult<Void>> completeFutureTask() {
 
-        return new SystemFutureWrapper<>(EJokerFutureTaskUtil.completeTask());
+        return defaultCompletedVoidFutureTask;
         
 	}
 	
