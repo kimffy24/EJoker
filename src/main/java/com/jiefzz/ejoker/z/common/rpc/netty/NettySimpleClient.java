@@ -29,7 +29,7 @@ public class NettySimpleClient {
 	
 	private final String clientDesc;
 	
-	private long lastInvokeTime;
+	private long lastInvokeTime = System.currentTimeMillis();
 
 	private EventLoopGroup eventLoopGroup;
 

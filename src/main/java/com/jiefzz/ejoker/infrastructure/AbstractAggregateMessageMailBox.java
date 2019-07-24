@@ -164,11 +164,14 @@ public abstract class AbstractAggregateMessageMailBox<TMessage extends IAggregat
 			exit();
 			return SystemFutureWrapperUtil.completeFuture();
 		}
-		
+
         TMessage message = null;
+		//设置运行信号，表示当前正在运行Run方法中的逻辑 // ** 可以简单理解为 进入临界区
+		if(!onProcessing.compareAndSet(false, true)) {
+			exit();
+			return SystemFutureWrapperUtil.completeFuture();
+		};
 		try {
-			//设置运行信号，表示当前正在运行Run方法中的逻辑 // ** 可以简单理解为 进入临界区
-			onProcessing.set(true);
 			int count = 0;
             List<TMessage> messageList = null;
             while (consumingSequence < nextSequence && count < batchSize && !onPaused.get()) {
@@ -299,6 +302,8 @@ public abstract class AbstractAggregateMessageMailBox<TMessage extends IAggregat
 		} catch (RuntimeException ex) {
 			logger.error("Aggregate mailbox complete message failed, aggregateRootId: {}, message: {}, result: {}", aggregateRootId, message, result);
 			logger.error("Aggregate mailbox complete message failed, aggregateRootId: " + aggregateRootId, ex);
+		} finally {
+			LockWrapper.unlock(asyncLock);
 		}
 		return SystemFutureWrapperUtil.completeFuture();
 	}

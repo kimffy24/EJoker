@@ -23,7 +23,7 @@ public class ProcessingCommandMailbox extends AbstractAggregateMessageMailBox<Pr
 		try {
 			return processingCommand.completeAsync(commandResult);
 		} catch (RuntimeException ex) {
-			logger.error(String.format("Failed to complete command, commandId: %s, aggregateRootId: %s", processingCommand.getMessage().getId(), getAggregateRootId()), ex);
+			logger.error(String.format("Failed to complete command, commandId: %s, aggregateRootId: %s, commandType: %s", processingCommand.getMessage().getId(), getAggregateRootId(), processingCommand.getMessage().getClass().getSimpleName()), ex);
 			return SystemFutureWrapperUtil.completeFuture();
 		}
 	}
