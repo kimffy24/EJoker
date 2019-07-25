@@ -146,17 +146,21 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	}
 
 	@Override
-	public void acceptChanges(long newVersion) {
-		if(version+1 != newVersion)
-			throw new InvalidOperationException(String.format(
-					"Cannot accept invalid version: %d, expect version: %d, current aggregateRoot type: %s, id: %s",
-					newVersion,
-					version+1,
-					this.getClass().getName(),
-					id.toString()
-			));
-		version = newVersion;
-		uncommittedEvents.clear();
+	public void acceptChanges() {
+		if (null != uncommittedEvents && 0 < uncommittedEvents.size()) {
+			version = uncommittedEvents.peek().getVersion();
+			uncommittedEvents.clear();
+		}
+//		if(version+1 != newVersion)
+//			throw new InvalidOperationException(String.format(
+//					"Cannot accept invalid version: %d, expect version: %d, current aggregateRoot type: %s, id: %s",
+//					newVersion,
+//					version+1,
+//					this.getClass().getName(),
+//					id.toString()
+//			));
+//		version = newVersion;
+//		uncommittedEvents.clear();
 	}
 
 	@SuppressWarnings("unchecked")

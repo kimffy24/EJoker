@@ -5,6 +5,10 @@ import java.util.concurrent.TimeUnit;
 import com.jiefzz.ejoker.z.common.system.functional.IVoidFunction2;
 
 public class SleepWrapper {
+	
+	public final static void sleep(Long millis) {
+		sleep(TimeUnit.MILLISECONDS, millis);
+	}
 
 	public final static void sleep(TimeUnit unit, Long millis) {
 		try {

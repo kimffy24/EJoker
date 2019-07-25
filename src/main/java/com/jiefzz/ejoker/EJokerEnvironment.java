@@ -94,6 +94,11 @@ public final class EJokerEnvironment {
 	 * * 默认32
 	 */
 	public final static int MAX_BATCH_EVENTS;
+
+	/**
+	 * EventService使用多少个mailbox来承载带持久化的事件
+	 */
+	public final static int EVENT_MAILBOX_ACTOR_COUNT;
 	
 	/**
 	 * 默认配置文件名
@@ -144,6 +149,9 @@ public final class EJokerEnvironment {
 
 		MAX_BATCH_EVENTS =
 				Integer.valueOf(props.getProperty("MAX_BATCH_EVENTS", "32"));
+		
+		EVENT_MAILBOX_ACTOR_COUNT =
+				Integer.valueOf(props.getProperty("EVENT_MAILBOX_ACTOR_COUNT", "4"));
 		
 		REBALANCE_STRATEGY = 
 				Integer.valueOf(props.getProperty("REBALANCE_STRATEGY", "1"));

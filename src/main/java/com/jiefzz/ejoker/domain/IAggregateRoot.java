@@ -13,7 +13,7 @@ public interface IAggregateRoot {
 	
 	public Collection<IDomainEvent<?>> getChanges();
     
-	public void acceptChanges(long newVersion);
+	public void acceptChanges();
 	
 	public void replayEvents(Collection<DomainEventStream> eventStreams);
 

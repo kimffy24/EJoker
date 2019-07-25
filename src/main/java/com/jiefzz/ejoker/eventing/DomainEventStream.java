@@ -3,7 +3,11 @@ package com.jiefzz.ejoker.eventing;
 import java.util.Collection;
 import java.util.Map;
 
+import com.jiefzz.ejoker.utils.MObjectId;
+
 public class DomainEventStream {
+	
+	private String id;
 	
 	private String commandId;
 	
@@ -23,6 +27,8 @@ public class DomainEventStream {
 	
 	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long version, long timestamp, Collection<IDomainEvent<?>> events, Map<String, String> items) {
 
+		this.id=MObjectId.get().toHexString();
+		
 		this.commandId = commandId;
 		this.aggregateRootTypeName = aggregateRootTypeName;
 		this.aggregateRootId = aggregateRootId;
@@ -53,6 +59,10 @@ public class DomainEventStream {
 	
 	public void setItems(Map<String, String> items) {
 		this.items = items;
+	}
+	
+	public String getId() {
+		return id;
 	}
 
 	public String getCommandId() {
@@ -85,7 +95,7 @@ public class DomainEventStream {
 	
 	@Override
 	public String toString() {
-        String format = "[commandId=%s, aggregateRootTypeName=%s, aggregateRootId=%s, version=%d, timestamp=%d, events=%s, items=%s]";
+        String format = "[id=%s, commandId=%s, aggregateRootTypeName=%s, aggregateRootId=%s, version=%d, timestamp=%d, events=%s, items=%s]";
         StringBuffer eventSB = new StringBuffer();
         StringBuffer itemSB = new StringBuffer();
 
@@ -102,6 +112,7 @@ public class DomainEventStream {
         }
         
         return String.format(format,
+        		id,
         		commandId,
         		aggregateRootTypeName,
             	aggregateRootId,

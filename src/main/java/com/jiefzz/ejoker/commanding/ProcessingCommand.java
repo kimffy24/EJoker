@@ -3,13 +3,13 @@ package com.jiefzz.ejoker.commanding;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBox;
-import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBoxMessage;
+import com.jiefzz.ejoker.infrastructure.IMailBox;
+import com.jiefzz.ejoker.infrastructure.IMailBoxMessage;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 
-public class ProcessingCommand implements IAggregateMessageMailBoxMessage<ProcessingCommand, CommandResult> {
+public class ProcessingCommand implements IMailBoxMessage<ProcessingCommand, CommandResult> {
 
-	private IAggregateMessageMailBox<ProcessingCommand, CommandResult> mailBox;
+	private IMailBox<ProcessingCommand, CommandResult> mailBox;
 	
 	private long sequence;
 	
@@ -53,12 +53,12 @@ public class ProcessingCommand implements IAggregateMessageMailBoxMessage<Proces
 	}
 
 	@Override
-	public IAggregateMessageMailBox<ProcessingCommand, CommandResult> getMailBox() {
+	public IMailBox<ProcessingCommand, CommandResult> getMailBox() {
 		return mailBox;
 	}
 
 	@Override
-	public void setMailBox(IAggregateMessageMailBox<ProcessingCommand, CommandResult> mailbox) {
+	public void setMailBox(IMailBox<ProcessingCommand, CommandResult> mailbox) {
 		this.mailBox = mailbox;
 	}
 

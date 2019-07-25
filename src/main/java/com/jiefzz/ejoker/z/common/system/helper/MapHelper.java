@@ -20,4 +20,5 @@ public final class MapHelper {
 			map.putIfAbsent(uniqueKey, f.trigger());
 		return value;
 	}
+	
 }

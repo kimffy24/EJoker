@@ -4,12 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jiefzz.ejoker.EJokerEnvironment;
-import com.jiefzz.ejoker.infrastructure.AbstractAggregateMessageMailBox;
+import com.jiefzz.ejoker.infrastructure.AbstractMailBox;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapper;
 import com.jiefzz.ejoker.z.common.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import com.jiefzz.ejoker.z.common.task.context.SystemAsyncHelper;
 
-public class ProcessingCommandMailbox extends AbstractAggregateMessageMailBox<ProcessingCommand, CommandResult> {
+public class ProcessingCommandMailbox extends AbstractMailBox<ProcessingCommand, CommandResult> {
 
 	private final static Logger logger = LoggerFactory.getLogger(ProcessingCommandMailbox.class);
 
@@ -23,10 +23,9 @@ public class ProcessingCommandMailbox extends AbstractAggregateMessageMailBox<Pr
 		try {
 			return processingCommand.completeAsync(commandResult);
 		} catch (RuntimeException ex) {
-			logger.error(String.format("Failed to complete command, commandId: %s, aggregateRootId: %s, commandType: %s", processingCommand.getMessage().getId(), getAggregateRootId(), processingCommand.getMessage().getClass().getSimpleName()), ex);
+			logger.error(String.format("Failed to complete command, commandId: %s, aggregateRootId: %s, commandType: %s", processingCommand.getMessage().getId(), getRoutingKey(), processingCommand.getMessage().getClass().getSimpleName()), ex);
 			return SystemFutureWrapperUtil.completeFuture();
 		}
 	}
-	
 	
 }

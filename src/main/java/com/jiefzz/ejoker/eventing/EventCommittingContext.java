@@ -2,12 +2,12 @@ package com.jiefzz.ejoker.eventing;
 
 import com.jiefzz.ejoker.commanding.ProcessingCommand;
 import com.jiefzz.ejoker.domain.IAggregateRoot;
-import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBox;
-import com.jiefzz.ejoker.infrastructure.IAggregateMessageMailBoxMessage;
+import com.jiefzz.ejoker.infrastructure.IMailBox;
+import com.jiefzz.ejoker.infrastructure.IMailBoxMessage;
 
-public class EventCommittingContext implements IAggregateMessageMailBoxMessage<EventCommittingContext, Void>{
+public class EventCommittingContext implements IMailBoxMessage<EventCommittingContext, Void>{
 	
-	private IAggregateMessageMailBox<EventCommittingContext, Void>  mailBox;
+	private IMailBox<EventCommittingContext, Void>  mailBox;
 	
 	private long sequence;
 	
@@ -20,12 +20,12 @@ public class EventCommittingContext implements IAggregateMessageMailBoxMessage<E
 	public EventCommittingContext next = null; // { get, set }
 
 	@Override
-	public IAggregateMessageMailBox<EventCommittingContext, Void> getMailBox() {
+	public IMailBox<EventCommittingContext, Void> getMailBox() {
 		return mailBox;
 	}
 
 	@Override
-	public void setMailBox(IAggregateMessageMailBox<EventCommittingContext, Void> mailbox) {
+	public void setMailBox(IMailBox<EventCommittingContext, Void> mailbox) {
 		this.mailBox = mailbox;
 	}
 	
