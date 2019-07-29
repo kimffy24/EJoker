@@ -186,6 +186,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			processIfNoEventsOfCommand(processingCommand);
 			return;
 		}
+		
+        //接受聚合根的最新修改
+        dirtyAggregateRoot.acceptChanges();
+
+        //刷新聚合根的内存缓存
+        memoryCache.updateAggregateRootCache(dirtyAggregateRoot);
 
         //构造出一个事件流对象
 		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
@@ -207,7 +213,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				processingCommand.getMessage().getId(),
 				aggregateRoot.getUniqueId(),
 				aggregateRootTypeName,
-				aggregateRoot.getVersion()+1,
+//				aggregateRoot.getVersion()+1,
+				changeEvents.iterator().next().getVersion(),
 				System.currentTimeMillis(),
 				changeEvents,
 				processingCommand.getItems()

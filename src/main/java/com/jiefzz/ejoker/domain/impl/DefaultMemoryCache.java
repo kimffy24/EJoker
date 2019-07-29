@@ -55,8 +55,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	private void init() {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "CleanInactiveAggregates()"),
-				this::cleanInactiveAggregates, EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
-				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
+				this::cleanInactiveAggregates, 2000l, 2000l);
 	}
 
 	@Override

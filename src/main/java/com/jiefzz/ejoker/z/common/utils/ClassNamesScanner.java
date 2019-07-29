@@ -63,14 +63,16 @@ public class ClassNamesScanner {
 						while (entries.hasMoreElements()) {
 							JarEntry entry = entries.nextElement();
 							String name = entry.getName();
-							// 非目标包下的文件，跳过
-							if (!name.startsWith(packageDirName)) continue;
-							// 仅仅关注.class文件
-							if(!name.endsWith(".class")) continue;
-							// 排除匿名类
-							if(name.contains("$")) continue;
 							// 如果是以/开头的，去除/ 正常情况下不会有这样的情况
 							if (name.charAt(0) == '/') name = name.substring(1);
+							// 非目标包下的文件，跳过
+							if (!name.startsWith(packageDirName)) continue;
+							// 排除非目标包但是其包路径的前部与目标相同的情况
+							if (name.charAt(packageDirName.length()) != '/') continue;
+							// 仅仅关注.class文件
+							if (!name.endsWith(".class")) continue;
+							// 排除匿名类
+							if (name.contains("$")) continue;
 
 							classes.add(name.substring(0, name.length()-6).replace('/', '.'));
 						}

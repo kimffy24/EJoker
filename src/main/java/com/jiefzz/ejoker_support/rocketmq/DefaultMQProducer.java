@@ -68,6 +68,11 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 			throw new IOExceptionOnRuntime(new IOException(e));
 		}
 		if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+			if(SendStatus.SLAVE_NOT_AVAILABLE.equals(sendResult.getSendStatus())) {
+				// rocketmq特有情况 如果没有slave可能会报出这个错，但严格来说又不算错。
+//				logger.warn("RocketMQ slave is no avaliable, but it dosn't matter. sendResult: {}", sendResult);
+				return;
+			}
 			logger.error(
 					"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
 					sendResult.toString(), rMessage.getKeys(), messageId, version);

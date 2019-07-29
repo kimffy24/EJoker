@@ -47,8 +47,8 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
 				this::cleanInactiveMailbox,
-				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT,
-				EJokerEnvironment.MAILBOX_IDLE_TIMEOUT);
+				2000l,
+				2000l);
 	}
 
 	@Override
