@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Resource;
 
@@ -24,6 +25,7 @@ import pro.jiefzz.ejoker.z.utils.ClassNamesScanner;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
+import pro.jiefzz.ejoker_support.equasar.EJoker;
 
 public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	
@@ -51,10 +53,11 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 
 	private Map<Class<? extends IEjokerClazzScannerHook>, IEjokerClazzScannerHook> hookMap = new HashMap<>();
 	
-	/**
-	 * 放入扫描过的包得路径的字符串
-	 */
-	private final Set<String> hasScanPackage = new HashSet<>();
+//	/**
+//	 * 放入扫描过的包得路径的字符串
+//	 */
+//	private final Set<String> hasScanPackage = new HashSet<>();
+	private AtomicBoolean rootSkeletonScanFlag = new AtomicBoolean(false);
 	
 	/**********public method*********/
 	
@@ -69,16 +72,24 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	public void annotationScan(String specificPackage) {
 		if ( specificPackage.lastIndexOf('.') == (specificPackage.length()-1) )
 			specificPackage = specificPackage.substring(0, specificPackage.length()-1);
-		for ( String key : hasScanPackage )
-			if(specificPackage.startsWith(key)) return;// 传入的包是某个已经被分析的包的子包或就是已存在的包，则不再分析
-
+		// ## 此段导致不同jar中的同名包会被忽略，产生意料之外的错误
+//		for ( String key : hasScanPackage )
+//			if(specificPackage.startsWith(key)) return;// 传入的包是某个已经被分析的包的子包或就是已存在的包，则不再分析
+		if ( EJoker.SELF_PACKAGE_NAME.equals(specificPackage) ) {
+			if( !rootSkeletonScanFlag.compareAndSet(false, true) ) {
+				throw new ContextRuntimeException("Unsupport your owner package is same with " + EJoker.SELF_PACKAGE_NAME + " or scan it twice!!!");
+			}
+		} else if ( specificPackage.startsWith(EJoker.SELF_PACKAGE_NAME) ) {
+			logger.warn(" !!! YOUR owner package's name sequence in \"" + EJoker.SELF_PACKAGE_NAME + "\" maybe result is some unexcepted status!");
+		}
+		
 		List<Class<?>> clazzInSpecificPackage;
 		try {
 			clazzInSpecificPackage = ClassNamesScanner.scanClass(specificPackage);
 		} catch (ClassNotFoundException ex) {
 			throw new ContextRuntimeException(String.format("Exception occur whild scanning package [%s]!!!", specificPackage), ex);
 		}
-		hasScanPackage.add(specificPackage + ".");
+//		hasScanPackage.add(specificPackage + ".");
 
 		for (Class<?> clazz:clazzInSpecificPackage) {
 			// skip Throwable \ Abstract \ Interface class

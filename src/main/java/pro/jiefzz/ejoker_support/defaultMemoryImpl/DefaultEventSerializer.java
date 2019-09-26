@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker_support.defalultMemoryImpl;
+package pro.jiefzz.ejoker_support.defaultMemoryImpl;
 
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 

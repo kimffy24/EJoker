@@ -45,12 +45,12 @@ public class EJoker {
 		
 		// regist scanner hook
 		context.registeScannerHook(clazz -> {
-				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
+//				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
 					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
 					RegistCommandHandlerHelper.checkAndRegistCommandHandler(context, clazz);
 					RegistCommandAsyncHandlerHelper.checkAndRegistCommandAsyncHandler(context, clazz);
 					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
-				}
+//				}
 				RegistMessageHandlerHelper.checkAndRegistMessageHandler(context, clazz);
 				
 				// register StringId to GenericId codec.
