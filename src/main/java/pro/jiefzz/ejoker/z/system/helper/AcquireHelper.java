@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.wrapper.SleepWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
 /**
  * 等待期望值 - 盲等
@@ -18,13 +18,13 @@ public final class AcquireHelper {
 	public static void waitAcquire(AtomicBoolean ab, long msPerLoop, IVoidFunction loopAction) {
 		while (ab.get()) {
 			loopAction.trigger();
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, long msPerLoop) {
 		while (ab.get()) {
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
@@ -32,20 +32,20 @@ public final class AcquireHelper {
 		int i = -1;
 		while (ab.get()) {
 			loopAction.trigger(++i);
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop, IVoidFunction loopAction) {
 		while (expect != ab.get()) {
 			loopAction.trigger();
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop) {
 		while (expect != ab.get()) {
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
@@ -53,7 +53,7 @@ public final class AcquireHelper {
 		int i = -1;
 		while (expect != ab.get()) {
 			loopAction.trigger(++i);
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 }

@@ -10,3 +10,10 @@
  *
  */
 package pro.jiefzz.ejoker.z.system.wrapper;
+
+/**
+ * 注意了哦！！！！！！！！！
+ * 在这个包下的所有并发同步工具都会丢失了可中断的能力！！！
+ * 自己mark一下
+ *
+ */

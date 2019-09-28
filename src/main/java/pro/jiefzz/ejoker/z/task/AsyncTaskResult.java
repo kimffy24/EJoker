@@ -13,11 +13,14 @@ public final class AsyncTaskResult<T> {
 	public AsyncTaskResult(AsyncTaskStatus status) {
 		this(status, null, null);
 	}
+	public AsyncTaskResult(T data) {
+		this(AsyncTaskStatus.Success, null, data);
+	}
+//	public AsyncTaskResult(AsyncTaskStatus status, T data) {
+//		this(status, null, data);
+//	}
 	public AsyncTaskResult(AsyncTaskStatus status, String errorMessage) {
 		this(status, errorMessage, null);
-	}
-	public AsyncTaskResult(AsyncTaskStatus status, T data) {
-		this(status, null, data);
 	}
 	public AsyncTaskResult(AsyncTaskStatus status, String errorMessage, T data) {
 		this.status = status;

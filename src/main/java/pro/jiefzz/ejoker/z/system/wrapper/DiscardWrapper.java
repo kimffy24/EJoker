@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
 
-public class SleepWrapper {
+public class DiscardWrapper {
 	
 	public final static void sleep(Long millis) {
 		sleep(TimeUnit.MILLISECONDS, millis);
@@ -19,7 +19,7 @@ public class SleepWrapper {
 	}
 
 	public final static void setProvider(IVoidFunction2<TimeUnit, Long> vf2) {
-		SleepWrapper.vf2 = vf2;
+		DiscardWrapper.vf2 = vf2;
 	}
 
 	private static IVoidFunction2<TimeUnit, Long> vf2 = (u, t) -> {

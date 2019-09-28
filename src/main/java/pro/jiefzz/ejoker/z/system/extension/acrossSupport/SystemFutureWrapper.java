@@ -15,7 +15,7 @@ import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
  *
  * @param <TResult>
  */
-public class SystemFutureWrapper<TResult> {
+public class SystemFutureWrapper<TResult> implements Future<TResult> {
 
 	public final Future<TResult> refFuture;
 
@@ -23,27 +23,29 @@ public class SystemFutureWrapper<TResult> {
 		refFuture = javaSystemFuture;
 	}
 
-//	@Override
+	@Override
 	@Suspendable
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		return refFuture.cancel(mayInterruptIfRunning);
 	}
 
-//	@Override
+	@Override
 	@Suspendable
 	public boolean isCancelled() {
 		return refFuture.isCancelled();
 	}
 
-//	@Override
+	@Override
 	@Suspendable
 	public boolean isDone() {
 		return refFuture.isDone();
 	}
 
-//	@Override
+	@Override
 	@Suspendable
-	public TResult get() {
+	public TResult get()
+			throws InterruptedException, ExecutionException
+	{
 		try {
 			return refFuture.get();
 		} catch (InterruptedException ie) {
@@ -58,9 +60,11 @@ public class SystemFutureWrapper<TResult> {
 		}
 	}
 
-//	@Override
+	@Override
 	@Suspendable
-	public TResult get(long timeout, TimeUnit unit) {
+	public TResult get(long timeout, TimeUnit unit)
+		throws InterruptedException, ExecutionException, TimeoutException
+	{
 		try {
 			return refFuture.get(timeout, unit);
 		} catch (InterruptedException | TimeoutException e) {

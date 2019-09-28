@@ -26,7 +26,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.SleepWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
 
 @EService
@@ -93,7 +93,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 								closeHookTrigger.put(port, f.channel()::close);
 								RPCTuple currentRPCTuple;
 								while(null == (currentRPCTuple = portMap.get(port)))
-									SleepWrapper.sleep(TimeUnit.MILLISECONDS, 5l);
+									DiscardWrapper.sleep(TimeUnit.MILLISECONDS, 5l);
 								currentRPCTuple.initialFuture.trySetResult(null);
 							}					
 							// 监听服务器关闭监听
@@ -120,7 +120,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		} else {
 			if(waitFinished) {
 				while(null == (currentTuple = portMap.get(port)))
-					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 10l);
+					DiscardWrapper.sleep(TimeUnit.MILLISECONDS, 10l);
 			}
 		}
 			
@@ -156,7 +156,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			} else {
 				int loop = 0;
 				while (loop++<5 && null == (nettySimpleClient = clientStore.get(uniqueKey)))
-					SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
+					DiscardWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
 				if(null == nettySimpleClient) {
 					return fetchNettySimpleClient(host, port);
 				}

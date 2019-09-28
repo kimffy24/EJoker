@@ -7,17 +7,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
+import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.wrapper.SleepWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
 
 /**
  * 模拟IOHelper的实现
@@ -85,6 +82,87 @@ public class IOHelper {
 //	private void init() {
 ////		scavenger.addFianllyJob(retryExecutorService::shutdown);
 //	}
+	
+
+	public void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IVoidFunction completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction) {
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				null,
+				completeAction,
+				contextInfo,
+				faildAction);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IVoidFunction1<IOHelperContext<Void>> loopAction,
+			IVoidFunction completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction) {
+		IOHelperContext ioHelperContext = new IOHelperContext(
+				this,
+				actionName,
+				mainAction,
+				loopAction,
+				r -> {
+					completeAction.trigger();
+				},
+				contextInfo,
+				faildAction);
+		do {
+			ioHelperContext.loopAction.trigger(ioHelperContext);
+		} while(!ioHelperContext.isFinish());
+	}
+
+	public void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IVoidFunction completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction,
+			boolean retryWhenFailed) {
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				null,
+				completeAction,
+				contextInfo,
+				faildAction,
+				retryWhenFailed);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void tryAsyncAction2(
+			String actionName,
+			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IVoidFunction1<IOHelperContext<Void>> loopAction,
+			IVoidFunction completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction,
+			boolean retryWhenFailed) {
+		IOHelperContext ioHelperContext = new IOHelperContext(
+				this,
+				actionName,
+				mainAction,
+				loopAction,
+				r -> {
+					completeAction.trigger();
+				},
+				contextInfo,
+				faildAction,
+				retryWhenFailed);
+		do {
+			ioHelperContext.loopAction.trigger(ioHelperContext);
+		} while(!ioHelperContext.isFinish());
+	}
 
 	public <T> void tryAsyncAction2(
 			String actionName,
@@ -286,7 +364,7 @@ public class IOHelper {
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
 //				retryExecutorService.submit(() -> {
-					SleepWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
+					DiscardWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
 //					externalContext.loopAction.trigger(externalContext);
 //					});
 			} else {
