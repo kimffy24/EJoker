@@ -22,15 +22,13 @@ import pro.jiefzz.ejoker.domain.IAggregateStorage;
 import pro.jiefzz.ejoker.domain.IRepository;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.queue.SendReplyService;
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
-import pro.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
+import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueConsumer;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.schedule.IScheduleService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.service.IWorkerService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
@@ -39,7 +37,7 @@ import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
 
 @EService
-public class CommandConsumer implements IWorkerService {
+public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
 	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
@@ -68,19 +66,7 @@ public class CommandConsumer implements IWorkerService {
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 
-	/// #fix 180920 register sync offset task
-	@Dependence
-	private IScheduleService scheduleService;
-
-	///
-
-	private IConsumerWrokerAware consumer;
-
-	public CommandConsumer useConsumer(IConsumerWrokerAware consumer) {
-		this.consumer = consumer;
-		return this;
-	}
-	
+	@Override
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		// Here QueueMessage is a carrier of Command
 		// separate it from QueueMessage；
@@ -94,42 +80,10 @@ public class CommandConsumer implements IWorkerService {
 		processor.process(new ProcessingCommand(command, commandExecuteContext, commandItems));
 	}
 
-	public CommandConsumer start() {
-		consumer.registerEJokerCallback(this::handle);
-		try {
-			consumer.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
-
-		/// #fix 180920 register sync offset task
-		{
-			scheduleService.startTask(this.getClass().getName() + "@" + this.hashCode() + "#sync offset task",
-					consumer::syncOffsetToBroker, 2000, 2000);
-		}
-		///
-
-		return this;
-	}
-
-	public CommandConsumer subscribe(String topic) throws Exception {
-		consumer.subscribe(topic, "*");
-		return this;
-	}
-
-	public CommandConsumer shutdown() {
-		try {
-			consumer.shutdown();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return this;
-	}
-	
-	public Object getDeeplyConsumer() {
-		return consumer;
+	@Override
+	protected long getConsumerLoopInterval() {
+		// TODO Auto-generated method stub
+		return 2000l;
 	}
 
 	/**
@@ -160,7 +114,7 @@ public class CommandConsumer implements IWorkerService {
 
 		@Override
 		public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult) {
-			messageContext.onMessageHandled(/*message*/);
+			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
 				return SystemFutureWrapperUtil.completeFuture();

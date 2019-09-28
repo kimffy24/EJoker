@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.queue.aware;
+package pro.jiefzz.ejoker.queue.skeleton.aware;
 
 import java.io.Serializable;
 

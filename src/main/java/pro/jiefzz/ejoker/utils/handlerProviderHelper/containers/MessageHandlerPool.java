@@ -1,5 +1,7 @@
 package pro.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
+import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,10 +17,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.infrastructure.IMessage;
-import pro.jiefzz.ejoker.infrastructure.IMessageHandler;
-import pro.jiefzz.ejoker.infrastructure.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
+import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandler;
+import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
@@ -175,7 +177,7 @@ public class MessageHandlerPool {
 						@SuppressWarnings("unchecked")
 						SystemFutureWrapper<AsyncTaskResult<Void>> result =
 								(SystemFutureWrapper<AsyncTaskResult<Void>> )handleReflectionMethod.invoke(getInnerObject(), message);
-						return result.get();
+						return await(result);
 					} catch (IllegalAccessException|IllegalArgumentException e) {
 						logger.error("Message handle async faild", e);
 						return new AsyncTaskResult<>(AsyncTaskStatus.Failed, e.getMessage(), null);

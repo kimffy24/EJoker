@@ -3,13 +3,11 @@ package pro.jiefzz.ejoker.commanding;
 import java.util.HashMap;
 import java.util.Map;
 
-import pro.jiefzz.ejoker.infrastructure.IMailBox;
-import pro.jiefzz.ejoker.infrastructure.IMailBoxMessage;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 
-public class ProcessingCommand implements IMailBoxMessage<ProcessingCommand, CommandResult> {
+public class ProcessingCommand {
 
-	private IMailBox<ProcessingCommand, CommandResult> mailBox;
+	private ProcessingCommandMailbox mailBox;
 	
 	private long sequence;
 	
@@ -52,13 +50,11 @@ public class ProcessingCommand implements IMailBoxMessage<ProcessingCommand, Com
 		return items;
 	}
 
-	@Override
-	public IMailBox<ProcessingCommand, CommandResult> getMailBox() {
+	public ProcessingCommandMailbox getMailBox() {
 		return mailBox;
 	}
 
-	@Override
-	public void setMailBox(IMailBox<ProcessingCommand, CommandResult> mailbox) {
+	public void setMailBox(ProcessingCommandMailbox mailbox) {
 		this.mailBox = mailbox;
 	}
 

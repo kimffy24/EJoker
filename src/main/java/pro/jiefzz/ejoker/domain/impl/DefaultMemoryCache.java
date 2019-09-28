@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
 
-	private final Object lockHandle = LockWrapper.createLock();
+	private final Lock resetLock = LockWrapper.createLock();
 	
 	private final Map<String, AggregateCacheInfo> aggregateRootInfoDict = new ConcurrentHashMap<>();
 
@@ -137,7 +138,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	private void resetAggregateRootCache(IAggregateRoot aggregateRoot) {
-		LockWrapper.lock(lockHandle);
+		resetLock.lock();
 		try {
 			if(null == aggregateRoot)
 				throw new ArgumentNullException("aggregateRoot");
@@ -159,7 +160,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			}
 			
 		} finally {
-			LockWrapper.unlock(lockHandle);
+			resetLock.unlock();
 		}
 //		Ensure.notNull(aggregateRoot, "aggregateRoot");
 //		AggregateCacheInfo previous = MapHelper.getOrAddConcurrent(aggregateRootInfoDict, aggregateRoot.getUniqueId(),

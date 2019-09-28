@@ -8,11 +8,13 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.Strand;
 import co.paralleluniverse.strands.concurrent.CountDownLatch;
 import co.paralleluniverse.strands.concurrent.ReentrantLock;
+import co.paralleluniverse.strands.concurrent.ReentrantReadWriteLock;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
-import pro.jiefzz.ejoker.z.system.wrapper.SleepWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.RWLockWrapper;
 import pro.jiefzz.ejoker.z.task.IAsyncEntrance;
 import pro.jiefzz.ejoker.z.task.context.AbstractNormalWorkerGroupService;
 
@@ -42,7 +44,7 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 	 */
 	private final static void useQuasar() {
 		
-		SleepWrapper.setProvider((u, l) -> {
+		DiscardWrapper.setProvider((u, l) -> {
 			try {
 				Strand.sleep(l, u);
 			} catch (SuspendExecution s) {
@@ -78,18 +80,9 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 			
 		});
 		
-		LockWrapper.setProvider(
-				ReentrantLock::new,
-				l -> ((ReentrantLock )l).lock(),
-				l -> ((ReentrantLock )l).unlock(),
-				l -> ((ReentrantLock )l).tryLock(),
-				(l, r, u) -> {
-					try {
-						return ((ReentrantLock )l).tryLock(r, u);
-					} catch (InterruptedException e) {
-						throw new AsyncWrapperException(e);
-					}
-				});
+		LockWrapper.setProvider(ReentrantLock::new);
+		
+		RWLockWrapper.setProvider(ReentrantReadWriteLock::new);
 		
 
 		CountDownLatchWrapper.setProvider(

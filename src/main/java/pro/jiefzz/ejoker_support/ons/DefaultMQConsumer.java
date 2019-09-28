@@ -29,9 +29,9 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.MessageQueue;
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.RemotingException;
 
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
-import pro.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 import pro.jiefzz.ejoker.z.system.functional.IFunction3;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction3;
@@ -162,7 +162,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		ONSPullConsumer.shutdown();
 	}
 	
-	public void syncOffsetToBroker() {
+	public void loopInterval() {
 		
 		if(this.onPasue.get())
 			return;
@@ -571,7 +571,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		}
 		
 		@Override
-		public void onMessageHandled() {
+		public void onMessageHandled(EJokerQueueMessage queueMessage) {
 			DefaultMQConsumer.this.tryMarkCompletion(mq, comsumedOffset);
 		}
 		

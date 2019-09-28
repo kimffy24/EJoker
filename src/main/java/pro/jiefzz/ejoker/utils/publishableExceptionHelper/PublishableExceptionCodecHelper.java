@@ -5,7 +5,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import pro.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
 import pro.jiefzz.ejoker.z.context.dev2.EJokerInstanceBuilder;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;

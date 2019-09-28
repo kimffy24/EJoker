@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.queue.aware;
+package pro.jiefzz.ejoker.queue.skeleton.aware;
 
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
 
@@ -12,6 +12,6 @@ public interface IConsumerWrokerAware {
 	
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf);
 	
-	public void syncOffsetToBroker();
+	public void loopInterval();
 	
 }

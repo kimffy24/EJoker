@@ -1,6 +1,6 @@
-package pro.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage;
+package pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException;
 
-import pro.jiefzz.ejoker.infrastructure.IMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
 
 public interface IPublishableException extends IMessage {
 

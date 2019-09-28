@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandAsyncHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;

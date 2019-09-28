@@ -18,13 +18,15 @@ import org.apache.rocketmq.remoting.RPCHook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 import pro.jiefzz.ejoker.z.algorithm.ConsistentHashShard;
 import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
+import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
+import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
-import pro.jiefzz.ejoker.z.system.wrapper.SleepWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
 /**
  * Use consistent hash algorithm to select a queue, as default.<br>
@@ -54,7 +56,13 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 	}
 
 	@Override
-	public void send(final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
+	public void send(
+			final EJokerQueueMessage message,
+			final String routingKey,
+			IVoidFunction successAction,
+			IVoidFunction1<String> faildAction,
+			IVoidFunction1<Exception> exceptionAction) {
+//	public void send(final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
 		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(),
 				message.getBody(), true);
 		// 使用一致性hash选择队列
@@ -62,22 +70,16 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		try {
 			sendResult = super.send(rMessage, this::selectQueue, null);
 		} catch (Exception e) {
-			logger.error(
-					"EJoker message async send failed, message: {}, routingKey: {}, messageId: {}, version: {}",
-					e.getMessage(), rMessage.getKeys(), messageId, version);
+			exceptionAction.trigger(e);
 			throw new IOExceptionOnRuntime(new IOException(e));
 		}
-		if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-			if(SendStatus.SLAVE_NOT_AVAILABLE.equals(sendResult.getSendStatus())) {
+		if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())
+				&& !SendStatus.SLAVE_NOT_AVAILABLE.equals(sendResult.getSendStatus())) {
 				// rocketmq特有情况 如果没有slave可能会报出这个错，但严格来说又不算错。
-//				logger.warn("RocketMQ slave is no avaliable, but it dosn't matter. sendResult: {}", sendResult);
-				return;
-			}
-			logger.error(
-					"EJoker message async send failed, sendResult: {}, routingKey: {}, messageId: {}, version: {}",
-					sendResult.toString(), rMessage.getKeys(), messageId, version);
+			faildAction.trigger(sendResult.toString());
 			throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
 		}
+		successAction.trigger();
 	}
 	
 	@Override
@@ -163,7 +165,7 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 			onPasue4RepreparePredispatch.set(false);
 			
 			// waiting for a moment
-			SleepWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
+			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
 		}
 		
 		public void awaitPredispatch() {

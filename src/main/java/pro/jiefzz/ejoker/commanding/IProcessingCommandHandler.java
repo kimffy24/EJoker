@@ -4,6 +4,6 @@ import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 
 public interface IProcessingCommandHandler {
 
-	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand);
+	public SystemFutureWrapper<Void> handleAsync(ProcessingCommand processingCommand);
 	
 }

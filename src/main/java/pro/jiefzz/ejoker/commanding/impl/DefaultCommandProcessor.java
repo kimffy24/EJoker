@@ -17,6 +17,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.schedule.IScheduleService;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -32,7 +33,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	private final static Logger logger = LoggerFactory.getLogger(DefaultCommandProcessor.class);
 	
 	private final Map<String, ProcessingCommandMailbox> mailboxDict = new ConcurrentHashMap<>();
-	
+
 	@Dependence
     private IProcessingCommandHandler handler;
 
@@ -41,14 +42,26 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
-
+	
+	@Dependence
+	private Scavenger scavenger;
+	
+	private long timeoutMillis = EJokerEnvironment.MAILBOX_IDLE_TIMEOUT;
+	
+	private long cleanInactivalMillis = 5000l;
+	
 	@EInitialize
 	private void init() {
+
+		String taskName;
 		scheduleService.startTask(
-				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				taskName = String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
 				this::cleanInactiveMailbox,
-				2000l,
-				2000l);
+				cleanInactivalMillis,
+				cleanInactivalMillis);
+		
+		scavenger.addFianllyJob(() ->  scheduleService.stopTask(taskName));
+		
 	}
 
 	@Override
@@ -57,8 +70,31 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         if (aggregateRootId==null || "".equals(aggregateRootId))
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());
 
-        ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
-        mailbox.enqueueMessage(processingCommand);
+//        // 虽然内存操作比IO快得多得多，但是这样全部command开始都在这里竞争真的好吗？
+//        asyncLock.lock();
+//        try {
+//            ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
+//            mailbox.enqueueMessage(processingCommand);
+//        } finally {
+//        	asyncLock.unlock();
+//        }
+
+        ProcessingCommandMailbox mailbox;
+        
+        do {
+			mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
+        	if(mailbox.tryUse()) {
+        		// tryUse()包装的是读锁，当前这个process调用是可以并行的。
+        		try {
+        			mailbox.enqueueMessage(processingCommand);
+        		} finally {
+        			mailbox.releaseUse();
+        		}
+        		break;
+        	} else {
+        		// ... 自旋 ...
+        	}
+        } while (true);
 	}
 
 	/**
@@ -70,9 +106,22 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 		while(it.hasNext()) {
 			Entry<String, ProcessingCommandMailbox> current = it.next();
 			ProcessingCommandMailbox mailbox = current.getValue();
-			if(!mailbox.isRunning() && mailbox.isInactive(EJokerEnvironment.MAILBOX_IDLE_TIMEOUT)) {
-				it.remove();
-				logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
+			if(!mailbox.isRunning()
+					&& mailbox.isInactive(timeoutMillis)
+					&& mailbox.tryClean()
+					&& 0 == mailbox.getTotalUnConsumedMessageCount()
+					) {
+		        // tryClean()封装的是一个写锁，即clean过程完全排他的
+				// 获取失败后马上放弃clean过程，可能有别的线程要使用mailbox
+		        try {
+		        	if(mailbox.getTotalUnConsumedMessageCount() > 0) {
+		        		continue;
+		        	}
+		        	it.remove();
+		        	logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
+		        } finally {
+		        	mailbox.releaseClean();
+		        }
 			}
 		}
 	}

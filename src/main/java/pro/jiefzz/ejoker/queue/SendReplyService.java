@@ -1,6 +1,5 @@
 package pro.jiefzz.ejoker.queue;
 
-import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;

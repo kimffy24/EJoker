@@ -1,8 +1,14 @@
-package pro.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage;
+package pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import pro.jiefzz.ejoker.utils.MObjectId;
 
-public abstract class AbstractPublishableException extends RuntimeException implements IPublishableException {
+public abstract class AbstractPublishableException extends RuntimeException implements IPublishableException, Serializable {
 
 	private static final long serialVersionUID = 4037848789314871750L;
 
@@ -10,24 +16,14 @@ public abstract class AbstractPublishableException extends RuntimeException impl
 	
 	private long timestamp;
 	
-	private int sequence;
+	private Map<String, String> items;
 	
 	public AbstractPublishableException() {
         id = MObjectId.get().toHexString();
         timestamp = System.currentTimeMillis();
-        sequence = 1;
+        items = new HashMap<>();
     }
 	
-	@Override
-	public String getRoutingKey() {
-		return null;
-	}
-
-	@Override
-	public String getTypeName() {
-		return this.getClass().getName();
-	}
-
 	@Override
 	public void setId(String id) {
 		this.id = id;
@@ -49,13 +45,27 @@ public abstract class AbstractPublishableException extends RuntimeException impl
 	}
 
 	@Override
-	public int getSequence() {
-		return sequence;
+	public Map<String, String> getItems() {
+		return items;
 	}
 
 	@Override
-	public void setSequence(int sequence) {
-		this.sequence = sequence;
+	public void setItems(Map<String, String> items) {
+		this.items = items;
+	}
+
+	@Override
+	public void mergeItems(Map<String, String> items) {
+		if(null == items || 0 == items.size()) {
+			return;
+		}
+		if(null == this.items) {
+			this.items = new HashMap<>();
+		}
+		Set<Entry<String, String>> entrySet = items.entrySet();
+		for(Entry<String, String> entry : entrySet) {
+			this.items.putIfAbsent(entry.getKey(), entry.getValue());
+		}
 	}
 
 }

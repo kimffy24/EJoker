@@ -1,6 +1,6 @@
-package pro.jiefzz.ejoker.infrastructure.varieties.applicationMessage;
+package pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage;
 
-import pro.jiefzz.ejoker.infrastructure.IMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
 
 public interface IApplicationMessage extends IMessage {
 

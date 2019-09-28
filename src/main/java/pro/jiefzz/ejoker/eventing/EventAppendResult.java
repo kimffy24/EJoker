@@ -1,30 +1,62 @@
 package pro.jiefzz.ejoker.eventing;
 
-public enum EventAppendResult {
+import java.util.ArrayList;
+import java.util.List;
 
-	/**
-	 * 无定义。
-	 */
-	Undefined,
+public class EventAppendResult {
+	
+    private List<String> successAggregateRootIdList;
+    
+    private List<String> duplicateEventAggregateRootIdList;
+    
+    private List<String> duplicateCommandIdList;
 
-	/**
-	 * 成功
-	 */
-	Success,
+    public EventAppendResult() {
+        successAggregateRootIdList = new ArrayList<>();
+        duplicateCommandIdList = new ArrayList<>();
+        duplicateEventAggregateRootIdList = new ArrayList<>();
+    }
 
-	/**
-	 * 失败
-	 */
-	Failed,
+    public void addSuccessAggregateRootId(String aggregateRootId) {
+        if (!successAggregateRootIdList.contains(aggregateRootId)) {
+            successAggregateRootIdList.add(aggregateRootId);
+        }
+    }
+    public void addDuplicateEventAggregateRootId(String aggregateRootId) {
+        if (!duplicateEventAggregateRootIdList.contains(aggregateRootId)) {
+            duplicateEventAggregateRootIdList.add(aggregateRootId);
+        }
+    }
+    public void addDuplicateCommandId(String commandId) {
+        if (!duplicateCommandIdList.contains(commandId)) {
+            duplicateCommandIdList.add(commandId);
+        }
+    }
 
-	/**
-	 * 重复事件
-	 */
-	DuplicateEvent,
+    
+    
+	public List<String> getSuccessAggregateRootIdList() {
+		return successAggregateRootIdList;
+	}
 
-	/**
-	 * 重复命令
-	 */
-	DuplicateCommand
+	public void setSuccessAggregateRootIdList(List<String> successAggregateRootIdList) {
+		this.successAggregateRootIdList = successAggregateRootIdList;
+	}
+
+	public List<String> getDuplicateEventAggregateRootIdList() {
+		return duplicateEventAggregateRootIdList;
+	}
+
+	public void setDuplicateEventAggregateRootIdList(List<String> duplicateEventAggregateRootIdList) {
+		this.duplicateEventAggregateRootIdList = duplicateEventAggregateRootIdList;
+	}
+
+	public List<String> getDuplicateCommandIdList() {
+		return duplicateCommandIdList;
+	}
+
+	public void setDuplicateCommandIdList(List<String> duplicateCommandIdList) {
+		this.duplicateCommandIdList = duplicateCommandIdList;
+	}
 
 }

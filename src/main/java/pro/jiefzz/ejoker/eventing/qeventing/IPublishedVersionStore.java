@@ -1,8 +1,13 @@
-package pro.jiefzz.ejoker.infrastructure;
+package pro.jiefzz.ejoker.eventing.qeventing;
 
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
+/**
+ * Represents a storage to store the aggregate published event version.
+ * @author kimffy
+ *
+ */
 public interface IPublishedVersionStore {
 	
 	/**

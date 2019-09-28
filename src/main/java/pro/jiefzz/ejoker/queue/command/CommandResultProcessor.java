@@ -12,7 +12,6 @@ import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandReturnType;
 import pro.jiefzz.ejoker.commanding.CommandStatus;
 import pro.jiefzz.ejoker.commanding.ICommand;
-import pro.jiefzz.ejoker.queue.IReplyHandler;
 import pro.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
@@ -23,10 +22,9 @@ import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.service.IWorkerService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
 
 @EService
-public class CommandResultProcessor implements IReplyHandler, IWorkerService {
+public class CommandResultProcessor implements IWorkerService {
 
 	private final static Logger logger = LoggerFactory.getLogger(CommandResultProcessor.class);
 
@@ -96,29 +94,25 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 			CommandResult commandResult = new CommandResult(CommandStatus.Failed, command.getId(),
 					command.getAggregateRootId(), "Failed to send the command.", String.class.getName());
 
-			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(AsyncTaskStatus.Success,
-					commandResult);
+			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
 			commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult);
 		}
 	}
 
-	@Override
-	public void handlerResult(int type, CommandResult commandResult) {
+	private void handlerResult(int type, CommandResult commandResult) {
 		CommandTaskCompletionSource commandTaskCompletionSource;
 		if (null != (commandTaskCompletionSource = commandTaskMap.getOrDefault(commandResult.getCommandId(), null))) {
 
 			if (CommandReturnType.CommandExecuted.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				commandTaskMap.remove(commandResult.getCommandId());
-				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
-						AsyncTaskStatus.Success, commandResult);
+				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
 				if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
 					logger.debug("Command result return, {}", commandResult);
 			} else if (CommandReturnType.EventHandled.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				if (CommandStatus.Failed.equals(commandResult.getStatus())
 						|| CommandStatus.NothingChanged.equals(commandResult.getStatus())) {
 					commandTaskMap.remove(commandResult.getCommandId());
-					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(
-							AsyncTaskStatus.Success, commandResult);
+					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
 					if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
 						logger.debug("Command result return, {}", commandResult);
 				}
@@ -127,8 +121,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 
 	}
 
-	@Override
-	public void handlerResult(int type, DomainEventHandledMessage message) {
+	private void handlerResult(int type, DomainEventHandledMessage message) {
 		String commandId = message.getCommandId();
 		CommandTaskCompletionSource commandTaskCompletionSource;
 		if (null != (commandTaskCompletionSource = commandTaskMap.getOrDefault(commandId, null))) {
@@ -137,7 +130,7 @@ public class CommandResultProcessor implements IReplyHandler, IWorkerService {
 					message.getAggregateRootId(), message.getCommandResult(),
 					message.getCommandResult() != null ? message.getCommandResult().getClass().getName() : null);
 			if (commandTaskCompletionSource.taskCompletionSource
-					.trySetResult(new AsyncTaskResult<>(AsyncTaskStatus.Success, commandResult)))
+					.trySetResult(new AsyncTaskResult<>(commandResult)))
 				logger.debug("Command result return, {}", commandResult.toString());
 		}
 	}

@@ -7,18 +7,18 @@ import java.nio.charset.Charset;
 import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandReturnType;
 import pro.jiefzz.ejoker.commanding.ICommand;
-import pro.jiefzz.ejoker.commanding.ICommandRoutingKeyProvider;
 import pro.jiefzz.ejoker.commanding.ICommandService;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.queue.ITopicProvider;
 import pro.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import pro.jiefzz.ejoker.queue.SendQueueMessageService;
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.service.IWorkerService;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
@@ -47,9 +47,6 @@ public class CommandService implements ICommandService, IWorkerService {
 	
 	@Dependence
 	private ITopicProvider<ICommand> commandTopicProvider;
-	
-	@Dependence
-	private ICommandRoutingKeyProvider commandRouteKeyProvider;
 	
 	@Dependence
 	private CommandResultProcessor commandResultProcessor;
@@ -85,7 +82,18 @@ public class CommandService implements ICommandService, IWorkerService {
 	
 	@Override
 	public SystemFutureWrapper<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
-		return sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null);
+		try {
+			return sendQueueMessageService.sendMessageAsync(
+					producer,
+					"command",
+					command.getClass().getSimpleName(),
+					buildCommandMessage(command),
+					command.getAggregateRootId(),
+					command.getId(),
+					command.getItems());
+		} catch (RuntimeException ex) {
+			return new SystemFutureWrapper<>(EJokerFutureTaskUtil.newFutureTask(AsyncTaskStatus.Failed, ex.getMessage()));
+		}
 	}
 
 	/**
@@ -98,14 +106,24 @@ public class CommandService implements ICommandService, IWorkerService {
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
 		
 		return systemAsyncHelper.submit(() -> {
+			
 			RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
 			commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
-			AsyncTaskResult<Void> result = await(sendQueueMessageService.sendMessageAsync(producer, buildCommandMessage(command, true), commandRouteKeyProvider.getRoutingKey(command), command.getId(), null));
+			
+			AsyncTaskResult<Void> result = await(sendQueueMessageService.sendMessageAsync(
+					producer,
+					"command",
+					command.getClass().getSimpleName(),
+					buildCommandMessage(command, true),
+					command.getAggregateRootId(),
+					command.getId(),
+					command.getItems()));
+			
 			if(AsyncTaskStatus.Success.equals(result.getStatus())) {
 				return remoteTaskCompletionSource.get();
 			} else {
 				commandResultProcessor.processFailedSendingCommand(command);
-				throw new RuntimeException(result.getErrorMessage());
+				return new AsyncTaskResult<>(result.getStatus(), result.getErrorMessage());
 			}
 		});
 		

@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.infrastructure;
+package pro.jiefzz.ejoker.infrastructure.messaging;
 
 import java.util.Collection;
 

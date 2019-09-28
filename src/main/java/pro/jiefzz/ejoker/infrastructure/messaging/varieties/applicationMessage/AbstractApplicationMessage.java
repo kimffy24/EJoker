@@ -1,6 +1,6 @@
-package pro.jiefzz.ejoker.infrastructure.varieties.applicationMessage;
+package pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage;
 
-import pro.jiefzz.ejoker.infrastructure.AbstractMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.AbstractMessage;
 
 public abstract class AbstractApplicationMessage extends AbstractMessage implements IApplicationMessage {
 

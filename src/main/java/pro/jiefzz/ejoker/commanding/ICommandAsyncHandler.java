@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.commanding;
 
-import pro.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 

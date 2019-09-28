@@ -1,27 +1,24 @@
-package pro.jiefzz.ejoker.infrastructure;
+package pro.jiefzz.ejoker.infrastructure.messaging;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import pro.jiefzz.ejoker.utils.MObjectId;
 
 public abstract class AbstractMessage implements  IMessage {
 
 	private String id;
-	private int sequence;
+	
 	private long timestamp;
 	
-	public AbstractMessage() {
-		id=MObjectId.get().toHexString();
-		timestamp=System.currentTimeMillis();
-		sequence=1;
-	}
+	private Map<String, String> items;
 	
-	@Override
-	public String getRoutingKey() {
-		return null;
-	}
-
-	@Override
-	public String getTypeName() {
-		return this.getClass().getName();
+	public AbstractMessage() {
+        id = MObjectId.get().toHexString();
+        timestamp = System.currentTimeMillis();
+        items = new HashMap<>();
 	}
 
 	@Override
@@ -45,13 +42,27 @@ public abstract class AbstractMessage implements  IMessage {
 	}
 
 	@Override
-	public int getSequence() {
-		return sequence;
+	public Map<String, String> getItems() {
+		return items;
 	}
 
 	@Override
-	public void setSequence(int sequence) {
-		this.sequence = sequence;
+	public void setItems(Map<String, String> items) {
+		this.items = items;
+	}
+
+	@Override
+	public void mergeItems(Map<String, String> items) {
+		if(null == items || 0 == items.size()) {
+			return;
+		}
+		if(null == this.items) {
+			this.items = new HashMap<>();
+		}
+		Set<Entry<String, String>> entrySet = items.entrySet();
+		for(Entry<String, String> entry : entrySet) {
+			this.items.putIfAbsent(entry.getKey(), entry.getValue());
+		}
 	}
 
 }
