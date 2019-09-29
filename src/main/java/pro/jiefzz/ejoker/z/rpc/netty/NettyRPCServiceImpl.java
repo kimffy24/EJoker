@@ -21,7 +21,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.io.IOHelper;
 import pro.jiefzz.ejoker.z.rpc.IRPCService;
 import pro.jiefzz.ejoker.z.scavenger.Scavenger;
-import pro.jiefzz.ejoker.z.schedule.IScheduleService;
+import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;

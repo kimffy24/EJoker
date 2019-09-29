@@ -22,7 +22,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.schedule.IScheduleService;
+import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;

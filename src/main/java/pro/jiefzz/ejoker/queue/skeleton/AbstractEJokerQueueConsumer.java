@@ -7,7 +7,7 @@ import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.schedule.IScheduleService;
+import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.service.IWorkerService;
 
 public abstract class AbstractEJokerQueueConsumer implements IWorkerService {

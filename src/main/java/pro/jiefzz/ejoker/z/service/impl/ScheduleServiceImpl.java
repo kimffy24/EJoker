@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.schedule.impl;
+package pro.jiefzz.ejoker.z.service.impl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +15,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.scavenger.Scavenger;
-import pro.jiefzz.ejoker.z.schedule.IScheduleService;
+import pro.jiefzz.ejoker.z.service.IScheduleService;
 
 @EService
 public class ScheduleServiceImpl implements IScheduleService {

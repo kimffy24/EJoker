@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.schedule;
+package pro.jiefzz.ejoker.z.service;
 
 public interface IScheduleService {
 
