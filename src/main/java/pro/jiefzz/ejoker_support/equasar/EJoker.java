@@ -14,6 +14,7 @@ import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.MittenWrapper;
 import pro.jiefzz.ejoker.z.system.wrapper.RWLockWrapper;
 import pro.jiefzz.ejoker.z.task.IAsyncEntrance;
 import pro.jiefzz.ejoker.z.task.context.AbstractNormalWorkerGroupService;
@@ -44,15 +45,57 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 	 */
 	private final static void useQuasar() {
 		
+		MittenWrapper.setProvider(
+				Strand::currentStrand,
+				() -> {
+					try {
+						Strand.park();
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
+				},
+				broker -> {
+					try {
+						Strand.park(broker);
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
+				},
+				nanos -> {
+					try {
+						Strand.parkNanos(nanos);
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
+				},
+				(broker, nanos) -> {
+					try {
+						Strand.parkNanos(broker, nanos);
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
+				},
+				(broker, nanos) -> {
+					try {
+						Strand.parkNanos(broker, nanos);
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
+				},
+				s -> Strand.unpark((Strand )s),
+				s -> ((Strand )s).interrupt(),
+				s -> ((Strand )s).isInterrupted(),
+				s -> ((Strand )s).isAlive(),
+				s -> ((Strand )s).getName(),
+				s -> ((Strand )s).getId());
+		
 		DiscardWrapper.setProvider((u, l) -> {
 			try {
 				Strand.sleep(l, u);
 			} catch (SuspendExecution s) {
 				throw new AssertionError(s);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
-		});
+		}, Strand::interrupted);
 		
 		AbstractNormalWorkerGroupService.setAsyncEntranceProvider(s -> new IAsyncEntrance() {
 			
@@ -67,9 +110,7 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 					fiberAmount.getAndIncrement();
 					try {
 						return asyncTaskThread.trigger();
-//					} catch (SuspendExecution|InterruptedException e) {
-//						throw e;
-					} catch (Exception e) {
+					} catch (RuntimeException e) {
 						e.printStackTrace();
 						throw new AsyncWrapperException(e);
 					} finally {

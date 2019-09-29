@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker.z.system.wrapper;
 import java.util.concurrent.TimeUnit;
 
 import co.paralleluniverse.fibers.Suspendable;
+import pro.jiefzz.ejoker.z.system.functional.IFunction;
 
 public class DiscardWrapper {
 	
@@ -29,23 +30,28 @@ public class DiscardWrapper {
 		try {
 			vf2.trigger(unit, millis);
 		} catch (InterruptedException e) {
-			MittenWrapper.interrupted(); // clean interrupt flag and do nothing
+			interruptedAction.trigger(); // clean interrupt flag and do nothing
 		}
 	}
-	
+
+	@Suspendable
 	public final static void sleep(Long millis) throws InterruptedException {
 		sleep(TimeUnit.MILLISECONDS, millis);
 	}
 
+	@Suspendable
 	public final static void sleep(TimeUnit unit, Long millis) throws InterruptedException {
 		vf2.trigger(unit, millis);
 	}
 
-	public final static void setProvider(IVoidFunction2_TimeUnit_Long vf2) {
+	public final static void setProvider(IVoidFunction2_TimeUnit_Long vf2, IFunction<Boolean> interruptedAction) {
 		DiscardWrapper.vf2 = vf2;
+		DiscardWrapper.interruptedAction  =interruptedAction;
 	}
 	
 	private static IVoidFunction2_TimeUnit_Long vf2;
+	
+	private static IFunction<Boolean> interruptedAction;
 	
 	public static interface IVoidFunction2_TimeUnit_Long {
 		@Suspendable
@@ -54,5 +60,6 @@ public class DiscardWrapper {
 	
 	static {
 		vf2 = TimeUnit::sleep;
+		interruptedAction = Thread::interrupted;
 	}
 }
