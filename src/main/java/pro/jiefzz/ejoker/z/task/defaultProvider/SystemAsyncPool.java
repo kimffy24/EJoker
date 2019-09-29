@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -23,6 +24,10 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	private final static String threadNamePrefix = "EjokerInnerThread-";
 
 	private final ExecutorService defaultThreadPool;
+	
+	private final AtomicInteger activeCounter = new AtomicInteger(0);
+	
+	private int threadPoolSize;
 
 	public SystemAsyncPool(int threadPoolSize) {
 		this(threadPoolSize, false);
@@ -30,7 +35,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 
 	public SystemAsyncPool(int threadPoolSize, boolean prestartAllThread) {
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-				threadPoolSize,
+				this.threadPoolSize = threadPoolSize,
 				threadPoolSize,
 				0l,
 				TimeUnit.MILLISECONDS,
@@ -53,7 +58,21 @@ public class SystemAsyncPool implements IAsyncEntrance {
 						this.daemon = false;
 					}
 				},
-				new ThreadPoolExecutor.CallerRunsPolicy());
+				new ThreadPoolExecutor.CallerRunsPolicy()) {
+
+					@Override
+					protected void beforeExecute(Thread t, Runnable r) {
+						activeCounter.incrementAndGet();
+						super.beforeExecute(t, r);
+					}
+
+					@Override
+					protected void afterExecute(Runnable r, Throwable t) {
+						super.afterExecute(r, t);
+						activeCounter.incrementAndGet();
+					}
+			
+		};
 		if (prestartAllThread)
 			threadPoolExecutor.prestartAllCoreThreads();
 		defaultThreadPool = threadPoolExecutor;
@@ -63,6 +82,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	@Override
 	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
 		if (
+				activeCounter.get() >= threadPoolSize && 
 				Thread.currentThread().getName().startsWith(SystemAsyncPool.threadNamePrefix)
 				) {
 			// @important 1. 如果当前提交线程本来就是线程池中的线程，则由当前线程直接执行

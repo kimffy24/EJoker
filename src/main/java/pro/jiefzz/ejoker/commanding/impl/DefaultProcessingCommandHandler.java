@@ -127,6 +127,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 					commandHandler.toString(), message.getClass().getName(), message.getId(), message.getAggregateRootId());
 			handleSuccess = true;
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			handleExceptionAsync(processingCommand, commandHandler, ex);
 			return;
 		}

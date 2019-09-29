@@ -148,40 +148,40 @@ public class EventCommittingContextMailBox {
 		if (!onProcessing.compareAndSet(false, true)) {
 			return SystemFutureWrapperUtil.completeFuture();
 		}
-
-		lastActiveTime = System.currentTimeMillis();
-		long scannedSequenceSize = 0;
-		List<EventCommittingContext> messageList = new ArrayList<>();
-
-		while (hasRemindMessage() && scannedSequenceSize < batchSize) {
-			EventCommittingContext message;
-			Map<String, Byte> eventDict;
-			if (null != (message = messageQueue.poll()) ) {
-				
-				if ( null != (eventDict = aggregateDictDict.get(message.getEventStream().getAggregateRootId()))
-					&& null != eventDict.remove(message.getEventStream().getId())
-					) {
-					messageList.add(message);
-					scannedSequenceSize ++;
-				}
-			} else {
-				break;
-			}
-		}
 		
-		if(0 == messageList.size()) {
-			completeRun();
-		} else {
-			try {
-				handler.trigger(messageList);
-			} catch (RuntimeException ex) {
-				logger.error(String.format("%s run has unknown exception, mailboxNumber: %d",
-						this.getClass().getSimpleName(), number), ex);
-				
-				DiscardWrapper.sleepInterruptable(1l);
-				
-				completeRun();
+		try {
+
+			lastActiveTime = System.currentTimeMillis();
+			List<EventCommittingContext> messageList = new ArrayList<>();
+	
+			while (messageList.size() < batchSize) {
+				EventCommittingContext message;
+				Map<String, Byte> eventDict;
+				if (null != (message = messageQueue.poll()) ) {
+					if ( null != (eventDict = aggregateDictDict.get(message.getEventStream().getAggregateRootId()))
+						&& null != eventDict.remove(message.getEventStream().getId())
+						) {
+						messageList.add(message);
+					}
+				} else {
+					break;
+				}
 			}
+			
+			if(0 != messageList.size()) {
+				try {
+					handler.trigger(messageList);
+				} catch (RuntimeException ex) {
+					logger.error(String.format("%s run has unknown exception, mailboxNumber: %d",
+							this.getClass().getSimpleName(), number), ex);
+					
+					DiscardWrapper.sleepInterruptable(1l);
+				}
+			}
+		
+		} finally {
+			onProcessing.compareAndSet(true, false);
+			completeRun();
 		}
 		return SystemFutureWrapperUtil.completeFuture();
 	}

@@ -93,6 +93,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 			if(mailBox.tryUse()) {
 				try {
 					mailBox.enqueueMessage(processingMessage);
+					break;
 				} finally {
 					mailBox.releaseUse();
 				}

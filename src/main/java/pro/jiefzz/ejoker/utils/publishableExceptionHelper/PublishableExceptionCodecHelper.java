@@ -4,8 +4,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+import net.minidev.json.parser.ParseException;
 import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
+import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.z.context.dev2.EJokerInstanceBuilder;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
@@ -30,14 +36,23 @@ public final class PublishableExceptionCodecHelper {
 			rMap.put(n, sValue(f.getType(), fValue));
 			
 		});
+
+		// fixed #190929 针对 IMessage 增加的items
+		JSONObject itemsDict = new JSONObject();
+		Set<Entry<String, String>> entrySet = exception.getItems().entrySet();
+		for(Entry<String, String> entry : entrySet) {
+			itemsDict.appendField(entry.getKey(), entry.getValue());
+		}
+		rMap.put("items", itemsDict.toJSONString());
 		
 		return rMap;
 	}
 	
 	public static IPublishableException deserialize(Map<String, String> pMap, Class<? extends IPublishableException> exceptionClazz) {
 		
-		return (IPublishableException )(new EJokerInstanceBuilder(exceptionClazz).doCreate((e) -> {
-			
+		return (IPublishableException )(MapHelper
+				.getOrAdd(builderMap, exceptionClazz, () -> new EJokerInstanceBuilder(exceptionClazz))
+				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
 			ForEachHelper.processForEach(reflectFields, (n, f) -> {
 				
@@ -49,6 +64,20 @@ public final class PublishableExceptionCodecHelper {
 				}
 				
 			});
+
+			// fixed #190929 针对 IMessage 增加的items
+			JSONObject itemsDict;
+			try {
+				itemsDict = (JSONObject )JSONValue.parseStrict(pMap.get("items"));
+			} catch (ParseException e1) {
+				throw new RuntimeException(e1.getMessage(), e1);
+			}
+			Map<String, String> items = new HashMap<>();
+			Set<Entry<String, Object>> entrySet = itemsDict.entrySet();
+			for(Entry<String, Object> entry : entrySet) {
+				items.put(entry.getKey(), entry.getValue().toString());
+			}
+			((IPublishableException )e).setItems(items);
 			
 		}));
 		
@@ -75,6 +104,9 @@ public final class PublishableExceptionCodecHelper {
 					if(Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
 						return;
 					
+					if(field.isAnnotationPresent(PersistentIgnore.class))
+						return;
+					
 					if(!ParameterizedTypeUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
 						throw new RuntimeException(String.format("Unsupport non-basic field in PublishableException!!! type: %s, field: %s", exceptionClazz.getName(), fieldName));
 					
@@ -82,7 +114,6 @@ public final class PublishableExceptionCodecHelper {
 					rMap.putIfAbsent(fieldName, field);
 					
 				});
-				
 				
 			}
 			
@@ -169,4 +200,6 @@ public final class PublishableExceptionCodecHelper {
 	}
 	private static Map<Class<Enum<?>>, Map<String, Enum<?>>> eMap = new HashMap<>();
 	private final static Map<String, Enum<?>> eMapItemPlaceHolder = new HashMap<>();
+	
+	private final static Map<Class<? extends IPublishableException>, EJokerInstanceBuilder> builderMap = new HashMap<>();
 }

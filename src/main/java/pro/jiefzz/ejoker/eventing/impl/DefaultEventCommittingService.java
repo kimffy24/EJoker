@@ -37,6 +37,7 @@ import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
 
@@ -84,6 +85,13 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					new EventCommittingContextMailBox(i, EJokerEnvironment.MAX_BATCH_EVENTS, this::batchPersistEventCommittingContexts, systemAsyncHelper));
 		}
 		
+		new Thread(this::t).start();
+		
+	}
+	
+	private void t() {
+		while(true)
+			DiscardWrapper.sleepInterruptable(1000l);
 	}
 
 	@Override
@@ -174,12 +182,12 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        		sb.append("\": [");
 				        		for(EventCommittingContext ecc : contexts) {
 				        			// TODO 这个地方遇上泛型就扑街了。
-				        			jsonSerializer.convert(ecc);
+				        			sb.append(jsonSerializer.convert(ecc));
 				        			sb.append(", ");
 				        		}
+					        	sb.deleteCharAt(sb.length()-1);
+					        	sb.deleteCharAt(sb.length()-1);
 				        		sb.append("], ");
-					        	sb.deleteCharAt(sb.length()-1);
-					        	sb.deleteCharAt(sb.length()-1);
 				        	});
 				        	sb.deleteCharAt(sb.length()-1);
 				        	sb.deleteCharAt(sb.length()-1);

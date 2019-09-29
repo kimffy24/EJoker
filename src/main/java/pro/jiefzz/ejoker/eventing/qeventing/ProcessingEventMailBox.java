@@ -84,18 +84,21 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 
 		ProcessingEvent currentMessage = message;
 		DomainEventStreamMessage eventStream = currentMessage.getMessage();
-		long currentVersion = eventStream.getVersion();
+		long processingVersion = eventStream.getVersion();
 		
-		long expected = latestHandledEventVersion.get() + 1l;
+		long currentVersion = latestHandledEventVersion.get();
+		long expected = currentVersion + 1l;
 		
-		if(currentVersion == expected) {
+		if(processingVersion == expected) {
 			
 			do {
-				
+
 				eventStream = currentMessage.getMessage();
-				currentVersion = eventStream.getVersion();
+				processingVersion = eventStream.getVersion();
+				
 				if(!latestHandledEventVersion.compareAndSet(currentVersion, expected)) {
 					// 抢占失败？
+					break;
 				}
 				currentMessage.setMailBox(this);
 				messageQueue.offer(currentMessage);
@@ -131,14 +134,14 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 
 				expected = latestHandledEventVersion.get() + 1l;
 				
-			} while(null != (currentMessage = waitingMessageDict.remove(currentVersion+1l)));
+			} while(null != (currentMessage = waitingMessageDict.remove(processingVersion+1l)));
 
 			lastActiveTime = System.currentTimeMillis();
 			tryRun();
 			
-		} else if ( currentVersion > expected ){
+		} else if ( processingVersion > expected ){
 			
-			waitingMessageDict.putIfAbsent(currentVersion, message);
+			waitingMessageDict.putIfAbsent(processingVersion, message);
 			
 		}
 	}

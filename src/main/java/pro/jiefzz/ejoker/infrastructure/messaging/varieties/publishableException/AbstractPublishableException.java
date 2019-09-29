@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import pro.jiefzz.ejoker.utils.MObjectId;
+import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractPublishableException extends RuntimeException implements IPublishableException, Serializable {
 
@@ -16,6 +17,7 @@ public abstract class AbstractPublishableException extends RuntimeException impl
 	
 	private long timestamp;
 	
+	@PersistentIgnore
 	private Map<String, String> items;
 	
 	public AbstractPublishableException() {

@@ -87,10 +87,10 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         		// tryUse()包装的是读锁，当前这个process调用是可以并行的。
         		try {
         			mailbox.enqueueMessage(processingCommand);
+					break;
         		} finally {
         			mailbox.releaseUse();
         		}
-        		break;
         	} else {
         		// ... 不入队，纯自旋 ...
         	}
