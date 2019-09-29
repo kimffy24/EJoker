@@ -7,16 +7,12 @@ import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 
 public final class RegistCommandAsyncHandlerHelper {
 
-	static public void checkAndRegistCommandAsyncHandler(IEjokerContextDev2 ejokerContext, Class<?> clazz) {
-		CommandAsyncHandlerPool commandAsyncHandlerPool = ejokerContext.get(CommandAsyncHandlerPool.class);
-		if(null == commandAsyncHandlerPool)
-			ejokerContext.shallowRegister(commandAsyncHandlerPool = new CommandAsyncHandlerPool());
+	static public void checkAndRegistCommandAsyncHandler(Class<?> clazz, CommandAsyncHandlerPool commandAsyncHandlerPool, IEjokerContextDev2 ejokerContext) {
 
 		if(clazz.isAnnotationPresent(CommandHandler.class)) {
-			
 			commandAsyncHandlerPool.regist((Class<? extends AbstractCommandHandler> )clazz, () -> ejokerContext);
-			
 		}
+		
 	}
 	
 }

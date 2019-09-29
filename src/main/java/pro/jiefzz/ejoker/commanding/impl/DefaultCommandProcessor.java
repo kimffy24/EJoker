@@ -53,14 +53,11 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	@EInitialize
 	private void init() {
 
-		String taskName;
 		scheduleService.startTask(
-				taskName = String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
-		
-		scavenger.addFianllyJob(() ->  scheduleService.stopTask(taskName));
 		
 	}
 

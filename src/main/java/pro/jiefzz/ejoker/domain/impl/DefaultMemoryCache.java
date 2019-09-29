@@ -22,6 +22,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
@@ -51,12 +52,15 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
-
+	
+	@Dependence
+	private Scavenger scavenger;
+	
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "CleanInactiveAggregates()"),
-				this::cleanInactiveAggregates, 2000l, 2000l);
+				this::cleanInactiveAggregates, 10000l, 10000l);
 	}
 
 	@Override

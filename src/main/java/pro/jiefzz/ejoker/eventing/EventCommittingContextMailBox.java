@@ -77,7 +77,7 @@ public class EventCommittingContextMailBox {
 	}
 
 	public void enqueueMessage(EventCommittingContext message) {
-		Map<String, Byte> eventDict = MapHelper.getOrAddConcurrent(aggregateDictDict, message.getEventStream().getAggregateRootId(), ConcurrentHashMap::new);
+		Map<String, Byte> eventDict = MapHelper.getOrAddConcurrent(aggregateDictDict, message.getEventStream().getAggregateRootId(), () -> new ConcurrentHashMap<>());
 		// 添加成功，则...
 		if(null == eventDict.putIfAbsent(message.getEventStream().getId(), (byte )1)) {
 			message.setMailBox(this);

@@ -99,7 +99,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			return o1.intValue() - o2.intValue();
 		}});
 	
-	private final AtomicBoolean onService = new AtomicBoolean(true);
+	private final AtomicBoolean onService = new AtomicBoolean(false);
 	
 	private final static Object defaultInstance = new Object();
 	
@@ -182,7 +182,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void refresh() {
 		
-		onService.set(false);
+		if(onService.get()) {
+			throw new RuntimeException("EJoker has been refresh() once!!!");
+		}
 		
 		refreshContextRecord();
 		
@@ -198,12 +200,16 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		preparePreviouslyLoad();
 		completeInstanceInitMethod();
 		
-		onService.compareAndSet(false, true);
+		// Call full gc once here after 
+		System.gc();
+		
+		onService.set(true);
 	}
 	
 	@Override
 	public void discard() {
-		if(!onService.get())
+		
+		if(onService.compareAndSet(true, false))
 			return;
 		
 		Scavenger scavenger = this.get(Scavenger.class);
@@ -477,7 +483,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);
 					int priority = annotation.priority();
-					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, LinkedBlockingQueue::new);
+					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
 					initTaskQueue.offer(() -> {
 						try {
 							method.invoke(instance);

@@ -168,7 +168,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 						// 这个位置用java stream操作不太顺手
 				        for(EventCommittingContext ecc : committingContexts) {
 				        	MapHelper
-				        		.getOrAdd(successCommittedContextDict, ecc.getEventStream().getAggregateRootId(), ArrayList::new)
+				        		.getOrAdd(successCommittedContextDict, ecc.getEventStream().getAggregateRootId(), () -> new ArrayList<>())
 				        		.add(ecc);
 				        }
 				        

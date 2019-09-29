@@ -53,7 +53,7 @@ public class InMemoryEventStore implements IEventStore {
         Map<String, List<DomainEventStream>> eventStreamDict = new HashMap<>();
         for(DomainEventStream es : eventStreams) {
         	MapHelper
-        		.getOrAdd(eventStreamDict, es.getAggregateRootId(), ArrayList::new)
+        		.getOrAdd(eventStreamDict, es.getAggregateRootId(), () -> new ArrayList<>())
         		.add(es);
         }
         

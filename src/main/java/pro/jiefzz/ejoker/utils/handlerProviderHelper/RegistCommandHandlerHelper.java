@@ -7,16 +7,12 @@ import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 
 public final class RegistCommandHandlerHelper {
 
-	static public void checkAndRegistCommandHandler(IEjokerContextDev2 ejokerContext, Class<?> clazz) {
-		CommandHandlerPool commandHandlerPool = ejokerContext.get(CommandHandlerPool.class);
-		if(null == commandHandlerPool)
-			ejokerContext.shallowRegister(commandHandlerPool = new CommandHandlerPool());
+	static public void checkAndRegistCommandHandler(Class<?> clazz, CommandHandlerPool commandHandlerPool ,IEjokerContextDev2 ejokerContext) {
 		
 		if(clazz.isAnnotationPresent(CommandHandler.class)) {
-
 			commandHandlerPool.regist((Class<? extends AbstractCommandHandler> )clazz, () -> ejokerContext);
-			
 		}
+		
 	}
 	
 }

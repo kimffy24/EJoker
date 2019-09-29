@@ -72,7 +72,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		}
 
 		RPCTuple currentTuple = null;
-		AtomicBoolean ab = MapHelper.getOrAdd(serverPortOccupation, port, AtomicBoolean::new);
+		AtomicBoolean ab = MapHelper.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
 		if(ab.compareAndSet(false, true)) {
 			Thread ioThread = new Thread(
 					() -> {
@@ -129,7 +129,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	// @unsafe on multiple thread process
 	@Override
 	public void removeExport(int port) {
-		AtomicBoolean atomicBoolean = MapHelper.getOrAdd(serverPortOccupation, port, AtomicBoolean::new);
+		AtomicBoolean atomicBoolean = MapHelper.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
 		if(!atomicBoolean.compareAndSet(true, false))
 			return;
 		IVoidFunction closeAction = closeHookTrigger.remove(port);
@@ -149,7 +149,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		String uniqueKey = host+":"+port;
 		NettySimpleClient nettySimpleClient = clientStore.get(uniqueKey);
 		if(null == nettySimpleClient) {
-			AtomicBoolean acquired = MapHelper.getOrAdd(clientConnectionOccupation, uniqueKey, AtomicBoolean::new);
+			AtomicBoolean acquired = MapHelper.getOrAdd(clientConnectionOccupation, uniqueKey, () -> new AtomicBoolean());
 			if(acquired.compareAndSet(false, true)) {
 				nettySimpleClient = new NettySimpleClient(host, port);
 				clientStore.put(host+":"+port, nettySimpleClient);

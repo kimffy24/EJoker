@@ -114,7 +114,7 @@ public class MessageHandlerPool {
 	}
 
 	public final static List<MessageHandlerReflectionTuple> getProxyAsyncHandlers(Class<? extends IMessage> messageType) {
-		return MapHelper.getOrAdd(handlerMapper, messageType, LinkedList::new);
+		return MapHelper.getOrAdd(handlerMapper, messageType, () -> new LinkedList<>());
 	}
 	
 	public static class MessageHandlerReflectionTuple implements IMessageHandlerProxy {
