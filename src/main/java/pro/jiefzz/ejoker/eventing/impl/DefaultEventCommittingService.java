@@ -153,7 +153,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					EventCommittingContextMailBox eventMailBox = firstEventCommittingContext.getMailBox();
 					
 					List<String> successIds = appendResult.getSuccessAggregateRootIdList();
-					if(null != successIds && 0 > successIds.size()) {
+					if(null != successIds && 0 < successIds.size()) {
 						// 针对持久化成功的聚合根，发布这些聚合根的事件到Q端
 						Map<String, List<EventCommittingContext>> successCommittedContextDict = new HashMap<>();
 						

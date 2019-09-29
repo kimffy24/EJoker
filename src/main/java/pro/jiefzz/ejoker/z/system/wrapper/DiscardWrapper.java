@@ -14,6 +14,7 @@ public class DiscardWrapper {
 	 * 
 	 * @param millis
 	 */
+	@Suspendable
 	public final static void sleepInterruptable(Long millis) {
 		sleepInterruptable(TimeUnit.MILLISECONDS, millis);
 	}
@@ -26,9 +27,10 @@ public class DiscardWrapper {
 	 * @param unit
 	 * @param millis
 	 */
+	@Suspendable
 	public final static void sleepInterruptable(TimeUnit unit, Long millis) {
 		try {
-			vf2.trigger(unit, millis);
+			sleep(unit, millis);
 		} catch (InterruptedException e) {
 			interruptedAction.trigger(); // clean interrupt flag and do nothing
 		}

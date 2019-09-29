@@ -116,7 +116,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 					eIds = eIds.substring(1);
 					
 					logger.debug(String.format(
-							"{} enqueued new message, mailboxNumber: {}, aggregateRootId: {}, commandId: {}, eventVersion: {}, eventStreamId: {}, eventTypes: {}, eventIds: {}",
+							"%s enqueued new message, aggregateRootType: %s, aggregateRootId: %s, commandId: %s, eventVersion: %s, eventStreamId: %s, eventTypes: %s, eventIds: %s",
 							this.getClass().getSimpleName(),
 							eventStream.getAggregateRootTypeName(),
 							eventStream.getAggregateRootId(),
@@ -181,7 +181,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 			try {
 				handler.trigger(message);
 			} catch (RuntimeException ex) {
-				logger.error(String.format("{} run has unknown exception, aggregateRootId: {}",
+				logger.error(String.format("%s run has unknown exception, aggregateRootId: %s",
 						this.getClass().getSimpleName(), aggregateRootId), ex);
 				DiscardWrapper.sleepInterruptable(1l);
 				completeRun();

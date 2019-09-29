@@ -91,7 +91,7 @@ public class EventCommittingContextMailBox {
 				}
 				eIds = eIds.substring(1);
 				logger.debug(String.format(
-						"{} enqueued new message, mailboxNumber: {}, aggregateRootId: {}, commandId: {}, eventVersion: {}, eventStreamId: {}, eventIds: {}",
+						"%s enqueued new message, mailboxNumber: %d, aggregateRootId: %s, commandId: %s, eventVersion: %d, eventStreamId: %s, eventIds: %s",
 						this.getClass().getSimpleName(),
 						number,
 						message.getAggregateRoot().getUniqueId(),
@@ -111,8 +111,9 @@ public class EventCommittingContextMailBox {
 	 */
 	public void tryRun() {
 		if(onRunning.compareAndSet(false, true)) {
-			logger.debug("{} start run, mailboxNumber: {}", this.getClass().getSimpleName(),
-					this.getClass().getSimpleName(), number);
+			logger.debug("{} start run, mailboxNumber: {}",
+					this.getClass().getSimpleName(),
+					number);
 			systemAsyncHelper.submit(this::processMessages);
 		}
 	}
@@ -174,7 +175,7 @@ public class EventCommittingContextMailBox {
 			try {
 				handler.trigger(messageList);
 			} catch (RuntimeException ex) {
-				logger.error(String.format("{} run has unknown exception, mailboxNumber: {}",
+				logger.error(String.format("%s run has unknown exception, mailboxNumber: %d",
 						this.getClass().getSimpleName(), number), ex);
 				
 				DiscardWrapper.sleepInterruptable(1l);

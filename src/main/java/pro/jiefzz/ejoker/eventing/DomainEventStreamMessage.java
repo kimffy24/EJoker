@@ -21,7 +21,7 @@ public class DomainEventStreamMessage extends AbstractMessage {
 	
 	private Collection<IDomainEvent<?>> events;
 	
-	public DomainEventStreamMessage() {}
+	public DomainEventStreamMessage() { }
 	
 	public DomainEventStreamMessage(
 			String commandId,

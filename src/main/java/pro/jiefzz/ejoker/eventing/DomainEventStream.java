@@ -19,7 +19,7 @@ public class DomainEventStream extends AbstractMessage {
 	
 	private Collection<IDomainEvent<?>> events;
 	
-	public DomainEventStream(){}
+	public DomainEventStream(){ }
 	
 	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long timestamp, Collection<IDomainEvent<?>> events, Map<String, String> items) {
 		
@@ -52,10 +52,10 @@ public class DomainEventStream extends AbstractMessage {
         				));
         	}
         	if(-1l == this.version) {
+        		// eventStream的version从序号为1的事件里获取
+        		// 序号为1以后的事件则做确认版本相等操作
         		this.version = evnt.getVersion();
-        		continue;
-        	}
-            if (evnt.getVersion() != getVersion()) {
+        	} else if (evnt.getVersion() != getVersion()) {
                 throw new UnmatchEventVersionException(String.format(
                 		"Invalid domain event version, aggregateRootTypeName: %s, aggregateRootId: %s, expected version: %d, but was: %d",
                 		this.aggregateRootTypeName,
