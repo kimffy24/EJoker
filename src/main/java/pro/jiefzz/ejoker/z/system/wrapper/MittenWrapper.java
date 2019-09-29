@@ -32,6 +32,10 @@ public class MittenWrapper {
 	public final static void unpark(MittenWrapper mitten) {
 		Strand.unpark(mitten.targetStrand);
 	}
+	
+	public final static boolean interrupted() {
+		return true;
+	}
 
 	@Suspendable
 	public final static void parkNanos(long nanos) {

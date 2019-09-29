@@ -178,7 +178,7 @@ public class DefaultMQProducer implements IProducerWrokerAware {
 			onPasue4RepreparePredispatch.set(false);
 			
 			// waiting for a moment
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, 50l);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, 50l);
 		}
 		
 		public void awaitPredispatch() {

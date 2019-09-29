@@ -92,7 +92,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         		}
         		break;
         	} else {
-        		// ... 自旋 ...
+        		// ... 不入队，纯自旋 ...
         	}
         } while (true);
 	}
@@ -108,8 +108,8 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 			ProcessingCommandMailbox mailbox = current.getValue();
 			if(!mailbox.isRunning()
 					&& mailbox.isInactive(timeoutMillis)
-					&& mailbox.tryClean()
 					&& 0 == mailbox.getTotalUnConsumedMessageCount()
+					&& mailbox.tryClean()
 					) {
 		        // tryClean()封装的是一个写锁，即clean过程完全排他的
 				// 获取失败后马上放弃clean过程，可能有别的线程要使用mailbox

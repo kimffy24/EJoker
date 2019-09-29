@@ -18,13 +18,13 @@ public final class AcquireHelper {
 	public static void waitAcquire(AtomicBoolean ab, long msPerLoop, IVoidFunction loopAction) {
 		while (ab.get()) {
 			loopAction.trigger();
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, long msPerLoop) {
 		while (ab.get()) {
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
@@ -32,20 +32,20 @@ public final class AcquireHelper {
 		int i = -1;
 		while (ab.get()) {
 			loopAction.trigger(++i);
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop, IVoidFunction loopAction) {
 		while (expect != ab.get()) {
 			loopAction.trigger();
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
 	public static void waitAcquire(AtomicBoolean ab, boolean expect, long msPerLoop) {
 		while (expect != ab.get()) {
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 
@@ -53,7 +53,7 @@ public final class AcquireHelper {
 		int i = -1;
 		while (expect != ab.get()) {
 			loopAction.trigger(++i);
-			DiscardWrapper.sleep(TimeUnit.MILLISECONDS, msPerLoop);
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, msPerLoop);
 		}
 	}
 }

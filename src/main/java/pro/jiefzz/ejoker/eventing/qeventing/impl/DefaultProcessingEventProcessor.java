@@ -97,7 +97,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 					mailBox.releaseUse();
 				}
 			} else {
-				// ... 自旋 ...
+        		// ... 不入队，纯自旋 ...
 			}
 		} while (true);
 		
@@ -170,8 +170,8 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 			ProcessingEventMailBox mailbox = current.getValue();
 			if(!mailbox.isRunning()
 					&& mailbox.isInactive(timeoutMillis)
-					&& mailbox.tryClean()
 					&& !mailbox.hasRemindMessage()
+					&& mailbox.tryClean()
 					) {
 				try {
 			        it.remove();

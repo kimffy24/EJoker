@@ -363,8 +363,9 @@ public class IOHelper {
 		externalContext.currentRetryTimes++;
 		try {
 			if (externalContext.currentRetryTimes >= externalContext.maxRetryTimes) {
+				DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, externalContext.retryInterval);
 //				retryExecutorService.submit(() -> {
-					DiscardWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
+//					DiscardWrapper.sleep(TimeUnit.MILLISECONDS, externalContext.retryInterval);
 //					externalContext.loopAction.trigger(externalContext);
 //					});
 			} else {
