@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.z.system.extension;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import co.paralleluniverse.fibers.Suspendable;
 
 public final class LangUtil {
 
@@ -11,6 +11,7 @@ public final class LangUtil {
 //		return sfw.get();
 //	}
 
+	@Suspendable
 	public static <T> T await(Future<T> sfw) {
 		try {
 			return sfw.get();

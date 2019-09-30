@@ -35,8 +35,6 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultProcessingEventProcessor.class);
 	
-	private final Map<String, ProcessingEventMailBox> mailboxDict = new ConcurrentHashMap<>();
-	
 	@Dependence
 	private IPublishedVersionStore publishedVersionStore;
 	
@@ -54,6 +52,8 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	
 	@Dependence
 	private Scavenger scavenger;
+	
+	private final Map<String, ProcessingEventMailBox> mailboxDict = new ConcurrentHashMap<>();
 	
 	private String processorName;
 	

@@ -21,6 +21,7 @@ import pro.jiefzz.ejoker.z.service.IWorkerService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -104,13 +105,13 @@ public class CommandService implements ICommandService, IWorkerService {
 	public SystemFutureWrapper<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
 
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
+
+		RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
+		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
 		
-		return systemAsyncHelper.submit(() -> {
+		AsyncTaskResult<Void> sendResult = await(systemAsyncHelper.submit(() -> {
 			
-			RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
-			commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
-			
-			AsyncTaskResult<Void> result = await(sendQueueMessageService.sendMessageAsync(
+			return await(sendQueueMessageService.sendMessageAsync(
 					producer,
 					"command",
 					command.getClass().getSimpleName(),
@@ -118,14 +119,14 @@ public class CommandService implements ICommandService, IWorkerService {
 					command.getAggregateRootId(),
 					command.getId(),
 					command.getItems()));
-			
-			if(AsyncTaskStatus.Success.equals(result.getStatus())) {
-				return remoteTaskCompletionSource.get();
-			} else {
-				commandResultProcessor.processFailedSendingCommand(command);
-				return new AsyncTaskResult<>(result.getStatus(), result.getErrorMessage());
-			}
-		});
+		}));
+		
+		if(AsyncTaskStatus.Success.equals(sendResult.getStatus())) {
+			return new SystemFutureWrapper<>(remoteTaskCompletionSource);
+		} else {
+			commandResultProcessor.processFailedSendingCommand(command);
+			return new SystemFutureWrapper<>(EJokerFutureTaskUtil.newFutureTask(sendResult.getStatus(), sendResult.getErrorMessage(), CommandResult.class));
+		}
 		
 	}
 

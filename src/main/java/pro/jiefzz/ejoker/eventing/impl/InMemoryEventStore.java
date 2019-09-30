@@ -156,7 +156,7 @@ public class InMemoryEventStore implements IEventStore {
 		return resultSet;
 	}
 
-    private final static class AggregateInfo {
+    public final static class AggregateInfo {
     	
         public long currentVersion;
         public Map<Long, DomainEventStream> eventDict = new ConcurrentHashMap<>();

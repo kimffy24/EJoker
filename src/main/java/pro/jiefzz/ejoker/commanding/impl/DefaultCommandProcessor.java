@@ -89,7 +89,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         			mailbox.releaseUse();
         		}
         	} else {
-        		// ... 不入队，纯自旋 ...
+        		// ... 不排队队，纯自旋 ...
         	}
         } while (true);
 	}

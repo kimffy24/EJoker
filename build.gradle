@@ -51,7 +51,7 @@ dependencies {
     // 如果不需要使用quasar，则前4个声明周期即可构建功能完备的ejoker
     // gradle-maven-plugin:invoke 就是调用此gradle任务的起点。
     // 后一个instal则是安装已经instrumentation的包的。
-    compile "com.jiefzz:ejoker:1.0.0-BETA"
+    compile "pro.jiefzz:ejoker:1.2.0-snapshot"
     
 }
 

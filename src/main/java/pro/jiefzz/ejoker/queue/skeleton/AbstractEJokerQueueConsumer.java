@@ -70,7 +70,7 @@ public abstract class AbstractEJokerQueueConsumer implements IWorkerService {
 		return this;
 	}
 	
-	public Object getDeeplyConsumer() {
+	public IConsumerWrokerAware getDeeplyConsumer() {
 		return consumer;
 	}
 	
