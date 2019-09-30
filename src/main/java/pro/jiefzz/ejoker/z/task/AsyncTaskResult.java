@@ -8,7 +8,8 @@ public final class AsyncTaskResult<T> {
 	
 	protected final String errorMessage;
 	
-	private final T data;
+//	private final T data;
+	private final Object data;
 
 	public AsyncTaskResult(AsyncTaskStatus status) {
 		this(status, null, null);
@@ -39,8 +40,9 @@ public final class AsyncTaskResult<T> {
 		return errorMessage;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public T getData() {
-		return data;
+		return (T )data;
 	}
 
 }

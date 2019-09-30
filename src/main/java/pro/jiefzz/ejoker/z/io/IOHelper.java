@@ -1,6 +1,7 @@
 package pro.jiefzz.ejoker.z.io;
 
 import java.io.IOException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
@@ -86,7 +86,7 @@ public class IOHelper {
 
 	public void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction) {
@@ -102,7 +102,7 @@ public class IOHelper {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
 			IVoidFunction1<IOHelperContext<Void>> loopAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
@@ -124,7 +124,7 @@ public class IOHelper {
 
 	public void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction,
@@ -142,7 +142,7 @@ public class IOHelper {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<Void>>> mainAction,
+			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
 			IVoidFunction1<IOHelperContext<Void>> loopAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
@@ -166,7 +166,7 @@ public class IOHelper {
 
 	public <T> void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IFunction<Future<AsyncTaskResult<T>>> mainAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction) {
@@ -181,7 +181,7 @@ public class IOHelper {
 
 	public <T> void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IFunction<Future<AsyncTaskResult<T>>> mainAction,
 			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
@@ -210,7 +210,7 @@ public class IOHelper {
 	 */
 	public <T> void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IFunction<Future<AsyncTaskResult<T>>> mainAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
 			IVoidFunction1<Exception> faildAction,
@@ -227,7 +227,7 @@ public class IOHelper {
 
 	public <T> void tryAsyncAction2(
 			String actionName,
-			IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+			IFunction<Future<AsyncTaskResult<T>>> mainAction,
 			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
@@ -249,7 +249,7 @@ public class IOHelper {
 
 	public <T> void taskContinueAction(IOHelperContext<T> externalContext) {
 		
-		SystemFutureWrapper<AsyncTaskResult<T>> task;
+		Future<AsyncTaskResult<T>> task;
 		
 		try {
 			task = externalContext.mainAction.trigger();
@@ -421,7 +421,7 @@ public class IOHelper {
 
 		protected final String actionName;
 		
-		protected final IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction;
+		protected final IFunction<Future<AsyncTaskResult<T>>> mainAction;
 		
 		protected final IVoidFunction1<IOHelperContext<T>> loopAction;
 		
@@ -438,7 +438,7 @@ public class IOHelper {
 		public IOHelperContext(
 				IOHelper ioHelper,
 				String actionName,
-				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IFunction<Future<AsyncTaskResult<T>>> mainAction,
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
@@ -462,7 +462,7 @@ public class IOHelper {
 		public IOHelperContext(
 				IOHelper ioHelper,
 				String actionName,
-				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IFunction<Future<AsyncTaskResult<T>>> mainAction,
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
@@ -475,7 +475,7 @@ public class IOHelper {
 		public IOHelperContext(
 				IOHelper ioHelper,
 				String actionName,
-				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IFunction<Future<AsyncTaskResult<T>>> mainAction,
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
@@ -488,7 +488,7 @@ public class IOHelper {
 		public IOHelperContext(
 				IOHelper ioHelper,
 				String actionName,
-				IFunction<SystemFutureWrapper<AsyncTaskResult<T>>> mainAction,
+				IFunction<Future<AsyncTaskResult<T>>> mainAction,
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,

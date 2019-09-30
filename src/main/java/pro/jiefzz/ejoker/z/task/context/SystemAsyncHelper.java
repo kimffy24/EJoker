@@ -1,8 +1,9 @@
 package pro.jiefzz.ejoker.z.task.context;
 
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 
@@ -26,12 +27,12 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 		return EJokerEnvironment.ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;
 	}
 
-	public SystemFutureWrapper<Void> submit(IVoidFunction vf) {
-		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
+	public Future<Void> submit(IVoidFunction vf) {
+		return submitInternal(vf::trigger);
 	}
 
-	public <T> SystemFutureWrapper<T> submit(IFunction<T> vf) {
-		return new SystemFutureWrapper<>(submitInternal(vf::trigger));
+	public <T> Future<T> submit(IFunction<T> vf) {
+		return submitInternal(vf::trigger);
 	}
 	
 }

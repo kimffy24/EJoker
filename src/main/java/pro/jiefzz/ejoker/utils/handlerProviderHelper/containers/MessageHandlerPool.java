@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,6 @@ import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IFunction1;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
@@ -76,7 +76,7 @@ public class MessageHandlerPool {
 					Type genericReturnType = method.getGenericReturnType();
 					if(genericReturnType instanceof ParameterizedType) {
 						ParameterizedType parameterizedType = (ParameterizedType )genericReturnType;
-						if(parameterizedType.getRawType().equals(SystemFutureWrapper.class)) {
+						if(parameterizedType.getRawType().equals(Future.class)) {
 							Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
 							if(null != actualTypeArguments && 1 == actualTypeArguments.length) {
 								Type type = actualTypeArguments[0];
@@ -147,7 +147,7 @@ public class MessageHandlerPool {
 
 		@Deprecated // 此处是使用原生线程来执行任务。
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message) {
+		public Future<AsyncTaskResult<Void>> handleAsync(IMessage message) {
 			/// 使用默认的异步任务执行器，就是创建新线程
 			return handleAsync(message, c -> {
 				RipenFuture<AsyncTaskResult<Void>> ripenFuture = new RipenFuture<>();
@@ -163,7 +163,7 @@ public class MessageHandlerPool {
 								);
 						}
 					}).start();
-				return new SystemFutureWrapper<>(ripenFuture);
+				return ripenFuture;
 			});
 		}
 
@@ -171,12 +171,12 @@ public class MessageHandlerPool {
 		 * submitter为异步任务执行器的调度封装方法
 		 */
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<SystemFutureWrapper<AsyncTaskResult<Void>>, IFunction<AsyncTaskResult<Void>>> submitter) {
+		public Future<AsyncTaskResult<Void>> handleAsync(IMessage message, IFunction1<Future<AsyncTaskResult<Void>>, IFunction<AsyncTaskResult<Void>>> submitter) {
 			return submitter.trigger(() -> {
 					try {
 						@SuppressWarnings("unchecked")
-						SystemFutureWrapper<AsyncTaskResult<Void>> result =
-								(SystemFutureWrapper<AsyncTaskResult<Void>> )handleReflectionMethod.invoke(getInnerObject(), message);
+						Future<AsyncTaskResult<Void>> result =
+								(Future<AsyncTaskResult<Void>> )handleReflectionMethod.invoke(getInnerObject(), message);
 						return await(result);
 					} catch (IllegalAccessException|IllegalArgumentException e) {
 						logger.error("Message handle async faild", e);

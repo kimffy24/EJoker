@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.domain;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import java.util.concurrent.Future;
 
 public interface IMemoryCache {
 	
@@ -10,7 +10,7 @@ public interface IMemoryCache {
          * @param aggregateRootType
          * @return
          */
-        public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType);
+        public Future<IAggregateRoot> getAsync(Object aggregateRootId, Class<IAggregateRoot> aggregateRootType);
         
 //        /**
 //         * Set an aggregate to memory cache.
@@ -30,7 +30,7 @@ public interface IMemoryCache {
          * @param aggregateRoot
          * @return
          */
-        public SystemFutureWrapper<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot);
+        public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot);
         
         /**
          * 
@@ -38,7 +38,7 @@ public interface IMemoryCache {
          * @param aggregateRootId
          * @return
          */
-        public SystemFutureWrapper<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName, Object aggregateRootId);
+        public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName, Object aggregateRootId);
         
         /**
          * Refresh the aggregate memory cache by replaying events of event store, and return the refreshed aggregate root.
@@ -46,5 +46,5 @@ public interface IMemoryCache {
          * @param aggregateRootId
          * @return
          */
-        public SystemFutureWrapper<IAggregateRoot> refreshAggregateFromEventStoreAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId);
+        public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId);
 }

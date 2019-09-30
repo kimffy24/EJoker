@@ -2,9 +2,9 @@ package pro.jiefzz.ejoker.eventing.qeventing.impl;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.eventing.qeventing.IPublishedVersionStore;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
@@ -16,20 +16,17 @@ import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 //@EService
 public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 
-	private final SystemFutureWrapper<AsyncTaskResult<Void>> successTask
-		= SystemFutureWrapperUtil.completeFutureTask();
-
 	private final Map<String, Long> versionDict = new ConcurrentHashMap<>();
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName,
+	public Future<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId, long publishedVersion) {
 		updatePublishedVersion(processorName, aggregateRootTypeName, aggregateRootId, publishedVersion);
-		return successTask;
+		return SystemFutureWrapperUtil.completeFutureTask();
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
+	public Future<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName,
 			String aggregateRootId) {
 		return SystemFutureWrapperUtil.completeFutureTask(getPublishedVersion(processorName, aggregateRootTypeName, aggregateRootId));
 		

@@ -176,7 +176,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		ioHelper.tryAsyncAction2(
 				"RemoteInvoke",
 				() -> eJokerAsyncHelper.submit(() -> fetchNettySimpleClient(host, port).sendMessage(s)),
-				r -> {},
+				() -> {},
 				() -> String.format("remoteInvoke[target: %s:%d]", host, port),
 				e -> logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s:%d, data: %s", host, port, data)),
 				true);

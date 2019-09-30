@@ -1,5 +1,7 @@
 package pro.jiefzz.ejoker.queue.skeleton;
 
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
 import pro.jiefzz.ejoker.infrastructure.messaging.IMessagePublisher;
 import pro.jiefzz.ejoker.queue.SendQueueMessageService;
@@ -7,7 +9,6 @@ import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.service.IWorkerService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
 public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> implements IMessagePublisher<TMessage>, IWorkerService {
@@ -47,7 +48,7 @@ public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> imp
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> publishAsync(TMessage message) {
+	public Future<AsyncTaskResult<Void>> publishAsync(TMessage message) {
 		return sendQueueMessageService.sendMessageAsync(
 				producer,
 				this.getMessageType(message),

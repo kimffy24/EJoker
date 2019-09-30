@@ -1,11 +1,11 @@
 package pro.jiefzz.ejoker.z.task.context;
 
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
@@ -22,7 +22,7 @@ public class EJokerTaskAsyncHelper {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 
-	public SystemFutureWrapper<AsyncTaskResult<Void>> submit(IVoidFunction vf) {
+	public Future<AsyncTaskResult<Void>> submit(IVoidFunction vf) {
 		return systemAsyncHelper.submit(() -> {
 			try {
 				vf.trigger();
@@ -37,7 +37,7 @@ public class EJokerTaskAsyncHelper {
 		});
 	}
 
-	public <T> SystemFutureWrapper<AsyncTaskResult<T>> submit(IFunction<T> vf) {
+	public <T> Future<AsyncTaskResult<T>> submit(IFunction<T> vf) {
 		return systemAsyncHelper.submit(() -> {
 			try {
 				T r = vf.trigger();
@@ -45,8 +45,7 @@ public class EJokerTaskAsyncHelper {
 			} catch (Exception ex) {
 				return new AsyncTaskResult<>(
 						((ex instanceof IOException || ex instanceof IOExceptionOnRuntime) ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed),
-						ex.getMessage(),
-						null
+						ex.getMessage()
 				);
 			}
 		});

@@ -4,6 +4,7 @@ import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,6 @@ import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPo
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.io.IOHelper;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
@@ -38,7 +38,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	private SystemAsyncHelper systemAsyncHelper;
 	
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
+	public Future<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
 
 		List<? extends IMessageHandlerProxy> handlers = MessageHandlerPool.getProxyAsyncHandlers(message.getClass());
 		if(null != handlers && 0 < handlers.size()) {
@@ -72,7 +72,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
+	public Future<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
 
 		/// TODO 此处的异步语义是等待全部指派完成才返回？
 		/// 还是只要有一个完成就返回?

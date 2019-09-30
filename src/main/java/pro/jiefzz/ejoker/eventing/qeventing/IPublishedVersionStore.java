@@ -1,6 +1,7 @@
 package pro.jiefzz.ejoker.eventing.qeventing;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
 /**
@@ -18,7 +19,7 @@ public interface IPublishedVersionStore {
 	 * @param publishedVersion
 	 * @return
 	 */
-	SystemFutureWrapper<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId, long publishedVersion);
+	Future<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId, long publishedVersion);
     
     /**
      * Get the current published version for the given aggregate.
@@ -27,6 +28,6 @@ public interface IPublishedVersionStore {
      * @param aggregateRootId
      * @return
      */
-	SystemFutureWrapper<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId);
+	Future<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId);
 
 }

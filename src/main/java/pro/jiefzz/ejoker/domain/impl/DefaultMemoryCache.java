@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
@@ -24,7 +25,6 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
@@ -64,7 +64,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId,
+	public Future<IAggregateRoot> getAsync(Object aggregateRootId,
 			Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		Ensure.notNull(aggregateRootType, "aggregateRootType");
@@ -72,13 +72,13 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public SystemFutureWrapper<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot) {
+	public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot) {
 		resetAggregateRootCache(aggregateRoot);
 		return SystemFutureWrapperUtil.completeFuture();
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName,
+	public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName,
 			Object aggregateRootId) {
 
 		if(StringHelper.isNullOrEmpty(aggregateRootTypeName))
@@ -95,7 +95,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> refreshAggregateFromEventStoreAsync(Class<IAggregateRoot> aggregateRootType,
+	public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(Class<IAggregateRoot> aggregateRootType,
 			Object aggregateRootId) {
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(aggregateRootType, aggregateRootId));
 	}

@@ -2,13 +2,14 @@ package pro.jiefzz.ejoker.domain.impl;
 
 import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IMemoryCache;
 import pro.jiefzz.ejoker.domain.IRepository;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
 
@@ -22,7 +23,7 @@ public class DefaultRepository implements IRepository {
 	private SystemAsyncHelper systemAsyncHelper;
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
+	public Future<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, Object aggregateRootId) {
 		if (aggregateRootType == null)
 			throw new ArgumentNullException("aggregateRootType");
 		if (aggregateRootId == null)

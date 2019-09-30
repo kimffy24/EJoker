@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.commanding;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import java.util.concurrent.Future;
 
 /**
  * commandHandler处理过程中，使用的上下文就是这个上下文。<br>
@@ -10,6 +10,6 @@ import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
  */
 public interface ICommandExecuteContext extends ICommandContext, ITrackingContext{
 
-	public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult);
+	public Future<Void> onCommandExecutedAsync(CommandResult commandResult);
 
 }

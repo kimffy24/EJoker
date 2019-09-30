@@ -4,6 +4,7 @@ import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,6 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.z.io.IOHelper;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
@@ -82,7 +82,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private ITypeNameProvider typeNameProvider;
 
 	@Override
-	public SystemFutureWrapper<Void> handleAsync(ProcessingCommand processingCommand) {
+	public Future<Void> handleAsync(ProcessingCommand processingCommand) {
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(
@@ -296,14 +296,14 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         logger.error(errorMessage, exception);
     }
 	
-	private SystemFutureWrapper<Void> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
+	private Future<Void> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
 		ioHelper.tryAsyncAction2(
 					"HandleCommandAsync",
 					() ->  {
 						try {
-							SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
+							Future<AsyncTaskResult<IApplicationMessage>> ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
 							logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
 		                            commandHandler.toString(),
 		                            command.getClass().getName(),
@@ -362,7 +362,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				);
 	}
 
-	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand,
+	private Future<Void> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandStatus commandStatus, String resultType, String result) {
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);
