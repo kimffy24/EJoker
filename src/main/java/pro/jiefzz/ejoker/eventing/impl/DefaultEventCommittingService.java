@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.io.IOHelper;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
@@ -459,7 +459,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				);
 	}
 
-	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
+	private Future<Void> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
 		return processingCommand.getMailBox().completeMessage(processingCommand, commandResult);
 	}
 

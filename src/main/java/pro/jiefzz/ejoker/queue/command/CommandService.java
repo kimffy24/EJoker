@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker.queue.command;
 import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandReturnType;
@@ -20,8 +21,6 @@ import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.service.IWorkerService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -82,7 +81,7 @@ public class CommandService implements ICommandService, IWorkerService {
 	}
 	
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
+	public Future<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
 		try {
 			return sendQueueMessageService.sendMessageAsync(
 					producer,
@@ -93,7 +92,7 @@ public class CommandService implements ICommandService, IWorkerService {
 					command.getId(),
 					command.getItems());
 		} catch (RuntimeException ex) {
-			return new SystemFutureWrapper<>(EJokerFutureTaskUtil.newFutureTask(AsyncTaskStatus.Failed, ex.getMessage()));
+			return EJokerFutureTaskUtil.newFutureTask(AsyncTaskStatus.Failed, ex.getMessage());
 		}
 	}
 
@@ -102,7 +101,7 @@ public class CommandService implements ICommandService, IWorkerService {
 	 * Java中没有c# 的 async/await 调用，只能用最原始的创建线程任务对象的方法。
 	 */
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
+	public Future<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
 
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
 
@@ -122,10 +121,10 @@ public class CommandService implements ICommandService, IWorkerService {
 		}));
 		
 		if(AsyncTaskStatus.Success.equals(sendResult.getStatus())) {
-			return new SystemFutureWrapper<>(remoteTaskCompletionSource);
+			return remoteTaskCompletionSource;
 		} else {
 			commandResultProcessor.processFailedSendingCommand(command);
-			return new SystemFutureWrapper<>(EJokerFutureTaskUtil.newFutureTask(sendResult.getStatus(), sendResult.getErrorMessage(), CommandResult.class));
+			return EJokerFutureTaskUtil.newFutureTask(sendResult.getStatus(), sendResult.getErrorMessage(), CommandResult.class);
 		}
 		
 	}

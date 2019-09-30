@@ -18,7 +18,6 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.scavenger.Scavenger;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
@@ -38,7 +37,7 @@ public class SendQueueMessageService {
 	@Dependence
 	private Scavenger scavenger;
 
-	public SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync(
+	public Future<AsyncTaskResult<Void>> sendMessageAsync(
 			IProducerWrokerAware producer,
 			String messageType,
 			String messageClass,
@@ -87,16 +86,14 @@ public class SendQueueMessageService {
 
 		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
 
-			// use producer inner executor service to execute aSync task 
-			// and wrap the result with type SystemFutureWrapper.
-			return new SystemFutureWrapper<>(submitWithInnerExector(() -> {
+			return submitWithInnerExector(() -> {
 				try {
 					producer.send(message, routingKey, sa, fa, ea);
 					return AsyncTaskResult.Success;
 				} catch (Exception e) {
 					return new AsyncTaskResult<>(AsyncTaskStatus.IOException, e.getMessage(), null);
 				}
-			}));
+			});
 
 		} else {
 

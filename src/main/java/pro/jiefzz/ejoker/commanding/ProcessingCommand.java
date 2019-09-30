@@ -2,8 +2,7 @@ package pro.jiefzz.ejoker.commanding;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import java.util.concurrent.Future;
 
 public class ProcessingCommand {
 
@@ -23,7 +22,7 @@ public class ProcessingCommand {
     	this.items = (null != items ? items : new HashMap<>());
     }
 
-    public SystemFutureWrapper<Void> completeAsync(CommandResult commandResult) {
+    public Future<Void> completeAsync(CommandResult commandResult) {
     	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }
     

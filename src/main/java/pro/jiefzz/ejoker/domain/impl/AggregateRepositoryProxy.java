@@ -1,9 +1,10 @@
 package pro.jiefzz.ejoker.domain.impl;
 
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.domain.IAggregateRepository;
 import pro.jiefzz.ejoker.domain.IAggregateRepositoryProxy;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 
 /**
@@ -25,7 +26,7 @@ public class AggregateRepositoryProxy implements IAggregateRepositoryProxy {
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> getAsync(String aggregateRootId) {
+	public Future<IAggregateRoot> getAsync(String aggregateRootId) {
 		return SystemFutureWrapperUtil.completeFuture(null);
 	}
 

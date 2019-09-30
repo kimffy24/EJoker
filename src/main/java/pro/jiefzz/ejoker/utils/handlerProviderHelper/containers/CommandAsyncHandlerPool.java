@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,6 @@ import pro.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandContext;
 import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
@@ -88,9 +88,9 @@ public class CommandAsyncHandlerPool {
 		}
 		
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception {
+		public Future<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception {
 				try {
-					return (SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> )(1==asyncHandleReflectionMethod.getParameterCount()
+					return (Future<AsyncTaskResult<IApplicationMessage>> )(1==asyncHandleReflectionMethod.getParameterCount()
 							? asyncHandleReflectionMethod.invoke(getInnerObject(), command)
 									: asyncHandleReflectionMethod.invoke(getInnerObject(), context, command));
 				} catch (IllegalAccessException|IllegalArgumentException e) {

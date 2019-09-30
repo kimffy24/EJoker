@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
@@ -15,7 +16,6 @@ import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
@@ -48,7 +48,7 @@ public class InMemoryEventStore implements IEventStore {
 	private ITypeNameProvider typeNameProvider;
 	
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<EventAppendResult>> batchAppendAsync(List<DomainEventStream> eventStreams) {
+	public Future<AsyncTaskResult<EventAppendResult>> batchAppendAsync(List<DomainEventStream> eventStreams) {
 		
         Map<String, List<DomainEventStream>> eventStreamDict = new HashMap<>();
         for(DomainEventStream es : eventStreams) {
@@ -65,17 +65,17 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, long version) {
+	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, long version) {
 		return eJokerAsyncHelper.submit(() -> find(aggregateRootId, version));
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
+	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
 		return eJokerAsyncHelper.submit(() -> find(aggregateRootId, commandId));
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<List<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
+	public Future<AsyncTaskResult<List<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
 			long maxVersion) {
 		return eJokerAsyncHelper.submit(() -> queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
 	}

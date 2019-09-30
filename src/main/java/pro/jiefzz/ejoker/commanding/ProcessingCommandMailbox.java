@@ -4,6 +4,7 @@ import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -11,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.z.framework.enhance.EasyCleanMailbox;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
@@ -192,7 +192,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		lastActiveTime = System.currentTimeMillis();
 	}
 
-	public SystemFutureWrapper<Void> completeMessage(ProcessingCommand message, CommandResult result) {
+	public Future<Void> completeMessage(ProcessingCommand message, CommandResult result) {
 		
 		try {
 			if(null != messageDict.remove(message.getSequence())) {
@@ -216,7 +216,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		return System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 
-	private SystemFutureWrapper<Void> processMessages() {
+	private Future<Void> processMessages() {
 		
 		// 设置运行信号，表示当前正在运行Run方法中的逻辑
 		// ** 可以简单理解为 进入临界区

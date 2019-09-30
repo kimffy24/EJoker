@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,6 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
@@ -113,7 +113,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 		}
 
 		@Override
-		public SystemFutureWrapper<Void> onCommandExecutedAsync(CommandResult commandResult) {
+		public Future<Void> onCommandExecutedAsync(CommandResult commandResult) {
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
@@ -134,18 +134,18 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 		}
 
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot) {
+		public Future<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot) {
 			return eJokerAsyncHelper.submit(() -> add(aggregateRoot));
 		}
 
 		@Override
-		public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz,
+		public <T extends IAggregateRoot> Future<T> getAsync(Object id, Class<T> clazz,
 				boolean tryFromCache) {
 
 			if (id == null) {
 				RipenFuture<T> ripenFuture = new RipenFuture<>();
 				ripenFuture.trySetException(new ArgumentNullException("id"));
-				return new SystemFutureWrapper<>(ripenFuture);
+				return ripenFuture;
 			}
 			
 			return systemAsyncHelper.submit(() -> get(id, clazz, tryFromCache));

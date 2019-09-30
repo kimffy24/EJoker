@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
@@ -142,7 +142,7 @@ public class EventCommittingContextMailBox {
 		return System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 
-	private SystemFutureWrapper<Void> processMessages() {
+	private Future<Void> processMessages() {
 		
 		// 设置运行信号，表示当前正在运行Run方法中的逻辑 // ** 可以简单理解为 进入临界区
 		if (!onProcessing.compareAndSet(false, true)) {
