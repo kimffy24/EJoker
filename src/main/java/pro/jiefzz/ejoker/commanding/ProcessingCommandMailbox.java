@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.z.framework.enhance.EasyCleanMailbox;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -206,7 +206,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 					e);
 		}
 		
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
 	}
 
 	/**
@@ -222,7 +222,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		// ** 可以简单理解为 进入临界区
 		if (!onProcessing.compareAndSet(false, true)) {
 			// 独占失败 即有别的线程在运行
-			return SystemFutureWrapperUtil.completeFuture();
+			return EJokerFutureUtil.completeFuture();
 		}
 		
 		lastActiveTime = System.currentTimeMillis();
@@ -247,7 +247,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 			onProcessing.set(false);
 			completeRun();
 		}
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
 	}
 
 	private boolean hasNextMessage() {

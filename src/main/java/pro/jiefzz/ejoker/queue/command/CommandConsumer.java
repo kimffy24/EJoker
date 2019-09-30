@@ -31,7 +31,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -117,7 +117,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 			messageContext.onMessageHandled(message);
 
 			if (null == commandMessage.replyAddress || "".equals(commandMessage.replyAddress))
-				return SystemFutureWrapperUtil.completeFuture();
+				return EJokerFutureUtil.completeFuture();
 
 			return sendReplyService.sendReply(CommandReturnType.CommandExecuted.ordinal(), commandResult,
 					commandMessage.replyAddress);

@@ -4,7 +4,7 @@ import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
-public final class SystemFutureWrapperUtil {
+public final class EJokerFutureUtil {
 
 	public static Future<Void> completeFuture() {
 		return defaultCompletedVoidFuture;
@@ -16,23 +16,23 @@ public final class SystemFutureWrapperUtil {
         return rf;
 	}
 
-	public static Future<AsyncTaskResult<Void>> completeFutureTask() {
-        return defaultCompletedVoidFutureTask;
-	}
-
-	public static <T> Future<AsyncTaskResult<T>> completeFutureTask(T result) {
-        return EJokerFutureTaskUtil.completeTask(result);
-	}
+//	public static Future<AsyncTaskResult<Void>> completeFutureTask() {
+//        return defaultCompletedVoidFutureTask;
+//	}
+//
+//	public static <T> Future<AsyncTaskResult<T>> completeFutureTask(T result) {
+//        return EJokerFutureTaskUtil.completeTask(result);
+//	}
 
 	// 优化，固定返回避免多次new对象
 	private final static Future<Void> defaultCompletedVoidFuture;
-	private final static Future<AsyncTaskResult<Void>> defaultCompletedVoidFutureTask;
+//	private final static Future<AsyncTaskResult<Void>> defaultCompletedVoidFutureTask;
 	static {
 
 		RipenFuture<Void> rf = new RipenFuture<>();
 		rf.trySetResult(null);
 		defaultCompletedVoidFuture = rf;
-		defaultCompletedVoidFutureTask = EJokerFutureTaskUtil.completeTask();
+//		defaultCompletedVoidFutureTask = EJokerFutureTaskUtil.completeTask();
 		
 	}
 }

@@ -16,7 +16,7 @@ import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
@@ -61,7 +61,7 @@ public class InMemoryEventStore implements IEventStore {
 		
         ForEachHelper.processForEach(eventStreamDict, (k, v) -> batchAppend(k, v, eventAppendResult));
         
-        return SystemFutureWrapperUtil.completeFutureTask(eventAppendResult);
+        return EJokerFutureTaskUtil.completeTask(eventAppendResult);
 	}
 
 	@Override
