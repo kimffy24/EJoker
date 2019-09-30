@@ -25,7 +25,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
@@ -74,7 +74,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	@Override
 	public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot) {
 		resetAggregateRootCache(aggregateRoot);
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 			type = (Class<IAggregateRoot> )typeNameProvider.getType(aggregateRootTypeName);
 		} catch (RuntimeException ex) {
 			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
-			return SystemFutureWrapperUtil.completeFuture(null);
+			return EJokerFutureUtil.completeFuture(null);
 		}
 		
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(type, aggregateRootId));

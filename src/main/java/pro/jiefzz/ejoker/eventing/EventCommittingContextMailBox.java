@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
@@ -146,7 +146,7 @@ public class EventCommittingContextMailBox {
 		
 		// 设置运行信号，表示当前正在运行Run方法中的逻辑 // ** 可以简单理解为 进入临界区
 		if (!onProcessing.compareAndSet(false, true)) {
-			return SystemFutureWrapperUtil.completeFuture();
+			return EJokerFutureUtil.completeFuture();
 		}
 		
 		try {
@@ -183,6 +183,6 @@ public class EventCommittingContextMailBox {
 			onProcessing.compareAndSet(true, false);
 			completeRun();
 		}
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
 	}
 }

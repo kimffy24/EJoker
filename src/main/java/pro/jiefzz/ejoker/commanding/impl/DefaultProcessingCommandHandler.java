@@ -37,7 +37,7 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.z.io.IOHelper;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
 import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
@@ -325,14 +325,14 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		                            command.getId(),
 		                            command.getAggregateRootId()), ex);
 
-		            		return SystemFutureWrapperUtil.completeFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		            		return EJokerFutureUtil.completeFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
 		                }
 					},
 					r -> commitChangesAsync(processingCommand, true, r, null),
 					() -> String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString()),
 					ex -> commitChangesAsync(processingCommand, false, null, ex.getMessage())
 		);
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
     }
 	
 	private void commitChangesAsync(ProcessingCommand processingCommand, boolean success, IApplicationMessage message,
