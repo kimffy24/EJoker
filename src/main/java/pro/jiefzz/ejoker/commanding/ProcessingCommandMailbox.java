@@ -230,7 +230,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 				long scannedSequenceSize = 0l;
 				while (hasNextMessage() && scannedSequenceSize < batchSize && !onPaused.get()) {
 					ProcessingCommand message;
-					if (null != (message = messageDict.remove(consumingSequence))) {
+					if (null != (message = messageDict.get(consumingSequence))) {
 						await(handler.handleAsync(message));
 					}
 					scannedSequenceSize++;
