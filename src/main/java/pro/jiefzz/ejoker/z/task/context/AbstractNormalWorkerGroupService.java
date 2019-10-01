@@ -1,6 +1,5 @@
 package pro.jiefzz.ejoker.z.task.context;
 
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -9,9 +8,7 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.scavenger.Scavenger;
-import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IFunction1;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.task.IAsyncEntrance;
 import pro.jiefzz.ejoker.z.task.defaultProvider.SystemAsyncPool;
 
@@ -42,16 +39,16 @@ public abstract class AbstractNormalWorkerGroupService {
 
 	protected abstract boolean prestartAll();
 
-	protected <T> Future<T> submitInternal(IFunction<T> vf) {
-		return asyncPool.execute(vf::trigger);
-	}
-
-	protected Future<Void> submitInternal(IVoidFunction vf) {
-		return asyncPool.execute(() -> {
-			vf.trigger();
-			return null;
-		});
-	}
+//	protected <T> Future<T> submitInternal(IFunction<T> vf) {
+//		return asyncPool.execute(vf::trigger);
+//	}
+//
+//	protected Future<Void> submitInternal(IVoidFunction vf) {
+//		return asyncPool.execute(() -> {
+//			vf.trigger();
+//			return null;
+//		});
+//	}
 
 	protected static IAsyncEntrance getDefaultThreadPool(AbstractNormalWorkerGroupService service) {
 		return new SystemAsyncPool(service.usePoolSize(), service.prestartAll());
