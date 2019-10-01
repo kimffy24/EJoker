@@ -96,7 +96,7 @@ public class MessageHandlerPool {
 						}
 					}
 					if(!isOK) {
-						String errorDesc = String.format("%s#%s should return SystemFutureWrapper<AsyncTaskResult<Void>> !!!", actuallyHandlerName, HANDLER_METHOD_NAME);
+						String errorDesc = String.format("%s#%s should return Future<AsyncTaskResult<Void>> !!!", actuallyHandlerName, HANDLER_METHOD_NAME);
 						logger.error(errorDesc);
 						throw new RuntimeException(errorDesc);
 					}
