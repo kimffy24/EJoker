@@ -155,7 +155,8 @@ public class EventCommittingContextMailBox {
 			lastActiveTime = System.currentTimeMillis();
 			List<EventCommittingContext> messageList = new ArrayList<>();
 	
-			while (messageList.size() < batchSize) {
+			int amount = 0;
+			while (amount < batchSize) {
 				EventCommittingContext message;
 				Map<String, Byte> eventDict;
 				if (null != (message = messageQueue.poll()) ) {
@@ -163,13 +164,14 @@ public class EventCommittingContextMailBox {
 						&& null != eventDict.remove(message.getEventStream().getId())
 						) {
 						messageList.add(message);
+						amount ++;
 					}
 				} else {
 					break;
 				}
 			}
 			
-			if(0 != messageList.size()) {
+			if(!messageList.isEmpty()) {
 				try {
 					handler.trigger(messageList);
 				} catch (RuntimeException ex) {

@@ -41,7 +41,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	public Future<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
 
 		List<? extends IMessageHandlerProxy> handlers = MessageHandlerPool.getProxyAsyncHandlers(message.getClass());
-		if(null != handlers && 0 < handlers.size()) {
+		if(null != handlers && !handlers.isEmpty()) {
 			Object countDownLatchHandle = CountDownLatchWrapper.newCountDownLatch(handlers.size());
 			
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {

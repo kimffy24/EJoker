@@ -40,7 +40,7 @@ public class ConsistentHashShard<S> {
 
 	public S getShardInfo(String key) {
 		SortedMap<Long, S> tail = nodes.tailMap(hash(key)); // 沿环的顺时针找到一个虚拟节点
-		if (tail.size() == 0) {
+		if (tail.isEmpty()) {
 			return nodes.get(nodes.firstKey());
 		}
 		return tail.get(tail.firstKey()); // 返回该虚拟节点对应的真实机器节点的信息

@@ -25,7 +25,7 @@ public class DomainEventStream extends AbstractMessage {
 		
 		super();
 		
-		if(null == events || 0 == events.size()) {
+		if(null == events || events.isEmpty()) {
 			throw new ArgumentException("Parameter events cannot be null or empty!!!");
 		}
 		

@@ -109,7 +109,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	}
 
 	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, Collection<DomainEventStream> eventStreams) {
-		if (null == eventStreams || 0 == eventStreams.size())
+		if (null == eventStreams || eventStreams.isEmpty())
 			return null;
 
 		IAggregateRoot aggregateRoot = aggregateRootFactory.createAggregateRoot(aggregateRootType);

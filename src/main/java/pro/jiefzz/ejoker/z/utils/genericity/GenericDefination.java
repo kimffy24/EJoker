@@ -284,7 +284,7 @@ public final class GenericDefination {
 	}
 
 	public Map<String, String> getDeliveryMapperCopy() {
-		if(null == deliveryMapper || deliveryMapper.size() == 0)
+		if(null == deliveryMapper || deliveryMapper.isEmpty())
 			return null;
 		return new HashMap<>(deliveryMapper);
 	}
@@ -302,10 +302,10 @@ public final class GenericDefination {
 	}
 
 	public Map<String, String> getInterfaceDeliveryMapperCopy(Class<?> interfaceClazz) {
-		if(null == interfaceDeliveryMappers || interfaceDeliveryMappers.size() == 0)
+		if(null == interfaceDeliveryMappers || interfaceDeliveryMappers.isEmpty())
 			return null;
 		Map<String, String> interfaceDeliveryMapper = interfaceDeliveryMappers.get(interfaceClazz);
-		if(null == interfaceDeliveryMapper || interfaceDeliveryMapper.size() == 0)
+		if(null == interfaceDeliveryMapper || interfaceDeliveryMapper.isEmpty())
 			return null;
 		return new HashMap<>(interfaceDeliveryMapper);
 	}

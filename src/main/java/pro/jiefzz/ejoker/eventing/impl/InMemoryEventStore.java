@@ -108,7 +108,7 @@ public class InMemoryEventStore implements IEventStore {
 	                eventAppendResult.addDuplicateCommandId(eventStream.getCommandId());
 	            }
 	        }
-	        if (eventAppendResult.getDuplicateCommandIdList().size() > 0) {
+	        if (!eventAppendResult.getDuplicateCommandIdList().isEmpty()) {
 	            return;
 	        }
 		

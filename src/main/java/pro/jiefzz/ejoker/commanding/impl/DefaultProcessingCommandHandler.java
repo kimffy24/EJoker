@@ -158,7 +158,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
 			Collection<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
-			if(null!=changes && changes.size()>0) {
+			if(null!=changes && !changes.isEmpty()) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
 					String errorInfo = String.format(
@@ -182,7 +182,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         //所以如果该command再次被处理，可能对应的聚合根就不会再产生事件了；
         //所以，我们要考虑到这种情况，尝试再次发布该命令产生的事件到MQ；
         //否则，如果我们直接将当前command设置为完成，即对MQ进行ack操作，那该command的事件就永远不会再发布到MQ了，这样就无法保证CQRS数据的最终一致性了。
-		if(0 == dirtyAggregateRootCount || null == changeEvents || 0 == changeEvents.size() ) {
+		if(0 == dirtyAggregateRootCount || null == changeEvents || changeEvents.isEmpty() ) {
 			processIfNoEventsOfCommand(processingCommand);
 			return;
 		}

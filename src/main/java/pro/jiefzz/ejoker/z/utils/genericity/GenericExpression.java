@@ -360,7 +360,7 @@ public class GenericExpression {
 		Set<String> hasProcessedField = new HashSet<>();
 		GenericExpression currentExpression = this;
 		do {
-			if(null == currentExpression.fieldExpressions || 0 == currentExpression.fieldExpressions.size())
+			if(null == currentExpression.fieldExpressions || currentExpression.fieldExpressions.isEmpty())
 				continue;
 			Set<Entry<String,GenericDefinedField>> entrySet = currentExpression.fieldExpressions.entrySet();
 			for(Entry<String,GenericDefinedField> entry: entrySet) {

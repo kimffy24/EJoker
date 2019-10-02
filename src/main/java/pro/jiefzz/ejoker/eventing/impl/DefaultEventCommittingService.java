@@ -105,7 +105,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 	 */
 	@Override
 	public void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStream eventStream) {
-		if (null == eventStream.getItems() || 0 == eventStream.getItems().size())
+		if (null == eventStream.getItems() || eventStream.getItems().isEmpty())
 			eventStream.setItems(processingCommand.getItems());
 		DomainEventStreamMessage domainEventStreamMessage = new DomainEventStreamMessage(
 				processingCommand.getMessage().getId(),
@@ -133,7 +133,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 
 	private void batchPersistEventCommittingContexts(List<EventCommittingContext> committingContexts) {
 		
-		if (null == committingContexts || 0 == committingContexts.size())
+		if (null == committingContexts || committingContexts.isEmpty())
 			return;
 		
 		batchPersistEventAsync(committingContexts);
@@ -154,7 +154,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					EventCommittingContextMailBox eventMailBox = firstEventCommittingContext.getMailBox();
 					
 					List<String> successIds = appendResult.getSuccessAggregateRootIdList();
-					if(null != successIds && 0 < successIds.size()) {
+					if(null != successIds && !successIds.isEmpty()) {
 						// 针对持久化成功的聚合根，发布这些聚合根的事件到Q端
 						Map<String, List<EventCommittingContext>> successCommittedContextDict = new HashMap<>();
 						
@@ -203,7 +203,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        });
 					}
 					
-					if(null != appendResult.getDuplicateCommandIdList() && 0 > appendResult.getDuplicateCommandIdList().size()) {
+					if(null != appendResult.getDuplicateCommandIdList() && !appendResult.getDuplicateCommandIdList().isEmpty()) {
 		                //针对持久化出现重复的命令ID，则重新发布这些命令对应的领域事件到Q端
 						List<String> duplicateCommandIdList = appendResult.getDuplicateCommandIdList();
 						
