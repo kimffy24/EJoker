@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.task.defaultProvider;
+package pro.jiefzz.ejoker.z.system.task.defaultProvider;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
-import pro.jiefzz.ejoker.z.task.IAsyncEntrance;
+import pro.jiefzz.ejoker.z.system.task.IAsyncEntrance;
 
 public class SystemAsyncPool implements IAsyncEntrance {
 

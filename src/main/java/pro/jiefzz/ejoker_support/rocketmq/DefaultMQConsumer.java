@@ -234,7 +234,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					if(onRunning.get())
 						e.printStackTrace();
 				}
-			} while(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size());
+			} while(null == fetchMessageQueuesInBalance || fetchMessageQueuesInBalance.isEmpty());
 			while (DefaultMQConsumer.this.onRunning.get()) {
 				
 				try {
@@ -439,7 +439,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
 		long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
 		
-		if(/*null == aheadOffsetDict || */0 == aheadOffsetDict.size()) {
+		if(/*null == aheadOffsetDict || */aheadOffsetDict.isEmpty()) {
 			return;
 		}
 		
@@ -449,7 +449,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			beforeSequence.add(nextIndex);
 		}
 		nextIndex -= 1l;
-		if (0 < beforeSequence.size()) {
+		if (!beforeSequence.isEmpty()) {
 			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
 				controlStruct.offsetDirty.set(true);
 				for(Long index : beforeSequence) {

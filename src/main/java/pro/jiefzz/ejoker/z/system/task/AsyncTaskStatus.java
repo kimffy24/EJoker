@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.task;
+package pro.jiefzz.ejoker.z.system.task;
 
 public enum AsyncTaskStatus {
 	

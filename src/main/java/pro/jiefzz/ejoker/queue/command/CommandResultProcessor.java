@@ -16,12 +16,12 @@ import pro.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.rpc.IClientNodeIPAddressProvider;
-import pro.jiefzz.ejoker.z.rpc.IRPCService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.service.IWorkerService;
+import pro.jiefzz.ejoker.z.service.rpc.IClientNodeIPAddressProvider;
+import pro.jiefzz.ejoker.z.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 @EService
 public class CommandResultProcessor implements IWorkerService {

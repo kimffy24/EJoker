@@ -2,8 +2,8 @@ package pro.jiefzz.ejoker.z.system.extension.acrossSupport;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
 
 /**
  * 结果集创建工具

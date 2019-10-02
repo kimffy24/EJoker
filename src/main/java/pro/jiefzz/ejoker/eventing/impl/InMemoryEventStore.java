@@ -19,9 +19,9 @@ import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
 
 /**
  * 供演示和测试排错使用
@@ -108,7 +108,7 @@ public class InMemoryEventStore implements IEventStore {
 	                eventAppendResult.addDuplicateCommandId(eventStream.getCommandId());
 	            }
 	        }
-	        if (eventAppendResult.getDuplicateCommandIdList().size() > 0) {
+	        if (!eventAppendResult.getDuplicateCommandIdList().isEmpty()) {
 	            return;
 	        }
 		

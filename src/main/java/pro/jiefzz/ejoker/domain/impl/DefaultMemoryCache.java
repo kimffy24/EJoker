@@ -22,12 +22,12 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.framework.enhance.EasyCleanMailbox;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
+import pro.jiefzz.ejoker.z.service.Scavenger;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.utils.Ensure;
 
 @EService
@@ -109,7 +109,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 				throw new RuntimeException(String.format(
 						"Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s",
 						aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
-			if (aggregateRoot.getChanges().size() > 0) {
+			if (!aggregateRoot.getChanges().isEmpty()) {
 
 				// TODO @await
 				IAggregateRoot lastestAggregateRoot = await(aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()));

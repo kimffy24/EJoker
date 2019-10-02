@@ -34,14 +34,14 @@ import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException
 import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
-import pro.jiefzz.ejoker.z.io.IOHelper;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.io.IOExceptionOnRuntime;
+import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
 @EService
 public class DefaultProcessingCommandHandler implements IProcessingCommandHandler {
@@ -158,7 +158,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
 			Collection<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
-			if(null!=changes && changes.size()>0) {
+			if(null!=changes && !changes.isEmpty()) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
 					String errorInfo = String.format(
@@ -182,7 +182,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         //所以如果该command再次被处理，可能对应的聚合根就不会再产生事件了；
         //所以，我们要考虑到这种情况，尝试再次发布该命令产生的事件到MQ；
         //否则，如果我们直接将当前command设置为完成，即对MQ进行ack操作，那该command的事件就永远不会再发布到MQ了，这样就无法保证CQRS数据的最终一致性了。
-		if(0 == dirtyAggregateRootCount || null == changeEvents || 0 == changeEvents.size() ) {
+		if(0 == dirtyAggregateRootCount || null == changeEvents || changeEvents.isEmpty() ) {
 			processIfNoEventsOfCommand(processingCommand);
 			return;
 		}

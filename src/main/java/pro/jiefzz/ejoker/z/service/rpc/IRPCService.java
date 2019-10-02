@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.rpc;
+package pro.jiefzz.ejoker.z.service.rpc;
 
 import java.util.HashMap;
 import java.util.Map;

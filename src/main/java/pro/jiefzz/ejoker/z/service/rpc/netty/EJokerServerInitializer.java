@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.rpc.netty;
+package pro.jiefzz.ejoker.z.service.rpc.netty;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;

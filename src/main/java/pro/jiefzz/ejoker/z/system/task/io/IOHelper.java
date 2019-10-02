@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.io;
+package pro.jiefzz.ejoker.z.system.task.io;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -13,8 +13,8 @@ import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
 /**
  * 模拟IOHelper的实现
@@ -27,62 +27,6 @@ import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
-	
-//	private final static AtomicInteger poolIndex = new AtomicInteger(0);
-	
-//	private final ThreadPoolExecutor retryExecutorService = new MixedThreadPoolExecutor(
-//			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
-//			EJokerEnvironment.ASYNC_IO_RETRY_THREADPOLL_SIZE,
-//			0l, TimeUnit.MICROSECONDS,
-//			new LinkedBlockingQueue<Runnable>(),
-//			new ThreadFactory() {
-//
-//				private final AtomicInteger threadIndex = new AtomicInteger(0);
-//
-//				private final ThreadGroup group;
-//
-//				private final String namePrefix;
-//
-//				{
-//
-//					SecurityManager s = System.getSecurityManager();
-//					group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-//					namePrefix = "EJokerIORetry-" + poolIndex.incrementAndGet() + "-thread-";
-//				}
-//
-//				@Override
-//				public Thread newThread(Runnable r) {
-//					Thread t = new Thread(null, r, namePrefix + threadIndex.getAndIncrement(), 0);
-//					if (t.isDaemon())
-//						t.setDaemon(false);
-//					if (t.getPriority() != Thread.NORM_PRIORITY)
-//						t.setPriority(Thread.NORM_PRIORITY);
-//
-//					return t;
-//				}
-//
-//			},
-//			new ThreadPoolExecutor.CallerRunsPolicy());
-//	
-//
-//	/**
-//	 * ioHelper自身线程池服務主要目的还是为了IO重试<br>
-//	 * 其余异步委托还是使用系统异步助手
-//	 */
-//	@Dependence
-//	protected SystemAsyncHelper systemAsyncHelper;
-//
-//	@Dependence
-//	private Scavenger scavenger;
-//	
-//	/**
-//	 * 要不要考慮下，如果有重試任務正在進行的話，保存關鍵信息？還是給出異常日誌？還是阻止關閉？
-//	 */
-//	@EInitialize
-//	private void init() {
-////		scavenger.addFianllyJob(retryExecutorService::shutdown);
-//	}
-	
 
 	public void tryAsyncAction2(
 			String actionName,

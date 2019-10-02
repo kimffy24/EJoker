@@ -5,7 +5,7 @@ import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueConsist
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
+import pro.jiefzz.ejoker.z.service.Scavenger;
 
 public class MQInstanceHelper {
 

@@ -99,7 +99,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		}
 		
 
-		if(0 < uncommittedEvents.size()) {
+		if(!uncommittedEvents.isEmpty()) {
 			Class<?> eType = domainEvent.getClass();
 			for(IDomainEvent<?> x : uncommittedEvents) {
 				if(eType.equals(x.getClass())) {
@@ -155,7 +155,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replayEvents(Collection<DomainEventStream> eventStreams) {
-		if(null == eventStreams || 0 == eventStreams.size())
+		if(null == eventStreams || eventStreams.isEmpty())
 			return;
 		
 		for(DomainEventStream eventStream:eventStreams) {

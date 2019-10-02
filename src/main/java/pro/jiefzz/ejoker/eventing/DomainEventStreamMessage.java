@@ -42,13 +42,13 @@ public class DomainEventStreamMessage extends AbstractMessage {
 	@Override
 	public String toString(){
 		String eventString = "";
-		if(null != events && 0 < events.size()) {
+		if(null != events && !events.isEmpty()) {
 			for(IDomainEvent<?> event:events)
 				eventString += event.getClass().getName() +"|";
 		}
 		Map<String, String> items = this.getItems();
 		String itemString = "";
-		if(null != items && 0 < items.size()) {
+		if(null != items && !items.isEmpty()) {
 			Set<Entry<String,String>> entrySet = items.entrySet();
 			for(Entry<String,String> entry:entrySet)
 				itemString += entry.getKey() +":" +entry.getValue() +"|";

@@ -12,7 +12,7 @@ import java.util.Set;
 public class ForEachHelper {
 
 	public static <K, V> void processForEach(Map<K, V> targetMap, IVoidFunction2<K, V> vf) {
-		if(null == targetMap || 0 == targetMap.size())
+		if(null == targetMap || targetMap.isEmpty())
 			return;
 		Set<Entry<K,V>> entrySet = targetMap.entrySet();
 		for(Entry<K,V> entry : entrySet)
@@ -20,21 +20,21 @@ public class ForEachHelper {
 	}
 	
 	public static <V> void processForEach(List<V> targetList, IVoidFunction1<V> vf) {
-		if(null == targetList || 0 == targetList.size())
+		if(null == targetList || targetList.isEmpty())
 			return;
 		for(V item : targetList)
 			vf.trigger(item);
 	}
 	
 	public static <V> void processForEach(Set<V> targetList, IVoidFunction1<V> vf) {
-		if(null == targetList || 0 == targetList.size())
+		if(null == targetList || targetList.isEmpty())
 			return;
 		for(V item : targetList)
 			vf.trigger(item);
 	}
 	
 	public static <V> void processForEach(List<V> targetList, IVoidFunction2<V, Integer> vf) {
-		if(null == targetList || 0 == targetList.size())
+		if(null == targetList || targetList.isEmpty())
 			return;
 		// 尽量使用foreach和迭代器
 		// 如果使用ArrayList可以直接使用顺序迭代( for(int i=0; i<list.size(); i++) )

@@ -4,7 +4,7 @@ import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.infrastructure.IObjectProxy;
 import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public interface ICommandAsyncHandlerProxy extends IObjectProxy {
 	

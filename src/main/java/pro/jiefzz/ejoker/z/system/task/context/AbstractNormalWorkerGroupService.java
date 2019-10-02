@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.task.context;
+package pro.jiefzz.ejoker.z.system.task.context;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -7,10 +7,10 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
+import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.system.functional.IFunction1;
-import pro.jiefzz.ejoker.z.task.IAsyncEntrance;
-import pro.jiefzz.ejoker.z.task.defaultProvider.SystemAsyncPool;
+import pro.jiefzz.ejoker.z.system.task.IAsyncEntrance;
+import pro.jiefzz.ejoker.z.system.task.defaultProvider.SystemAsyncPool;
 
 public abstract class AbstractNormalWorkerGroupService {
 
@@ -19,7 +19,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	protected IAsyncEntrance asyncPool = null;
 
 	@Dependence
-	private Scavenger scavenger;
+	private IEjokerContextDev2 ejokerContext;
 
 	@EInitialize(priority = 5)
 	private void init() {
@@ -29,7 +29,7 @@ public abstract class AbstractNormalWorkerGroupService {
 		}
 
 		asyncPool = AsyncEntranceProvider.trigger(this);
-		scavenger.addFianllyJob(asyncPool::shutdown);
+		ejokerContext.destroyRegister(asyncPool::shutdown, 95);
 		logger.debug("Create a new AsyncEntrance[{}] for {}.", asyncPool.getClass().getName(),
 				this.getClass().getName());
 

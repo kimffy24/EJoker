@@ -128,7 +128,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			if (target instanceof Collection) {
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
-				if(((List )target).size()>0)
+				if(!((List )target).isEmpty())
 					ForEachHelper.processForEach((List )target, (item) -> 
 						join( () -> 
 							assemblyStructure(
@@ -154,7 +154,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				GenericDefinedTypeMeta pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
-				if(((Map )target).size()>0)
+				if(!((Map )target).isEmpty())
 					ForEachHelper.processForEach((Map )target, (k, v) -> {
 						join(() -> assemblyStructure(
 								pass2TypeMeta,

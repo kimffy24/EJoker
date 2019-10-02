@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.scavenger;
+package pro.jiefzz.ejoker.z.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
+import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 
 @EService
@@ -52,7 +55,12 @@ public class Scavenger {
 		amountOfJob.incrementAndGet();
 	}
 
-	public void cleanUp(){
-		cdl.countDown();
+	@Dependence
+	private IEjokerContextDev2 ejokerContext;
+	
+	@EInitialize
+	private void init() {
+		ejokerContext.destroyRegister(cdl::countDown);
 	}
+	
 }

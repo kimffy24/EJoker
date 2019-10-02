@@ -53,7 +53,7 @@ public abstract class AbstractMessage implements  IMessage {
 
 	@Override
 	public void mergeItems(Map<String, String> items) {
-		if(null == items || 0 == items.size()) {
+		if(null == items || items.isEmpty()) {
 			return;
 		}
 		if(null == this.items) {

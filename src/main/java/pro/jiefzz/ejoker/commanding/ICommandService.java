@@ -2,7 +2,7 @@ package pro.jiefzz.ejoker.commanding;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public interface ICommandService {
 

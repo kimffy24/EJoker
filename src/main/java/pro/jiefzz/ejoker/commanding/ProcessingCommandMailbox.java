@@ -14,8 +14,8 @@ import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.z.framework.enhance.EasyCleanMailbox;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.utils.Ensure;
 
 public class ProcessingCommandMailbox extends EasyCleanMailbox {
@@ -152,7 +152,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public void acquireOnProcessing() {
-		AcquireHelper.waitAcquire(onProcessing, 10l, // 1000l,
+		AcquireHelper.waitAcquire(onProcessing, 5l, // 1000l,
 				r -> {
 					if (0 == r % 100)
 						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while, aggregateRootId: {}, waitTime: {} ms",
