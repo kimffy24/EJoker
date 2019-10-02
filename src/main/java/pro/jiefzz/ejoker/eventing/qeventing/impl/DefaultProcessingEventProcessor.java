@@ -59,7 +59,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	
 	private long timeoutMillis = EJokerEnvironment.MAILBOX_IDLE_TIMEOUT;
 	
-	private long cleanInactivalMillis = 5000l;
+	private long cleanInactivalMillis = EJokerEnvironment.IDLE_RELEASE_PERIOD;
 	
 	@EInitialize
 	private void init() {
@@ -166,12 +166,12 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 		while(it.hasNext()) {
 			Entry<String, ProcessingEventMailBox> current = it.next();
 			ProcessingEventMailBox mailbox = current.getValue();
-			if(!mailbox.isRunning()
-					&& mailbox.isInactive(timeoutMillis)
-					&& !mailbox.hasRemindMessage()
+			if(mailbox.isInactive(timeoutMillis)
 					&& mailbox.tryClean()
 					) {
 				try {
+					if(mailbox.hasRemindMessage())
+						continue;
 			        it.remove();
 			        logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
 				} finally {

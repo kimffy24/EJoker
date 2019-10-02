@@ -48,7 +48,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	
 	private long timeoutMillis = EJokerEnvironment.MAILBOX_IDLE_TIMEOUT;
 	
-	private long cleanInactivalMillis = 5000l;
+	private long cleanInactivalMillis = EJokerEnvironment.IDLE_RELEASE_PERIOD;
 	
 	@EInitialize
 	private void init() {
@@ -103,9 +103,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 		while(it.hasNext()) {
 			Entry<String, ProcessingCommandMailbox> current = it.next();
 			ProcessingCommandMailbox mailbox = current.getValue();
-			if(!mailbox.isRunning()
-					&& mailbox.isInactive(timeoutMillis)
-					&& 0 == mailbox.getTotalUnConsumedMessageCount()
+			if(mailbox.isInactive(timeoutMillis)
 					&& mailbox.tryClean()
 					) {
 		        // tryClean()封装的是一个写锁，即clean过程完全排他的

@@ -118,6 +118,12 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 					}
 				}).start();
 			}
+
+			@Override
+			public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread,
+					boolean reuse) {
+				return execute(asyncTaskThread);
+			}
 			
 		});
 		

@@ -30,8 +30,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	private final String aggregateRootId;
 	// # end
 	
-//	private final Lock enqueueLock = LockWrapper.createLock();
-//
 	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
 	private final int batchSize;
@@ -93,8 +91,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public void enqueueMessage(ProcessingCommand message) {
-//		enqueueLock.lock();
-//		try {
 		message.setSequence(nextSequence);
 		message.setMailBox(this);
 		if (null == messageDict.putIfAbsent(message.getSequence(), message)) {
@@ -104,9 +100,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 			lastActiveTime = System.currentTimeMillis();
 			tryRun();
 		}
-//		} finally {
-//			enqueueLock.unlock();
-//		}
 	}
 
 	/**
@@ -118,7 +111,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		if(onRunning.compareAndSet(false, true)) {
 			logger.debug("{} start run, aggregateRootId: {}, consumingSequence: {}", this.getClass().getSimpleName(),
 					aggregateRootId, consumingSequence);
-			systemAsyncHelper.submit(this::processMessages);
+			systemAsyncHelper.submit(this::processMessages, false);
 		}
 	}
 	

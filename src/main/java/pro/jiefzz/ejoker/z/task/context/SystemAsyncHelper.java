@@ -28,7 +28,6 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 	}
 
 	public Future<Void> submit(IVoidFunction vf) {
-//		return submitInternal(vf::trigger);
 		return asyncPool.execute(() -> {
 			vf.trigger();
 			return null;
@@ -36,8 +35,18 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 	}
 
 	public <T> Future<T> submit(IFunction<T> vf) {
-//		return submitInternal(vf::trigger);
 		return asyncPool.execute(vf::trigger);
 	}
-	
+
+
+	public Future<Void> submit(IVoidFunction vf, boolean reuse) {
+		return asyncPool.execute(() -> {
+			vf.trigger();
+			return null;
+		}, reuse);
+	}
+
+	public <T> Future<T> submit(IFunction<T> vf, boolean reuse) {
+		return asyncPool.execute(vf::trigger, reuse);
+	}
 }

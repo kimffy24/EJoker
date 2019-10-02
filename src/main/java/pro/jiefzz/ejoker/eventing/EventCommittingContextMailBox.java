@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -40,7 +41,7 @@ public class EventCommittingContextMailBox {
 
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
-	private AtomicBoolean onProcessing = new AtomicBoolean(false);
+//	private AtomicBoolean onProcessing = new AtomicBoolean(false);
 
 	private long lastActiveTime = System.currentTimeMillis();
 	
@@ -114,7 +115,7 @@ public class EventCommittingContextMailBox {
 			logger.debug("{} start run, mailboxNumber: {}",
 					this.getClass().getSimpleName(),
 					number);
-			systemAsyncHelper.submit(this::processMessages);
+			systemAsyncHelper.submit(this::processMessages, false);
 		}
 	}
 
@@ -144,12 +145,12 @@ public class EventCommittingContextMailBox {
 
 	private Future<Void> processMessages() {
 		
-		// 设置运行信号，表示当前正在运行Run方法中的逻辑 // ** 可以简单理解为 进入临界区
-		if (!onProcessing.compareAndSet(false, true)) {
-			return EJokerFutureUtil.completeFuture();
-		}
-		
-		try {
+//		// 设置运行信号，表示当前正在运行Run方法中的逻辑
+//		// ** 可以简单理解为 进入临界区
+//		while (!onProcessing.compareAndSet(false, true))
+//			DiscardWrapper.sleepInterruptable(1l);;
+//		
+//		try {
 
 			lastActiveTime = System.currentTimeMillis();
 			List<EventCommittingContext> messageList = new ArrayList<>();
@@ -174,15 +175,16 @@ public class EventCommittingContextMailBox {
 				} catch (RuntimeException ex) {
 					logger.error(String.format("%s run has unknown exception, mailboxNumber: %d",
 							this.getClass().getSimpleName(), number), ex);
-					
 					DiscardWrapper.sleepInterruptable(1l);
+					completeRun();
 				}
+			} else {
+				completeRun();
 			}
 		
-		} finally {
-			onProcessing.compareAndSet(true, false);
-			completeRun();
-		}
+//		} finally {
+//			onProcessing.compareAndSet(true, false);
+//		}
 		return EJokerFutureUtil.completeFuture();
 	}
 }
