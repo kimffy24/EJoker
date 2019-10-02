@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
+import pro.jiefzz.ejoker.z.service.Scavenger;
 import pro.jiefzz.ejoker.z.system.functional.IFunction1;
 import pro.jiefzz.ejoker.z.task.IAsyncEntrance;
 import pro.jiefzz.ejoker.z.task.defaultProvider.SystemAsyncPool;

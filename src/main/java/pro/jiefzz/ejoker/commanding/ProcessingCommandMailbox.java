@@ -152,7 +152,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public void acquireOnProcessing() {
-		AcquireHelper.waitAcquire(onProcessing, 10l, // 1000l,
+		AcquireHelper.waitAcquire(onProcessing, 5l, // 1000l,
 				r -> {
 					if (0 == r % 100)
 						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while, aggregateRootId: {}, waitTime: {} ms",

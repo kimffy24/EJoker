@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
@@ -40,8 +39,6 @@ public class EventCommittingContextMailBox {
 	private int number;
 
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
-
-//	private AtomicBoolean onProcessing = new AtomicBoolean(false);
 
 	private long lastActiveTime = System.currentTimeMillis();
 	
@@ -144,14 +141,9 @@ public class EventCommittingContextMailBox {
 	}
 
 	private Future<Void> processMessages() {
-		
-//		// 设置运行信号，表示当前正在运行Run方法中的逻辑
-//		// ** 可以简单理解为 进入临界区
-//		while (!onProcessing.compareAndSet(false, true))
-//			DiscardWrapper.sleepInterruptable(1l);;
-//		
-//		try {
 
+		// 这个地方可以不加锁，因为tryRun调用有排他能力
+		
 			lastActiveTime = System.currentTimeMillis();
 			List<EventCommittingContext> messageList = new ArrayList<>();
 	
@@ -171,6 +163,8 @@ public class EventCommittingContextMailBox {
 				}
 			}
 			
+			// 在列表为空或遇到异常时才在这里执行completeRun()调用
+			// 正常情况下的completeRun()调用由handler负责
 			if(!messageList.isEmpty()) {
 				try {
 					handler.trigger(messageList);
@@ -183,10 +177,6 @@ public class EventCommittingContextMailBox {
 			} else {
 				completeRun();
 			}
-		
-//		} finally {
-//			onProcessing.compareAndSet(true, false);
-//		}
 		return EJokerFutureUtil.completeFuture();
 	}
 }

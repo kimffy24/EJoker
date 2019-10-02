@@ -2,9 +2,6 @@
 	# 异步线程池大小(Quasar模式下无效)
 	ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE = 256
 	
-	# io失败重试线程池大小
-	ASYNC_IO_RETRY_THREADPOLL_SIZE = 64
-		
 	# 消息异步发送(Quasar模式下请置为true)
 	ASYNC_EJOKER_MESSAGE_SEND = false
 	
@@ -22,6 +19,9 @@
 			
 	# 内存中聚合对象副本的最大超时时间(毫秒)
 	AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT = 180000
+	
+	# 设置CommandMailBox和AggregateCacheInfo和ProcessingEventMailBox的cleanInactive间隔 
+	IDLE_RELEASE_PERIOD = 5000
 			
 	# 消息回复的监听端口
 	REPLY_PORT = 65056

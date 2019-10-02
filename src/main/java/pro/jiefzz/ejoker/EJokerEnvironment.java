@@ -19,12 +19,6 @@ public final class EJokerEnvironment {
 	 */
 	public final static int ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;
 	
-//	/**
-//	 * EJoker内部任务IO失败重试线程池的大小<br>
-//	 * * 默认8
-//	 */
-//	public final static int ASYNC_IO_RETRY_THREADPOLL_SIZE;
-
 	/**
 	 * 消息发送是否使用单独的线程池（独立发送者线程池）<br>
 	 * * 默认false
@@ -63,8 +57,8 @@ public final class EJokerEnvironment {
 	public final static long AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT;
 	
 	/**<br>
-	 * 设置CommandMailBox和AggregateCacheInfo和ProcessingEventMailBox的cleanInactive间隔
-	 * * 默认 300000 (即5分钟)
+	 * 设置CommandMailBox和AggregateCacheInfo和ProcessingEventMailBox的cleanInactive间隔 (单位: 毫秒)
+	 * * 默认 5000 (即5秒)
 	 */
 	public final static long IDLE_RELEASE_PERIOD;
 
@@ -125,9 +119,6 @@ public final class EJokerEnvironment {
 
 		ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE =
 				Integer.valueOf(props.getProperty("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE", "64"));
-//
-//		ASYNC_IO_RETRY_THREADPOLL_SIZE =
-//				Integer.valueOf(props.getProperty("ASYNC_IO_RETRY_THREADPOLL_SIZE", "8"));
 		
 		ASYNC_EJOKER_MESSAGE_SEND =
 				Boolean.valueOf(props.getProperty("ASYNC_EJOKER_MESSAGE_SEND", "false"));
@@ -148,7 +139,7 @@ public final class EJokerEnvironment {
 				Long.valueOf(props.getProperty("AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT", "180000"));
 		
 		IDLE_RELEASE_PERIOD =
-				Long.valueOf(props.getProperty("IDLE_RELEASE_PERIOD", "300000"));
+				Long.valueOf(props.getProperty("IDLE_RELEASE_PERIOD", "5000"));
 
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
@@ -166,7 +157,6 @@ public final class EJokerEnvironment {
 				Integer.valueOf(props.getProperty("REBALANCE_STRATEGY", "1"));
 
 		logger.debug("ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE: {}", ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE);
-//		logger.debug("ASYNC_IO_RETRY_THREADPOLL_SIZE: {}", ASYNC_IO_RETRY_THREADPOLL_SIZE);
 		logger.debug("ASYNC_EJOKER_MESSAGE_SEND: {}", ASYNC_EJOKER_MESSAGE_SEND);
 		logger.debug("ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE: {}", ASYNC_EJOKER_MESSAGE_SENDER_THREADPOLL_SIZE);
 		logger.debug("MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE: {}", MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE);

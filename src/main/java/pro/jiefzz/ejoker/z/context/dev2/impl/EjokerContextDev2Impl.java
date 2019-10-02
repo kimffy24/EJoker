@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -25,14 +26,12 @@ import pro.jiefzz.ejoker.z.context.dev2.EjokerRootDefinationStore;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerClazzScannerHook;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
@@ -95,6 +94,12 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	private final Set<String> instanceCandidateDisable = new HashSet<>();
 	
 	Map<Integer, Queue<IVoidFunction>> initTasks = new TreeMap<>(new Comparator<Integer>() {
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			return o1.intValue() - o2.intValue();
+		}});
+	
+	Map<Integer, Queue<IVoidFunction>> destroyTasks = new TreeMap<>(new Comparator<Integer>() {
 		@Override
 		public int compare(Integer o1, Integer o2) {
 			return o1.intValue() - o2.intValue();
@@ -201,13 +206,6 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		preparePreviouslyLoad();
 		completeInstanceInitMethod();
 		
-		// Call full gc once here after 
-		// And make some framework object move to Tenured space
-		for(int i = 0; i<8; i++) {
-			System.gc();
-			DiscardWrapper.sleepInterruptable(10l);
-		}
-		
 		onService.set(true);
 	}
 	
@@ -217,19 +215,39 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		if(onService.compareAndSet(true, false))
 			return;
 		
-		Scavenger scavenger = this.get(Scavenger.class);
 		
-		markLoad.clear();
-		superMapperRecord.clear();
-		conflictMapperRecord.clear();
+		destroyTasks.forEach((k, v) -> {
+			IVoidFunction task;
+			while(null != (task = v.poll())) {
+				try {
+					task.trigger();
+				} catch (RuntimeException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		destroyTasks.clear();
+		initTasks.clear();
 		
 		instanceMap.clear();
 		instanceGenericTypeMap.clear();
 		instanceCandidateGenericTypeMap.clear();
 		instanceCandidateFaildMap.clear();
 		instanceCandidateDisable.clear();
+
+		superMapperRecord.clear();
+		conflictMapperRecord.clear();
+		markLoad.clear();
 		
-		scavenger.cleanUp();
+	}
+	
+	@Override
+	public void destroyRegister(IVoidFunction vf, int priority) {
+		if(onService.get()) {
+			Queue<IVoidFunction> taskQueue = MapHelper.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
+			taskQueue.offer(vf);
+		}
 	}
 	
 	private void refreshContextRecord() {

@@ -6,8 +6,8 @@ import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.rpc.IRPCService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
+import pro.jiefzz.ejoker.z.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
 
 @EService
