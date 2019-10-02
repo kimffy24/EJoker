@@ -61,6 +61,12 @@ public final class EJokerEnvironment {
 	 * * 默认值 180000 (即3分钟)
 	 */
 	public final static long AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT;
+	
+	/**<br>
+	 * 设置CommandMailBox和AggregateCacheInfo和ProcessingEventMailBox的cleanInactive间隔
+	 * * 默认 300000 (即5分钟)
+	 */
+	public final static long IDLE_RELEASE_PERIOD;
 
 	/**
 	 * 消息队列的re-balance策略<br>
@@ -140,6 +146,9 @@ public final class EJokerEnvironment {
 
 		AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT =
 				Long.valueOf(props.getProperty("AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT", "180000"));
+		
+		IDLE_RELEASE_PERIOD =
+				Long.valueOf(props.getProperty("IDLE_RELEASE_PERIOD", "300000"));
 
 		REPLY_PORT =
 				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
@@ -163,6 +172,7 @@ public final class EJokerEnvironment {
 		logger.debug("MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE: {}", MAX_AMOUNT_OF_ON_PROCESSING_MESSAGE);
 		logger.debug("MAILBOX_IDLE_TIMEOUT: {}", MAILBOX_IDLE_TIMEOUT);
 		logger.debug("AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT: {}", AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT);
+		logger.debug("IDLE_RELEASE_PERIOD: {}", IDLE_RELEASE_PERIOD);
 		logger.debug("REPLY_PORT: {}", REPLY_PORT);
 		logger.debug("MAX_BATCH_COMMANDS: {}", MAX_BATCH_COMMANDS);
 		logger.debug("MAX_BATCH_EVENTS: {}", MAX_BATCH_EVENTS);

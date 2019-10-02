@@ -61,9 +61,11 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	}
 
 	@Override
-	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread,
+			boolean reuse) {
 		if (
-				Thread.currentThread().getName().startsWith(SystemAsyncPool.threadNamePrefix)
+				reuse
+				&& Thread.currentThread().getName().startsWith(SystemAsyncPool.threadNamePrefix)
 				) {
 			// @important 1. 如果当前提交线程本来就是线程池中的线程，则由当前线程直接执行
 			// @important 2. 如果当前线程池的任务队列中有等待的任务，则由当前线程直接执行（可以视为线程池满载了，在提交任务前直接执行CallerRunsPolicy策略）
@@ -97,6 +99,11 @@ public class SystemAsyncPool implements IAsyncEntrance {
 
 	public void shutdown() {
 		defaultThreadPool.shutdown();
+	}
+
+	@Override
+	public <TAsyncTaskResult> Future<TAsyncTaskResult> execute(IFunction<TAsyncTaskResult> asyncTaskThread) {
+		return execute(asyncTaskThread, true);
 	}
 
 }

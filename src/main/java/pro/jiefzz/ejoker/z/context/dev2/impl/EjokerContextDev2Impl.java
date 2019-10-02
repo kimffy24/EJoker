@@ -32,6 +32,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
+import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
@@ -201,7 +202,11 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		completeInstanceInitMethod();
 		
 		// Call full gc once here after 
-		System.gc();
+		// And make some framework object move to Tenured space
+		for(int i = 0; i<8; i++) {
+			System.gc();
+			DiscardWrapper.sleepInterruptable(10l);
+		}
 		
 		onService.set(true);
 	}

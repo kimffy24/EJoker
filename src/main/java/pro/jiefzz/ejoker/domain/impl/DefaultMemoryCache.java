@@ -54,11 +54,13 @@ public class DefaultMemoryCache implements IMemoryCache {
 	
 	private long aliveMax = EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT;
 	
+	private long cleanInactivalMillis = EJokerEnvironment.IDLE_RELEASE_PERIOD;
+	
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "CleanInactiveAggregates()"),
-				this::cleanInactiveAggregates, 10000l, 10000l);
+				this::cleanInactiveAggregates, cleanInactivalMillis, cleanInactivalMillis);
 	}
 
 	@Override
@@ -176,7 +178,8 @@ public class DefaultMemoryCache implements IMemoryCache {
 		while (it.hasNext()) {
 			Entry<String, AggregateCacheInfo> current = it.next();
 			AggregateCacheInfo aggregateCacheInfo = current.getValue();
-			if (aggregateCacheInfo.isExpired(aliveMax) && aggregateCacheInfo.tryClean()) {
+			if (aggregateCacheInfo.isExpired(aliveMax)
+					&& aggregateCacheInfo.tryClean()) {
 				try {
 					it.remove();
 					logger.debug("Removed inactive aggregate root, id: {}, type: {}", current.getKey(), aggregateCacheInfo.aggregateRoot.getClass().getName());
@@ -188,7 +191,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 	
 	// ============ 
-	private class AggregateCacheInfo extends EasyCleanMailbox {
+	public static class AggregateCacheInfo extends EasyCleanMailbox {
 		
 		public IAggregateRoot aggregateRoot;
 		

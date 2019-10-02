@@ -85,15 +85,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					new EventCommittingContextMailBox(i, EJokerEnvironment.MAX_BATCH_EVENTS, this::batchPersistEventCommittingContexts, systemAsyncHelper));
 		}
 		
-		new Thread(this::t).start();
-		
 	}
 	
-	private void t() {
-		while(true)
-			DiscardWrapper.sleepInterruptable(1000l);
-	}
-
 	@Override
 	public void commitDomainEventAsync(EventCommittingContext context) {
 		

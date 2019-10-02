@@ -14,6 +14,7 @@ public abstract class EasyCleanMailbox {
 	 */
 	public boolean tryUse() {
 		return rwLock.readLock().tryLock();
+//		return true;
 	}
 	
 	public void releaseUse() {
@@ -26,6 +27,7 @@ public abstract class EasyCleanMailbox {
 	 */
 	public boolean tryClean() {
 		return rwLock.writeLock().tryLock();
+//		return false;
 	}
 	
 	public void releaseClean() {
