@@ -17,7 +17,7 @@ import pro.jiefzz.ejoker.commanding.ICommandContext;
 import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public class CommandAsyncHandlerPool {
 	

@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.io;
+package pro.jiefzz.ejoker.z.system.task.io;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
@@ -13,8 +13,8 @@ import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
 /**
  * 模拟IOHelper的实现

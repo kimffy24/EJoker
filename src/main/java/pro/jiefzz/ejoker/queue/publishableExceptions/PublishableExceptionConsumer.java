@@ -17,7 +17,7 @@ import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCo
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 @EService
 public class PublishableExceptionConsumer extends AbstractEJokerQueueConsumer {

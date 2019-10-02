@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 import pro.jiefzz.ejoker.eventing.qeventing.IPublishedVersionStore;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 /**
  * 已经发布事件版本记录中心服务。

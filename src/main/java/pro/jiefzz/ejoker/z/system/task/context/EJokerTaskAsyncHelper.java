@@ -1,15 +1,15 @@
-package pro.jiefzz.ejoker.z.task.context;
+package pro.jiefzz.ejoker.z.system.task.context;
 
 import java.io.IOException;
 import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.z.system.task.io.IOExceptionOnRuntime;
 
 /**
  * 包装一下使异步任务返回AsyncTaskResult&lt;T&gt;结构

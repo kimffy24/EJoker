@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.eventing;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public interface IEventStore {
 	
