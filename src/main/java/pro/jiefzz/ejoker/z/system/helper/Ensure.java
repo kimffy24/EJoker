@@ -1,9 +1,9 @@
-package pro.jiefzz.ejoker.z.utils;
+package pro.jiefzz.ejoker.z.system.helper;
 
-import pro.jiefzz.ejoker.z.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentNullOrEmptyException;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentOutOfRangeException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullOrEmptyException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentOutOfRangeException;
 
 /**
  * 对象化的断言方法

@@ -212,7 +212,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void discard() {
 		
-		if(onService.compareAndSet(true, false))
+		if(!onService.compareAndSet(true, false))
 			return;
 		
 		
@@ -244,7 +244,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	@Override
 	public void destroyRegister(IVoidFunction vf, int priority) {
-		if(onService.get()) {
+		if(!onService.get()) {
 			Queue<IVoidFunction> taskQueue = MapHelper.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
 			taskQueue.offer(vf);
 		}

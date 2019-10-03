@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.commanding;
 import java.util.Map;
 
 import pro.jiefzz.ejoker.infrastructure.messaging.AbstractMessage;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 
 /**
  * ENode 中Command基类分了不带泛型的和带泛型的Command<TAggregateRootId>

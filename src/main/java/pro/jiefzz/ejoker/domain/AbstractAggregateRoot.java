@@ -9,10 +9,10 @@ import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.AggregateRootHandlerPool;
 import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.exceptions.InvalidOperationException;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.z.system.exceptions.InvalidOperationException;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot {
 

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import pro.jiefzz.ejoker.infrastructure.messaging.AbstractMessage;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentException;
 
 public class DomainEventStream extends AbstractMessage {
 	

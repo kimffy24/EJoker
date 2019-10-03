@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
