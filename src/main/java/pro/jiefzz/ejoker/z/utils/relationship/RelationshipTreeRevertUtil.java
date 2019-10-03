@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.InstanceBuilder;
 import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;

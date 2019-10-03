@@ -9,7 +9,7 @@ import pro.jiefzz.ejoker.domain.IMemoryCache;
 import pro.jiefzz.ejoker.domain.IRepository;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 

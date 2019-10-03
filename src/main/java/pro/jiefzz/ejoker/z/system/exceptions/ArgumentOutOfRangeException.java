@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.z.exceptions;
+package pro.jiefzz.ejoker.z.system.exceptions;
 
 public class ArgumentOutOfRangeException extends RuntimeException {
 	/**

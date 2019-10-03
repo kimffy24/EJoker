@@ -15,8 +15,7 @@ import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.GenericTypeUtil;
 import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
@@ -129,7 +128,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
 				if(!((List )target).isEmpty())
-					ForEachHelper.processForEach((List )target, (item) -> 
+					((List )target).forEach(item -> 
 						join( () -> 
 							assemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
@@ -155,7 +154,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
 				if(!((Map )target).isEmpty())
-					ForEachHelper.processForEach((Map )target, (k, v) -> {
+					((Map )target).forEach((k, v) -> {
 						join(() -> assemblyStructure(
 								pass2TypeMeta,
 								v,
@@ -174,18 +173,20 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				join(()-> privateTypeForEach(target, definedClazz, createValueSet), subTaskQueue);
 			} else {
 				Object[] objArray = (Object[])target;
-				ForEachHelper.processForEach((Object[])target, (item, i) -> 
+				for(int i=0; i<objArray.length; i++) {
+					Object item = objArray[i];
+					int index = i;
 					join( () -> 
 						assemblyStructure(
 								targetDefinedTypeMeta.componentTypeMeta,
-								objArray[i],
+								objArray[index],
 								(result) -> eval.addToValueSet(createValueSet, result),
-								() -> key + i,
+								() -> key + index,
 								subTaskQueue
 						),
 						subTaskQueue
-					)
-				);
+					);
+				};
 			}
 			
 		} else {
