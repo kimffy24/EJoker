@@ -3,28 +3,26 @@ package pro.jiefzz.ejoker.domain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.AggregateRootHandlerPool;
 import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.exceptions.InvalidOperationException;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.z.system.exceptions.InvalidOperationException;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 
 public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggregateRoot {
 
+	@PersistentIgnore
+	private List<IDomainEvent<?>> uncommittedEvents = null;
+	
+	private TAggregateRootId id = null;
+
 	private long version = 0;
 	
-	@PersistentIgnore
-	private Queue<IDomainEvent<?>> uncommittedEvents = null;
-	
-	protected TAggregateRootId id = null;
-
 	public TAggregateRootId getId(){
 		return id;
 	}
@@ -67,6 +65,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
         }
 		
 		domainEvent.setAggregateRootId(this.id);
+		domainEvent.setAggregateRootStringId(this.getUniqueId());
 		domainEvent.setVersion(this.version + 1);
 
 		// 聚合根响应事件
@@ -96,26 +95,26 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	private void appendUncommittedEvent(final IDomainEvent<TAggregateRootId> domainEvent){
 		
 		if(null == uncommittedEvents) {
-			uncommittedEvents = new LinkedBlockingQueue<>();
+			uncommittedEvents = new ArrayList<>();
 		}
 		
 
-		if(0 < uncommittedEvents.size()) {
-			uncommittedEvents.forEach((x) -> {
-
-				if(x.getClass().equals(domainEvent.getClass())) {
+		if(!uncommittedEvents.isEmpty()) {
+			Class<?> eType = domainEvent.getClass();
+			for(IDomainEvent<?> x : uncommittedEvents) {
+				if(eType.equals(x.getClass())) {
 					throw new InvalidOperationException(String.format(
-							"Cannot apply duplicated domain event type: %s,current aggregateRoot type: %s, id: %s",
-							domainEvent.getClass().getName(),
+							"Cannot apply duplicated domain event type: %s, current aggregateRoot type: %s, id: %s",
+							eType.getName(),
 							AbstractAggregateRoot.this.getClass().getName(),
 							id
 					));
 				}
-				
-			});
+			}
 		}
 		
-		uncommittedEvents.offer(domainEvent);
+		uncommittedEvents.add(domainEvent);
+		
 	}
 
 	private void verifyEvent(DomainEventStream eventStream){
@@ -147,26 +146,16 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 
 	@Override
 	public void acceptChanges() {
-		if (null != uncommittedEvents && 0 < uncommittedEvents.size()) {
-			version = uncommittedEvents.peek().getVersion();
+		if (null != uncommittedEvents && !uncommittedEvents.isEmpty()) {
+			version = uncommittedEvents.get(0).getVersion();
 			uncommittedEvents.clear();
 		}
-//		if(version+1 != newVersion)
-//			throw new InvalidOperationException(String.format(
-//					"Cannot accept invalid version: %d, expect version: %d, current aggregateRoot type: %s, id: %s",
-//					newVersion,
-//					version+1,
-//					this.getClass().getName(),
-//					id.toString()
-//			));
-//		version = newVersion;
-//		uncommittedEvents.clear();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void replayEvents(Collection<DomainEventStream> eventStreams) {
-		if(null == eventStreams || 0 == eventStreams.size())
+		if(null == eventStreams || eventStreams.isEmpty())
 			return;
 		
 		for(DomainEventStream eventStream:eventStreams) {
@@ -176,5 +165,6 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 				handleEvent((IDomainEvent<TAggregateRootId> )event);
 			version = eventStream.getVersion();
 		}
+		
 	}
 }

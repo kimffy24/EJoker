@@ -1,14 +1,14 @@
 package pro.jiefzz.ejoker.queue;
 
-import pro.jiefzz.ejoker.EJokerEnvironment;
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.rpc.IRPCService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.service.rpc.IRPCService;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 @EService
 public class SendReplyService {
@@ -22,7 +22,7 @@ public class SendReplyService {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 	
-	public SystemFutureWrapper<Void> sendReply(int replyType, CommandResult commandResult, String replyAddress) {
+	public Future<Void> sendReply(int replyType, CommandResult commandResult, String replyAddress) {
 		return systemAsyncHelper.submit(() -> {
 			ReplyMessage rm = new ReplyMessage();
 			rm.t = replyType;
@@ -31,7 +31,7 @@ public class SendReplyService {
 		});
 	}
 	
-	public SystemFutureWrapper<Void> sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
+	public Future<Void> sendReply(int replyType, DomainEventHandledMessage eomainEventHandledMessage, String replyAddress) {
 		return systemAsyncHelper.submit(() -> {
 			ReplyMessage rm = new ReplyMessage();
 			rm.t = replyType;

@@ -7,7 +7,6 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.JSONStyle;
 import net.minidev.json.JSONValue;
 import net.minidev.json.parser.ParseException;
-import pro.jiefzz.ejoker.infrastructure.InfrastructureRuntimeException;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
@@ -33,7 +32,7 @@ public class JSONConverterUseJsonSmartImpl implements IJSONConverter {
 			return jsonObjectConverter.revert((JSONObject )JSONValue.parseStrict(jsonString), clazz);
 		} catch (ParseException e) {
 			logger.error("revert JsonObject failed!!!", e);
-			throw new InfrastructureRuntimeException("revert JsonObject failed!!!", e);
+			throw new RuntimeException("revert JsonObject failed!!!", e);
 		}
 	}
 

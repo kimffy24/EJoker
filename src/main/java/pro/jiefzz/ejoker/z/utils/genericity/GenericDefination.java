@@ -7,10 +7,10 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 
 /**
  * A Object contain some useful reflect info.<br>
@@ -100,22 +100,24 @@ public final class GenericDefination {
 
 			deliveryTypeMetasTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
 			
-			ForEachHelper.processForEach(superDefination.exportGenericDeclares, (declareTuple, i) -> {
-
-				Type typeArgument = actualTypeArguments[i];
-
-				if(typeArgument instanceof TypeVariable<?>) {
-					// generic!
-					TypeVariable<?> tv = (TypeVariable<?> )typeArgument;
-					deliveryMapper.put("" + i, tv.getTypeName());
-					deliveryMapper.put(declareTuple.name, tv.getTypeName());
-					deliveryTypeMetasTable[i] = null;
-				} else {
-					// materialized!
-					deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
-				}
+			if(null != superDefination.exportGenericDeclares && 0 != superDefination.exportGenericDeclares.length) {
+				for(int i=0; i<superDefination.exportGenericDeclares.length; i++) {
+					GenericDeclare declareTuple = superDefination.exportGenericDeclares[i];
+					Type typeArgument = actualTypeArguments[i];
+	
+					if(typeArgument instanceof TypeVariable<?>) {
+						// generic!
+						TypeVariable<?> tv = (TypeVariable<?> )typeArgument;
+						deliveryMapper.put("" + i, tv.getTypeName());
+						deliveryMapper.put(declareTuple.name, tv.getTypeName());
+						deliveryTypeMetasTable[i] = null;
+					} else {
+						// materialized!
+						deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
+					}
 				
-			});
+				}
+			}
 			
 		} else {
 			deliveryTypeMetasTable = null;
@@ -132,21 +134,24 @@ public final class GenericDefination {
 				Map<String, String> ifaceDeliveryMapper = new HashMap<>();
 				
 				Class<?> iface = (Class<?> )interfacePt.getRawType();
-				
-				ForEachHelper.processForEach(interfaceDefinations.get(iface).exportGenericDeclares, (declareTuple, i) -> {
-					Type typeArgument = actualTypeArguments[i];
-
-					if(typeArgument instanceof TypeVariable<?>) {
-						// generic!
-						TypeVariable<?> tv = (TypeVariable<?> )typeArgument;
-						ifaceDeliveryMapper.put("" + i, tv.getTypeName());
-						ifaceDeliveryMapper.put(declareTuple.name, tv.getTypeName());
-						ifaceDeliveryTypeMetaTable[i] = null;
-					} else {
-						// materialized!
-						ifaceDeliveryTypeMetaTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
+				GenericDeclare[] eGD = interfaceDefinations.get(iface).exportGenericDeclares;
+				if(null != interfaceDefinations.get(iface).exportGenericDeclares
+						&& 0 != interfaceDefinations.get(iface).exportGenericDeclares.length)
+					for(int i = 0; i<eGD.length; i++) {
+						GenericDeclare declareTuple = eGD[i];
+						Type typeArgument = actualTypeArguments[i];
+	
+						if(typeArgument instanceof TypeVariable<?>) {
+							// generic!
+							TypeVariable<?> tv = (TypeVariable<?> )typeArgument;
+							ifaceDeliveryMapper.put("" + i, tv.getTypeName());
+							ifaceDeliveryMapper.put(declareTuple.name, tv.getTypeName());
+							ifaceDeliveryTypeMetaTable[i] = null;
+						} else {
+							// materialized!
+							ifaceDeliveryTypeMetaTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
+						}
 					}
-				});
 				
 //				TypeVariable<?>[] interfaceTypeParameters = iface.getTypeParameters();
 //				for(int i = 0; i<actualTypeArguments.length; i++) {
@@ -230,21 +235,32 @@ public final class GenericDefination {
 	public void forEachGenericDeclares(IVoidFunction1<GenericDeclare> vf) {
 		if(!hasGenericDeclare)
 			return;
-		ForEachHelper.processForEach(exportGenericDeclares, vf);
+		if(null == exportGenericDeclares || 0 == exportGenericDeclares.length)
+			return;
+		for(GenericDeclare gd : exportGenericDeclares)
+			vf.trigger(gd);
 	}
 	
 	public void forEachGenericDeclares(IVoidFunction2<GenericDeclare, Integer> vf) {
 		if(!hasGenericDeclare)
 			return;
-		ForEachHelper.processForEach(exportGenericDeclares, vf);
+		if(null == exportGenericDeclares || 0 == exportGenericDeclares.length)
+			return;
+		for(int i=0; i<exportGenericDeclares.length; i++) {
+			vf.trigger(exportGenericDeclares[i], i);
+		}
 	}
 	
 	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefination> vf) {
-		ForEachHelper.processForEach(interfaceDefinations, vf);
+		if(null == interfaceDefinations || interfaceDefinations.isEmpty())
+			return;
+		interfaceDefinations.forEach(vf::trigger);
 	}
 	
 	public void forEachFieldDefinations(IVoidFunction2<String, GenericDefinedField> vf) {
-		ForEachHelper.processForEach(fieldDefinations, vf);
+		if(null == fieldDefinations || fieldDefinations.isEmpty())
+			return;
+		fieldDefinations.forEach(vf::trigger);
 	}
 	
 	public int getGenericDeclareAmount() {
@@ -284,7 +300,7 @@ public final class GenericDefination {
 	}
 
 	public Map<String, String> getDeliveryMapperCopy() {
-		if(null == deliveryMapper || deliveryMapper.size() == 0)
+		if(null == deliveryMapper || deliveryMapper.isEmpty())
 			return null;
 		return new HashMap<>(deliveryMapper);
 	}
@@ -302,10 +318,10 @@ public final class GenericDefination {
 	}
 
 	public Map<String, String> getInterfaceDeliveryMapperCopy(Class<?> interfaceClazz) {
-		if(null == interfaceDeliveryMappers || interfaceDeliveryMappers.size() == 0)
+		if(null == interfaceDeliveryMappers || interfaceDeliveryMappers.isEmpty())
 			return null;
 		Map<String, String> interfaceDeliveryMapper = interfaceDeliveryMappers.get(interfaceClazz);
-		if(null == interfaceDeliveryMapper || interfaceDeliveryMapper.size() == 0)
+		if(null == interfaceDeliveryMapper || interfaceDeliveryMapper.isEmpty())
 			return null;
 		return new HashMap<>(interfaceDeliveryMapper);
 	}

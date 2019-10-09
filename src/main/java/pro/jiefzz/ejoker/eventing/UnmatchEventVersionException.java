@@ -4,7 +4,7 @@ public class UnmatchEventVersionException extends RuntimeException {
 
 	private static final long serialVersionUID = 730075755177264830L;
 
-	public UnmatchEventVersionException() {}
+	public UnmatchEventVersionException() { }
 
 	public UnmatchEventVersionException(String message) {
 		super(message);

@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.utils.GenericTypeUtil;
 
 public class GenericExpression {
@@ -276,7 +276,7 @@ public class GenericExpression {
 				fieldExpressions = null;
 			} else {
 				fieldExpressions = new HashMap<>();
-				ForEachHelper.processForEach(target.fieldExpressions, (fieldName, genericDefinedField) -> {
+				target.fieldExpressions.forEach((fieldName, genericDefinedField) -> {
 					GenericDefinedTypeMeta currentGenericDefinedTypeMeta;
 					if(genericDefinedField.isGenericVariable) {
 						/// 如果是泛型类型变量，则从 exportMapper 泛型导出表中获取对应具现化类型
@@ -342,25 +342,32 @@ public class GenericExpression {
 	}
 	
 	public void forEachImplementationsExpressions(IVoidFunction1<GenericExpression> vf) {
-		ForEachHelper.processForEach(implementationsExpressions, vf);
+		if(null == implementationsExpressions || 0 == implementationsExpressions.length)
+			return;
+		for(GenericExpression ge : implementationsExpressions)
+			vf.trigger(ge);
 	}
 	
 	public void forEachImplementationsExpressionsDeeply(IVoidFunction1<GenericExpression> vf) {
-		ForEachHelper.processForEach(implementationsExpressions, genericExpression -> {
-			vf.trigger(genericExpression);
-			genericExpression.forEachImplementationsExpressionsDeeply(vf);
-		});
+		if(null == implementationsExpressions || 0 == implementationsExpressions.length)
+			return;
+		for(GenericExpression ge : implementationsExpressions) {
+			vf.trigger(ge);
+			ge.forEachImplementationsExpressionsDeeply(vf);
+		}
 	}
 	
 	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
-		ForEachHelper.processForEach(fieldExpressions, vf);
+		if(null == fieldExpressions || fieldExpressions.isEmpty())
+			return;
+		fieldExpressions.forEach(vf::trigger);
 	}
 	
 	public void forEachFieldExpressionsDeeply(IVoidFunction2<String, GenericDefinedField> vf) {
 		Set<String> hasProcessedField = new HashSet<>();
 		GenericExpression currentExpression = this;
 		do {
-			if(null == currentExpression.fieldExpressions || 0 == currentExpression.fieldExpressions.size())
+			if(null == currentExpression.fieldExpressions || currentExpression.fieldExpressions.isEmpty())
 				continue;
 			Set<Entry<String,GenericDefinedField>> entrySet = currentExpression.fieldExpressions.entrySet();
 			for(Entry<String,GenericDefinedField> entry: entrySet) {

@@ -2,14 +2,11 @@ package pro.jiefzz.ejoker.commanding;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.infrastructure.IMailBox;
-import pro.jiefzz.ejoker.infrastructure.IMailBoxMessage;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+public class ProcessingCommand {
 
-public class ProcessingCommand implements IMailBoxMessage<ProcessingCommand, CommandResult> {
-
-	private IMailBox<ProcessingCommand, CommandResult> mailBox;
+	private ProcessingCommandMailbox mailBox;
 	
 	private long sequence;
 	
@@ -25,7 +22,7 @@ public class ProcessingCommand implements IMailBoxMessage<ProcessingCommand, Com
     	this.items = (null != items ? items : new HashMap<>());
     }
 
-    public SystemFutureWrapper<Void> completeAsync(CommandResult commandResult) {
+    public Future<Void> completeAsync(CommandResult commandResult) {
     	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }
     
@@ -52,13 +49,11 @@ public class ProcessingCommand implements IMailBoxMessage<ProcessingCommand, Com
 		return items;
 	}
 
-	@Override
-	public IMailBox<ProcessingCommand, CommandResult> getMailBox() {
+	public ProcessingCommandMailbox getMailBox() {
 		return mailBox;
 	}
 
-	@Override
-	public void setMailBox(IMailBox<ProcessingCommand, CommandResult> mailbox) {
+	public void setMailBox(ProcessingCommandMailbox mailbox) {
 		this.mailBox = mailbox;
 	}
 

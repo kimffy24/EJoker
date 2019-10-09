@@ -6,13 +6,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
-import pro.jiefzz.ejoker.domain.AggregateCacheInfo;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateStorage;
 import pro.jiefzz.ejoker.domain.IMemoryCache;
@@ -20,23 +20,21 @@ import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.schedule.IScheduleService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.framework.enhance.EasyCleanMailbox;
+import pro.jiefzz.ejoker.z.service.IScheduleService;
+import pro.jiefzz.ejoker.z.service.Scavenger;
+import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
-import pro.jiefzz.ejoker.z.utils.Ensure;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 @EService
 public class DefaultMemoryCache implements IMemoryCache {
 
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMemoryCache.class);
 
-	private final Object lockHandle = LockWrapper.createLock();
-	
 	private final Map<String, AggregateCacheInfo> aggregateRootInfoDict = new ConcurrentHashMap<>();
 
 	@Dependence
@@ -50,16 +48,23 @@ public class DefaultMemoryCache implements IMemoryCache {
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
-
+	
+	@Dependence
+	private Scavenger scavenger;
+	
+	private long aliveMax = EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT;
+	
+	private long cleanInactivalMillis = EJokerEnvironment.IDLE_RELEASE_PERIOD;
+	
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
 				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "CleanInactiveAggregates()"),
-				this::cleanInactiveAggregates, 2000l, 2000l);
+				this::cleanInactiveAggregates, cleanInactivalMillis, cleanInactivalMillis);
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> getAsync(Object aggregateRootId,
+	public Future<IAggregateRoot> getAsync(Object aggregateRootId,
 			Class<IAggregateRoot> aggregateRootType) {
 		Ensure.notNull(aggregateRootId, "aggregateRootId");
 		Ensure.notNull(aggregateRootType, "aggregateRootType");
@@ -67,13 +72,13 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public SystemFutureWrapper<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot) {
+	public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot) {
 		resetAggregateRootCache(aggregateRoot);
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName,
+	public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName,
 			Object aggregateRootId) {
 
 		if(StringHelper.isNullOrEmpty(aggregateRootTypeName))
@@ -83,14 +88,14 @@ public class DefaultMemoryCache implements IMemoryCache {
 			type = (Class<IAggregateRoot> )typeNameProvider.getType(aggregateRootTypeName);
 		} catch (RuntimeException ex) {
 			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
-			return SystemFutureWrapperUtil.completeFuture(null);
+			return EJokerFutureUtil.completeFuture(null);
 		}
 		
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(type, aggregateRootId));
 	}
 
 	@Override
-	public SystemFutureWrapper<IAggregateRoot> refreshAggregateFromEventStoreAsync(Class<IAggregateRoot> aggregateRootType,
+	public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(Class<IAggregateRoot> aggregateRootType,
 			Object aggregateRootId) {
 		return systemAsyncHelper.submit(() -> refreshAggregateFromEventStore(aggregateRootType, aggregateRootId));
 	}
@@ -104,7 +109,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 				throw new RuntimeException(String.format(
 						"Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s",
 						aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
-			if (aggregateRoot.getChanges().size() > 0) {
+			if (!aggregateRoot.getChanges().isEmpty()) {
 
 				// TODO @await
 				IAggregateRoot lastestAggregateRoot = await(aggregateStorage.getAsync(aggregateRootType, aggregateRootId.toString()));
@@ -137,12 +142,11 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	private void resetAggregateRootCache(IAggregateRoot aggregateRoot) {
-		LockWrapper.lock(lockHandle);
-		try {
-			if(null == aggregateRoot)
-				throw new ArgumentNullException("aggregateRoot");
-			// Enode在这个位置使用了 初始-存在 的分支处理，但是java没有这个api
-			AtomicBoolean isInitCache = new AtomicBoolean(false);
+		if(null == aggregateRoot)
+			throw new ArgumentNullException("aggregateRoot");
+		// Enode在这个位置使用了 初始-存在 的分支处理，但是java没有这个api
+		AtomicBoolean isInitCache = new AtomicBoolean(false);
+		do {
 			AggregateCacheInfo previous = MapHelper.getOrAddConcurrent(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
 					() -> {
 						isInitCache.set(true);
@@ -151,23 +155,22 @@ public class DefaultMemoryCache implements IMemoryCache {
 						return new AggregateCacheInfo(aggregateRoot);
 					});
 			if(!isInitCache.get()) {
-				long aggregateRootOldVersion = previous.aggregateRoot.getVersion();
-				previous.aggregateRoot = aggregateRoot;
-				previous.lastUpdateTime = System.currentTimeMillis();
-				logger.debug("Aggregate root in-memory cache reset, aggregateRootType: {}, aggregateRootId: {}, aggregateRootNewVersion: {}, aggregateRootOldVersion: {}",
-						typeNameProvider.getTypeName(aggregateRoot.getClass()), aggregateRoot.getUniqueId(), aggregateRoot.getVersion(), aggregateRootOldVersion);
+				if(previous.tryUse()) {
+					try {
+						long aggregateRootOldVersion = previous.aggregateRoot.getVersion();
+						previous.aggregateRoot = aggregateRoot;
+						previous.lastUpdateTime = System.currentTimeMillis();
+						logger.debug("Aggregate root in-memory cache reset, aggregateRootType: {}, aggregateRootId: {}, aggregateRootNewVersion: {}, aggregateRootOldVersion: {}",
+								typeNameProvider.getTypeName(aggregateRoot.getClass()), aggregateRoot.getUniqueId(), aggregateRoot.getVersion(), aggregateRootOldVersion);
+					} finally {
+						previous.releaseUse();
+					}
+					break;
+				}
+				continue;
 			}
-			
-		} finally {
-			LockWrapper.unlock(lockHandle);
-		}
-//		Ensure.notNull(aggregateRoot, "aggregateRoot");
-//		AggregateCacheInfo previous = MapHelper.getOrAddConcurrent(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
-//				() -> new AggregateCacheInfo(aggregateRoot));
-//		previous.aggregateRoot = aggregateRoot;
-//		previous.lastUpdateTime = System.currentTimeMillis();
-//		logger.debug("Aggregate memory cache refreshed, type: {}, id: {}, version: {}",
-//				aggregateRoot.getClass().getName(), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
+			break;
+		} while(true);
 	}
 
 	private void cleanInactiveAggregates() {
@@ -175,10 +178,33 @@ public class DefaultMemoryCache implements IMemoryCache {
 		while (it.hasNext()) {
 			Entry<String, AggregateCacheInfo> current = it.next();
 			AggregateCacheInfo aggregateCacheInfo = current.getValue();
-			if (aggregateCacheInfo.isExpired(EJokerEnvironment.AGGREGATE_IN_MEMORY_EXPIRE_TIMEOUT)) {
-				it.remove();
-				logger.debug("Removed inactive aggregate root, id: {}, type: {}", current.getKey(), aggregateCacheInfo.aggregateRoot.getClass().getName());
+			if (aggregateCacheInfo.isExpired(aliveMax)
+					&& aggregateCacheInfo.tryClean()) {
+				try {
+					it.remove();
+					logger.debug("Removed inactive aggregate root, id: {}, type: {}", current.getKey(), aggregateCacheInfo.aggregateRoot.getClass().getName());
+				} finally {
+					aggregateCacheInfo.releaseClean();
+				}
 			}
 		}
+	}
+	
+	// ============ 
+	public static class AggregateCacheInfo extends EasyCleanMailbox {
+		
+		public IAggregateRoot aggregateRoot;
+		
+		public long lastUpdateTime;
+
+		public AggregateCacheInfo(IAggregateRoot aggregateRoot) {
+			this.aggregateRoot = aggregateRoot;
+			this.lastUpdateTime = System.currentTimeMillis();
+		}
+
+		public boolean isExpired(long timeoutMilliseconds) {
+			return 0 < (System.currentTimeMillis() - lastUpdateTime - timeoutMilliseconds);
+		}
+		
 	}
 }

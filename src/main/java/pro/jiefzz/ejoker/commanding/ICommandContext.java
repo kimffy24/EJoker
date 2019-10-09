@@ -1,8 +1,9 @@
 package pro.jiefzz.ejoker.commanding;
 
+import java.util.concurrent.Future;
+
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public interface ICommandContext {
 
@@ -16,7 +17,7 @@ public interface ICommandContext {
 	 * Add a new aggregate into the current command context.
 	 * @param aggregateRoot
 	 */
-    public SystemFutureWrapper<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot);
+    public Future<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot);
     
     /**
      * Because Java's generic type is pseudo generic type, not real generic.
@@ -27,7 +28,7 @@ public interface ICommandContext {
      * @param tryFromCache
      * @return
      */
-    public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz, boolean tryFromCache);
+    public <T extends IAggregateRoot> Future<T> getAsync(Object id, Class<T> clazz, boolean tryFromCache);
     
     /**
      * @see com.jiefzz.ejoker.commanding.ICommandContext.get(Object, Class, boolean)
@@ -35,7 +36,7 @@ public interface ICommandContext {
      * @param clazz
      * @return
      */
-    default public <T extends IAggregateRoot> SystemFutureWrapper<T> getAsync(Object id, Class<T> clazz) {
+    default public <T extends IAggregateRoot> Future<T> getAsync(Object id, Class<T> clazz) {
     	return getAsync(id, clazz, true);
     }
     

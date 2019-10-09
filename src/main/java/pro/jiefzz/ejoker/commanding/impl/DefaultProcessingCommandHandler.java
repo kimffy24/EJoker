@@ -4,6 +4,7 @@ import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,24 +25,23 @@ import pro.jiefzz.ejoker.domain.IMemoryCache;
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
 import pro.jiefzz.ejoker.eventing.EventCommittingContext;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
-import pro.jiefzz.ejoker.eventing.IEventService;
+import pro.jiefzz.ejoker.eventing.IEventCommittingService;
 import pro.jiefzz.ejoker.eventing.IEventStore;
-import pro.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
-import pro.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
-import pro.jiefzz.ejoker.infrastructure.varieties.publishableExceptionMessage.IPublishableException;
+import pro.jiefzz.ejoker.infrastructure.messaging.IMessagePublisher;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
 import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.io.IOExceptionOnRuntime;
-import pro.jiefzz.ejoker.z.io.IOHelper;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapperUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
-import pro.jiefzz.ejoker.z.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.io.IOExceptionOnRuntime;
+import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
 @EService
 public class DefaultProcessingCommandHandler implements IProcessingCommandHandler {
@@ -61,7 +61,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private ICommandAsyncHandlerProvider commandAsyncHandlerPrivider;
 	
 	@Dependence
-	private IEventService eventService;
+	private IEventCommittingService eventService;
 
 	@Dependence
     private IMessagePublisher<IApplicationMessage> applicationMessagePublisher;
@@ -82,11 +82,11 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private ITypeNameProvider typeNameProvider;
 
 	@Override
-	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand) {
+	public Future<Void> handleAsync(ProcessingCommand processingCommand) {
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(
-					"The aggregateId of commmand is null or empty! commandType=%s commandId=%s.", message.getTypeName(),
+					"The aggregateId of commmand is null or empty! commandType=%s commandId=%s.", message.getClass().getName(),
 					message.getId());
 			logger.error(errorInfo);
 			return completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
@@ -124,7 +124,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			/// 此处由本类的handle()方法通过异步的方式发起调用
 			commandHandler.handle(processingCommand.getCommandExecuteContext(), message);
 			logger.debug("Handle command success. [handlerType={}, commandType={}, commandId={}, aggregateRootId={}]",
-					commandHandler.toString(), message.getTypeName(), message.getId(), message.getAggregateRootId());
+					commandHandler.toString(), message.getClass().getName(), message.getId(), message.getAggregateRootId());
 			handleSuccess = true;
 		} catch (Exception ex) {
 			handleExceptionAsync(processingCommand, commandHandler, ex);
@@ -158,12 +158,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		for( IAggregateRoot aggregateRoot : trackedAggregateRoots) {
 			
 			Collection<IDomainEvent<?>> changes = aggregateRoot.getChanges();	
-			if(null!=changes && changes.size()>0) {
+			if(null!=changes && !changes.isEmpty()) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
 					String errorInfo = String.format(
 							"Detected more than one aggregate created or modified by command!!! commandType=%s commandId=%s",
-							command.getTypeName(),
+							command.getClass().getName(),
 							command.getId()
 					);
 					logger.error(errorInfo);
@@ -182,7 +182,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         //所以如果该command再次被处理，可能对应的聚合根就不会再产生事件了；
         //所以，我们要考虑到这种情况，尝试再次发布该命令产生的事件到MQ；
         //否则，如果我们直接将当前command设置为完成，即对MQ进行ack操作，那该command的事件就永远不会再发布到MQ了，这样就无法保证CQRS数据的最终一致性了。
-		if(0 == dirtyAggregateRootCount || null == changeEvents || 0 == changeEvents.size() ) {
+		if(0 == dirtyAggregateRootCount || null == changeEvents || changeEvents.isEmpty() ) {
 			processIfNoEventsOfCommand(processingCommand);
 			return;
 		}
@@ -194,31 +194,23 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         memoryCache.updateAggregateRootCache(dirtyAggregateRoot);
 
         //构造出一个事件流对象
-		DomainEventStream eventStream = buildDomainEventStream(dirtyAggregateRoot, changeEvents, processingCommand);
-
-        //将事件流提交到EventStore
-		// TODO event提交从这里开始(可以作为调试点)
-		eventService.commitDomainEventAsync(new EventCommittingContext(dirtyAggregateRoot, eventStream, processingCommand));
-		
-	}
-	
-	private DomainEventStream buildDomainEventStream(IAggregateRoot aggregateRoot, Collection<IDomainEvent<?>> changeEvents, ProcessingCommand processingCommand) {
-		String result = processingCommand.getCommandExecuteContext().getResult();
+        String result = processingCommand.getCommandExecuteContext().getResult();
 		if(null!=result)
 			processingCommand.getItems().put("CommandResult", result);
 		
-		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRoot.getClass());
+		String aggregateRootTypeName = typeNameProvider.getTypeName(dirtyAggregateRoot.getClass());
 		
-		return new DomainEventStream(
+		DomainEventStream eventStream = new DomainEventStream(
 				processingCommand.getMessage().getId(),
-				aggregateRoot.getUniqueId(),
+				dirtyAggregateRoot.getUniqueId(),
 				aggregateRootTypeName,
-//				aggregateRoot.getVersion()+1,
-				changeEvents.iterator().next().getVersion(),
 				System.currentTimeMillis(),
 				changeEvents,
-				processingCommand.getItems()
+				command.getItems()
 		);
+        //将事件流提交到EventStore
+		// TODO event提交从这里开始(可以作为调试点)
+		eventService.commitDomainEventAsync(new EventCommittingContext(dirtyAggregateRoot, eventStream, processingCommand));
 		
 	}
 	
@@ -250,16 +242,16 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				() -> eventStore.findAsync(command.getAggregateRootId(), command.getId()),
 				existingEventStream -> {
 					if (existingEventStream != null) {
-	                    //这里，我们需要再重新做一遍发布事件这个操作；
-	                    //之所以要这样做是因为虽然该command产生的事件已经持久化成功，但并不表示事件已经发布出去了；
-	                    //因为有可能事件持久化成功了，但那时正好机器断电了，则发布事件就没有做；
+	                    // 这里，我们需要再重新做一遍发布事件这个操作；
+	                    // 之所以要这样做是因为虽然该command产生的事件已经持久化成功，但并不表示事件已经发布出去了；
+	                    // 因为有可能事件持久化成功了，但那时正好机器断电了，则发布事件就没有做；
 	                    eventService.publishDomainEventAsync(processingCommand, existingEventStream);
 	                
 	                } else {
 	                	
-	                    //到这里，说明当前command执行遇到异常，然后当前command之前也没执行过，是第一次被执行。
-	                    //那就判断当前异常是否是需要被发布出去的异常，如果是，则发布该异常给所有消费者；
-	                    //否则，就记录错误日志，然后认为该command处理失败即可；
+	                    // 到这里，说明当前command执行遇到异常，然后当前command之前也没执行过，是第一次被执行。
+	                    // 那就判断当前异常是否是需要被发布出去的异常，如果是，则发布该异常给所有消费者；
+	                    // 否则，就记录错误日志，然后认为该command处理失败即可；
 	                	IPublishableException publishableException
 	                		= (exception instanceof IPublishableException) ? (IPublishableException )exception : null;
 	                    if (publishableException != null) {
@@ -282,6 +274,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	
 	
 	private void publishExceptionAsync(ProcessingCommand processingCommand, IPublishableException exception) {
+		exception.mergeItems(processingCommand.getMessage().getItems());
 		ioHelper.tryAsyncAction2(
 				"PublishExceptionAsync",
 				() -> exceptionPublisher.publishAsync(exception),
@@ -303,14 +296,14 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         logger.error(errorMessage, exception);
     }
 	
-	private SystemFutureWrapper<Void> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
+	private Future<Void> handleCommandAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler) {
 		ICommand command = processingCommand.getMessage();
 		
 		ioHelper.tryAsyncAction2(
 					"HandleCommandAsync",
 					() ->  {
 						try {
-							SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
+							Future<AsyncTaskResult<IApplicationMessage>> ressult = commandHandler.handleAsync(processingCommand.getCommandExecuteContext(), command);
 							logger.debug("Handle command async success. handler:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
 		                            commandHandler.toString(),
 		                            command.getClass().getName(),
@@ -332,20 +325,21 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		                            command.getId(),
 		                            command.getAggregateRootId()), ex);
 
-		            		return SystemFutureWrapperUtil.completeFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
+		            		return EJokerFutureUtil.completeFuture(new AsyncTaskResult<>(isIOException ? AsyncTaskStatus.IOException : AsyncTaskStatus.Failed, ex.getMessage()));
 		                }
 					},
 					r -> commitChangesAsync(processingCommand, true, r, null),
 					() -> String.format("[command: [id: %s, type: %s], handler: %s]", command.getId(), command.getClass().getName(), commandHandler.toString()),
 					ex -> commitChangesAsync(processingCommand, false, null, ex.getMessage())
 		);
-		return SystemFutureWrapperUtil.completeFuture();
+		return EJokerFutureUtil.completeFuture();
     }
 	
 	private void commitChangesAsync(ProcessingCommand processingCommand, boolean success, IApplicationMessage message,
 			String errorMessage) {
 		if (success) {
 			if (null != message) {
+				message.mergeItems(processingCommand.getMessage().getItems());
 				publishMessageAsync(processingCommand, message);
 			} else {
 				completeCommandAsync(processingCommand, CommandStatus.Success, null, null);
@@ -368,7 +362,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				);
 	}
 
-	private SystemFutureWrapper<Void> completeCommandAsync(ProcessingCommand processingCommand,
+	private Future<Void> completeCommandAsync(ProcessingCommand processingCommand,
 			CommandStatus commandStatus, String resultType, String result) {
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);

@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
@@ -25,7 +26,6 @@ import pro.jiefzz.ejoker.z.context.dev2.EjokerRootDefinationStore;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerClazzScannerHook;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
@@ -99,7 +99,13 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			return o1.intValue() - o2.intValue();
 		}});
 	
-	private final AtomicBoolean onService = new AtomicBoolean(true);
+	Map<Integer, Queue<IVoidFunction>> destroyTasks = new TreeMap<>(new Comparator<Integer>() {
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			return o1.intValue() - o2.intValue();
+		}});
+	
+	private final AtomicBoolean onService = new AtomicBoolean(false);
 	
 	private final static Object defaultInstance = new Object();
 	
@@ -182,7 +188,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void refresh() {
 		
-		onService.set(false);
+		if(onService.get()) {
+			throw new RuntimeException("EJoker has been refresh() once!!!");
+		}
 		
 		refreshContextRecord();
 		
@@ -198,27 +206,48 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		preparePreviouslyLoad();
 		completeInstanceInitMethod();
 		
-		onService.compareAndSet(false, true);
+		onService.set(true);
 	}
 	
 	@Override
 	public void discard() {
-		if(!onService.get())
+		
+		if(!onService.compareAndSet(true, false))
 			return;
 		
-		Scavenger scavenger = this.get(Scavenger.class);
 		
-		markLoad.clear();
-		superMapperRecord.clear();
-		conflictMapperRecord.clear();
+		destroyTasks.forEach((k, v) -> {
+			IVoidFunction task;
+			while(null != (task = v.poll())) {
+				try {
+					task.trigger();
+				} catch (RuntimeException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		destroyTasks.clear();
+		initTasks.clear();
 		
 		instanceMap.clear();
 		instanceGenericTypeMap.clear();
 		instanceCandidateGenericTypeMap.clear();
 		instanceCandidateFaildMap.clear();
 		instanceCandidateDisable.clear();
+
+		superMapperRecord.clear();
+		conflictMapperRecord.clear();
+		markLoad.clear();
 		
-		scavenger.cleanUp();
+	}
+	
+	@Override
+	public void destroyRegister(IVoidFunction vf, int priority) {
+		if(!onService.get()) {
+			Queue<IVoidFunction> taskQueue = MapHelper.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
+			taskQueue.offer(vf);
+		}
 	}
 	
 	private void refreshContextRecord() {
@@ -477,7 +506,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);
 					int priority = annotation.priority();
-					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, LinkedBlockingQueue::new);
+					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
 					initTaskQueue.offer(() -> {
 						try {
 							method.invoke(instance);

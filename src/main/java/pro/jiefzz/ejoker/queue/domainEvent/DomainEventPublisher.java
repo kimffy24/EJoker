@@ -3,30 +3,19 @@ package pro.jiefzz.ejoker.queue.domainEvent;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import pro.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.eventing.IEventSerializer;
-import pro.jiefzz.ejoker.infrastructure.IMessagePublisher;
 import pro.jiefzz.ejoker.queue.ITopicProvider;
 import pro.jiefzz.ejoker.queue.QueueMessageTypeCode;
-import pro.jiefzz.ejoker.queue.SendQueueMessageService;
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
+import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueProducer;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.service.IWorkerService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
 
 @EService
-public class DomainEventPublisher implements IMessagePublisher<DomainEventStreamMessage>, IWorkerService {
-
-	@SuppressWarnings("unused")
-	private final static Logger logger = LoggerFactory.getLogger(DomainEventPublisher.class);
+public class DomainEventPublisher extends AbstractEJokerQueueProducer<DomainEventStreamMessage> {
 
 	@Dependence
 	private IJSONConverter jsonConverter;
@@ -36,49 +25,24 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
 	
 	@Dependence
 	private IEventSerializer eventSerializer;
-	
-	@Dependence
-	private SendQueueMessageService sendQueueMessageService;
-	
-	private IProducerWrokerAware producer;
-	
-	public DomainEventPublisher useProducer(IProducerWrokerAware producer) {
-		this.producer = producer;
-		return this;
-	}
 
-	public DomainEventPublisher start() {
-		try {
-			producer.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
-		return this;
-	}
-
-	public DomainEventPublisher shutdown() {
-		try {
-			producer.shutdown();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return this;
+	@Override
+	protected String getMessageType(DomainEventStreamMessage message) {
+		return "events";
 	}
 
 	@Override
-	public SystemFutureWrapper<AsyncTaskResult<Void>> publishAsync(DomainEventStreamMessage eventStream) {
-		EJokerQueueMessage queueMessage = createQueueMessage(eventStream);
-		return sendQueueMessageService.sendMessageAsync(
-			producer,
-			queueMessage,
-			(null != eventStream.getRoutingKey() ? eventStream.getRoutingKey():eventStream.getAggregateRootStringId()),
-			eventStream.getId(),
-			("" + eventStream.getVersion())
-		);
+	protected String getRoutingKey(DomainEventStreamMessage message) {
+		return message.getAggregateRootId();
 	}
 
-	public EJokerQueueMessage createQueueMessage(DomainEventStreamMessage eventStream) {
+	@Override
+	protected String getMessageClassDesc(DomainEventStreamMessage message) {
+		return message.getEvents().stream().map(e -> e.getClass().getSimpleName()).reduce("", (r, s) -> r + s + ", ");
+	}
+
+	@Override
+	protected EJokerQueueMessage createEQueueMessage(DomainEventStreamMessage eventStream) {
 		EventStreamMessage eventMessage = createEventMessage(eventStream);
 		Collection<IDomainEvent<?>> events = eventStream.getEvents();
 		Iterator<IDomainEvent<?>> iterator = events.iterator();
@@ -94,7 +58,7 @@ public class DomainEventPublisher implements IMessagePublisher<DomainEventStream
         message.setId(eventStream.getId());
         message.setCommandId(eventStream.getCommandId());
         message.setAggregateRootTypeName(eventStream.getAggregateRootTypeName());
-        message.setAggregateRootId(eventStream.getAggregateRootStringId());
+        message.setAggregateRootId(eventStream.getAggregateRootId());
         message.setTimestamp(eventStream.getTimestamp());
         message.setVersion(eventStream.getVersion());
         message.setEvents(eventSerializer.serializer(eventStream.getEvents()));

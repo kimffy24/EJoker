@@ -26,9 +26,9 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IConsumerWrokerAware;
-import pro.jiefzz.ejoker.queue.aware.IEJokerQueueMessageContext;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 import pro.jiefzz.ejoker.z.system.functional.IFunction3;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction3;
@@ -161,7 +161,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		shutdownHook.start();
 	}
 	
-	public void syncOffsetToBroker() {
+	public void loopInterval() {
 		
 		if(!this.onRunning.get())
 			return;
@@ -234,7 +234,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					if(onRunning.get())
 						e.printStackTrace();
 				}
-			} while(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size());
+			} while(null == fetchMessageQueuesInBalance || fetchMessageQueuesInBalance.isEmpty());
 			while (DefaultMQConsumer.this.onRunning.get()) {
 				
 				try {
@@ -439,7 +439,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
 		long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
 		
-		if(/*null == aheadOffsetDict || */0 == aheadOffsetDict.size()) {
+		if(/*null == aheadOffsetDict || */aheadOffsetDict.isEmpty()) {
 			return;
 		}
 		
@@ -449,7 +449,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			beforeSequence.add(nextIndex);
 		}
 		nextIndex -= 1l;
-		if (0 < beforeSequence.size()) {
+		if (!beforeSequence.isEmpty()) {
 			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
 				controlStruct.offsetDirty.set(true);
 				for(Long index : beforeSequence) {
@@ -575,7 +575,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 		
 		@Override
-		public void onMessageHandled() {
+		public void onMessageHandled(EJokerQueueMessage queueMessage) {
 			DefaultMQConsumer.this.tryMarkCompletion(this.mq, this.comsumedOffset);
 		}
 		

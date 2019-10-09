@@ -1,9 +1,9 @@
 package pro.jiefzz.ejoker.commanding;
 
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import java.util.concurrent.Future;
 
 public interface IProcessingCommandHandler {
 
-	public SystemFutureWrapper<Void> handle(ProcessingCommand processingCommand);
+	public Future<Void> handleAsync(ProcessingCommand processingCommand);
 	
 }

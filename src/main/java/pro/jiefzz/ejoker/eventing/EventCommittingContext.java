@@ -2,14 +2,10 @@ package pro.jiefzz.ejoker.eventing;
 
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.infrastructure.IMailBox;
-import pro.jiefzz.ejoker.infrastructure.IMailBoxMessage;
 
-public class EventCommittingContext implements IMailBoxMessage<EventCommittingContext, Void>{
+public class EventCommittingContext {
 	
-	private IMailBox<EventCommittingContext, Void>  mailBox;
-	
-	private long sequence;
+	private EventCommittingContextMailBox  mailBox;
 	
 	private IAggregateRoot aggregateRoot;
 	
@@ -17,28 +13,14 @@ public class EventCommittingContext implements IMailBoxMessage<EventCommittingCo
 	
 	private ProcessingCommand processingCommand;
 	
-	public EventCommittingContext next = null; // { get, set }
-
-	@Override
-	public IMailBox<EventCommittingContext, Void> getMailBox() {
+	public EventCommittingContextMailBox getMailBox() {
 		return mailBox;
 	}
 
-	@Override
-	public void setMailBox(IMailBox<EventCommittingContext, Void> mailbox) {
+	public void setMailBox(EventCommittingContextMailBox mailbox) {
 		this.mailBox = mailbox;
 	}
 	
-	@Override
-	public long getSequence() {
-		return sequence;
-	}
-
-	@Override
-	public void setSequence(long sequence) {
-		this.sequence = sequence;
-	}
-
 	public IAggregateRoot getAggregateRoot() {
 		return aggregateRoot;
 	}

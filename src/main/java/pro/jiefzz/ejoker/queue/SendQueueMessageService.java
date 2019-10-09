@@ -1,5 +1,6 @@
 package pro.jiefzz.ejoker.queue;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -11,23 +12,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
-import pro.jiefzz.ejoker.queue.aware.EJokerQueueMessage;
-import pro.jiefzz.ejoker.queue.aware.IProducerWrokerAware;
+import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
+import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.scavenger.Scavenger;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
+import pro.jiefzz.ejoker.z.service.Scavenger;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
+import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
+import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.MixedThreadPoolExecutor;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.task.AsyncTaskStatus;
-import pro.jiefzz.ejoker.z.task.context.EJokerTaskAsyncHelper;
 
 @EService
 public class SendQueueMessageService {
 
-	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(SendQueueMessageService.class);
 
 	@Dependence
@@ -36,26 +37,68 @@ public class SendQueueMessageService {
 	@Dependence
 	private Scavenger scavenger;
 
-	public SystemFutureWrapper<AsyncTaskResult<Void>> sendMessageAsync(IProducerWrokerAware producer,
-			final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
+	public Future<AsyncTaskResult<Void>> sendMessageAsync(
+			IProducerWrokerAware producer,
+			String messageType,
+			String messageClass,
+			EJokerQueueMessage message,
+			String routingKey,
+			String messageId,
+			Map<String, String> messageExtensionItems)
+	{
+		IVoidFunction sa = () -> {
+			logger.error(
+					"EJoker {} message send failed, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}",
+					messageType,
+					message,
+					"ok",
+					routingKey,
+					messageClass,
+					messageId,
+					messageExtensionItems.toString()
+				);
+		};
+		
+		IVoidFunction1<String> fa = s -> {
+			logger.error(
+					"EJoker {} message send failed, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}",
+					messageType,
+					message,
+					s,
+					routingKey,
+					messageClass,
+					messageId,
+					messageExtensionItems.toString()
+				);
+		};
+
+		IVoidFunction1<Exception> ea = e -> {
+			logger.error(String.format(
+					"EJoker %s message send failed, message: %s, routingKey: %s, messageType: %s, messageId: %s, messageExtensionItems: %s",
+					messageType,
+					message,
+					routingKey,
+					messageClass,
+					messageId,
+					messageExtensionItems.toString()),
+				e);
+		};
 
 		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
 
-			// use producer inner executor service to execute aSync task 
-			// and wrap the result with type SystemFutureWrapper.
-			return new SystemFutureWrapper<>(submitWithInnerExector(() -> {
+			return submitWithInnerExector(() -> {
 				try {
-					producer.send(message, routingKey, messageId, version);
+					producer.send(message, routingKey, sa, fa, ea);
 					return AsyncTaskResult.Success;
 				} catch (Exception e) {
 					return new AsyncTaskResult<>(AsyncTaskStatus.IOException, e.getMessage(), null);
 				}
-			}));
+			});
 
 		} else {
 
 			// use eJoker inner executor service
-			return eJokerAsyncHelper.submit(() -> producer.send(message, routingKey, messageId, version));
+			return eJokerAsyncHelper.submit(() -> producer.send(message, routingKey, sa, fa, ea));
 			
 		}
 

@@ -4,21 +4,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.commanding.AbstractCommandHandler;
-import pro.jiefzz.ejoker.commanding.CommandExecuteTimeoutException;
 import pro.jiefzz.ejoker.commanding.CommandRuntimeException;
 import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandContext;
-import pro.jiefzz.ejoker.infrastructure.varieties.applicationMessage.IApplicationMessage;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.SystemFutureWrapper;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
-import pro.jiefzz.ejoker.z.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public class CommandAsyncHandlerPool {
 	
@@ -89,14 +88,14 @@ public class CommandAsyncHandlerPool {
 		}
 		
 		@Override
-		public SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception {
+		public Future<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception {
 				try {
-					return (SystemFutureWrapper<AsyncTaskResult<IApplicationMessage>> )(1==asyncHandleReflectionMethod.getParameterCount()
+					return (Future<AsyncTaskResult<IApplicationMessage>> )(1==asyncHandleReflectionMethod.getParameterCount()
 							? asyncHandleReflectionMethod.invoke(getInnerObject(), command)
 									: asyncHandleReflectionMethod.invoke(getInnerObject(), context, command));
 				} catch (IllegalAccessException|IllegalArgumentException e) {
 					e.printStackTrace();
-					throw new CommandExecuteTimeoutException("Command execute failed!!! " +command.toString(), e);
+					throw new RuntimeException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
 					String eMsg = "Command execute failed!!! " +command.toString();
 					logger.error(eMsg, (Exception )e.getCause());
