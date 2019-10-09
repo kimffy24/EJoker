@@ -49,10 +49,14 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	}
 
 	@Override
-	public TResult get() {
+	public TResult get() throws InterruptedException {
 		
 		if(!isFutureReady.get()) {
-			CountDownLatchWrapper.await(syncHandle);
+			try {
+				CountDownLatchWrapper.await(syncHandle);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		if (hasCanceled)
 			return null;
@@ -62,7 +66,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	}
 
 	@Override
-	public TResult get(long timeout, TimeUnit unit) throws TimeoutException {
+	public TResult get(long timeout, TimeUnit unit) throws TimeoutException, InterruptedException  {
 
 		if(!isFutureReady.get()) {
 			if(!CountDownLatchWrapper.await(syncHandle, timeout, unit)){
