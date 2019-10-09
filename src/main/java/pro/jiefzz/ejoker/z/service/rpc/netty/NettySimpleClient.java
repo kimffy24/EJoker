@@ -1,5 +1,7 @@
 package pro.jiefzz.ejoker.z.service.rpc.netty;
 
+import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,6 +31,10 @@ public class NettySimpleClient {
 	private final String clientDesc;
 	
 	private long lastInvokeTime = System.currentTimeMillis();
+	
+	private final AtomicBoolean ready = new AtomicBoolean(false);
+	
+	private final Object connectBlocker;
 
 	private EventLoopGroup eventLoopGroup;
 
@@ -37,11 +43,9 @@ public class NettySimpleClient {
 	public NettySimpleClient(String host, int port) {
 
 		clientDesc = host + ":" + port;
-		
+		connectBlocker = CountDownLatchWrapper.newCountDownLatch();
 		eventLoopGroup = new NioEventLoopGroup();
 		
-		AtomicBoolean ready = new AtomicBoolean(false);
-		Object countDownLatch = CountDownLatchWrapper.newCountDownLatch();
 		
 		Thread clientHolder = new Thread(() -> {
 			try {
@@ -71,17 +75,18 @@ public class NettySimpleClient {
 				// 进行连接
 				ChannelFuture future = bootstrap.connect(host, port).awaitUninterruptibly();
 				lastInvokeTime = System.currentTimeMillis();
+				await(future);
 				// 判断是否连接成功
 				if (future.isSuccess()) {
 					logger.debug("Client[to: {}:{} ] create success ...", host, port);
 					// 得到管道，便于通信
 					socketChannel = (SocketChannel )future.channel();
 					ready.set(true);
-					CountDownLatchWrapper.countDown(countDownLatch);
+					CountDownLatchWrapper.countDown(connectBlocker);
 					socketChannel.closeFuture().awaitUninterruptibly();
 				} else {
 					logger.debug("Client[to: {}:{} ] create faild ...", host, port);
-					CountDownLatchWrapper.countDown(countDownLatch);
+					CountDownLatchWrapper.countDown(connectBlocker);
 				}
 			} finally {
 				eventLoopGroup.shutdownGracefully();
@@ -91,8 +96,12 @@ public class NettySimpleClient {
 		clientHolder.start();
 
 		lastInvokeTime = System.currentTimeMillis();
+	}
+	
+	public void awaitReady() {
+		lastInvokeTime = System.currentTimeMillis();
 		
-		CountDownLatchWrapper.await(countDownLatch);
+		CountDownLatchWrapper.awaitInterruptable(connectBlocker);
 		if(!ready.get()) {
 			throw new IOExceptionOnRuntime(new IOException(String.format("Clien[to: %s] create faild!!!", clientDesc)));
 		}

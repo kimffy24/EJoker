@@ -1,5 +1,7 @@
 package pro.jiefzz.ejoker.z.service.rpc.netty;
 
+import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -60,8 +62,8 @@ public class NettyRPCServiceImpl implements IRPCService {
 		scavenger.addFianllyJob(this::exitHook);
 		scheduleService.startTask(String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
 				this::cleanInactiveClient,
-				1000l,
-				1000l);
+				2000l,
+				2000l);
 	}
 	
 	// @unsafe on multiple thread process
@@ -116,7 +118,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			// sync: start一定要放在注册portMap之后进行。
 			ioThread.start();
 			if(waitFinished)
-				currentTuple.initialFuture.get();
+				await(currentTuple.initialFuture);
 		} else {
 			if(waitFinished) {
 				while(null == (currentTuple = portMap.get(port)))
@@ -148,19 +150,21 @@ public class NettyRPCServiceImpl implements IRPCService {
 	private NettySimpleClient fetchNettySimpleClient(String host, int port) {
 		String uniqueKey = host+":"+port;
 		NettySimpleClient nettySimpleClient = clientStore.get(uniqueKey);
-		if(null == nettySimpleClient) {
+		while(null == nettySimpleClient) {
 			AtomicBoolean acquired = MapHelper.getOrAdd(clientConnectionOccupation, uniqueKey, () -> new AtomicBoolean());
 			if(acquired.compareAndSet(false, true)) {
 				nettySimpleClient = new NettySimpleClient(host, port);
-				clientStore.put(host+":"+port, nettySimpleClient);
+				nettySimpleClient.awaitReady();
+				clientStore.put(uniqueKey, nettySimpleClient);
 			} else {
 				int loop = 0;
 				while (loop++<5 && null == (nettySimpleClient = clientStore.get(uniqueKey)))
-					DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, 50l);
+					DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, 20l);
 				if(null == nettySimpleClient) {
-					return fetchNettySimpleClient(host, port);
+					continue;
 				}
 			}
+			break;
 		}
 		return nettySimpleClient;
 	}

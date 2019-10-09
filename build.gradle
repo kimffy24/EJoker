@@ -29,6 +29,14 @@ repositories {
 
 }
 
+// 强制指定一个版本
+// 给有冲突的 jar 包强制指定一个版本
+configurations.all{
+    resolutionStrategy{
+        force 'org.slf4j:slf4j-api:1.7.24'
+        force 'io.netty:netty-all:4.1.34.Final'
+    }
+}
 dependencies {
 	// https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core
 	compile group: 'co.paralleluniverse', name: 'quasar-core', version: "${quasarVer}"

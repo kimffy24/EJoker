@@ -15,6 +15,7 @@ import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
+import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
@@ -66,7 +67,11 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 				);
 			}
 			
-			CountDownLatchWrapper.await(countDownLatchHandle);
+			try {
+				CountDownLatchWrapper.await(countDownLatchHandle);
+			} catch (InterruptedException e) {
+				throw new AsyncWrapperException(e);
+			}
 		}
 		return EJokerFutureTaskUtil.completeTask();
 	}

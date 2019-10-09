@@ -55,7 +55,8 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	
 	private final Map<String, ProcessingEventMailBox> mailboxDict = new ConcurrentHashMap<>();
 	
-	private String processorName;
+	// TODO 要注入吗？
+	private String processorName = "d";
 	
 	private long timeoutMillis = EJokerEnvironment.MAILBOX_IDLE_TIMEOUT;
 	

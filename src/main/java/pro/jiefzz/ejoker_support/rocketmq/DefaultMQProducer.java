@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 import pro.jiefzz.ejoker.z.algorithm.ConsistentHashShard;
+import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
@@ -169,7 +170,11 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		}
 		
 		public void awaitPredispatch() {
-			CountDownLatchWrapper.await(cdlHandleAccesser.get(this));
+			try {
+				CountDownLatchWrapper.await(cdlHandleAccesser.get(this));
+			} catch (InterruptedException e) {
+				throw new AsyncWrapperException(e);
+			}
 		}
 	}
 	
