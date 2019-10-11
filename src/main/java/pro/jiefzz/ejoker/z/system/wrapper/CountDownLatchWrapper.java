@@ -29,6 +29,7 @@ public class CountDownLatchWrapper {
 	 * Just clean the interrupt flag and do nothing while interrupt() invoke.
 	 * @param handle
 	 */
+	@SuppressWarnings("deprecation")
 	public final static void awaitInterruptable(Object handle){
 		try {
 			awaiter.trigger(handle);
@@ -44,6 +45,7 @@ public class CountDownLatchWrapper {
 	 * @param unit
 	 * @return await enough or not
 	 */
+	@SuppressWarnings("deprecation")
 	public final static boolean awaitInterruptable(Object handle, long timeout, TimeUnit unit){
 		try {
 			return awaiterLimit.trigger(handle, timeout, unit);

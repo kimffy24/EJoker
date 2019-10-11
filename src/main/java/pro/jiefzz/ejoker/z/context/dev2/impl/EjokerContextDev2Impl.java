@@ -117,6 +117,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T get(Class<T> clazz) {
 		
@@ -127,6 +128,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		return (T )instanceMap.get(clazz.getName());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T get(Class<T> clazz, Type... types) {
 

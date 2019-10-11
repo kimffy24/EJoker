@@ -131,6 +131,7 @@ public class JSONObjectConverterUseJsonSmartImpl implements IJSONObjectConverter
 						return source.size();
 					}
 
+					@SuppressWarnings("rawtypes")
 					@Override
 					public Set getKeySet(JSONObject source) {
 						return source.keySet();

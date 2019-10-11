@@ -13,6 +13,7 @@ public class InstanceBuilder<T> {
 		this.clazz = clazz;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public T doCreate() {
 			Object newInstance;
 			try {
