@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
  * @author jiefzz
  *
  */
-public abstract class AbstractCommandHandler implements ICommandAsyncHandler<ICommand> {
+public abstract class AbstractCommandHandler implements ICommandHandler<ICommand> {
 	
 	@Override
 	public Future<Void> handleAsync(ICommandContext context, ICommand command) {

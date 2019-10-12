@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandStatus;
 import pro.jiefzz.ejoker.commanding.ICommand;
-import pro.jiefzz.ejoker.commanding.ICommandAsyncHandlerProvider;
-import pro.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
+import pro.jiefzz.ejoker.commanding.ICommandHandlerProvider;
+import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import pro.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
@@ -49,7 +49,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private IEventStore eventStore;
 	
 	@Dependence
-	private ICommandAsyncHandlerProvider commandAsyncHandlerPrivider;
+	private ICommandHandlerProvider commandAsyncHandlerPrivider;
 	
 	@Dependence
 	private IEventCommittingService eventCommittingService;
@@ -83,7 +83,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 		}
 
-		ICommandAsyncHandlerProxy asyncHandler = commandAsyncHandlerPrivider.getHandler(message.getClass());
+		ICommandHandlerProxy asyncHandler = commandAsyncHandlerPrivider.getHandler(message.getClass());
 		if(null != asyncHandler) {
 			// TODO await
 			await(handleCommandInternal(processingCommand, asyncHandler));
@@ -99,7 +99,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	}
 	
 	private Future<Void> handleCommandInternal(ProcessingCommand processingCommand,
-			ICommandAsyncHandlerProxy commandHandler) {
+			ICommandHandlerProxy commandHandler) {
 		
 		ICommand command = processingCommand.getMessage();
 		ICommandExecuteContext commandContext = processingCommand.getCommandExecuteContext();
@@ -238,7 +238,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
     			);
     }
 	
-	private void handleExceptionAsync(ProcessingCommand processingCommand, ICommandAsyncHandlerProxy commandHandler, Exception exception, String errorMessage) {
+	private void handleExceptionAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler, Exception exception, String errorMessage) {
 		ICommand command = processingCommand.getMessage();
 		ioHelper.tryAsyncAction2(
 				"FindEventByCommandIdAsync",

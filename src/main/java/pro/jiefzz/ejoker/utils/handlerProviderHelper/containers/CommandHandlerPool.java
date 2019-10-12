@@ -12,15 +12,15 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.commanding.AbstractCommandHandler;
 import pro.jiefzz.ejoker.commanding.CommandRuntimeException;
 import pro.jiefzz.ejoker.commanding.ICommand;
-import pro.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
+import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 
-public class CommandAsyncHandlerPool {
+public class CommandHandlerPool {
 	
-	private final static Logger logger = LoggerFactory.getLogger(CommandAsyncHandlerPool.class);
+	private final static Logger logger = LoggerFactory.getLogger(CommandHandlerPool.class);
 	
 	private final Map<Class<? extends ICommand>, AsyncHandlerReflectionMapper> asyncHandlerMapper =
 			new HashMap<>();
@@ -50,11 +50,11 @@ public class CommandAsyncHandlerPool {
 		}
 	}
 	
-	public ICommandAsyncHandlerProxy fetchCommandHandler(Class<? extends ICommand> commandType) {
+	public ICommandHandlerProxy fetchCommandHandler(Class<? extends ICommand> commandType) {
 		return asyncHandlerMapper.get(commandType);
 	}
 	
-	public static class AsyncHandlerReflectionMapper implements ICommandAsyncHandlerProxy {
+	public static class AsyncHandlerReflectionMapper implements ICommandHandlerProxy {
 		
 		public final Class<? extends AbstractCommandHandler> asyncHandlerClass;
 		public final Method asyncHandleReflectionMethod;
