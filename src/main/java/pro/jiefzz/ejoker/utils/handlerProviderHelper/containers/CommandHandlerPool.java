@@ -40,6 +40,8 @@ public class CommandHandlerPool {
 			if(parameterTypes.length==2) {
 				if(!ICommandContext.class.isAssignableFrom(parameterTypes[0]) || !ICommand.class.isAssignableFrom(parameterTypes[1]))
 					throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) second parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
+				if(!Future.class.isAssignableFrom(method.getReturnType()))
+					throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) return type is not accept!!! It should be an implementant of Future", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
 				commandType = (Class<? extends ICommand> )parameterTypes[1];
 			} else {
 				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
@@ -84,11 +86,11 @@ public class CommandHandlerPool {
 				try {
 					return (Future<Void> )asyncHandleReflectionMethod.invoke(getInnerObject(), context, command);
 				} catch (IllegalAccessException|IllegalArgumentException e) {
-					e.printStackTrace();
+//					e.printStackTrace();
 					throw new RuntimeException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
-					String eMsg = "Command execute failed!!! " +command.toString();
-					logger.error(eMsg, (Exception )e.getCause());
+//					String eMsg = "Command execute failed!!! " +command.toString();
+//					logger.error(eMsg, (Exception )e.getCause());
 					throw new AsyncWrapperException(e.getCause());
 				}
 		}

@@ -2,8 +2,8 @@ package pro.jiefzz.ejoker.queue.skeleton;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessagePublisher;
+import pro.jiefzz.ejoker.messaging.IMessage;
+import pro.jiefzz.ejoker.messaging.IMessagePublisher;
 import pro.jiefzz.ejoker.queue.SendQueueMessageService;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;

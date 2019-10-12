@@ -16,7 +16,7 @@ import pro.jiefzz.ejoker.eventing.qeventing.IProcessingEventProcessor;
 import pro.jiefzz.ejoker.eventing.qeventing.IPublishedVersionStore;
 import pro.jiefzz.ejoker.eventing.qeventing.ProcessingEvent;
 import pro.jiefzz.ejoker.eventing.qeventing.ProcessingEventMailBox;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageDispatcher;
+import pro.jiefzz.ejoker.messaging.IMessageDispatcher;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;

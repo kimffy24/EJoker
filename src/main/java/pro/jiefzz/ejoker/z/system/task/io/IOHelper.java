@@ -16,6 +16,7 @@ import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
+import pro.jiefzz.ejoker.z.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
@@ -32,6 +33,8 @@ public class IOHelper {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOHelper.class);
 
+	// 
+	// 整数标记的方法为IO任务循环起点，带点数的是采用默认的主循环并依次减少faildAction的入参的重载
 	// #1
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void tryAsyncAction2(
@@ -40,7 +43,7 @@ public class IOHelper {
 			IVoidFunction1<IOHelperContext<Void>> loopAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction2<Exception, String> faildAction) {
+			IVoidFunction3<IOHelperContext<Void>, Exception, String> faildAction) {
 		IOHelperContext ioHelperContext = new IOHelperContext(
 				actionName,
 				mainAction,
@@ -56,12 +59,13 @@ public class IOHelper {
 	}
 	
 	// #1.1
+	// #1.1
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction1<Exception> faildAction) {
+			IVoidFunction3<IOHelperContext<Void>, Exception, String> faildAction) {
 		// jump #1
 		tryAsyncAction2(
 				actionName,
@@ -69,9 +73,11 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				(e, eMsg) -> faildAction.trigger(e)
+				faildAction
 				);
 	}
+	
+	// #1.2
 
 	// #1.2
 	public void tryAsyncAction2(
@@ -87,11 +93,33 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				faildAction
+				(c, e, eMsg) -> faildAction.trigger(e, eMsg)
 				);
 	}
-
+	
 	// #1.3
+	
+	// #1.3
+	public void tryAsyncAction2(
+			String actionName,
+			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
+			IVoidFunction completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction) {
+		// jump #1
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				this::taskContinueAction,
+				completeAction,
+				contextInfo,
+				(c, e, eMsg) -> faildAction.trigger(e)
+				);
+	}
+	
+	// #1.4
+
+	// #1.4
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -107,6 +135,8 @@ public class IOHelper {
 				null
 				);
 	}
+	
+	// #2
 
 	// #2
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -116,7 +146,7 @@ public class IOHelper {
 			IVoidFunction1<IOHelperContext<Void>> loopAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction2<Exception, String> faildAction,
+			IVoidFunction3<IOHelperContext<Void>, Exception, String> faildAction,
 			boolean retryWhenFailed) {
 		IOHelperContext ioHelperContext = new IOHelperContext(
 				actionName,
@@ -134,12 +164,14 @@ public class IOHelper {
 	}
 	
 	// #2.1
+
+	// #2.1
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
 			IVoidFunction completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction1<Exception> faildAction,
+			IVoidFunction3<IOHelperContext<Void>, Exception, String> faildAction,
 			boolean retryWhenFailed) {
 		// jump #2
 		tryAsyncAction2(
@@ -148,10 +180,12 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				(e, eMsg) -> faildAction.trigger(e),
+				faildAction,
 				retryWhenFailed
 				);
 	}
+	
+	// #2.2
 
 	// #2.2
 	public void tryAsyncAction2(
@@ -168,12 +202,36 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				faildAction,
+				(c, e, eMsg) -> faildAction.trigger(e, eMsg),
 				retryWhenFailed
 				);
 	}
-
+	
 	// #2.3
+	
+	// #2.3
+	public void tryAsyncAction2(
+			String actionName,
+			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
+			IVoidFunction completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction,
+			boolean retryWhenFailed) {
+		// jump #2
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				this::taskContinueAction,
+				completeAction,
+				contextInfo,
+				(c, e, eMsg) -> faildAction.trigger(e),
+				retryWhenFailed
+				);
+	}
+	
+	// #2.4
+
+	// #2.4
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -191,6 +249,8 @@ public class IOHelper {
 				retryWhenFailed
 				);
 	}
+	
+	// #3
 
 	// #3
 	public <T> void tryAsyncAction2(
@@ -199,7 +259,7 @@ public class IOHelper {
 			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction2<Exception, String> faildAction) {
+			IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction) {
 		IOHelperContext<T> ioHelperContext = new IOHelperContext<>(
 				actionName,
 				mainAction,
@@ -211,6 +271,8 @@ public class IOHelper {
 			ioHelperContext.loopAction.trigger(ioHelperContext);
 		} while(!ioHelperContext.isFinish());
 	}
+	
+	// #3.1
 
 	// #3.1
 	public <T> void tryAsyncAction2(
@@ -218,7 +280,7 @@ public class IOHelper {
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction1<Exception> faildAction) {
+			IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction) {
 		// jump #3
 		tryAsyncAction2(
 				actionName,
@@ -226,9 +288,11 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				(e, eMsg) -> faildAction.trigger(e)
+				faildAction
 				);
 	}
+	
+	// #3.2
 
 	// #3.2
 	public <T> void tryAsyncAction2(
@@ -244,11 +308,33 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				faildAction
+				(c, e, eMsg) -> faildAction.trigger(e, eMsg)
 				);
 	}
+	
+	// #3.3
 
 	// #3.3
+	public <T> void tryAsyncAction2(
+			String actionName,
+			IFunction<Future<AsyncTaskResult<T>>> mainAction,
+			IVoidFunction1<T> completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction) {
+		// jump #3
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				this::taskContinueAction,
+				completeAction,
+				contextInfo,
+				(c, e, eMsg) -> faildAction.trigger(e)
+				);
+	}
+	
+	// #3.4
+
+	// #3.4
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
@@ -264,6 +350,8 @@ public class IOHelper {
 				null
 				);
 	}
+	
+	// #4
 
 	// #4
 	public <T> void tryAsyncAction2(
@@ -272,7 +360,7 @@ public class IOHelper {
 			IVoidFunction1<IOHelperContext<T>> loopAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction2<Exception, String> faildAction,
+			IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction,
 			boolean retryWhenFailed) {
 		IOHelperContext<T> ioHelperContext = new IOHelperContext<>(
 				actionName,
@@ -287,22 +375,15 @@ public class IOHelper {
 		} while(!ioHelperContext.isFinish());
 	}
 	
-	/**
-	 * Task Executor and Monitor
-	 * @param actionName 
-	 * @param mainAction - The closure of the task.
-	 * @param completeAction - The closure will be executed while main action got success.
-	 * @param contextInfo - The closure about get context info.
-	 * @param faildAction - The closure will be executed while main action got timeout or exception.
-	 * @param retryWhenFailed - The flag about whether do retry while main action got failed.
-	 */
+	// #4.1
+
 	// #4.1
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
 			IVoidFunction1<T> completeAction,
 			IFunction<String> contextInfo,
-			IVoidFunction1<Exception> faildAction,
+			IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction,
 			boolean retryWhenFailed) {
 		// jump #4
 		tryAsyncAction2(
@@ -311,10 +392,12 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				(e, eMsg) -> faildAction.trigger(e),
+				faildAction,
 				retryWhenFailed
 				);
 	}
+	
+	// #4.2
 
 	// #4.2
 	public <T> void tryAsyncAction2(
@@ -331,10 +414,43 @@ public class IOHelper {
 				this::taskContinueAction,
 				completeAction,
 				contextInfo,
-				faildAction,
+				(c, e, eMsg) -> faildAction.trigger(e, eMsg),
 				retryWhenFailed
 				);
 	}
+	
+	
+	/**
+	 * Task Executor and Monitor
+	 * @param actionName 
+	 * @param mainAction - The closure of the task.
+	 * @param completeAction - The closure will be executed while main action got success.
+	 * @param contextInfo - The closure about get context info.
+	 * @param faildAction - The closure will be executed while main action got timeout or exception.
+	 * @param retryWhenFailed - The flag about whether do retry while main action got failed.
+	 */
+	// #4.3
+	// #4.3
+	public <T> void tryAsyncAction2(
+			String actionName,
+			IFunction<Future<AsyncTaskResult<T>>> mainAction,
+			IVoidFunction1<T> completeAction,
+			IFunction<String> contextInfo,
+			IVoidFunction1<Exception> faildAction,
+			boolean retryWhenFailed) {
+		// jump #4
+		tryAsyncAction2(
+				actionName,
+				mainAction,
+				this::taskContinueAction,
+				completeAction,
+				contextInfo,
+				(c, e, eMsg) -> faildAction.trigger(e),
+				retryWhenFailed
+				);
+	}
+	
+	// #4.4
 
 	// #4.3
 	public <T> void tryAsyncAction2(
@@ -355,6 +471,7 @@ public class IOHelper {
 				);
 	}
 	
+	
 	/**
 	 * 如果自己实现loopAction的话请务必在自定义的loopAction中执行当前调用
 	 * @param externalContext
@@ -365,8 +482,8 @@ public class IOHelper {
 		AsyncTaskResult<T> result = null;
 		
 		try {
-			task = externalContext.mainAction.trigger();
 			try {
+				task = externalContext.mainAction.trigger();
 				result = task.get();
 			} catch (RuntimeException|InterruptedException|ExecutionException ex) {
 				Exception cause;
@@ -462,14 +579,14 @@ public class IOHelper {
 					exception);
 			executeRetryAction(externalContext);
 		} else {
-			logger.error(
-					String.format(
-							"Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
-							externalContext.actionName,
-							externalContext.contextInfo.trigger(),
-							externalContext.currentRetryTimes),
-					exception);
 			if (externalContext.retryWhenFailed) {
+				logger.error(
+						String.format(
+								"Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
+								externalContext.actionName,
+								externalContext.contextInfo.trigger(),
+								externalContext.currentRetryTimes),
+						exception);
 				executeRetryAction(externalContext);
 			} else {
 				executeFailedAction(externalContext, exception);
@@ -507,7 +624,7 @@ public class IOHelper {
 		externalContext.markFinish();
 		try {
 			if(null != externalContext.faildAction)
-				externalContext.faildAction.trigger(exception, errorMsg);
+				externalContext.faildAction.trigger((IOHelperContext )externalContext, exception, errorMsg);
 	    } catch (RuntimeException ex) {
 	        logger.error(
 	        		String.format(
@@ -518,7 +635,7 @@ public class IOHelper {
 	    }
 	}
 	
-	private static class IOHelperContext<T> {
+	public static class IOHelperContext<T> {
 
 		/**
 		 * 当前重试次数
@@ -551,7 +668,7 @@ public class IOHelper {
 		
 		protected final IFunction<String> contextInfo;
 		
-		protected final IVoidFunction2<Exception, String> faildAction;
+		protected final IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction;
 		
 		private final AtomicBoolean finishFlag = new AtomicBoolean(false);
 		
@@ -577,7 +694,7 @@ public class IOHelper {
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
-				IVoidFunction2<Exception, String> faildAction,
+				IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction,
 				boolean retryWhenFailed, int maxRetryTimes, long retryInterval) {
 			
 			Ensure.notNullOrEmpty(actionName, "actionName");
@@ -602,7 +719,7 @@ public class IOHelper {
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
-				IVoidFunction2<Exception, String> faildAction,
+				IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction,
 				boolean retryWhenFailed, int maxRetryTimes) {
 			this(actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
 					retryWhenFailed, maxRetryTimes, 1000l);
@@ -614,7 +731,7 @@ public class IOHelper {
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
-				IVoidFunction2<Exception, String> faildAction,
+				IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction,
 				boolean retryWhenFailed) {
 			this(actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
 					retryWhenFailed, 3);
@@ -626,7 +743,7 @@ public class IOHelper {
 				IVoidFunction1<IOHelperContext<T>> loopAction,
 				IVoidFunction1<T> completeAction,
 				IFunction<String> contextInfo,
-				IVoidFunction2<Exception, String> faildAction) {
+				IVoidFunction3<IOHelperContext<T>, Exception, String> faildAction) {
 			this(actionName, mainAction, loopAction, completeAction, contextInfo, faildAction,
 					false);
 		}
@@ -635,12 +752,11 @@ public class IOHelper {
 			return this.finishFlag.get();
 		}
 		
-		@SuppressWarnings("unused")
 		public int getCurrentRetryTimes() {
 			return currentRetryTimes;
 		}
 		
-		protected void markFinish() {
+		public void markFinish() {
 			this.finishFlag.set(true);
 		}
 	}

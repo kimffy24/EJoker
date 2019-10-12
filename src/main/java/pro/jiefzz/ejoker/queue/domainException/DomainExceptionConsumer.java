@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.queue.publishableExceptions;
+package pro.jiefzz.ejoker.queue.domainException;
 
 import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
@@ -7,22 +7,22 @@ import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageDispatcher;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
+import pro.jiefzz.ejoker.messaging.IMessageDispatcher;
 import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueConsumer;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
+import pro.jiefzz.ejoker.utils.domainExceptionHelper.DomainExceptionCodecHelper;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 @EService
-public class PublishableExceptionConsumer extends AbstractEJokerQueueConsumer {
+public class DomainExceptionConsumer extends AbstractEJokerQueueConsumer {
 
-	private final static Logger logger = LoggerFactory.getLogger(PublishableExceptionConsumer.class);
+	private final static Logger logger = LoggerFactory.getLogger(DomainExceptionConsumer.class);
 
 	@Dependence
 	private IJSONConverter jsonSerializer;
@@ -39,11 +39,11 @@ public class PublishableExceptionConsumer extends AbstractEJokerQueueConsumer {
 	@Override
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		
-        Class<? extends IPublishableException> publishableExceptionType = (Class<? extends IPublishableException> )typeNameProvider.getType(queueMessage.getTag());
-        PublishableExceptionMessage exceptionMessage = jsonSerializer.revert(new String(queueMessage.getBody(), Charset.forName("UTF-8")), PublishableExceptionMessage.class);
+        Class<? extends IDomainException> publishableExceptionType = (Class<? extends IDomainException> )typeNameProvider.getType(queueMessage.getTag());
+        DomainExceptionMessage exceptionMessage = jsonSerializer.revert(new String(queueMessage.getBody(), Charset.forName("UTF-8")), DomainExceptionMessage.class);
         
         // TODO ???? 不对
-        IPublishableException exception = PublishableExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), publishableExceptionType);
+        IDomainException exception = DomainExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), publishableExceptionType);
 
         logger.debug(
         		"EJoker publishable message received, messageId: {}, exceptionType: {}",

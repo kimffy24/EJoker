@@ -18,16 +18,16 @@ import pro.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IMemoryCache;
+import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
 import pro.jiefzz.ejoker.eventing.EventCommittingContext;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.eventing.IEventCommittingService;
 import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessagePublisher;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
-import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
+import pro.jiefzz.ejoker.messaging.IApplicationMessage;
+import pro.jiefzz.ejoker.messaging.IMessagePublisher;
+import pro.jiefzz.ejoker.utils.domainExceptionHelper.DomainExceptionCodecHelper;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
@@ -58,7 +58,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
     private IMessagePublisher<IApplicationMessage> applicationMessagePublisher;
 
 	@Dependence
-    private IMessagePublisher<IPublishableException> exceptionPublisher;
+    private IMessagePublisher<IDomainException> exceptionPublisher;
 	
 	@Dependence
 	private IMemoryCache memoryCache;
@@ -255,7 +255,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                    // 到这里，说明当前command执行遇到异常，然后当前command之前也没执行过，是第一次被执行。
 	                    // 那就判断当前异常是否是需要被发布出去的异常，如果是，则发布该异常给所有消费者；
 	                    // 否则，就记录错误日志，然后认为该command处理失败即可；
-	                	IPublishableException publishableException = tryGetDomainException(exception);
+	                	IDomainException publishableException = tryGetDomainException(exception);
 	                    if (publishableException != null) {
 	                        publishExceptionAsync(processingCommand, publishableException);
 	                    } else {
@@ -272,16 +272,14 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				);
 	}
 
-    private IPublishableException tryGetDomainException(Exception exception)
-    {
-        if (exception == null)
-        {
+    private IDomainException tryGetDomainException(Exception exception) {
+        if (exception == null) {
             return null;
+        } else if (exception instanceof IDomainException) {
+            return (IDomainException )exception;
         }
-        else if (exception instanceof IPublishableException)
-        {
-            return (IPublishableException )exception;
-        }
+        // TODO 未完成，找不到AggregateException在哪定义的
+        // TODO java里没有聚合异常这个玩意吧？
 //        else if (exception is AggregateException)
 //        {
 //            var aggregateException = exception as AggregateException;
@@ -292,13 +290,13 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
     }
 	
 	
-	private void publishExceptionAsync(ProcessingCommand processingCommand, IPublishableException exception) {
+	private void publishExceptionAsync(ProcessingCommand processingCommand, IDomainException exception) {
 		exception.mergeItems(processingCommand.getMessage().getItems());
 		ioHelper.tryAsyncAction2(
 				"PublishExceptionAsync",
 				() -> exceptionPublisher.publishAsync(exception),
 				r -> completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
-				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), PublishableExceptionCodecHelper.serialize(exception)),
+				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), DomainExceptionCodecHelper.serialize(exception)),
 				true
 				);
 	}

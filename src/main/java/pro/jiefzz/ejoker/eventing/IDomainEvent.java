@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.eventing;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
+import pro.jiefzz.ejoker.messaging.IMessage;
 
 /**
  * 

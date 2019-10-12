@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.utils.handlerProviderHelper;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandler;
+import pro.jiefzz.ejoker.messaging.IMessageHandler;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import pro.jiefzz.ejoker.z.context.annotation.assemblies.MessageHandler;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;

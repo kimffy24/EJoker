@@ -29,14 +29,13 @@ import pro.jiefzz.ejoker.eventing.EventCommittingContext;
 import pro.jiefzz.ejoker.eventing.EventCommittingContextMailBox;
 import pro.jiefzz.ejoker.eventing.IEventCommittingService;
 import pro.jiefzz.ejoker.eventing.IEventStore;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessagePublisher;
+import pro.jiefzz.ejoker.messaging.IMessagePublisher;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
-import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
@@ -70,9 +69,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
-	
-	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private final List<EventCommittingContextMailBox> eventCommittingContextMailBoxList = new ArrayList<>();
 
@@ -215,7 +211,10 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 							Optional<EventCommittingContext> optional = committingContexts.stream().filter(x -> commandId.equals(x.getProcessingCommand().getMessage().getId())).findFirst();
 							EventCommittingContext eventCommittingContext = optional.get();
 							if(null != eventCommittingContext) {
-								tryToRepublishEventAsync(eventCommittingContext);
+								resetCommandMailBoxConsumingSequence(eventCommittingContext, eventCommittingContext.getProcessingCommand().getSequence() + 1)
+									.thenAcceptAsync(t -> {
+										tryToRepublishEventAsync(eventCommittingContext);
+									});
 							}
 						}
 					}
@@ -251,7 +250,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 			handleFirstEventDuplicationAsync(eventCommittingContext);
 		} else {
 			// TODO .ConfigureAwait(false);
-			resetCommandMailBoxConsumingSequence(eventCommittingContext, eventCommittingContext.getProcessingCommand().getSequence());
+			resetCommandMailBoxConsumingSequence(eventCommittingContext, eventCommittingContext.getProcessingCommand().getSequence())
+			.thenRunAsync(() -> {});
 		}
 	}
 
@@ -360,9 +360,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     						
 							/// TODO .ConfigureAwait(false);
 							resetCommandMailBoxConsumingSequence(context,
-									context.getProcessingCommand().getSequence() + 1).thenApplyAsync(t -> {
+									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
 										publishDomainEventAsync(context.getProcessingCommand(), firstEventStream);
-										return null;
 									});
     						
     					} else {
@@ -377,12 +376,11 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 
 							/// TODO .ConfigureAwait(false);
 							resetCommandMailBoxConsumingSequence(context,
-									context.getProcessingCommand().getSequence() + 1).thenApplyAsync(t -> {
+									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
 										CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,
 												eventStream.getAggregateRootId(), "Duplicate aggregate creation.",
 												String.class.getName());
 										completeCommandAsync(context.getProcessingCommand(), commandResult);
-										return null;
 									});
                             
     					}

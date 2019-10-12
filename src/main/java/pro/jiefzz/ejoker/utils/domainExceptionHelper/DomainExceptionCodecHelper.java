@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.utils.publishableExceptionHelper;
+package pro.jiefzz.ejoker.utils.domainExceptionHelper;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -10,18 +10,18 @@ import java.util.Set;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 import net.minidev.json.parser.ParseException;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
+import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.z.context.dev2.EJokerInstanceBuilder;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
 
-public final class PublishableExceptionCodecHelper {
+public final class DomainExceptionCodecHelper {
 	
-	private static Map<Class<? extends IPublishableException>, Map<String, Field>> reflectMap= new HashMap<>();
+	private static Map<Class<? extends IDomainException>, Map<String, Field>> reflectMap= new HashMap<>();
 
-	public static Map<String, String> serialize(IPublishableException exception) {
+	public static Map<String, String> serialize(IDomainException exception) {
 		Map<String, String> rMap = new HashMap<>();
 		
 		Map<String, Field> reflectFields = getReflectFields(exception.getClass());
@@ -48,9 +48,9 @@ public final class PublishableExceptionCodecHelper {
 		return rMap;
 	}
 	
-	public static IPublishableException deserialize(Map<String, String> pMap, Class<? extends IPublishableException> exceptionClazz) {
+	public static IDomainException deserialize(Map<String, String> pMap, Class<? extends IDomainException> exceptionClazz) {
 		
-		return (IPublishableException )(MapHelper
+		return (IDomainException )(MapHelper
 				.getOrAdd(builderMap, exceptionClazz, () -> new EJokerInstanceBuilder(exceptionClazz))
 				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
@@ -77,13 +77,13 @@ public final class PublishableExceptionCodecHelper {
 			for(Entry<String, Object> entry : entrySet) {
 				items.put(entry.getKey(), entry.getValue().toString());
 			}
-			((IPublishableException )e).setItems(items);
+			((IDomainException )e).setItems(items);
 			
 		}));
 		
 	}
 	
-	public static Map<String, Field> getReflectFields(Class<? extends IPublishableException> exceptionClazz)  {
+	public static Map<String, Field> getReflectFields(Class<? extends IDomainException> exceptionClazz)  {
 		return MapHelper.getOrAdd(reflectMap, exceptionClazz, () -> {
 			
 			Map<String, Field> rMap = new HashMap<>();
@@ -201,5 +201,5 @@ public final class PublishableExceptionCodecHelper {
 	private static Map<Class<Enum<?>>, Map<String, Enum<?>>> eMap = new HashMap<>();
 	private final static Map<String, Enum<?>> eMapItemPlaceHolder = new HashMap<>();
 	
-	private final static Map<Class<? extends IPublishableException>, EJokerInstanceBuilder> builderMap = new HashMap<>();
+	private final static Map<Class<? extends IDomainException>, EJokerInstanceBuilder> builderMap = new HashMap<>();
 }

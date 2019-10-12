@@ -68,7 +68,7 @@ public class AggregateRootHandlerPool {
 				throw new AsyncWrapperException(e);
 			} catch (InvocationTargetException e) {
 				String eMsg = "Command execute failed!!! " +domainEvent.toString();
-				logger.error(eMsg, (Exception )e.getCause());
+//				logger.error(eMsg, (Exception )e.getCause());
 				throw new RuntimeException(eMsg, (Exception )e.getCause());
 			}
 		}

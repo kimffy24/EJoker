@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import java.util.Set;
+import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.AbstractMessage;
+import java.util.Set;
 
 public class DomainEventStreamMessage extends AbstractMessage {
 	

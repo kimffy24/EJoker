@@ -3,8 +3,7 @@ package pro.jiefzz.ejoker.commanding;
 import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.messaging.IApplicationMessage;
 
 public interface ICommandContext {
 
@@ -18,7 +17,7 @@ public interface ICommandContext {
 	 * Add a new aggregate into the current command context.
 	 * @param aggregateRoot
 	 */
-    public Future<AsyncTaskResult<Void>> addAsync(IAggregateRoot aggregateRoot);
+    public Future<Void> addAsync(IAggregateRoot aggregateRoot);
     
     /**
      * Because Java's generic type is pseudo generic type, not real generic.

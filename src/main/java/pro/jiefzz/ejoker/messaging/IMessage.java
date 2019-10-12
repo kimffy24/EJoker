@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.infrastructure.messaging;
+package pro.jiefzz.ejoker.messaging;
 
 import java.util.Map;
 

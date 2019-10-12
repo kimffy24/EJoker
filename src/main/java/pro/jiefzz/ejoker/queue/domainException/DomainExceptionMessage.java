@@ -1,8 +1,8 @@
-package pro.jiefzz.ejoker.queue.publishableExceptions;
+package pro.jiefzz.ejoker.queue.domainException;
 
 import java.util.Map;
 
-public class PublishableExceptionMessage {
+public class DomainExceptionMessage {
 	
 	private String uniqueId;
 	

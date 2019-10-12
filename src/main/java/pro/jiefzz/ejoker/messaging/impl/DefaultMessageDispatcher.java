@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.infrastructure.messaging.impl;
+package pro.jiefzz.ejoker.messaging.impl;
 
 import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
@@ -9,9 +9,9 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageDispatcher;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandlerProxy;
+import pro.jiefzz.ejoker.messaging.IMessage;
+import pro.jiefzz.ejoker.messaging.IMessageDispatcher;
+import pro.jiefzz.ejoker.messaging.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
