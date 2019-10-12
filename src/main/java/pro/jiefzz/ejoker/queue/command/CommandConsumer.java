@@ -22,6 +22,7 @@ import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateStorage;
 import pro.jiefzz.ejoker.domain.IRepository;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.queue.SendReplyService;
 import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueConsumer;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
@@ -104,6 +105,8 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 		private final IEJokerQueueMessageContext messageContext;
 
 		private final CommandMessage commandMessage;
+		
+		private IApplicationMessage applicationMessage = null;
 
 		public CommandExecuteContext(EJokerQueueMessage message, IEJokerQueueMessageContext messageContext,
 				CommandMessage commandMessage) {
@@ -199,6 +202,16 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 			}
 			
 			return null;
+		}
+
+		@Override
+		public void setApplicationMessage(IApplicationMessage applicationMessage) {
+			this.applicationMessage = applicationMessage;
+		}
+
+		@Override
+		public IApplicationMessage getApplicationMessage() {
+			return applicationMessage;
 		}
 
 	}

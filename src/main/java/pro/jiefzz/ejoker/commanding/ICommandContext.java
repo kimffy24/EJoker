@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker.commanding;
 import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
+import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public interface ICommandContext {
@@ -47,5 +48,17 @@ public interface ICommandContext {
     public void setResult(String result);
     
     public String getResult();
+    
+    /**
+     * Set an application message.
+     * @param applicationMessage
+     */
+    public void setApplicationMessage(IApplicationMessage applicationMessage);
+    
+    /**
+     * Get an application message.
+     * @return
+     */
+    public IApplicationMessage getApplicationMessage();
     
 }

@@ -113,9 +113,6 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootId(),
 						message.getVersion()),
-				ex -> logger.error(String.format(
-						"Dispatching message has unknown exception, the code should not be run to here, errorMessage: %s",
-						ex.getMessage()), ex),
 				true);
 		
 	}
@@ -150,9 +147,6 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootId(),
 						message.getVersion()),
-				ex -> logger.error(String.format(
-						"Update published version has unknown exception, the code should not be run to here, errorMessage: %s",
-						ex.getMessage())),
 				true);
 		
 	}

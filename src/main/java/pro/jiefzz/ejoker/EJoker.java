@@ -10,11 +10,9 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandAsyncHandlerHelper;
-import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.CommandAsyncHandlerPool;
-import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.CommandHandlerPool;
 import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
 import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
@@ -50,9 +48,6 @@ public class EJoker {
 	protected EJoker() {
 		context = new EjokerContextDev2Impl();
 
-		final CommandHandlerPool commandHandlerPool = new CommandHandlerPool();
-		((EjokerContextDev2Impl )context).shallowRegister(commandHandlerPool);
-		
 		final CommandAsyncHandlerPool commandAsyncHandlerPool = new CommandAsyncHandlerPool();
 		((EjokerContextDev2Impl )context).shallowRegister(commandAsyncHandlerPool);
 		
@@ -60,7 +55,6 @@ public class EJoker {
 		context.registeScannerHook(clazz -> {
 //				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
 					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
-					RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz, commandHandlerPool, context);
 					RegistCommandAsyncHandlerHelper.checkAndRegistCommandAsyncHandler(clazz, commandAsyncHandlerPool, context);
 					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 //				}

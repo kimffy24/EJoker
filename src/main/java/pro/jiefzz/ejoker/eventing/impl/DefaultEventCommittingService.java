@@ -39,7 +39,6 @@ import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
 @EService
 public class DefaultEventCommittingService implements IEventCommittingService {
@@ -243,7 +242,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					
 				},
 				() -> String.format("[contextListCount: %d]", committingContexts.size()),
-				ex -> logger.error(String.format("Batch persist event has unknown exception, the code should not be run to here, errorMessage: %s", ex.getMessage()), ex),
 				true
 			);
 	}
@@ -336,11 +334,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                     }
         		},
         		() -> String.format("[aggregateRootId: %s, commandId: %s]", command.getAggregateRootId(), command.getId()),
-        		ex -> logger.error(
-						String.format(
-								"Find event by commandId has unknown exception, the code should not be run to here, errorMessage: %s",
-								ex.getMessage()),
-						ex),
         		true
         		);
 	}
@@ -415,11 +408,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     				}
         		},
         		() -> String.format("[eventStream: %s]", jsonSerializer.convert(eventStream)),
-        		ex -> logger.error(
-    					String.format(
-    							"Find the first version of event has unknown exception, the code should not be run to here, errorMessage: %s",
-    							ex.getMessage()),
-    						ex),
         		true
         		);
 	}
@@ -443,11 +431,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					completeCommandAsync(processingCommand, commandResult);
 					},
 				() -> String.format("[eventStream: %s]", eventStream.toString()),
-				ex -> logger.error(
-						String.format(
-								"Publish event has unknown exception, the code should not be run to here, errorMessage: %s",
-								ex.getMessage()),
-						ex),
 				true
 				);
 	}

@@ -14,10 +14,9 @@ import pro.jiefzz.ejoker.commanding.CommandRuntimeException;
 import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ICommandAsyncHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandContext;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
+import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public class CommandAsyncHandlerPool {
 	
@@ -38,19 +37,12 @@ public class CommandAsyncHandlerPool {
 			if(null==parameterTypes)
 				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
 			Class<? extends ICommand> commandType;
-			switch(parameterTypes.length) {
-				case 1:
-					if(!ICommand.class.isAssignableFrom(parameterTypes[0]))
-						throw new CommandRuntimeException(String.format("%s#%s( %s ) fitst parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName()));
-					commandType = (Class<? extends ICommand> )parameterTypes[0];
-					break;
-				case 2:
-					if(!ICommandContext.class.isAssignableFrom(parameterTypes[0]) || !ICommand.class.isAssignableFrom(parameterTypes[1]))
-						throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) second parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
-					commandType = (Class<? extends ICommand> )parameterTypes[1];
-					break;
-				default:
-					throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
+			if(parameterTypes.length==2) {
+				if(!ICommandContext.class.isAssignableFrom(parameterTypes[0]) || !ICommand.class.isAssignableFrom(parameterTypes[1]))
+					throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) second parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
+				commandType = (Class<? extends ICommand> )parameterTypes[1];
+			} else {
+				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
 			}
 			
 			if(null!=asyncHandlerMapper.putIfAbsent(commandType, new AsyncHandlerReflectionMapper(method, ejokerProvider)))
@@ -88,18 +80,16 @@ public class CommandAsyncHandlerPool {
 		}
 		
 		@Override
-		public Future<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception {
+		public Future<Void> handleAsync(ICommandContext context, ICommand command) {
 				try {
-					return (Future<AsyncTaskResult<IApplicationMessage>> )(1==asyncHandleReflectionMethod.getParameterCount()
-							? asyncHandleReflectionMethod.invoke(getInnerObject(), command)
-									: asyncHandleReflectionMethod.invoke(getInnerObject(), context, command));
+					return (Future<Void> )asyncHandleReflectionMethod.invoke(getInnerObject(), context, command);
 				} catch (IllegalAccessException|IllegalArgumentException e) {
 					e.printStackTrace();
 					throw new RuntimeException("Command execute failed!!! " +command.toString(), e);
 				} catch (InvocationTargetException e) {
 					String eMsg = "Command execute failed!!! " +command.toString();
 					logger.error(eMsg, (Exception )e.getCause());
-					throw (Exception )e.getCause();
+					throw new AsyncWrapperException(e.getCause());
 				}
 		}
 		

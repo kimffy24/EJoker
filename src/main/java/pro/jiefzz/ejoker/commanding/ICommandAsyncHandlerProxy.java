@@ -3,11 +3,14 @@ package pro.jiefzz.ejoker.commanding;
 import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.infrastructure.IObjectProxy;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public interface ICommandAsyncHandlerProxy extends IObjectProxy {
 	
-	default public Future<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) throws Exception { return null; };
-	
+	default public Future<Void> handleAsync(ICommandContext context, ICommand command) {
+		throw new RuntimeException("Unimplemented!!!");
+	};
+
+	default public Future<Void> handleAsync(ICommand command) {
+		throw new RuntimeException("Unimplemented!!!");
+	};
 }
