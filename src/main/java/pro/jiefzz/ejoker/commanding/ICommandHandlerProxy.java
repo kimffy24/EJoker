@@ -10,7 +10,4 @@ public interface ICommandHandlerProxy extends IObjectProxy {
 		throw new RuntimeException("Unimplemented!!!");
 	};
 
-	default public Future<Void> handleAsync(ICommand command) {
-		throw new RuntimeException("Unimplemented!!!");
-	};
 }

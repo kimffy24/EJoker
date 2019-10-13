@@ -16,11 +16,4 @@ public abstract class AbstractCommandHandler implements ICommandHandler<ICommand
 		throw new CommandRuntimeException("Do you forget to implement the handler function to handle command which type is " +command.getClass().getName());
 	}
 
-	@Override
-	public Future<Void> handleAsync(ICommand command) {
-
-		throw new CommandRuntimeException("Do you forget to implement the handler function to handle command which type is " +command.getClass().getName());
-	}
-
-	
 }

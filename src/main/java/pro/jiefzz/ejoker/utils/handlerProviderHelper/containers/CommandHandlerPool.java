@@ -2,6 +2,8 @@ package pro.jiefzz.ejoker.utils.handlerProviderHelper.containers;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -12,10 +14,11 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.commanding.AbstractCommandHandler;
 import pro.jiefzz.ejoker.commanding.CommandRuntimeException;
 import pro.jiefzz.ejoker.commanding.ICommand;
-import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandContext;
+import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 
 public class CommandHandlerPool {
@@ -37,14 +40,37 @@ public class CommandHandlerPool {
 			if(null==parameterTypes)
 				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
 			Class<? extends ICommand> commandType;
-			if(parameterTypes.length==2) {
-				if(!ICommandContext.class.isAssignableFrom(parameterTypes[0]) || !ICommand.class.isAssignableFrom(parameterTypes[1]))
-					throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) second parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
-				if(!Future.class.isAssignableFrom(method.getReturnType()))
-					throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) return type is not accept!!! It should be an implementant of Future", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getName(), parameterTypes[1].getName()));
-				commandType = (Class<? extends ICommand> )parameterTypes[1];
-			} else {
+			if(parameterTypes.length!=2) {
 				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", implementationHandlerClass.getName(), method.getName()));
+			}
+			
+			if(!ICommandContext.class.isAssignableFrom(parameterTypes[0]) || !ICommand.class.isAssignableFrom(parameterTypes[1]))
+				throw new CommandRuntimeException(String.format("%s#%s( %s, %s ) second parameters is not accept!!!", implementationHandlerClass.getName(), method.getName(), parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName()));
+			commandType = (Class<? extends ICommand> )parameterTypes[1];
+			
+			{
+				// 约束返回类型。 java无法在编译时约束，那就推到运行时上约束吧
+				// 这里就是检查返回类型(带泛型)为 Future<Void>
+				boolean isOK = false;
+				Type genericReturnType = method.getGenericReturnType();
+				if(genericReturnType instanceof ParameterizedType) {
+					ParameterizedType parameterizedType = (ParameterizedType )genericReturnType;
+					if(parameterizedType.getRawType().equals(Future.class)) {
+						Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+						if(null != actualTypeArguments && 1 == actualTypeArguments.length) {
+							if(Void.class.equals(actualTypeArguments[0])) {
+								isOK = true;
+							}
+						}
+					}
+				} else if(void.class.equals(genericReturnType))
+					isOK = true;
+				
+				if(!isOK) {
+					String errorDesc = String.format("%s#%s( %s, %s ) should return Future<Void> or declare return void!!!", implementationHandlerClass.getName(), "handleAsync", parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
+					logger.error(errorDesc);
+					throw new RuntimeException(errorDesc);
+				}
 			}
 			
 			if(null!=asyncHandlerMapper.putIfAbsent(commandType, new AsyncHandlerReflectionMapper(method, ejokerProvider)))
@@ -61,6 +87,7 @@ public class CommandHandlerPool {
 		public final Class<? extends AbstractCommandHandler> asyncHandlerClass;
 		public final Method asyncHandleReflectionMethod;
 		public final String identification;
+		public final boolean voidReturn;
 		
 		private AbstractCommandHandler asyncHandler = null;
 		
@@ -72,6 +99,11 @@ public class CommandHandlerPool {
 			Class<?>[] parameterTypes = asyncHandleReflectionMethod.getParameterTypes();
 			identification = String.format("Proxy[ forward: %s#%s(%s, %s)]", asyncHandlerClass.getSimpleName(), asyncHandleReflectionMethod.getName(), parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
 			this.ejokerContext = ejokerProvider.trigger();
+			
+
+			Type genericReturnType = asyncHandleReflectionMethod.getGenericReturnType();
+			voidReturn = void.class.equals(genericReturnType) ? true : false;
+			
 		}
 		
 		@Override
@@ -84,6 +116,10 @@ public class CommandHandlerPool {
 		@Override
 		public Future<Void> handleAsync(ICommandContext context, ICommand command) {
 				try {
+					if(voidReturn) {
+						asyncHandleReflectionMethod.invoke(getInnerObject(), context, command);
+						return EJokerFutureUtil.completeFuture();
+					}
 					return (Future<Void> )asyncHandleReflectionMethod.invoke(getInnerObject(), context, command);
 				} catch (IllegalAccessException|IllegalArgumentException e) {
 //					e.printStackTrace();

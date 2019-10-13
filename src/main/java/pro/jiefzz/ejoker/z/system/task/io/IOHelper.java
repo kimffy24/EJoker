@@ -569,14 +569,19 @@ public class IOHelper {
 	}
 
 	private void processTaskException(IOHelperContext<?> externalContext, Exception exception) {
-		if (exception instanceof IOException || exception instanceof IOExceptionOnRuntime) {
+		
+		Exception ex = exception;
+		while(ex instanceof AsyncWrapperException)
+			ex = AsyncWrapperException.getActuallyCause(ex);
+		
+		if (ex instanceof IOException || ex instanceof IOExceptionOnRuntime) {
 			logger.error(
 					String.format(
 							"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
 							externalContext.actionName,
 							externalContext.contextInfo.trigger(),
 							externalContext.currentRetryTimes),
-					exception);
+					ex);
 			executeRetryAction(externalContext);
 		} else {
 			if (externalContext.retryWhenFailed) {
@@ -586,10 +591,10 @@ public class IOHelper {
 								externalContext.actionName,
 								externalContext.contextInfo.trigger(),
 								externalContext.currentRetryTimes),
-						exception);
+						ex);
 				executeRetryAction(externalContext);
 			} else {
-				executeFailedAction(externalContext, exception);
+				executeFailedAction(externalContext, ex);
 			}
 		}
 	}

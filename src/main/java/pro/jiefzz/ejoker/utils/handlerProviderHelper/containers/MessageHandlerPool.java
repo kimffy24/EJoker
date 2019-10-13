@@ -71,7 +71,7 @@ public class MessageHandlerPool {
 				Class<? extends IMessage> messageType = (Class<? extends IMessage> )parameterTypes[0];
 				{
 					// 约束返回类型。 java无法在编译时约束，那就推到运行时上约束吧
-					// 这里就是检查返回类型(带泛型)为 SystemFutureWrapper<AsyncTaskResult<Void>>
+					// 这里就是检查返回类型(带泛型)为 Future<AsyncTaskResult<Void>>
 					boolean isOK = false;
 					Type genericReturnType = method.getGenericReturnType();
 					if(genericReturnType instanceof ParameterizedType) {
