@@ -8,13 +8,13 @@ import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 
 public final class RegistMessageHandlerHelper {
 
-	static public void checkAndRegistMessageHandler(Class<?> clazz, IEjokerContextDev2 ejokerContext) {
+	static public void checkAndRegistMessageHandler(Class<?> clazz, MessageHandlerPool handlerPool, IEjokerContextDev2 ejokerContext) {
 
 		if(clazz.isAnnotationPresent(EService.class)) {
 			EService esa = clazz.getAnnotation(EService.class);
 			ESType type = esa.type();
 			if(ESType.MESSAGE_HANDLER.equals(type))
-				MessageHandlerPool.regist((Class<? extends IMessageHandler> )clazz, () -> ejokerContext);
+				handlerPool.regist((Class<? extends IMessageHandler> )clazz, () -> ejokerContext);
 		}
 	}
 	

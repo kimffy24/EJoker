@@ -14,6 +14,7 @@ import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.CommandHandlerPool;
+import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
@@ -51,14 +52,14 @@ public class EJoker {
 		final CommandHandlerPool commandAsyncHandlerPool = new CommandHandlerPool();
 		((EjokerContextDev2Impl )context).shallowRegister(commandAsyncHandlerPool);
 		
+		final MessageHandlerPool messageHandlerPool = new MessageHandlerPool();
+		((EjokerContextDev2Impl )context).shallowRegister(messageHandlerPool);
+		
 		// regist scanner hook
 		context.registeScannerHook(clazz -> {
-//				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
-					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
-					RegistCommandHandlerHelper.checkAndRegistCommandAsyncHandler(clazz, commandAsyncHandlerPool, context);
-					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
-//				}
-				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz, context);
+				RegistCommandHandlerHelper.checkAndRegistCommandAsyncHandler(clazz, commandAsyncHandlerPool, context);
+				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz, messageHandlerPool, context);
+				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 				
 				// register StringId to GenericId codec.
 				if(IAggregateRoot.class.isAssignableFrom(clazz))
