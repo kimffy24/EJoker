@@ -161,6 +161,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 		public void clear() {
 			trackingAggregateRootDict.clear();
 			result = null;
+			applicationMessage = null;
 		}
 
 		@Override
@@ -171,6 +172,16 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 		@Override
 		public String getResult() {
 			return result;
+		}
+
+		@Override
+		public void setApplicationMessage(IApplicationMessage applicationMessage) {
+			this.applicationMessage = applicationMessage;
+		}
+
+		@Override
+		public IApplicationMessage getApplicationMessage() {
+			return applicationMessage;
 		}
 
 		private <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
@@ -200,16 +211,6 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 			}
 			
 			return null;
-		}
-
-		@Override
-		public void setApplicationMessage(IApplicationMessage applicationMessage) {
-			this.applicationMessage = applicationMessage;
-		}
-
-		@Override
-		public IApplicationMessage getApplicationMessage() {
-			return applicationMessage;
 		}
 
 	}

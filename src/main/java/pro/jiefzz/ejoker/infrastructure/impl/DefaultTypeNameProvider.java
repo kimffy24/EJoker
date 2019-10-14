@@ -74,7 +74,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 
 	@Override
 	public void useDecorator(IDecorator decorator) {
-		if(null != decorator) {
+		if(null != this.decorator) {
 			throw new RuntimeException(this.getClass().getName() + "#decorator has been set!!!");
 		}
 		this.decorator = decorator;
