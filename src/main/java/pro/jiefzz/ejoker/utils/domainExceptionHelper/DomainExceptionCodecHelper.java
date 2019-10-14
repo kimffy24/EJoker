@@ -17,11 +17,19 @@ public final class DomainExceptionCodecHelper {
 	private static Map<Class<? extends IDomainException>, Map<String, Field>> reflectMap= new HashMap<>();
 
 	public static Map<String, String> serialize(IDomainException exception) {
+		return serialize(exception, true);
+	}
+	public static Map<String, String> serialize(IDomainException exception, boolean loggerUse) {
 		Map<String, String> rMap = new HashMap<>();
 		
 		Map<String, Field> reflectFields = getReflectFields(exception.getClass());
 		ForEachHelper.processForEach(reflectFields, (n, f) -> {
 
+			if(!loggerUse)
+				// 忽略特定两个字段，他们会被显式地设置到发送的message对象，没必要多做一次序列化
+				if("id".equals(n) || "timestamp".equals(n))
+					return;
+			
 			Object fValue;
 			try {
 				fValue = f.get(exception);
@@ -42,6 +50,11 @@ public final class DomainExceptionCodecHelper {
 				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
 			ForEachHelper.processForEach(reflectFields, (n, f) -> {
+				
+
+				// 忽略特定两个字段
+				if("id".equals(n) || "timestamp".equals(n))
+					return;
 				
 				Object dValue = dValue(f.getType(), pMap.get(n));
 				try {
@@ -85,10 +98,6 @@ public final class DomainExceptionCodecHelper {
 					// 如果有不能直接序列化字段且不是枚举类型，同时通过了上面3个判断，则报错
 					if(!SerializableCheckerUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
 						throw new RuntimeException(String.format("Unsupport non-basic field in PublishableException!!! type: %s, field: %s", exceptionClazz.getName(), fieldName));
-					
-					// 忽略特定两个字段，他们会被显式地设置到发送的message对象，没必要多做一次序列化
-					if("id".equals(fieldName) || "timestamp".equals(fieldName))
-						return;
 					
 					field.setAccessible(true);
 					rMap.putIfAbsent(fieldName, field);
