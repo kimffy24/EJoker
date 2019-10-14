@@ -4,18 +4,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
-import net.minidev.json.JSONObject;
-import net.minidev.json.JSONValue;
-import net.minidev.json.parser.ParseException;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.z.context.dev2.EJokerInstanceBuilder;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
-import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
+import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
 
 public final class DomainExceptionCodecHelper {
 	
@@ -36,14 +31,6 @@ public final class DomainExceptionCodecHelper {
 			rMap.put(n, sValue(f.getType(), fValue));
 			
 		});
-
-		// fixed #190929 针对 IMessage 增加的items
-		JSONObject itemsDict = new JSONObject();
-		Set<Entry<String, String>> entrySet = exception.getItems().entrySet();
-		for(Entry<String, String> entry : entrySet) {
-			itemsDict.appendField(entry.getKey(), entry.getValue());
-		}
-		rMap.put("items", itemsDict.toJSONString());
 		
 		return rMap;
 	}
@@ -64,20 +51,6 @@ public final class DomainExceptionCodecHelper {
 				}
 				
 			});
-
-			// fixed #190929 针对 IMessage 增加的items
-			JSONObject itemsDict;
-			try {
-				itemsDict = (JSONObject )JSONValue.parseStrict(pMap.get("items"));
-			} catch (ParseException e1) {
-				throw new RuntimeException(e1.getMessage(), e1);
-			}
-			Map<String, String> items = new HashMap<>();
-			Set<Entry<String, Object>> entrySet = itemsDict.entrySet();
-			for(Entry<String, Object> entry : entrySet) {
-				items.put(entry.getKey(), entry.getValue().toString());
-			}
-			((IDomainException )e).setItems(items);
 			
 		}));
 		
@@ -101,14 +74,21 @@ public final class DomainExceptionCodecHelper {
 					if("serialVersionUID".equals(fieldName))
 						return;
 					
+					// 跳过有final和static修饰的字段
 					if(Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
 						return;
 					
+					// 略过PersistentIgnore注解的字段
 					if(field.isAnnotationPresent(PersistentIgnore.class))
 						return;
 					
-					if(!ParameterizedTypeUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
+					// 如果有不能直接序列化字段且不是枚举类型，同时通过了上面3个判断，则报错
+					if(!SerializableCheckerUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
 						throw new RuntimeException(String.format("Unsupport non-basic field in PublishableException!!! type: %s, field: %s", exceptionClazz.getName(), fieldName));
+					
+					// 忽略特定两个字段，他们会被显式地设置到发送的message对象，没必要多做一次序列化
+					if("id".equals(fieldName) || "timestamp".equals(fieldName))
+						return;
 					
 					field.setAccessible(true);
 					rMap.putIfAbsent(fieldName, field);

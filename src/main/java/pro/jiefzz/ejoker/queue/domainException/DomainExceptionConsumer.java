@@ -39,16 +39,19 @@ public class DomainExceptionConsumer extends AbstractEJokerQueueConsumer {
 	@Override
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		
-        Class<? extends IDomainException> publishableExceptionType = (Class<? extends IDomainException> )typeNameProvider.getType(queueMessage.getTag());
+        Class<? extends IDomainException> exceptionType = (Class<? extends IDomainException> )typeNameProvider.getType(queueMessage.getTag());
         DomainExceptionMessage exceptionMessage = jsonSerializer.revert(new String(queueMessage.getBody(), Charset.forName("UTF-8")), DomainExceptionMessage.class);
         
         // TODO ???? 不对
-        IDomainException exception = DomainExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), publishableExceptionType);
-
+        IDomainException exception = DomainExceptionCodecHelper.deserialize(exceptionMessage.getSerializableInfo(), exceptionType);
+        exception.setItems(exceptionMessage.getItems());
+        exception.setId(exceptionMessage.getUniqueId());
+        exception.setTimestamp(exceptionMessage.getTimestamp());
+        
         logger.debug(
         		"EJoker publishable message received, messageId: {}, exceptionType: {}",
         		exceptionMessage.getUniqueId(),
-        		publishableExceptionType.getSimpleName());
+        		exceptionType.getSimpleName());
         systemAsyncHelper.submit(() -> {
         	await(messageDispatcher.dispatchMessageAsync(exception));
         	context.onMessageHandled(queueMessage);

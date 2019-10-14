@@ -17,7 +17,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.GenericTypeUtil;
-import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
+import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
@@ -51,7 +51,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		Queue<IVoidFunction> queue = new LinkedBlockingQueue<>();
 		
 		Class<?> targetClazz = target.getClass();
-		if(ParameterizedTypeUtil.hasSublevel(targetClazz)) {
+		if(SerializableCheckerUtil.hasSublevel(targetClazz)) {
 			throw new RuntimeException("Unsupport getTreeStructure() action on java collection util!!!");
 		}
 		
@@ -112,13 +112,13 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 //				String errmsg = String.format("Get an unexpect type from userSpecialCodec!!! targetClass: %s, resultClass: %s, occur on: %s", definedClazz.getName(), node.getClass().getName(), key);
 //				throw new RuntimeException(errmsg);
 //			}
-		} else if (ParameterizedTypeUtil.isDirectSerializableType(definedClazz)) {
+		} else if (SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
 			// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
 			node = target;
 		} else if (definedClazz.isEnum()) {
 			// 枚举类型
 			node = ((Enum<?> )target).name();
-		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
+		} else if (SerializableCheckerUtil.hasSublevel(definedClazz)) {
 			// Java集合类型
 			if (target instanceof Queue) {
 				if(!target.getClass().getSimpleName().endsWith("List"))
@@ -142,7 +142,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 					);
 			} else if (target instanceof Map) {
 				GenericDefinedTypeMeta pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
-				if(!ParameterizedTypeUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
+				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
 					throw new RuntimeException(
 							String.format(
 									"We just support java base data type on the key while opera in serializing map!!! Here %s provider, on type %s#%s",

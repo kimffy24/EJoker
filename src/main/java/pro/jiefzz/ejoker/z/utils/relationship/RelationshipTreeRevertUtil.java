@@ -22,7 +22,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.InstanceBuilder;
-import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
+import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
@@ -125,7 +125,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			}
 		} else if(null != (specialTypeCodec = getDeserializeCodec(definedClazz))) {
 			revertedResult = specialTypeCodec.decode(serializedValue);
-		} else if(ParameterizedTypeUtil.isDirectSerializableType(definedClazz)) {
+		} else if(SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
 			/// 定义为可直接序列化类型
 			revertedResult = serializedValue;
 		} else if (definedClazz.isEnum()) {
@@ -136,7 +136,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				logger.warn("Enum data should represent as a String!");
 				throw new RuntimeException(String.format("Revert %s#%s faild!!! serializedValue: %s", "", "", serializedValue.toString()));
 			}
-		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
+		} else if (SerializableCheckerUtil.hasSublevel(definedClazz)) {
 			if (Queue.class.isAssignableFrom(definedClazz)) {
 				if(!definedClazz.getSimpleName().endsWith("List"))
 					throw new RuntimeException("Unsupport revert type java.util.Queue!!!");

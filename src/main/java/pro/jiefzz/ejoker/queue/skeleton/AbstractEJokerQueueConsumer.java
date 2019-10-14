@@ -30,7 +30,17 @@ public abstract class AbstractEJokerQueueConsumer implements IWorkerService {
 		this.consumer = consumer;
 		return this;
 	}
+
+	public AbstractEJokerQueueConsumer subscribe(String topic) throws Exception {
+		consumer.subscribe(topic, "*");
+		return this;
+	}
 	
+	public IConsumerWrokerAware getDeeplyConsumer() {
+		return consumer;
+	}
+
+	@Override
 	public AbstractEJokerQueueConsumer start() {
 		consumer.registerEJokerCallback(this::handle);
 		try {
@@ -49,11 +59,7 @@ public abstract class AbstractEJokerQueueConsumer implements IWorkerService {
 		return this;
 	}
 
-	public AbstractEJokerQueueConsumer subscribe(String topic) throws Exception {
-		consumer.subscribe(topic, "*");
-		return this;
-	}
-
+	@Override
 	public AbstractEJokerQueueConsumer shutdown() {
 		try {
 			consumer.shutdown();
@@ -70,12 +76,13 @@ public abstract class AbstractEJokerQueueConsumer implements IWorkerService {
 		return this;
 	}
 	
-	public IConsumerWrokerAware getDeeplyConsumer() {
-		return consumer;
-	}
-	
 	abstract public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context);
 	
+	/**
+	 * 我们定义一个脉冲线程，定时执行一次内部的consumer的loopInterval方法<br />
+	 * 通过这个抽象方法提供给子类自定义脉冲时间间隔<br />
+	 * @return 脉冲间隔(单位: ms)
+	 */
 	abstract protected long getConsumerLoopInterval();
 
 }

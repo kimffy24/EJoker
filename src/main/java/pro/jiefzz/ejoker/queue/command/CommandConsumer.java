@@ -30,12 +30,11 @@ import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
+import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 @EService
 public class CommandConsumer extends AbstractEJokerQueueConsumer {
@@ -83,7 +82,6 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
 	@Override
 	protected long getConsumerLoopInterval() {
-		// TODO Auto-generated method stub
 		return 2000l;
 	}
 

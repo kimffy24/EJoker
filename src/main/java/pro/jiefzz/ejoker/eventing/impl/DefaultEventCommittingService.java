@@ -249,7 +249,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 		if(1l == eventCommittingContext.getEventStream().getVersion()) {
 			handleFirstEventDuplicationAsync(eventCommittingContext);
 		} else {
-			// TODO .ConfigureAwait(false);
 			resetCommandMailBoxConsumingSequence(eventCommittingContext, eventCommittingContext.getProcessingCommand().getSequence())
 			.thenRunAsync(() -> {});
 		}
@@ -358,7 +357,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                         //有可能事件持久化成功了，但那时正好机器断电了，则发布事件都没有做；
     					if(commandId.equals(firstEventStream.getCommandId())) {
     						
-							/// TODO .ConfigureAwait(false);
 							resetCommandMailBoxConsumingSequence(context,
 									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
 										publishDomainEventAsync(context.getProcessingCommand(), firstEventStream);
@@ -374,7 +372,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                                 firstEventStream.getAggregateRootTypeName());
 							logger.error(errorMessage);
 
-							/// TODO .ConfigureAwait(false);
 							resetCommandMailBoxConsumingSequence(context,
 									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
 										CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,
@@ -393,7 +390,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     	                        eventStream.getAggregateRootTypeName());
 						logger.error(errorMessage);
 
-						/// TODO .ConfigureAwait(false);
 						resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
 								.thenApplyAsync(t -> {
 									CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,
