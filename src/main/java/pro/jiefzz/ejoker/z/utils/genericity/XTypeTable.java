@@ -5,11 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 用于泛型实例化时测试用，没有特殊意思。
+ * Represents a table to test the class genericity signature. <br />
+ * There is no sense for business.
  * @author kimffy
  *
  */
-public final class XTypeTest {
+public final class XTypeTable {
 	
 	private final static Map<Integer, Class<?>> m = new HashMap<>();
 	
@@ -36,7 +37,7 @@ public final class XTypeTest {
 			Class<?> tClazz;
 			
 			try {
-				tClazz = Class.forName(XTypeTest.class.getName() + "$XTypeTest" + i);
+				tClazz = Class.forName(XTypeTable.class.getName() + "$XTypeTest" + i);
 			} catch (ClassNotFoundException e) {
 				throw new RuntimeException(e);
 			}

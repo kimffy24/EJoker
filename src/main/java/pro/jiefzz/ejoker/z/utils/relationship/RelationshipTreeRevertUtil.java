@@ -21,7 +21,6 @@ import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
-import pro.jiefzz.ejoker.z.utils.InstanceBuilder;
 import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
@@ -68,7 +67,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	}
 	
 	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression, Queue<IVoidFunction> subTaskQueue) { 
-		Object instance = (new InstanceBuilder(expression.getDeclarePrototype())).doCreate();
+		Object instance = doCreateInstance(expression.getDeclarePrototype());
 		expression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> { 
 						if(
@@ -310,6 +309,16 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		}
 		return result;
 	}
-	
+
+	private <T> T doCreateInstance(Class<T> clazz) {
+			Object newInstance;
+			try {
+				newInstance = clazz.newInstance();
+			} catch (InstantiationException|IllegalAccessException e) {
+				logger.error(String.format("Connot create new instance which type of %s", clazz.getName()), e);
+				throw new RuntimeException("Create new instance of ["+clazz.getName()+"] faild!!!", e);
+			}
+			return (T )newInstance;
+	}
 	
 }

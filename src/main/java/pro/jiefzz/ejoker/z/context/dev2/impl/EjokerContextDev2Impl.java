@@ -35,7 +35,7 @@ import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
-import pro.jiefzz.ejoker.z.utils.genericity.XTypeTest;
+import pro.jiefzz.ejoker.z.utils.genericity.XTypeTable;
 
 public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
@@ -265,7 +265,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				GenericExpression current;
 				int parameterizedTypeAmount = genericExpression.genericDefination.getGenericDeclareAmount();
 				
-				Type[] testTypeTable = XTypeTest.getTestTypeTable(parameterizedTypeAmount);
+				Type[] testTypeTable = XTypeTable.getTestTypeTable(parameterizedTypeAmount);
 				GenericExpression testGenericExpress = GenericExpressionFactory.getGenericExpress(clazz, testTypeTable);
 				
 				current = testGenericExpress;
