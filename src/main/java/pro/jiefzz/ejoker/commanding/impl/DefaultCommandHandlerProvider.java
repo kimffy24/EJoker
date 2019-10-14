@@ -17,10 +17,10 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 public class DefaultCommandHandlerProvider implements ICommandHandlerProvider {
 	
 	@Dependence
-	CommandHandlerPool commandHandlerPool;
+	CommandHandlerPool commandAsyncHandlerPool;
 
 	@Override
 	public ICommandHandlerProxy getHandler(Class<? extends ICommand> commandType) {
-		return commandHandlerPool.fetchCommandHandler(commandType);
+		return commandAsyncHandlerPool.fetchCommandHandler(commandType);
 	}
 }

@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException;
+package pro.jiefzz.ejoker.domain.domainException;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import java.util.Set;
 import pro.jiefzz.ejoker.utils.MObjectId;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 
-public abstract class AbstractPublishableException extends RuntimeException implements IPublishableException, Serializable {
+public abstract class AbstractDomainException extends RuntimeException implements IDomainException, Serializable {
 
 	private static final long serialVersionUID = 4037848789314871750L;
 
@@ -20,7 +20,7 @@ public abstract class AbstractPublishableException extends RuntimeException impl
 	@PersistentIgnore
 	private Map<String, String> items;
 	
-	public AbstractPublishableException() {
+	public AbstractDomainException() {
         id = MObjectId.get().toHexString();
         timestamp = System.currentTimeMillis();
         items = new HashMap<>();

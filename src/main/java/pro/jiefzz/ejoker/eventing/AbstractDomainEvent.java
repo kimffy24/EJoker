@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.eventing;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.AbstractMessage;
+import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
 public abstract class AbstractDomainEvent<TAggregateRootId> extends AbstractMessage implements IDomainEvent<TAggregateRootId> {
 
@@ -28,6 +28,7 @@ public abstract class AbstractDomainEvent<TAggregateRootId> extends AbstractMess
 	@Override
 	public void setAggregateRootId(TAggregateRootId aggregateRootId) {
 		this.aggregateRootId = aggregateRootId;
+		this.aggregateRootStringId = aggregateRootId.toString();
 	}
 
 	@Override

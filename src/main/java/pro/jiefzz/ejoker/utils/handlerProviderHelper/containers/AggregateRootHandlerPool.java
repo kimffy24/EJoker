@@ -32,7 +32,7 @@ public class AggregateRootHandlerPool {
 			if(null==parameterTypes || 1<parameterTypes.length)
 				throw new RuntimeException(String.format("Parameter signature of %s#%s is not accept!!!", aggregateRootClass.getName(), method.getName()));
 			if(!IDomainEvent.class.isAssignableFrom(parameterTypes[0]))
-				throw new RuntimeException(String.format("%s#%s(%s) parameter type is not accept!!!", aggregateRootClass.getName(), method.getName(), parameterTypes[0].getName()));
+				throw new RuntimeException(String.format("%s#%s(%s) parameter type is not accept!!!", aggregateRootClass.getName(), method.getName(), parameterTypes[0].getSimpleName()));
 			Class<? extends IDomainEvent<?>> domainEventType = (Class<? extends IDomainEvent<?>> )parameterTypes[0];
 			if(null!=handlerMapper.putIfAbsent(domainEventType, new HandlerReflectionMapper(method)))
 				throw new RuntimeException(String.format("DomainEvent[type=%s] has more than one handler!!!", domainEventType.getName()));
@@ -56,9 +56,9 @@ public class AggregateRootHandlerPool {
 			this.handleReflectionMethod = handleReflectionMethod;
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
 			identification = String.format("Proxy[ forward: %s#%s( %s )]",
-					handleReflectionMethod.getDeclaringClass().getSimpleName(),
+					handleReflectionMethod.getDeclaringClass().getName(),
 					handleReflectionMethod.getName(),
-					parameterTypes[0].getName());
+					parameterTypes[0].getSimpleName());
 		}
 		
 		public void handle(AbstractAggregateRoot<?> aggregateRoot, IDomainEvent<?> domainEvent) {
@@ -67,9 +67,7 @@ public class AggregateRootHandlerPool {
 			} catch (IllegalAccessException | IllegalArgumentException e) {
 				throw new AsyncWrapperException(e);
 			} catch (InvocationTargetException e) {
-				String eMsg = "Command execute failed!!! " +domainEvent.toString();
-				logger.error(eMsg, (Exception )e.getCause());
-				throw new RuntimeException(eMsg, (Exception )e.getCause());
+				throw new AsyncWrapperException(e.getCause());
 			}
 		}
 		

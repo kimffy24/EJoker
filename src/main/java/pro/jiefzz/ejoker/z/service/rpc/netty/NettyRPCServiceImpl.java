@@ -23,11 +23,11 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.service.Scavenger;
 import pro.jiefzz.ejoker.z.service.rpc.IRPCService;
+import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
-import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
@@ -47,9 +47,6 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	@Dependence
 	private IScheduleService scheduleService;
-	
-	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 	
 	private final Map<String, AtomicBoolean> clientConnectionOccupation = new HashMap<>();
 	
@@ -179,7 +176,10 @@ public class NettyRPCServiceImpl implements IRPCService {
 		
 		ioHelper.tryAsyncAction2(
 				"RemoteInvoke",
-				() -> eJokerAsyncHelper.submit(() -> fetchNettySimpleClient(host, port).sendMessage(s)),
+				() -> {
+					fetchNettySimpleClient(host, port).sendMessage(s);
+					return EJokerFutureTaskUtil.completeTask();
+				},
 				() -> {},
 				() -> String.format("remoteInvoke[target: %s:%d]", host, port),
 				e -> logger.error(String.format("Send data to remote host faild!!! remoteAddress: %s:%d, data: %s", host, port, data)),

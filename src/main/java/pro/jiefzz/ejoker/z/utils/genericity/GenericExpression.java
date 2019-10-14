@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
@@ -399,28 +398,28 @@ public class GenericExpression {
 		}
 		return geDeliveryTypeMetasTable;
 	}
-	
-	private void fillAndCompleteGenericDefinedTypeMeta(
-			final GenericDefinedField genericDefinedField,
-			final Set<String> exportTypeVariableNames,
-			GenericDefinedTypeMeta[] deliveryTypeMetasTable,
-			GenericDefinedTypeMeta[] boundsUpper,
-			GenericDefinedTypeMeta[] boundsLower) {
-		GenericDefinedTypeMeta[][] group = new GenericDefinedTypeMeta[][] {deliveryTypeMetasTable, boundsUpper, boundsLower};
-		
-		for(GenericDefinedTypeMeta[] item : group) {
-			if(null == item || 0 == item.length)
-				continue;
-			for(int i = 0; i<item.length; i++) {
-				GenericDefinedTypeMeta typeMeta = item[i];
-				if(exportTypeVariableNames.contains(typeMeta.typeName)) {
-					GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(typeMeta.typeName);
-					item[i] = genericExpressionExportTuple.declarationTypeMeta;
-				}
-				fillAndCompleteGenericDefinedTypeMeta(genericDefinedField, exportTypeVariableNames, typeMeta.deliveryTypeMetasTable, typeMeta.boundsUpper, typeMeta.boundsLower);
-			}
-		}
-	}
+//	
+//	private void fillAndCompleteGenericDefinedTypeMeta(
+//			final GenericDefinedField genericDefinedField,
+//			final Set<String> exportTypeVariableNames,
+//			GenericDefinedTypeMeta[] deliveryTypeMetasTable,
+//			GenericDefinedTypeMeta[] boundsUpper,
+//			GenericDefinedTypeMeta[] boundsLower) {
+//		GenericDefinedTypeMeta[][] group = new GenericDefinedTypeMeta[][] {deliveryTypeMetasTable, boundsUpper, boundsLower};
+//		
+//		for(GenericDefinedTypeMeta[] item : group) {
+//			if(null == item || 0 == item.length)
+//				continue;
+//			for(int i = 0; i<item.length; i++) {
+//				GenericDefinedTypeMeta typeMeta = item[i];
+//				if(exportTypeVariableNames.contains(typeMeta.typeName)) {
+//					GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(typeMeta.typeName);
+//					item[i] = genericExpressionExportTuple.declarationTypeMeta;
+//				}
+//				fillAndCompleteGenericDefinedTypeMeta(genericDefinedField, exportTypeVariableNames, typeMeta.deliveryTypeMetasTable, typeMeta.boundsUpper, typeMeta.boundsLower);
+//			}
+//		}
+//	}
 
 	public final static String getExpressionSignature(Class<?> prototype, GenericDefinedTypeMeta... typeMetas) {
 

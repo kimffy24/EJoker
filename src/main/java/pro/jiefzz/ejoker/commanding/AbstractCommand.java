@@ -2,7 +2,7 @@ package pro.jiefzz.ejoker.commanding;
 
 import java.util.Map;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.AbstractMessage;
+import pro.jiefzz.ejoker.messaging.AbstractMessage;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 
 /**

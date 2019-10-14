@@ -1,6 +1,4 @@
-package pro.jiefzz.ejoker.infrastructure.messaging.impl;
-
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+package pro.jiefzz.ejoker.messaging.impl;
 
 import java.util.Collection;
 import java.util.List;
@@ -9,16 +7,15 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessage;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageDispatcher;
-import pro.jiefzz.ejoker.infrastructure.messaging.IMessageHandlerProxy;
+import pro.jiefzz.ejoker.messaging.IMessage;
+import pro.jiefzz.ejoker.messaging.IMessageDispatcher;
+import pro.jiefzz.ejoker.messaging.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
@@ -38,17 +35,20 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 	
+	@Dependence
+	private MessageHandlerPool messageHandlerPool;
+	
 	@Override
 	public Future<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
 
-		List<? extends IMessageHandlerProxy> handlers = MessageHandlerPool.getProxyAsyncHandlers(message.getClass());
+		List<? extends IMessageHandlerProxy> handlers = messageHandlerPool.getProxyAsyncHandlers(message.getClass());
 		if(null != handlers && !handlers.isEmpty()) {
 			Object countDownLatchHandle = CountDownLatchWrapper.newCountDownLatch(handlers.size());
 			
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
 				eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 							"HandleSingleMessageAsync",
-							() -> proxyAsyncHandler.handleAsync(message, systemAsyncHelper::submit),
+							() -> proxyAsyncHandler.handleAsync(message),
 							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
 							() -> String.format(
 									"[messages: [%s], handlerType: %s]",
@@ -78,24 +78,29 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 
 	@Override
 	public Future<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
+		
+		IMessage[] msgArray = messages.toArray(tRef);
+		
+		if(null == msgArray || 0 == msgArray.length)
+			throw new RuntimeException("null == msgArray || 0 == msgArray.length !!!");
+		
+		// 1个Message属于绝大多数情况，值得单独列出
+		if(1 == msgArray.length)
+			return dispatchMessageAsync(msgArray[0]);
 
 		/// TODO 此处的异步语义是等待全部指派完成才返回？
 		/// 还是只要有一个完成就返回?
 		/// 还是执行到此就返回?
 		return eJokerAsyncHelper.submit(() -> {
 
-			// 对每个message寻找单独的handler进行单独调用。
-			for (IMessage msg : messages) {
-
-				AsyncTaskResult<Void> result = await(dispatchMessageAsync(msg));
-				if (!AsyncTaskStatus.Success.equals(result.getStatus()))
-					throw new RuntimeException(result.getErrorMessage());
-				
-			};
-			
 			// 适配多个message的handler
 			// ...
+			messageHandlerPool.processMultiMessages(msgArray);
 			
 		});
+		
 	}
+
+	private final static IMessage[] tRef = new IMessage[0];
+	
 }

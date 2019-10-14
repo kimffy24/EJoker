@@ -2,9 +2,6 @@ package pro.jiefzz.ejoker.commanding;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
-
 /**
  * Java could not multi-implement ICommandHandler.<br>
  * 使用直接重载。<br>
@@ -12,21 +9,11 @@ import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
  * @author jiefzz
  *
  */
-public abstract class AbstractCommandHandler implements ICommandHandler<ICommand>, ICommandAsyncHandler<ICommand> {
+public abstract class AbstractCommandHandler implements ICommandHandler<ICommand> {
 	
 	@Override
-	public void handle(ICommandContext context, ICommand command) {
+	public Future<Void> handleAsync(ICommandContext context, ICommand command) {
 		throw new CommandRuntimeException("Do you forget to implement the handler function to handle command which type is " +command.getClass().getName());
 	}
 
-	@Override
-	public Future<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommandContext context, ICommand command) {
-		throw new CommandRuntimeException("Do you forget to implement the async handler function to handle command which type is " +command.getClass().getName());
-	}
-
-	@Override
-	public Future<AsyncTaskResult<IApplicationMessage>> handleAsync(ICommand command) {
-		throw new CommandRuntimeException("Do you forget to implement the async handler function to handle command which type is " +command.getClass().getName());
-	}
-	
 }

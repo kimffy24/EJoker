@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.queue.applicationMessage;
 import java.nio.charset.Charset;
 
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.applicationMessage.IApplicationMessage;
+import pro.jiefzz.ejoker.messaging.IApplicationMessage;
 import pro.jiefzz.ejoker.queue.ITopicProvider;
 import pro.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueProducer;

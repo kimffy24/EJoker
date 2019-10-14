@@ -8,15 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.infrastructure.messaging.varieties.publishableException.IPublishableException;
-import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandAsyncHandlerHelper;
+import pro.jiefzz.ejoker.domain.domainException.IDomainException;
+import pro.jiefzz.ejoker.utils.domainExceptionHelper.DomainExceptionCodecHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistCommandHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistDomainEventHandlerHelper;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.RegistMessageHandlerHelper;
-import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.CommandAsyncHandlerPool;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.CommandHandlerPool;
+import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.MessageHandlerPool;
 import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
-import pro.jiefzz.ejoker.utils.publishableExceptionHelper.PublishableExceptionCodecHelper;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.context.dev2.impl.EjokerContextDev2Impl;
@@ -50,29 +49,25 @@ public class EJoker {
 	protected EJoker() {
 		context = new EjokerContextDev2Impl();
 
-		final CommandHandlerPool commandHandlerPool = new CommandHandlerPool();
-		((EjokerContextDev2Impl )context).shallowRegister(commandHandlerPool);
-		
-		final CommandAsyncHandlerPool commandAsyncHandlerPool = new CommandAsyncHandlerPool();
+		final CommandHandlerPool commandAsyncHandlerPool = new CommandHandlerPool();
 		((EjokerContextDev2Impl )context).shallowRegister(commandAsyncHandlerPool);
+		
+		final MessageHandlerPool messageHandlerPool = new MessageHandlerPool();
+		((EjokerContextDev2Impl )context).shallowRegister(messageHandlerPool);
 		
 		// regist scanner hook
 		context.registeScannerHook(clazz -> {
-//				if(!clazz.getPackage().getName().startsWith(SELF_PACKAGE_NAME)) {
-					// We make sure that CommandHandler and DomainEventHandler will not in E-Joker Framework package.
-					RegistCommandHandlerHelper.checkAndRegistCommandHandler(clazz, commandHandlerPool, context);
-					RegistCommandAsyncHandlerHelper.checkAndRegistCommandAsyncHandler(clazz, commandAsyncHandlerPool, context);
-					RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
-//				}
-				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz, context);
+				RegistCommandHandlerHelper.checkAndRegistCommandAsyncHandler(clazz, commandAsyncHandlerPool, context);
+				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz, messageHandlerPool, context);
+				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
 				
 				// register StringId to GenericId codec.
 				if(IAggregateRoot.class.isAssignableFrom(clazz))
 					IDHelper.addAggregateRoot((Class<IAggregateRoot> )clazz);
 				
 				// preload IPubliashableException field inf 
-				if(IPublishableException.class.isAssignableFrom(clazz))
-					PublishableExceptionCodecHelper.getReflectFields((Class<IPublishableException> )clazz);
+				if(IDomainException.class.isAssignableFrom(clazz))
+					DomainExceptionCodecHelper.getReflectFields((Class<IDomainException> )clazz);
 		});
 		
 		context.scanPackage(SELF_PACKAGE_NAME);

@@ -17,4 +17,6 @@ import pro.jiefzz.ejoker.z.context.annotation.EJokerAnnotation;
 @EJokerAnnotation
 public @interface EService {
 
+	public ESType type() default ESType.NORMAL;
+	
 }
