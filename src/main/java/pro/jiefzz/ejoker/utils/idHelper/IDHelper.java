@@ -35,8 +35,8 @@ public final class IDHelper {
 			if(!ok.get()) {
 				if("id".equals(fieldName)) {
 
-					Ensure.notNull(fieldTypeDef.genericDefinedTypeMeta, "GenericDefinedField.genericDefinedTypeMeta");
-					Ensure.notNull(fieldTypeDef.genericDefinedTypeMeta.rawClazz, "GenericDefinedField.genericDefinedTypeMeta.rawClazz");
+					Ensure.notNull(fieldTypeDef.genericDefinedType, "GenericDefinedField.genericDefinedTypeMeta");
+					Ensure.notNull(fieldTypeDef.genericDefinedType.rawClazz, "GenericDefinedField.genericDefinedTypeMeta.rawClazz");
 					
 					ok.set(true);
 					idGdcCache.put(aggrType, fieldTypeDef);
@@ -50,7 +50,7 @@ public final class IDHelper {
 		if (null == (gdf = idGdcCache.get(aggr.getClass())))
 			throw new RuntimeException(String.format("Type defined for %s is not found!!!", aggr.getClass()));
 
-		Object decode = codecStore.get(gdf.genericDefinedTypeMeta.rawClazz).decode(stringId);
+		Object decode = codecStore.get(gdf.genericDefinedType.rawClazz).decode(stringId);
 		try {
 			gdf.field.set(aggr, decode);
 		} catch (IllegalArgumentException | IllegalAccessException ex) {

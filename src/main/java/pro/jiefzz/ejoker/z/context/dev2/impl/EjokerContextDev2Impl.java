@@ -442,9 +442,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		}
 		
 		Object dependence = null;
-		String instanceTypeName = genericDefinedField.genericDefinedTypeMeta.typeName;
+		String instanceTypeName = genericDefinedField.genericDefinedType.typeName;
 		
-		Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedTypeMeta.rawClazz);
+		Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedType.rawClazz);
 		
 		if(instanceMap.containsKey(instanceTypeName)) {
 			/// upper无泛型 eService无泛型
@@ -460,7 +460,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				{
 					// 对新创建的EService对象注入依赖
 					final Object passInstance = dependence;
-					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpress(eServiceClazz, genericDefinedField.genericDefinedTypeMeta.deliveryTypeMetasTable);
+					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpress(eServiceClazz, genericDefinedField.genericDefinedType.deliveryTypeMetasTable);
 					fieldTypeExpression.forEachFieldExpressionsDeeply(
 							(subFieldName, subGenericDefinedField) -> injectDependence(
 									subFieldName,
@@ -485,7 +485,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			throw new ContextRuntimeException(
 					String.format(
 							"No implementations or extensions found! \n\t field: %s#%s\n\t type: %s!!!",
-							genericDefinedField.genericDefinedTypeMeta.rawClazz.getName(),
+							genericDefinedField.genericDefinedType.rawClazz.getName(),
 							fieldName,
 							instanceTypeName
 							));

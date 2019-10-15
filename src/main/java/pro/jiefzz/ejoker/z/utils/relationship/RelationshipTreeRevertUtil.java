@@ -22,7 +22,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
+import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedType;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
 
@@ -76,7 +76,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							return;
 						}
 						disassemblyStructure(
-							genericDefinedField.genericDefinedTypeMeta,
+							genericDefinedField.genericDefinedType,
 							disassemblyEval.getValue(kvDataSet, fieldName),
 							result -> setField(genericDefinedField.field, instance, result.trigger()),
 							subTaskQueue
@@ -86,7 +86,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		return instance;
 	}
 	
-	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
+	private void disassemblyStructure(GenericDefinedType targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == serializedValue) {
 			if(!targetDefinedTypeMeta.rawClazz.isPrimitive())
@@ -163,7 +163,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				/// map的情况
 				/// 按照RelationshipTreeUtil的转化 map的key一定是string类型的。
 				revertedResult = new HashMap();
-				GenericDefinedTypeMeta valueTypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
+				GenericDefinedType valueTypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				Set keySet = disassemblyEval.getKeySet((ContainerKVP )serializedValue);
 				for(Object key:keySet) {
 					join(

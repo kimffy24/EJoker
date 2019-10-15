@@ -7,4 +7,6 @@ public class ClassE<U> implements Interface1, Interface2<U>, Interface3<String, 
 
 	public ClassA<U> x = null;
 	
+	public Map<String, List<U>> y = null;
+	
 }

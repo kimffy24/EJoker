@@ -18,7 +18,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.GenericTypeUtil;
 import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
+import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedType;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
 
@@ -75,7 +75,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 						throw new RuntimeException(e);
 					}
 					assemblyStructure(
-							genericDefinedField.genericDefinedTypeMeta,
+							genericDefinedField.genericDefinedType,
 							fieldValue,
 							(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
 							() -> fieldName,
@@ -91,7 +91,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		return createNode;
 	}
 	
-	private void assemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object target, IVoidFunction1<Object> effector, IFunction<String> keyAccesser, Queue<IVoidFunction> subTaskQueue) {
+	private void assemblyStructure(GenericDefinedType targetDefinedTypeMeta, Object target, IVoidFunction1<Object> effector, IFunction<String> keyAccesser, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == target) {
 			effector.trigger(null);
@@ -141,7 +141,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 						)
 					);
 			} else if (target instanceof Map) {
-				GenericDefinedTypeMeta pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
+				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
 				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
 					throw new RuntimeException(
 							String.format(
@@ -150,7 +150,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 									targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
 									key));
 				
-				GenericDefinedTypeMeta pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
+				GenericDefinedType pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
 				if(!((Map )target).isEmpty())
@@ -222,7 +222,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 							throw new RuntimeException(e);
 						}
 						assemblyStructure(
-								genericDefinedField.genericDefinedTypeMeta,
+								genericDefinedField.genericDefinedType,
 								fieldValue,
 								(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
 								() -> fieldName,
