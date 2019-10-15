@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,7 +192,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        
 				        systemAsyncHelper.submit(() -> {
 				        	ForEachHelper.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
-				        		for(EventCommittingContext ecc : committingContexts) {
+				        		for(EventCommittingContext ecc : contexts) {
 				        			publishDomainEventAsync(ecc.getProcessingCommand(), ecc.getEventStream());
 				        		}
 				        	});
@@ -406,8 +407,21 @@ public class DefaultEventCommittingService implements IEventCommittingService {
         		);
 	}
 
+	/// for debug
+	private AtomicInteger counter = new AtomicInteger(0);
+	/// for debug end
+
 	private void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStreamMessage eventStream) {
 
+		/// for debug
+		counter.getAndIncrement();
+//		try {
+//			throw new RuntimeException();
+//		} catch (RuntimeException ex) {
+//			logger.error(ex.getMessage(), ex);
+//		}
+		/// for debug end
+		
 		ioHelper.tryAsyncAction2(
 				"PublishEventAsync",
 				() -> domainEventPublisher.publishAsync(eventStream),
