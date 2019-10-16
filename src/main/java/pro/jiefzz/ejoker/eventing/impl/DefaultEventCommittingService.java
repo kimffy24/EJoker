@@ -415,11 +415,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 
 		/// for debug
 		counter.getAndIncrement();
-//		try {
-//			throw new RuntimeException();
-//		} catch (RuntimeException ex) {
-//			logger.error(ex.getMessage(), ex);
-//		}
 		/// for debug end
 		
 		ioHelper.tryAsyncAction2(
