@@ -1,5 +1,7 @@
 package pro.jiefzz.ejoker.eventing.impl;
 
+import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -16,11 +18,11 @@ import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
 
 /**
@@ -32,14 +34,15 @@ import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
 public class InMemoryEventStore implements IEventStore {
 
 	private Map<String, AggregateInfo> mStorage = new ConcurrentHashMap<>();
-	
-	private Lock writeLock = LockWrapper.createLock();
 
 	@Dependence
 	private IJSONConverter jsonConverter;
 	
 	@Dependence
 	private IEventSerializer eventSerializer;
+	
+	@Dependence
+	private SystemAsyncHelper systemAsyncHelper;
 	
 	@Dependence
 	private EJokerTaskAsyncHelper eJokerAsyncHelper;
@@ -49,7 +52,7 @@ public class InMemoryEventStore implements IEventStore {
 	
 	@Override
 	public Future<AsyncTaskResult<EventAppendResult>> batchAppendAsync(List<DomainEventStream> eventStreams) {
-		
+
         Map<String, List<DomainEventStream>> eventStreamDict = new HashMap<>();
         for(DomainEventStream es : eventStreams) {
         	MapHelper
@@ -57,11 +60,19 @@ public class InMemoryEventStore implements IEventStore {
         		.add(es);
         }
         
-        EventAppendResult eventAppendResult = new EventAppendResult();
-		
-        ForEachHelper.processForEach(eventStreamDict, (k, v) -> batchAppend(k, v, eventAppendResult));
-        
-        return EJokerFutureTaskUtil.completeTask(eventAppendResult);
+		return eJokerAsyncHelper.submit(() -> {
+	        
+	        EventAppendResult eventAppendResult = new EventAppendResult();
+			
+	        List<Future<Void>> fList = new ArrayList<>();
+	        ForEachHelper.processForEach(eventStreamDict, (k, v) -> fList.add(systemAsyncHelper.submit(() ->batchAppend(k, v, eventAppendResult))));
+	        for(Future<Void> f : fList) {
+	        	await(f);
+	        }
+	        
+	        return eventAppendResult;
+	        
+		});
 	}
 
 	@Override
@@ -85,7 +96,7 @@ public class InMemoryEventStore implements IEventStore {
 		AggregateInfo aggregateInfo = MapHelper.getOrAddConcurrent(mStorage, aggregateRootId,
 				AggregateInfo::new);
 
-		writeLock.lock();
+		aggregateInfo.writeLock.lock();
 		try {
 			
 	        // 检查提交过来的第一个事件的版本号是否是当前聚合根的当前版本号的下一个版本号
@@ -111,16 +122,16 @@ public class InMemoryEventStore implements IEventStore {
 	        if (!eventAppendResult.getDuplicateCommandIdList().isEmpty()) {
 	            return;
 	        }
+
+	        for (DomainEventStream eventStream : eventStreamList) {
+	            aggregateInfo.eventDict.put(eventStream.getVersion(), eventStream);
+	            aggregateInfo.commandDict.put(eventStream.getCommandId(), eventStream);
+	            aggregateInfo.currentVersion = eventStream.getVersion();
+	        }
 		
 		} finally {
-			writeLock.unlock();
+			aggregateInfo.writeLock.unlock();
 		}
-
-        for (DomainEventStream eventStream : eventStreamList) {
-            aggregateInfo.eventDict.put(eventStream.getVersion(), eventStream);
-            aggregateInfo.commandDict.put(eventStream.getCommandId(), eventStream);
-            aggregateInfo.currentVersion = eventStream.getVersion();
-        }
 
         eventAppendResult.addSuccessAggregateRootId(aggregateRootId);
 	}
@@ -157,10 +168,13 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
     public final static class AggregateInfo {
+
+    	public Lock writeLock = LockWrapper.createLock();
     	
         public long currentVersion;
-        public Map<Long, DomainEventStream> eventDict = new ConcurrentHashMap<>();
-        public Map<String, DomainEventStream> commandDict = new ConcurrentHashMap<>();
+        
+        public final Map<Long, DomainEventStream> eventDict = new ConcurrentHashMap<>();
+        public final Map<String, DomainEventStream> commandDict = new ConcurrentHashMap<>();
         
     }
 }
