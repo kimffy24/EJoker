@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>pro.jiefzz</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>1.2.0-snapshot-1</version>
+	<version>1.2.0-snapshot-2</version>
 	<name>EJoker</name>
 	<url>http://maven.apache.org</url>
 
@@ -73,6 +73,25 @@
 
 
 	<build>
+		<pluginManagement>
+			<plugins>
+			
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>getClasspathFilenames</id>
+							<goals>
+								<goal>properties</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				
+			</plugins>
+		</pluginManagement>
+		
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -143,20 +162,6 @@
 						</pluginExecutions>
 					</lifecycleMappingMetadata>
 				</configuration>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.1</version>
-				<executions>
-					<execution>
-						<id>getClasspathFilenames</id>
-						<goals>
-							<goal>properties</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<plugin>
