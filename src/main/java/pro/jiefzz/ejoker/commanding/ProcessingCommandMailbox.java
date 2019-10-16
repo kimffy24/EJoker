@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,9 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	private final int batchSize;
 	
-	private long nextSequence = 0l;
+	// nextSequence是需要竞态获取的，需要使用原子数
+//	private long nextSequence = 0l;
+	private AtomicLong nextSequence = new AtomicLong(0l);
 
 	private long consumingSequence = 0l;
 
@@ -75,11 +79,11 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public long getMaxMessageSequence() {
-		return nextSequence - 1;
+		return nextSequence.get() - 1;
 	}
 
 	public long getTotalUnConsumedMessageCount() {
-		return nextSequence - 1 - consumingSequence;
+		return nextSequence.get() - 1 - consumingSequence;
 	}
 	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler,
 			SystemAsyncHelper systemAsyncHelper) {
@@ -89,16 +93,28 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		this.handler = messageHandler;
 		batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	}
+	
+	/// for debug
+	private AtomicInteger counterConflictOnEnqueueMessage = new AtomicInteger(0);
+	/// for debug end
 
 	public void enqueueMessage(ProcessingCommand message) {
-		message.setSequence(nextSequence);
+//		message.setSequence(nextSequence);
 		message.setMailBox(this);
-		if (null == messageDict.putIfAbsent(message.getSequence(), message)) {
-			nextSequence++;
-			logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
-					this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), message.getSequence());
-			lastActiveTime = System.currentTimeMillis();
-			tryRun();
+		long currentSequence;
+		for( ;; ) {
+			if(null == messageDict.putIfAbsent(currentSequence = nextSequence.getAndIncrement(), message)) {
+	//			nextSequence++;
+				message.setSequence(currentSequence);
+				logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
+						this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), message.getSequence());
+				lastActiveTime = System.currentTimeMillis();
+				tryRun();
+				break;
+			}
+			/// for debug
+			counterConflictOnEnqueueMessage.getAndIncrement();
+			/// for debug end
 		}
 	}
 
@@ -180,7 +196,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	public void clear() {
 		messageDict.clear();
-		nextSequence = 0;
+		nextSequence.set(0l);;
 		consumingSequence = 0;
 		lastActiveTime = System.currentTimeMillis();
 	}
@@ -249,9 +265,9 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	private boolean hasNextMessage(Long consumingSequence) {
 		if (null != consumingSequence) {
-			return consumingSequence.longValue() < nextSequence;
+			return consumingSequence.longValue() < nextSequence.get();
 		}
-		return this.consumingSequence < nextSequence;
+		return this.consumingSequence < nextSequence.get();
 	}
 	
 }
