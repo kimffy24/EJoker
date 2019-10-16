@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import pro.jiefzz.ejoker.z.system.extension.TaskFaildException;
+import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
 
 /**
@@ -61,7 +61,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 		if (hasCanceled)
 			return null;
 		if (hasException)
-			throw new TaskFaildException("Thread executed faild!!!", exception);
+			throw new AsyncWrapperException("Thread executed faild!!!", exception);
 		return result;
 	}
 
@@ -76,7 +76,7 @@ public class RipenFuture<TResult> implements Future<TResult> {
 		if (hasCanceled)
 			return null;
 		if (hasException)
-			throw new TaskFaildException("Thread executed faild!!!", exception);
+			throw new AsyncWrapperException("Thread executed faild!!!", exception);
 		return result;
 	}
 
