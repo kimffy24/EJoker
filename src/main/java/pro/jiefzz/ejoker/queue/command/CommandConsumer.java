@@ -186,7 +186,6 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
 		private <T extends IAggregateRoot> T get(Object id, Class<T> clazz, boolean tryFromCache) {
 
-			RipenFuture<T> ripenFuture = new RipenFuture<>();
 			// getAsync已做了检查
 			// if (id == null) {
 			// 	throw new ArgumentNullException("id");

@@ -25,8 +25,6 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	
 	private boolean hasException = false;
 	
-	private boolean hasCanceled = false;
-	
 	private Throwable exception = null;
 	
 	private TResult result = null;
@@ -34,13 +32,13 @@ public class RipenFuture<TResult> implements Future<TResult> {
 	@Override
 	@Deprecated
 	public boolean cancel(boolean mayInterruptIfRunning) {
-			/// !!! RipenFuture 不实现取消线程的语义 !!!
-		throw new RuntimeException("Unsupport Operation(\"cancle\") in RipenFuture!!!");
+		/// !!! RipenFuture 不实现取消线程的语义 !!!
+		return false;
 	}
 
 	@Override
 	public boolean isCancelled() {
-		return hasCanceled;
+		return false;
 	}
 
 	@Override
@@ -58,8 +56,6 @@ public class RipenFuture<TResult> implements Future<TResult> {
 				e.printStackTrace();
 			}
 		}
-		if (hasCanceled)
-			return null;
 		if (hasException)
 			throw new AsyncWrapperException("Thread executed faild!!!", exception);
 		return result;
@@ -73,16 +69,14 @@ public class RipenFuture<TResult> implements Future<TResult> {
 				throw new TimeoutException();
 			}
 		}
-		if (hasCanceled)
-			return null;
 		if (hasException)
 			throw new AsyncWrapperException("Thread executed faild!!!", exception);
 		return result;
 	}
-
-	public boolean trySetCanceled() {
+	
+	public boolean trySetResult(TResult result) {
 		if (isFinishing.compareAndSet(false, true)) {
-			this.hasCanceled = true;
+			this.result = result;
 			this.isFutureReady.set(true);
 			enrollWaiting();
 			return true;
@@ -101,17 +95,8 @@ public class RipenFuture<TResult> implements Future<TResult> {
 			return false;
 	}
 	
-	public boolean trySetResult(TResult result) {
-		if (isFinishing.compareAndSet(false, true)) {
-			this.result = result;
-			this.isFutureReady.set(true);
-			enrollWaiting();
-			return true;
-		} else
-			return false;
-	}
-	
 	private void enrollWaiting() {
+		/// Weak up all waiting thread/fiber
 		CountDownLatchWrapper.countDown(syncHandle);
 	}
 

@@ -407,16 +407,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
         		);
 	}
 
-	/// for debug
-	private AtomicInteger counter = new AtomicInteger(0);
-	/// for debug end
-
 	private void publishDomainEventAsync(ProcessingCommand processingCommand, DomainEventStreamMessage eventStream) {
 
-		/// for debug
-		counter.getAndIncrement();
-		/// for debug end
-		
 		ioHelper.tryAsyncAction2(
 				"PublishEventAsync",
 				() -> domainEventPublisher.publishAsync(eventStream),

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +76,6 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	
 	@Override
 	public void process(ProcessingEvent processingMessage) {
-		
 		String aggregateRootId = processingMessage.getMessage().getAggregateRootId();
 		if(StringHelper.isNullOrWhiteSpace(aggregateRootId)) {
 			throw new ArgumentException("aggregateRootId of domain event stream cannot be null or empty, domainEventStreamId: " + processingMessage.getMessage().getId());

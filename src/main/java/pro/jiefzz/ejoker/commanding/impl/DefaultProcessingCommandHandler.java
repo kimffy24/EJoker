@@ -4,6 +4,7 @@ import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 	@Override
 	public Future<Void> handleAsync(ProcessingCommand processingCommand) {
+		
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(

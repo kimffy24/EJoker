@@ -94,10 +94,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	}
 	
-	/// for debug
-	private AtomicInteger counterConflictOnEnqueueMessage = new AtomicInteger(0);
-	/// for debug end
-
 	public void enqueueMessage(ProcessingCommand message) {
 //		message.setSequence(nextSequence);
 		message.setMailBox(this);
@@ -112,9 +108,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 				tryRun();
 				break;
 			}
-			/// for debug
-			counterConflictOnEnqueueMessage.getAndIncrement();
-			/// for debug end
 		}
 	}
 
@@ -202,7 +195,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public Future<Void> completeMessage(ProcessingCommand message, CommandResult result) {
-		
 		try {
 			if(null != messageDict.remove(message.getSequence())) {
 				lastActiveTime = System.currentTimeMillis();
@@ -225,6 +217,15 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		return System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 
+	/**
+	 * . <br />
+	 * * 在messageDict.get()方法取不到ProcessingCommand时，应该退出，而不是继续往下取数据<br />
+	 * * 因为enqueueMessage的时候是用原子数抢占的方式(参考{@link #enqueueMessage(ProcessingCommand)})<br />
+	 * * 在抢占nextSequence的那一刻，此刻messageDict.putIfAbsent方法还未执行<br />
+	 * * 而此时上一个tryRun开启的线程还在执行messageDict.get，此时就可能出现null了<br />
+	 * * 此时应该退出循环，不再执行consumingSequence++；<br />
+	 * @return
+	 */
 	private Future<Void> processMessages() {
 		
 		// 设置运行信号，表示当前正在运行Run方法中的逻辑
@@ -237,11 +238,12 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		lastActiveTime = System.currentTimeMillis();
 		try {
 				long scannedSequenceSize = 0l;
+				ProcessingCommand message;
 				while (hasNextMessage() && scannedSequenceSize < batchSize && !onPaused.get()) {
-					ProcessingCommand message;
-					if (null != (message = messageDict.get(consumingSequence))) {
-						await(handler.handleAsync(message));
+					if (null == (message = messageDict.get(consumingSequence))) {
+						break;
 					}
+					await(handler.handleAsync(message));
 					scannedSequenceSize++;
 					consumingSequence++;
 				}

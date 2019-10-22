@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +134,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 			
 			currentExpression.forEachFieldExpressions((fieldName, genericDefinedField) -> {
 				Field field = genericDefinedField.field;
-				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) ) {
+				if ( field.isAnnotationPresent(Dependence.class) ) {
 					reflectDependenceGenericDefinedFieldStore.put(fieldName, genericDefinedField);
 				}
 			});
