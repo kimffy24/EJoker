@@ -6,7 +6,9 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,7 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
+import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
 
 public class ProcessingEventMailBox extends EasyCleanMailbox {
 
@@ -82,26 +85,34 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 
 	public void enqueueMessage(ProcessingEvent message) {
 
-		ProcessingEvent currentMessage = message;
-		DomainEventStreamMessage eventStream = currentMessage.getMessage();
-		long processingVersion = eventStream.getVersion();
+//		systemAsyncHelper.submit(() -> {
+//			enqueueLock.lock();
+//			try {
 		
-		long currentVersion = latestHandledEventVersion.get();
-		long expected = currentVersion + 1l;
+		ProcessingEvent currentMessage = message;
+		long processingVersion = message.getMessage().getVersion();
+		
+		long latestVersion = latestHandledEventVersion.get();
+		long expected = latestVersion + 1l;
+
 		
 		if(processingVersion == expected) {
+
+			DomainEventStreamMessage eventStream;
 			
 			do {
 
 				eventStream = currentMessage.getMessage();
-				processingVersion = eventStream.getVersion();
 				
-				if(!latestHandledEventVersion.compareAndSet(currentVersion, expected)) {
+				if(!latestHandledEventVersion.compareAndSet(latestVersion, expected)) {
 					// 抢占失败？
 					break;
 				}
 				currentMessage.setMailBox(this);
 				messageQueue.offer(currentMessage);
+				
+				latestVersion = expected;
+				expected ++;
 				
 				if(logger.isDebugEnabled()) {
 					
@@ -131,19 +142,28 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 							));
 					
 				}
-
-				expected = latestHandledEventVersion.get() + 1l;
 				
-			} while(null != (currentMessage = waitingMessageDict.remove(processingVersion+1l)));
+			} while(null != (currentMessage = waitingMessageDict.remove(expected)));
 
 			lastActiveTime = System.currentTimeMillis();
 			tryRun();
 			
-		} else if ( processingVersion > expected ){
-			
-			waitingMessageDict.putIfAbsent(processingVersion, message);
+			return;
 			
 		}
+		
+		if (processingVersion > expected && null == waitingMessageDict.putIfAbsent(processingVersion, message)) {
+
+			// TODO 有没有一个情况，刚刚好上面的do.while循环的条件里执行了remove
+			// 而下一刻在当前语句块的条件里执行了waitingMessageDict.putIfAbsent呢？
+			
+			return;
+		}
+		
+//			} finally {
+//				enqueueLock.unlock();
+//			}
+//		});
 	}
 	
 	/**

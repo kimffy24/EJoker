@@ -46,7 +46,8 @@ public class Scavenger {
 			}
 			logger.debug("In the end of Invoking Scavenger.cleanUp(), execute {} jobs, there {} jobs faild.", totalJob, amountOfJob.get());
 			System.gc();
-		});
+		}, "Scavenger-0");
+		cleanUpThread.setDaemon(true);
 		cleanUpThread.start();
 	}
 

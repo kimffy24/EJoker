@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +17,8 @@ import pro.jiefzz.ejoker.z.context.ContextRuntimeException;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.utils.ClassNamesScanner;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
@@ -100,7 +98,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 				continue;
 			process(clazz);
 
-			ForEachHelper.processForEach(hookMap, (hookType, hook) -> hook.process(clazz));
+			ForEachUtil.processForEach(hookMap, (hookType, hook) -> hook.process(clazz));
 		}
 	}
 	
@@ -136,7 +134,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 			
 			currentExpression.forEachFieldExpressions((fieldName, genericDefinedField) -> {
 				Field field = genericDefinedField.field;
-				if ( field.isAnnotationPresent(Dependence.class) || field.isAnnotationPresent(Resource.class) ) {
+				if ( field.isAnnotationPresent(Dependence.class) ) {
 					reflectDependenceGenericDefinedFieldStore.put(fieldName, genericDefinedField);
 				}
 			});
@@ -182,6 +180,6 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	}
 	
 	public void forEachEServiceExpressions(IVoidFunction2<Class<?>, GenericExpression> vf) {
-		ForEachHelper.processForEach(eServiceMiddleExpressions, vf);
+		ForEachUtil.processForEach(eServiceMiddleExpressions, vf);
 	}
 }

@@ -26,16 +26,16 @@ import pro.jiefzz.ejoker.z.context.dev2.EjokerRootDefinationStore;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerClazzScannerHook;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
-import pro.jiefzz.ejoker.z.utils.genericity.XTypeTest;
+import pro.jiefzz.ejoker.z.utils.genericity.XTypeTable;
 
 public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
@@ -196,7 +196,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		refreshContextRecord();
 		
-		ForEachHelper.processForEach(conflictMapperRecord, (clazz, conflictSet) -> {
+		ForEachUtil.processForEach(conflictMapperRecord, (clazz, conflictSet) -> {
 			StringBuilder sb = new StringBuilder();
 			for(Class<?> cClazz : conflictSet) {
 				sb.append("\n\tCondidate class:\t\t");
@@ -247,7 +247,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void destroyRegister(IVoidFunction vf, int priority) {
 		if(!onService.get()) {
-			Queue<IVoidFunction> taskQueue = MapHelper.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
+			Queue<IVoidFunction> taskQueue = MapUtil.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
 			taskQueue.offer(vf);
 		}
 	}
@@ -265,7 +265,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				GenericExpression current;
 				int parameterizedTypeAmount = genericExpression.genericDefination.getGenericDeclareAmount();
 				
-				Type[] testTypeTable = XTypeTest.getTestTypeTable(parameterizedTypeAmount);
+				Type[] testTypeTable = XTypeTable.getTestTypeTable(parameterizedTypeAmount);
 				GenericExpression testGenericExpress = GenericExpressionFactory.getGenericExpress(clazz, testTypeTable);
 				
 				current = testGenericExpress;
@@ -371,7 +371,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			}
 		});
 
-		ForEachHelper.processForEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
+		ForEachUtil.processForEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
 			instanceCandidateGenericTypeMap.remove(expressionSignature);
 		});
 		
@@ -394,7 +394,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private void preparePreviouslyLoad() {
 		
-		ForEachHelper.processForEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
+		ForEachUtil.processForEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
 			
 			GenericExpression eServiceClazzMiddleStatementGenericExpression = GenericExpressionFactory.getMiddleStatementGenericExpression(eServiceClazz);
 			/// 预加载
@@ -421,7 +421,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 
 			Object instance = instanceMap.get(clazz.getName());
 			
-			ForEachHelper.processForEach(
+			ForEachUtil.processForEach(
 					defaultRootDefinationStore.getEDependenceRecord(clazz),
 					(fieldName, genericDefinedField) -> injectDependence(
 							fieldName,
@@ -442,9 +442,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		}
 		
 		Object dependence = null;
-		String instanceTypeName = genericDefinedField.genericDefinedTypeMeta.typeName;
+		String instanceTypeName = genericDefinedField.genericDefinedType.typeName;
 		
-		Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedTypeMeta.rawClazz);
+		Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedType.rawClazz);
 		
 		if(instanceMap.containsKey(instanceTypeName)) {
 			/// upper无泛型 eService无泛型
@@ -460,7 +460,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				{
 					// 对新创建的EService对象注入依赖
 					final Object passInstance = dependence;
-					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpress(eServiceClazz, genericDefinedField.genericDefinedTypeMeta.deliveryTypeMetasTable);
+					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpress(eServiceClazz, genericDefinedField.genericDefinedType.deliveryTypeMetasTable);
 					fieldTypeExpression.forEachFieldExpressionsDeeply(
 							(subFieldName, subGenericDefinedField) -> injectDependence(
 									subFieldName,
@@ -485,7 +485,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			throw new ContextRuntimeException(
 					String.format(
 							"No implementations or extensions found! \n\t field: %s#%s\n\t type: %s!!!",
-							genericDefinedField.genericDefinedTypeMeta.rawClazz.getName(),
+							genericDefinedField.genericDefinedType.rawClazz.getName(),
 							fieldName,
 							instanceTypeName
 							));
@@ -503,12 +503,12 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private void enqueueInitMethod(Object instance) {
 		final Class<?> instanceClazz = instance.getClass();
-		ForEachHelper.processForEach(
+		ForEachUtil.processForEach(
 				defaultRootDefinationStore.getEInitializeRecord(instanceClazz),
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);
 					int priority = annotation.priority();
-					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
+					Queue<IVoidFunction> initTaskQueue = MapUtil.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
 					initTaskQueue.offer(() -> {
 						try {
 							method.invoke(instance);

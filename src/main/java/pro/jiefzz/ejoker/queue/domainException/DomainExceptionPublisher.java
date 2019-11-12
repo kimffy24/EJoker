@@ -29,7 +29,7 @@ public class DomainExceptionPublisher extends AbstractEJokerQueueProducer<IDomai
 	@Override
 	protected EJokerQueueMessage createEQueueMessage(IDomainException exception) {
 		String topic = messageTopicProvider.getTopic(exception);
-		final Map<String, String> serializableInfo = DomainExceptionCodecHelper.serialize(exception);
+		final Map<String, String> serializableInfo = DomainExceptionCodecHelper.serialize(exception, false);
 		DomainExceptionMessage pMsg = new DomainExceptionMessage();
 		{
 			pMsg.setUniqueId(exception.getId());

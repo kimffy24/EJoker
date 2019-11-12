@@ -17,8 +17,8 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
 import pro.jiefzz.ejoker.z.utils.GenericTypeUtil;
-import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
+import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
+import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedType;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
 
@@ -51,7 +51,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		Queue<IVoidFunction> queue = new LinkedBlockingQueue<>();
 		
 		Class<?> targetClazz = target.getClass();
-		if(ParameterizedTypeUtil.hasSublevel(targetClazz)) {
+		if(SerializableCheckerUtil.hasSublevel(targetClazz)) {
 			throw new RuntimeException("Unsupport getTreeStructure() action on java collection util!!!");
 		}
 		
@@ -75,7 +75,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 						throw new RuntimeException(e);
 					}
 					assemblyStructure(
-							genericDefinedField.genericDefinedTypeMeta,
+							genericDefinedField.genericDefinedType,
 							fieldValue,
 							(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
 							() -> fieldName,
@@ -91,7 +91,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		return createNode;
 	}
 	
-	private void assemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object target, IVoidFunction1<Object> effector, IFunction<String> keyAccesser, Queue<IVoidFunction> subTaskQueue) {
+	private void assemblyStructure(GenericDefinedType targetDefinedTypeMeta, Object target, IVoidFunction1<Object> effector, IFunction<String> keyAccesser, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == target) {
 			effector.trigger(null);
@@ -112,13 +112,13 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 //				String errmsg = String.format("Get an unexpect type from userSpecialCodec!!! targetClass: %s, resultClass: %s, occur on: %s", definedClazz.getName(), node.getClass().getName(), key);
 //				throw new RuntimeException(errmsg);
 //			}
-		} else if (ParameterizedTypeUtil.isDirectSerializableType(definedClazz)) {
+		} else if (SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
 			// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
 			node = target;
 		} else if (definedClazz.isEnum()) {
 			// 枚举类型
 			node = ((Enum<?> )target).name();
-		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
+		} else if (SerializableCheckerUtil.hasSublevel(definedClazz)) {
 			// Java集合类型
 			if (target instanceof Queue) {
 				if(!target.getClass().getSimpleName().endsWith("List"))
@@ -141,8 +141,8 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 						)
 					);
 			} else if (target instanceof Map) {
-				GenericDefinedTypeMeta pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
-				if(!ParameterizedTypeUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
+				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
+				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
 					throw new RuntimeException(
 							String.format(
 									"We just support java base data type on the key while opera in serializing map!!! Here %s provider, on type %s#%s",
@@ -150,7 +150,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 									targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
 									key));
 				
-				GenericDefinedTypeMeta pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
+				GenericDefinedType pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
 				if(!((Map )target).isEmpty())
@@ -222,7 +222,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 							throw new RuntimeException(e);
 						}
 						assemblyStructure(
-								genericDefinedField.genericDefinedTypeMeta,
+								genericDefinedField.genericDefinedType,
 								fieldValue,
 								(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
 								() -> fieldName,

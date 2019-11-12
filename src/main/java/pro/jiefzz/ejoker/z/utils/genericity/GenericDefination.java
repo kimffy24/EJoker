@@ -27,23 +27,23 @@ public final class GenericDefination {
 	
 	public final boolean hasGenericDeclare;
 	
-	private final GenericDeclare[] exportGenericDeclares;
+	private final GenericDeclaration[] exportGenericDeclares;
 	
 	private final GenericDefination superDefination;
 	
 	private final Map<String, String> deliveryMapper;
 	
-	private final GenericDefinedTypeMeta[] deliveryTypeMetasTable;
+	private final GenericDefinedType[] deliveryTypeMetasTable;
 	
 	private final Map<Class<?>, GenericDefination> interfaceDefinations;
 	
 	private final Map<Class<?>, Map<String, String>> interfaceDeliveryMappers;
 	
-	private final Map<Class<?>, GenericDefinedTypeMeta[]> interfaceDeliveryTypeMetasTables;
+	private final Map<Class<?>, GenericDefinedType[]> interfaceDeliveryTypeMetasTables;
 	
 	private final Map<String, GenericDefinedField> fieldDefinations;
 
-	private GenericDefination(Class<?> genericPrototype) {
+	public GenericDefination(GenericDefinationManagement gdManager, Class<?> genericPrototype) {
 		super();
 		this.genericPrototypeClazz = genericPrototype;
 		this.isInterface = genericPrototype.isInterface();
@@ -52,12 +52,12 @@ public final class GenericDefination {
 		TypeVariable<?>[] typeParameters = genericPrototype.getTypeParameters();
 		if(typeParameters.length != 0) {
 			hasGenericDeclare = true;;
-			exportGenericDeclares = new GenericDeclare[typeParameters.length];
+			exportGenericDeclares = new GenericDeclaration[typeParameters.length];
 			deliveryMapper = new HashMap<>();
 
 			for(int i = 0; i<typeParameters.length; i++) {
 				TypeVariable<?> typeVar = typeParameters[i];
-				exportGenericDeclares[i] = new GenericDeclare(this, i, typeVar.getName());
+				exportGenericDeclares[i] = new GenericDeclaration(this, i, typeVar.getName());
 			}
 			
 		} else {
@@ -67,13 +67,13 @@ public final class GenericDefination {
 		}
 		
 
-		if(null == genericPrototype.getSuperclass() || Object.class.equals(genericPrototype.getSuperclass()))
+		if(isInterface || Object.class.equals(genericPrototype) || Object.class.equals(genericPrototype.getSuperclass()))
 			superDefination = null;
 		else
-			superDefination = getOrCreateDefination(genericPrototype.getSuperclass());
+			superDefination = gdManager.getOrCreateDefination(genericPrototype.getSuperclass());
 		
 		Class<?>[] interfaces = genericPrototype.getInterfaces();
-		if(null == interfaces || 0 == interfaces.length) {
+		if(0 == interfaces.length) {
 			interfaceDefinations = null;
 			{
 				interfaceDeliveryMappers = null;
@@ -82,7 +82,7 @@ public final class GenericDefination {
 		} else {
 			interfaceDefinations = new HashMap<>();
 			for(Class<?> iface : interfaces) {
-				interfaceDefinations.put(iface, getOrCreateDefination(iface));
+				interfaceDefinations.put(iface, gdManager.getOrCreateDefination(iface));
 			}
 			{
 				interfaceDeliveryMappers = new HashMap<>();
@@ -97,11 +97,11 @@ public final class GenericDefination {
 			ParameterizedType superPt = (ParameterizedType )genericSuperclass;
 			Type[] actualTypeArguments = superPt.getActualTypeArguments();
 
-			deliveryTypeMetasTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
+			deliveryTypeMetasTable = new GenericDefinedType[actualTypeArguments.length];
 			
 			if(null != superDefination.exportGenericDeclares && 0 != superDefination.exportGenericDeclares.length) {
 				for(int i=0; i<superDefination.exportGenericDeclares.length; i++) {
-					GenericDeclare declareTuple = superDefination.exportGenericDeclares[i];
+					GenericDeclaration declareTuple = superDefination.exportGenericDeclares[i];
 					Type typeArgument = actualTypeArguments[i];
 	
 					if(typeArgument instanceof TypeVariable<?>) {
@@ -112,7 +112,7 @@ public final class GenericDefination {
 						deliveryTypeMetasTable[i] = null;
 					} else {
 						// materialized!
-						deliveryTypeMetasTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
+						deliveryTypeMetasTable[i] = new GenericDefinedType(typeArgument, this);
 					}
 				
 				}
@@ -129,15 +129,15 @@ public final class GenericDefination {
 				ParameterizedType interfacePt = (ParameterizedType )genericInterface;
 				Type[] actualTypeArguments = interfacePt.getActualTypeArguments();
 
-				GenericDefinedTypeMeta[] ifaceDeliveryTypeMetaTable = new GenericDefinedTypeMeta[actualTypeArguments.length];
+				GenericDefinedType[] ifaceDeliveryTypeMetaTable = new GenericDefinedType[actualTypeArguments.length];
 				Map<String, String> ifaceDeliveryMapper = new HashMap<>();
 				
 				Class<?> iface = (Class<?> )interfacePt.getRawType();
-				GenericDeclare[] eGD = interfaceDefinations.get(iface).exportGenericDeclares;
+				GenericDeclaration[] eGD = interfaceDefinations.get(iface).exportGenericDeclares;
 				if(null != interfaceDefinations.get(iface).exportGenericDeclares
 						&& 0 != interfaceDefinations.get(iface).exportGenericDeclares.length)
 					for(int i = 0; i<eGD.length; i++) {
-						GenericDeclare declareTuple = eGD[i];
+						GenericDeclaration declareTuple = eGD[i];
 						Type typeArgument = actualTypeArguments[i];
 	
 						if(typeArgument instanceof TypeVariable<?>) {
@@ -148,7 +148,7 @@ public final class GenericDefination {
 							ifaceDeliveryTypeMetaTable[i] = null;
 						} else {
 							// materialized!
-							ifaceDeliveryTypeMetaTable[i] = new GenericDefinedTypeMeta(typeArgument, this);
+							ifaceDeliveryTypeMetaTable[i] = new GenericDefinedType(typeArgument, this);
 						}
 					}
 				
@@ -231,16 +231,16 @@ public final class GenericDefination {
 //		System.out.println(obj);
 //	}
 	
-	public void forEachGenericDeclares(IVoidFunction1<GenericDeclare> vf) {
+	public void forEachGenericDeclares(IVoidFunction1<GenericDeclaration> vf) {
 		if(!hasGenericDeclare)
 			return;
 		if(null == exportGenericDeclares || 0 == exportGenericDeclares.length)
 			return;
-		for(GenericDeclare gd : exportGenericDeclares)
+		for(GenericDeclaration gd : exportGenericDeclares)
 			vf.trigger(gd);
 	}
 	
-	public void forEachGenericDeclares(IVoidFunction2<GenericDeclare, Integer> vf) {
+	public void forEachGenericDeclares(IVoidFunction2<GenericDeclaration, Integer> vf) {
 		if(!hasGenericDeclare)
 			return;
 		if(null == exportGenericDeclares || 0 == exportGenericDeclares.length)
@@ -290,10 +290,10 @@ public final class GenericDefination {
 		return interfaceDefinations;
 	}
 
-	public GenericDefinedTypeMeta[] getDeliveryTypeMetasTableCopy() {
+	public GenericDefinedType[] getDeliveryTypeMetasTableCopy() {
 		if(null == deliveryTypeMetasTable)
 			return null;
-		GenericDefinedTypeMeta[] newOne = new GenericDefinedTypeMeta[deliveryTypeMetasTable.length];
+		GenericDefinedType[] newOne = new GenericDefinedType[deliveryTypeMetasTable.length];
 		System.arraycopy(deliveryTypeMetasTable, 0, newOne, 0, deliveryTypeMetasTable.length);
 		return newOne;
 	}
@@ -304,14 +304,14 @@ public final class GenericDefination {
 		return new HashMap<>(deliveryMapper);
 	}
 	
-	public GenericDefinedTypeMeta[] getInterfaceDeliveryTypeMetasTableCopy(Class<?> interfaceClazz) {
+	public GenericDefinedType[] getInterfaceDeliveryTypeMetasTableCopy(Class<?> interfaceClazz) {
 		if(null == interfaceDeliveryTypeMetasTables)
 			return null;
-		GenericDefinedTypeMeta[] interfaceDeliveryTypeMetasTable = interfaceDeliveryTypeMetasTables.get(interfaceClazz);
+		GenericDefinedType[] interfaceDeliveryTypeMetasTable = interfaceDeliveryTypeMetasTables.get(interfaceClazz);
 		if(null == interfaceDeliveryTypeMetasTable)
 			return null;
 
-		GenericDefinedTypeMeta[] newOne = new GenericDefinedTypeMeta[interfaceDeliveryTypeMetasTable.length];
+		GenericDefinedType[] newOne = new GenericDefinedType[interfaceDeliveryTypeMetasTable.length];
 		System.arraycopy(interfaceDeliveryTypeMetasTable, 0, newOne, 0, interfaceDeliveryTypeMetasTable.length);
 		return newOne;
 	}
@@ -323,38 +323,5 @@ public final class GenericDefination {
 		if(null == interfaceDeliveryMapper || interfaceDeliveryMapper.isEmpty())
 			return null;
 		return new HashMap<>(interfaceDeliveryMapper);
-	}
-	
-	/// ========================== ///
-	
-	private final static Map<Class<?>, GenericDefination> definationStore= new HashMap<>();
-	
-	public final static GenericDefination defaultGenericDefination = new GenericDefination(Object.class);
-	
-	public final static GenericDefination getOrCreateDefination(Class<?> prototype) {
-		GenericDefination currentDefination;
-		if(defaultGenericDefination.equals(currentDefination = definationStore.getOrDefault(prototype, defaultGenericDefination))) {
-			if(Object.class.equals(prototype))
-				return defaultGenericDefination;
-			definationStore.putIfAbsent(prototype, currentDefination = new GenericDefination(prototype));
-		}
-		return currentDefination;
-	}
-	
-	static {
-		definationStore.put(Object.class, defaultGenericDefination);
-	}
-	
-	public static abstract class GenericDefinationRef {
-		
-		protected final GenericDefination referDefination;
-		
-		protected GenericDefinationRef (GenericDefination referDefination) {
-			this.referDefination = referDefination;
-		}
-		
-		public GenericDefination getGenericDefination() {
-			return referDefination;
-		}
 	}
 }

@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,9 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	private final int batchSize;
 	
-	private long nextSequence = 0l;
+	// nextSequence是需要竞态获取的，需要使用原子数
+//	private long nextSequence = 0l;
+	private AtomicLong nextSequence = new AtomicLong(0l);
 
 	private long consumingSequence = 0l;
 
@@ -75,11 +79,11 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public long getMaxMessageSequence() {
-		return nextSequence - 1;
+		return nextSequence.get() - 1;
 	}
 
 	public long getTotalUnConsumedMessageCount() {
-		return nextSequence - 1 - consumingSequence;
+		return nextSequence.get() - 1 - consumingSequence;
 	}
 	public ProcessingCommandMailbox(String aggregateRootId, IProcessingCommandHandler messageHandler,
 			SystemAsyncHelper systemAsyncHelper) {
@@ -89,16 +93,21 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		this.handler = messageHandler;
 		batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	}
-
+	
 	public void enqueueMessage(ProcessingCommand message) {
-		message.setSequence(nextSequence);
+//		message.setSequence(nextSequence);
 		message.setMailBox(this);
-		if (null == messageDict.putIfAbsent(message.getSequence(), message)) {
-			nextSequence++;
-			logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
-					this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), message.getSequence());
-			lastActiveTime = System.currentTimeMillis();
-			tryRun();
+		long currentSequence;
+		for( ;; ) {
+			if(null == messageDict.putIfAbsent(currentSequence = nextSequence.getAndIncrement(), message)) {
+	//			nextSequence++;
+				message.setSequence(currentSequence);
+				logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
+						this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), message.getSequence());
+				lastActiveTime = System.currentTimeMillis();
+				tryRun();
+				break;
+			}
 		}
 	}
 
@@ -180,13 +189,12 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	public void clear() {
 		messageDict.clear();
-		nextSequence = 0;
+		nextSequence.set(0l);;
 		consumingSequence = 0;
 		lastActiveTime = System.currentTimeMillis();
 	}
 
 	public Future<Void> completeMessage(ProcessingCommand message, CommandResult result) {
-		
 		try {
 			if(null != messageDict.remove(message.getSequence())) {
 				lastActiveTime = System.currentTimeMillis();
@@ -209,6 +217,15 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		return System.currentTimeMillis() - lastActiveTime >= timeoutMilliseconds;
 	}
 
+	/**
+	 * . <br />
+	 * * 在messageDict.get()方法取不到ProcessingCommand时，应该退出，而不是继续往下取数据<br />
+	 * * 因为enqueueMessage的时候是用原子数抢占的方式(参考{@link #enqueueMessage(ProcessingCommand)})<br />
+	 * * 在抢占nextSequence的那一刻，此刻messageDict.putIfAbsent方法还未执行<br />
+	 * * 而此时上一个tryRun开启的线程还在执行messageDict.get，此时就可能出现null了<br />
+	 * * 此时应该退出循环，不再执行consumingSequence++；<br />
+	 * @return
+	 */
 	private Future<Void> processMessages() {
 		
 		// 设置运行信号，表示当前正在运行Run方法中的逻辑
@@ -221,11 +238,12 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		lastActiveTime = System.currentTimeMillis();
 		try {
 				long scannedSequenceSize = 0l;
+				ProcessingCommand message;
 				while (hasNextMessage() && scannedSequenceSize < batchSize && !onPaused.get()) {
-					ProcessingCommand message;
-					if (null != (message = messageDict.get(consumingSequence))) {
-						await(handler.handleAsync(message));
+					if (null == (message = messageDict.get(consumingSequence))) {
+						break;
 					}
+					await(handler.handleAsync(message));
 					scannedSequenceSize++;
 					consumingSequence++;
 				}
@@ -249,9 +267,9 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	private boolean hasNextMessage(Long consumingSequence) {
 		if (null != consumingSequence) {
-			return consumingSequence.longValue() < nextSequence;
+			return consumingSequence.longValue() < nextSequence.get();
 		}
-		return this.consumingSequence < nextSequence;
+		return this.consumingSequence < nextSequence.get();
 	}
 	
 }

@@ -19,7 +19,6 @@ import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.z.context.dev2.impl.EjokerContextDev2Impl;
-import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 
 /**
  * E-Joker instance provider. E-Joker context provider.
@@ -27,24 +26,22 @@ import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
  *
  */
 public class EJoker {
+
+	//////  properties:
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJoker.class);
 	
-	//////  public:
-	
 	public static final String SELF_PACKAGE_NAME;
 	
-//	public static EJoker getInstance(){
-//		if ( instance == null )
-//			instance = new EJoker();
-//		return instance;
-//	}
+	protected IEjokerContextDev2 context;
+	
+	//////  public:
 	
 	public IEJokerSimpleContext getEJokerContext(){
 		return context;
 	}
 
-	//////  private:
+	//////  protected:
 	
 	protected EJoker() {
 		context = new EjokerContextDev2Impl();
@@ -73,12 +70,6 @@ public class EJoker {
 		context.scanPackage(SELF_PACKAGE_NAME);
 		
 	}
-
-	//////  properties:
-	
-//	protected static EJoker instance;
-	
-	protected IEjokerContextDev2 context;
 	
 	static {
 		String packageName = EjokerContextDev2Impl.class.getName();
@@ -127,7 +118,7 @@ public class EJoker {
 					| IllegalAccessException
 					| IllegalArgumentException
 					| InvocationTargetException e) {
-				throw new AsyncWrapperException(e);
+				throw new RuntimeException(e);
 			}
 			
 		}

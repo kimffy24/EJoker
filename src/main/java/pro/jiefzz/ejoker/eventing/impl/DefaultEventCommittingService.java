@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,8 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
@@ -138,7 +139,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 	private void batchPersistEventAsync(List<EventCommittingContext> committingContexts) {
 		
 		LinkedList<DomainEventStream> domainEventStreams = new LinkedList<>();
-		ForEachHelper.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
+		ForEachUtil.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
 		
 		ioHelper.tryAsyncAction2(
 				"BatchPersistEventAsync",
@@ -155,7 +156,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 						
 						// 这个位置用java stream操作不太顺手
 				        for(EventCommittingContext ecc : committingContexts) {
-				        	MapHelper
+				        	MapUtil
 				        		.getOrAdd(successCommittedContextDict, ecc.getEventStream().getAggregateRootId(), () -> new ArrayList<>())
 				        		.add(ecc);
 				        }
@@ -164,7 +165,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        	StringBuilder sb = new StringBuilder();
 				        	
 				        	sb.append('{');
-				        	ForEachHelper.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
+				        	ForEachUtil.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
 				        		sb.append('"');
 				        		sb.append(aggrId);
 				        		sb.append("\": [");
@@ -190,8 +191,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        }
 				        
 				        systemAsyncHelper.submit(() -> {
-				        	ForEachHelper.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
-				        		for(EventCommittingContext ecc : committingContexts) {
+				        	ForEachUtil.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
+				        		for(EventCommittingContext ecc : contexts) {
 				        			publishDomainEventAsync(ecc.getProcessingCommand(), ecc.getEventStream());
 				        		}
 				        	});
@@ -249,7 +250,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 		if(1l == eventCommittingContext.getEventStream().getVersion()) {
 			handleFirstEventDuplicationAsync(eventCommittingContext);
 		} else {
-			// TODO .ConfigureAwait(false);
 			resetCommandMailBoxConsumingSequence(eventCommittingContext, eventCommittingContext.getProcessingCommand().getSequence())
 			.thenRunAsync(() -> {});
 		}
@@ -358,7 +358,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                         //有可能事件持久化成功了，但那时正好机器断电了，则发布事件都没有做；
     					if(commandId.equals(firstEventStream.getCommandId())) {
     						
-							/// TODO .ConfigureAwait(false);
 							resetCommandMailBoxConsumingSequence(context,
 									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
 										publishDomainEventAsync(context.getProcessingCommand(), firstEventStream);
@@ -374,7 +373,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                                 firstEventStream.getAggregateRootTypeName());
 							logger.error(errorMessage);
 
-							/// TODO .ConfigureAwait(false);
 							resetCommandMailBoxConsumingSequence(context,
 									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
 										CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,
@@ -393,7 +391,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     	                        eventStream.getAggregateRootTypeName());
 						logger.error(errorMessage);
 
-						/// TODO .ConfigureAwait(false);
 						resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
 								.thenApplyAsync(t -> {
 									CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,

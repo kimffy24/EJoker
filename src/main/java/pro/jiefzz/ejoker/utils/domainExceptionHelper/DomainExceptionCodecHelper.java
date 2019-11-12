@@ -4,29 +4,32 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
-import net.minidev.json.JSONObject;
-import net.minidev.json.JSONValue;
-import net.minidev.json.parser.ParseException;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.z.context.dev2.EJokerInstanceBuilder;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
-import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
 
 public final class DomainExceptionCodecHelper {
 	
 	private static Map<Class<? extends IDomainException>, Map<String, Field>> reflectMap= new HashMap<>();
 
 	public static Map<String, String> serialize(IDomainException exception) {
+		return serialize(exception, true);
+	}
+	public static Map<String, String> serialize(IDomainException exception, boolean loggerUse) {
 		Map<String, String> rMap = new HashMap<>();
 		
 		Map<String, Field> reflectFields = getReflectFields(exception.getClass());
-		ForEachHelper.processForEach(reflectFields, (n, f) -> {
+		ForEachUtil.processForEach(reflectFields, (n, f) -> {
 
+			if(!loggerUse)
+				// 忽略特定两个字段，他们会被显式地设置到发送的message对象，没必要多做一次序列化
+				if("id".equals(n) || "timestamp".equals(n))
+					return;
+			
 			Object fValue;
 			try {
 				fValue = f.get(exception);
@@ -36,25 +39,22 @@ public final class DomainExceptionCodecHelper {
 			rMap.put(n, sValue(f.getType(), fValue));
 			
 		});
-
-		// fixed #190929 针对 IMessage 增加的items
-		JSONObject itemsDict = new JSONObject();
-		Set<Entry<String, String>> entrySet = exception.getItems().entrySet();
-		for(Entry<String, String> entry : entrySet) {
-			itemsDict.appendField(entry.getKey(), entry.getValue());
-		}
-		rMap.put("items", itemsDict.toJSONString());
 		
 		return rMap;
 	}
 	
 	public static IDomainException deserialize(Map<String, String> pMap, Class<? extends IDomainException> exceptionClazz) {
 		
-		return (IDomainException )(MapHelper
+		return (IDomainException )(MapUtil
 				.getOrAdd(builderMap, exceptionClazz, () -> new EJokerInstanceBuilder(exceptionClazz))
 				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
-			ForEachHelper.processForEach(reflectFields, (n, f) -> {
+			ForEachUtil.processForEach(reflectFields, (n, f) -> {
+				
+
+				// 忽略特定两个字段
+				if("id".equals(n) || "timestamp".equals(n))
+					return;
 				
 				Object dValue = dValue(f.getType(), pMap.get(n));
 				try {
@@ -64,27 +64,13 @@ public final class DomainExceptionCodecHelper {
 				}
 				
 			});
-
-			// fixed #190929 针对 IMessage 增加的items
-			JSONObject itemsDict;
-			try {
-				itemsDict = (JSONObject )JSONValue.parseStrict(pMap.get("items"));
-			} catch (ParseException e1) {
-				throw new RuntimeException(e1.getMessage(), e1);
-			}
-			Map<String, String> items = new HashMap<>();
-			Set<Entry<String, Object>> entrySet = itemsDict.entrySet();
-			for(Entry<String, Object> entry : entrySet) {
-				items.put(entry.getKey(), entry.getValue().toString());
-			}
-			((IDomainException )e).setItems(items);
 			
 		}));
 		
 	}
 	
 	public static Map<String, Field> getReflectFields(Class<? extends IDomainException> exceptionClazz)  {
-		return MapHelper.getOrAdd(reflectMap, exceptionClazz, () -> {
+		return MapUtil.getOrAdd(reflectMap, exceptionClazz, () -> {
 			
 			Map<String, Field> rMap = new HashMap<>();
 			
@@ -92,7 +78,7 @@ public final class DomainExceptionCodecHelper {
 					!RuntimeException.class.equals(current);
 					current = current.getSuperclass()) {
 				
-				ForEachHelper.processForEach(current.getDeclaredFields(), (field) -> {
+				ForEachUtil.processForEach(current.getDeclaredFields(), (field) -> {
 					
 					String fieldName = field.getName();
 					Class<?> fieldType = field.getType();
@@ -101,13 +87,16 @@ public final class DomainExceptionCodecHelper {
 					if("serialVersionUID".equals(fieldName))
 						return;
 					
+					// 跳过有final和static修饰的字段
 					if(Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
 						return;
 					
+					// 略过PersistentIgnore注解的字段
 					if(field.isAnnotationPresent(PersistentIgnore.class))
 						return;
 					
-					if(!ParameterizedTypeUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
+					// 如果有不能直接序列化字段且不是枚举类型，同时通过了上面3个判断，则报错
+					if(!SerializableCheckerUtil.isDirectSerializableType(fieldType) && !fieldType.isEnum())
 						throw new RuntimeException(String.format("Unsupport non-basic field in PublishableException!!! type: %s, field: %s", exceptionClazz.getName(), fieldName));
 					
 					field.setAccessible(true);

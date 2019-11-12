@@ -28,10 +28,10 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.Rem
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 import pro.jiefzz.ejoker.z.algorithm.ConsistentHashShard;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
@@ -119,7 +119,7 @@ public class DefaultMQProducer implements IProducerWrokerAware {
 		
 		String topic = msg.getTopic();
 		int mqsHashCode = mqs.hashCode();
-		PredispatchControl predispatchControl = MapHelper.getOrAddConcurrent(dispatcherDashboard, topic, PredispatchControl::new);
+		PredispatchControl predispatchControl = MapUtil.getOrAdd(dispatcherDashboard, topic, PredispatchControl::new);
 		
 		if(mqsHashCode != predispatchControl.lastMqsHashCode.get()) {
 			// 抢占 （nameSrv更新broker和queue的状态信息的时间级别基本是秒级的）

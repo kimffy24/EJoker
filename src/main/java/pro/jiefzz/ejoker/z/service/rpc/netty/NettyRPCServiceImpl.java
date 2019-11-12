@@ -23,11 +23,11 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.service.Scavenger;
 import pro.jiefzz.ejoker.z.service.rpc.IRPCService;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
@@ -71,7 +71,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		}
 
 		RPCTuple currentTuple = null;
-		AtomicBoolean ab = MapHelper.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
+		AtomicBoolean ab = MapUtil.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
 		if(ab.compareAndSet(false, true)) {
 			Thread ioThread = new Thread(
 					() -> {
@@ -128,7 +128,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	// @unsafe on multiple thread process
 	@Override
 	public void removeExport(int port) {
-		AtomicBoolean atomicBoolean = MapHelper.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
+		AtomicBoolean atomicBoolean = MapUtil.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
 		if(!atomicBoolean.compareAndSet(true, false))
 			return;
 		IVoidFunction closeAction = closeHookTrigger.remove(port);
@@ -148,7 +148,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		String uniqueKey = host+":"+port;
 		NettySimpleClient nettySimpleClient = clientStore.get(uniqueKey);
 		while(null == nettySimpleClient) {
-			AtomicBoolean acquired = MapHelper.getOrAdd(clientConnectionOccupation, uniqueKey, () -> new AtomicBoolean());
+			AtomicBoolean acquired = MapUtil.getOrAdd(clientConnectionOccupation, uniqueKey, () -> new AtomicBoolean());
 			if(acquired.compareAndSet(false, true)) {
 				nettySimpleClient = new NettySimpleClient(host, port);
 				nettySimpleClient.awaitReady();
@@ -210,13 +210,13 @@ public class NettyRPCServiceImpl implements IRPCService {
 		clientConnectionOccupation.clear();
 		serverPortOccupation.clear();
 		
-		ForEachHelper.processForEach(clientStore, (k, c) -> {
+		ForEachUtil.processForEach(clientStore, (k, c) -> {
 			logger.debug("Close netty rpc client {}", k);
 			c.close();
 		});
 		clientStore.clear();
 		
-		ForEachHelper.processForEach(closeHookTrigger, (p, a) -> {
+		ForEachUtil.processForEach(closeHookTrigger, (p, a) -> {
 			a.trigger();
 			portMap.remove(p);
 		});

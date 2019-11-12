@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,8 @@ import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IScheduleService;
 import pro.jiefzz.ejoker.z.service.Scavenger;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.helper.StringHelper;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
@@ -75,7 +76,6 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	
 	@Override
 	public void process(ProcessingEvent processingMessage) {
-		
 		String aggregateRootId = processingMessage.getMessage().getAggregateRootId();
 		if(StringHelper.isNullOrWhiteSpace(aggregateRootId)) {
 			throw new ArgumentException("aggregateRootId of domain event stream cannot be null or empty, domainEventStreamId: " + processingMessage.getMessage().getId());
@@ -84,7 +84,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 		ProcessingEventMailBox mailBox;
 		
 		do {
-			mailBox = MapHelper.getOrAdd(mailboxDict, aggregateRootId, () -> {
+			mailBox = MapUtil.getOrAdd(mailboxDict, aggregateRootId, () -> {
 				long v = getAggregateRootLatestHandledEventVersion(processingMessage.getMessage().getAggregateRootTypeName(), aggregateRootId);
 				return new ProcessingEventMailBox(aggregateRootId, v, this::dispatchProcessingMessageAsync, systemAsyncHelper);
 			});

@@ -59,7 +59,6 @@ public class IOHelper {
 	}
 	
 	// #1.1
-	// #1.1
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -78,8 +77,6 @@ public class IOHelper {
 	}
 	
 	// #1.2
-
-	// #1.2
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -96,8 +93,6 @@ public class IOHelper {
 				(c, e, eMsg) -> faildAction.trigger(e, eMsg)
 				);
 	}
-	
-	// #1.3
 	
 	// #1.3
 	public void tryAsyncAction2(
@@ -118,8 +113,6 @@ public class IOHelper {
 	}
 	
 	// #1.4
-
-	// #1.4
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -136,8 +129,6 @@ public class IOHelper {
 				);
 	}
 	
-	// #2
-
 	// #2
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void tryAsyncAction2(
@@ -164,8 +155,6 @@ public class IOHelper {
 	}
 	
 	// #2.1
-
-	// #2.1
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -186,8 +175,6 @@ public class IOHelper {
 	}
 	
 	// #2.2
-
-	// #2.2
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -206,8 +193,6 @@ public class IOHelper {
 				retryWhenFailed
 				);
 	}
-	
-	// #2.3
 	
 	// #2.3
 	public void tryAsyncAction2(
@@ -230,8 +215,6 @@ public class IOHelper {
 	}
 	
 	// #2.4
-
-	// #2.4
 	public void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<Void>>> mainAction,
@@ -250,8 +233,6 @@ public class IOHelper {
 				);
 	}
 	
-	// #3
-
 	// #3
 	public <T> void tryAsyncAction2(
 			String actionName,
@@ -273,8 +254,6 @@ public class IOHelper {
 	}
 	
 	// #3.1
-
-	// #3.1
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
@@ -292,8 +271,6 @@ public class IOHelper {
 				);
 	}
 	
-	// #3.2
-
 	// #3.2
 	public <T> void tryAsyncAction2(
 			String actionName,
@@ -313,8 +290,6 @@ public class IOHelper {
 	}
 	
 	// #3.3
-
-	// #3.3
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
@@ -333,8 +308,6 @@ public class IOHelper {
 	}
 	
 	// #3.4
-
-	// #3.4
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
@@ -351,8 +324,6 @@ public class IOHelper {
 				);
 	}
 	
-	// #4
-
 	// #4
 	public <T> void tryAsyncAction2(
 			String actionName,
@@ -376,8 +347,6 @@ public class IOHelper {
 	}
 	
 	// #4.1
-
-	// #4.1
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
@@ -397,8 +366,6 @@ public class IOHelper {
 				);
 	}
 	
-	// #4.2
-
 	// #4.2
 	public <T> void tryAsyncAction2(
 			String actionName,
@@ -430,7 +397,6 @@ public class IOHelper {
 	 * @param retryWhenFailed - The flag about whether do retry while main action got failed.
 	 */
 	// #4.3
-	// #4.3
 	public <T> void tryAsyncAction2(
 			String actionName,
 			IFunction<Future<AsyncTaskResult<T>>> mainAction,
@@ -450,8 +416,6 @@ public class IOHelper {
 				);
 	}
 	
-	// #4.4
-
 	// #4.3
 	public <T> void tryAsyncAction2(
 			String actionName,

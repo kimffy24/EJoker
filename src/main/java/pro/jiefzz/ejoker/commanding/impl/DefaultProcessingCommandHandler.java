@@ -4,6 +4,7 @@ import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 	@Override
 	public Future<Void> handleAsync(ProcessingCommand processingCommand) {
+		
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
 			String errorInfo = String.format(
@@ -85,7 +87,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 
 		ICommandHandlerProxy asyncHandler = commandAsyncHandlerPrivider.getHandler(message.getClass());
 		if(null != asyncHandler) {
-			// TODO await
+			// TODO @await
 			await(handleCommandInternal(processingCommand, asyncHandler));
 		} else {
 			String errorMessage = String.format("No command handler found of command. commandType: %s, commandId: %s",
@@ -278,8 +280,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         } else if (exception instanceof IDomainException) {
             return (IDomainException )exception;
         }
-        // TODO 未完成，找不到AggregateException在哪定义的
-        // TODO java里没有聚合异常这个玩意吧？
+        // TODO unfinished: 未完成，找不到AggregateException在哪定义的
+        // TODO unfinished: java里没有聚合异常这个玩意吧？
 //        else if (exception is AggregateException)
 //        {
 //            var aggregateException = exception as AggregateException;

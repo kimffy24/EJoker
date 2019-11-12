@@ -92,7 +92,7 @@ public class GenericExpression {
 			GenericDefination lowerGe = lowerGenericExpression.genericDefination;
 			
 			/// 获取下级表达传递到此的dct以及dm
-			GenericDefinedTypeMeta[] targetDct = isInterface ?
+			GenericDefinedType[] targetDct = isInterface ?
 				lowerGe.getInterfaceDeliveryTypeMetasTableCopy(genericDefination.genericPrototypeClazz) :
 				lowerGe.getDeliveryTypeMetasTableCopy();
 			Map<String, String> targetDm = isInterface ?
@@ -101,8 +101,8 @@ public class GenericExpression {
 				
 			/// 如果dct中对应的位置存在类型的值，则添加一个导出记录，里面包含 泛型变量名 -> 传递来的类型
 			genericDefination.forEachGenericDeclares((genericDeclare, i) -> {
-				GenericDefinedTypeMeta passTypeMeta = targetDct[i];
-				GenericDefinedTypeMeta currentTypeMeta;
+				GenericDefinedType passTypeMeta = targetDct[i];
+				GenericDefinedType currentTypeMeta;
 				if(null == passTypeMeta) {
 					/// 下方表达中的genericDefination传来就是空值，有可能是隔代基础/扩展的情况，进一步排除
 					
@@ -113,13 +113,13 @@ public class GenericExpression {
 						hasGenericityPassing.incrementAndGet();
 						return;
 					} else {
-						currentTypeMeta = new GenericDefinedTypeMeta(genericExpressionExportTuple.declarationTypeMeta, lowerGenericExpression.materializedMapper);
+						currentTypeMeta = new GenericDefinedType(genericExpressionExportTuple.declarationTypeMeta, lowerGenericExpression.materializedMapper);
 					}
 				} else {
 					/// 为啥要创建一个新的GenericDefinedTypeMeta？
 					/// 因为定义中传递过来的还有可能是带有泛型的声明的具现化类类型
 					/// 如Map<K, V>这种，这样做的目的的继续具现化类。
-					currentTypeMeta = new GenericDefinedTypeMeta(passTypeMeta, lowerGenericExpression.materializedMapper);
+					currentTypeMeta = new GenericDefinedType(passTypeMeta, lowerGenericExpression.materializedMapper);
 				}
 
 				materializedMapper.put(
@@ -187,12 +187,12 @@ public class GenericExpression {
 					if(genericDefinedField.isGenericVariable) {
 						GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(genericDefinedField.genericTypeVariableName);
 						if(null == genericExpressionExportTuple) {
-							newGenericDefinedField = new GenericDefinedField(genericDefinedField.genericDefination, genericDefinedField.field);
+							newGenericDefinedField = new GenericDefinedField(genericDefinedField.getGenericDefination(), genericDefinedField.field);
 						} else {
-							newGenericDefinedField = new GenericDefinedField(genericDefinedField, new GenericDefinedTypeMeta(genericExpressionExportTuple.declarationTypeMeta, materializedMapper));
+							newGenericDefinedField = new GenericDefinedField(genericDefinedField, new GenericDefinedType(genericExpressionExportTuple.declarationTypeMeta, materializedMapper));
 						}
 					} else {
-						newGenericDefinedField = new GenericDefinedField(genericDefinedField, new GenericDefinedTypeMeta(genericDefinedField.genericDefinedTypeMeta, materializedMapper));
+						newGenericDefinedField = new GenericDefinedField(genericDefinedField, new GenericDefinedType(genericDefinedField.genericDefinedType, materializedMapper));
 					}
 					fieldExpressions.put(fieldName, newGenericDefinedField);
 				});
@@ -207,7 +207,7 @@ public class GenericExpression {
 	 * @param lowerGenericExpression 下级表达 （ 或是继承类的表达 或是 接口扩展的表达 ）
 	 * @param definedTypeMetas 泛型实例化列表
 	 */
-	protected GenericExpression(GenericExpression target, GenericExpression lowerGenericExpression, final GenericDefinedTypeMeta... definedTypeMetas) {
+	protected GenericExpression(GenericExpression target, GenericExpression lowerGenericExpression, final GenericDefinedType... definedTypeMetas) {
 		int genericTypeAmount = target.genericDefination.getGenericDeclareAmount();
 		if(genericTypeAmount > 0) {
 			if(null == definedTypeMetas || genericTypeAmount != definedTypeMetas.length) {
@@ -247,7 +247,7 @@ public class GenericExpression {
 //			GenericDefinedTypeMeta[] deliveryClassesTable = getDCT(
 //					() -> genericDefination.getDeliveryTypeMetasTableCopy(),
 //					() -> genericDefination.getDeliveryMapperCopy());
-			GenericDefinedTypeMeta[] deliveryClassesTable = getDCT(
+			GenericDefinedType[] deliveryClassesTable = getDCT(
 					genericDefination::getDeliveryTypeMetasTableCopy,
 					genericDefination::getDeliveryMapperCopy);
 			this.parent = new GenericExpression(upperGe, this, deliveryClassesTable);
@@ -259,7 +259,7 @@ public class GenericExpression {
 			for(int i = 0; i<target.implementationsExpressions.length; i++) {
 				
 				GenericExpression upperGe = target.implementationsExpressions[i];
-				GenericDefinedTypeMeta[] deliveryClassesTable = getDCT(
+				GenericDefinedType[] deliveryClassesTable = getDCT(
 						() -> genericDefination.getInterfaceDeliveryTypeMetasTableCopy(upperGe.genericDefination.genericPrototypeClazz),
 						() -> genericDefination.getInterfaceDeliveryMapperCopy(upperGe.genericDefination.genericPrototypeClazz));
 				
@@ -276,14 +276,14 @@ public class GenericExpression {
 			} else {
 				fieldExpressions = new HashMap<>();
 				target.fieldExpressions.forEach((fieldName, genericDefinedField) -> {
-					GenericDefinedTypeMeta currentGenericDefinedTypeMeta;
+					GenericDefinedType currentGenericDefinedTypeMeta;
 					if(genericDefinedField.isGenericVariable) {
 						/// 如果是泛型类型变量，则从 exportMapper 泛型导出表中获取对应具现化类型
 						GenericExpressionExportTuple genericExpressionExportTuple = materializedMapper.get(genericDefinedField.genericTypeVariableName);
 						currentGenericDefinedTypeMeta = genericExpressionExportTuple.declarationTypeMeta;
 					} else {
 						/// 如果是普通类型变量，则分情况处理
-						GenericDefinedTypeMeta originalGenericDefinedTypeMeta = genericDefinedField.genericDefinedTypeMeta;
+						GenericDefinedType originalGenericDefinedTypeMeta = genericDefinedField.genericDefinedType;
 //						if(originalGenericDefinedTypeMeta.hasGenericDeclare) {
 //							/ 声明中带有泛型
 //							currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta, materializedMapper);
@@ -298,7 +298,7 @@ public class GenericExpression {
 //							if(originalGenericDefinedTypeMeta.isWildcardType) {
 //								throw new RuntimeException("Fuck!!! This statement should not be happen!!!");
 //							}
-							currentGenericDefinedTypeMeta = new GenericDefinedTypeMeta(originalGenericDefinedTypeMeta, materializedMapper);
+							currentGenericDefinedTypeMeta = new GenericDefinedType(originalGenericDefinedTypeMeta, materializedMapper);
 //						}
 						
 					}
@@ -379,15 +379,15 @@ public class GenericExpression {
 		} while (null != (currentExpression = currentExpression.parent));
 	}
 	
-	private GenericDefinedTypeMeta[] getDCT(IFunction<GenericDefinedTypeMeta[]> originalGenericDefinationDCTGetter,
+	private GenericDefinedType[] getDCT(IFunction<GenericDefinedType[]> originalGenericDefinationDCTGetter,
 			IFunction<Map<String, String>> originalGenericDefinationDMGetter) {
-		GenericDefinedTypeMeta[] geDeliveryTypeMetasTable = originalGenericDefinationDCTGetter.trigger();
+		GenericDefinedType[] geDeliveryTypeMetasTable = originalGenericDefinationDCTGetter.trigger();
 		if (null == geDeliveryTypeMetasTable)
 			return geDeliveryTypeMetasTable;
 		Map<String, String> geDeliveryMapper = originalGenericDefinationDMGetter.trigger();
 		for (int j = 0; j < geDeliveryTypeMetasTable.length; j++) {
 			if (null != geDeliveryTypeMetasTable[j]) {
-				geDeliveryTypeMetasTable[j] = new GenericDefinedTypeMeta(geDeliveryTypeMetasTable[j], materializedMapper);
+				geDeliveryTypeMetasTable[j] = new GenericDefinedType(geDeliveryTypeMetasTable[j], materializedMapper);
 				continue;
 			}
 			String mapperTypeVariableName = geDeliveryMapper.get("" + j);
@@ -421,13 +421,13 @@ public class GenericExpression {
 //		}
 //	}
 
-	public final static String getExpressionSignature(Class<?> prototype, GenericDefinedTypeMeta... typeMetas) {
+	public final static String getExpressionSignature(Class<?> prototype, GenericDefinedType... typeMetas) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(prototype.getName());
 		if(null!=typeMetas && 0 != typeMetas.length) {
 			sb.append('<');
-			for(GenericDefinedTypeMeta typeMeta:typeMetas) {
+			for(GenericDefinedType typeMeta:typeMetas) {
 				sb.append(typeMeta.typeName);
 				sb.append(GenericTypeUtil.SEPARATOR);
 			}

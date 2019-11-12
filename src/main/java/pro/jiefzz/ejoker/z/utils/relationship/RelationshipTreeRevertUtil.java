@@ -21,9 +21,8 @@ import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
-import pro.jiefzz.ejoker.z.utils.InstanceBuilder;
-import pro.jiefzz.ejoker.z.utils.ParameterizedTypeUtil;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedTypeMeta;
+import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
+import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedType;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
 
@@ -68,7 +67,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 	}
 	
 	private Object revertInternal(ContainerKVP kvDataSet, GenericExpression expression, Queue<IVoidFunction> subTaskQueue) { 
-		Object instance = (new InstanceBuilder(expression.getDeclarePrototype())).doCreate();
+		Object instance = doCreateInstance(expression.getDeclarePrototype());
 		expression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> { 
 						if(
@@ -77,7 +76,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							return;
 						}
 						disassemblyStructure(
-							genericDefinedField.genericDefinedTypeMeta,
+							genericDefinedField.genericDefinedType,
 							disassemblyEval.getValue(kvDataSet, fieldName),
 							result -> setField(genericDefinedField.field, instance, result.trigger()),
 							subTaskQueue
@@ -87,7 +86,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		return instance;
 	}
 	
-	private void disassemblyStructure(GenericDefinedTypeMeta targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
+	private void disassemblyStructure(GenericDefinedType targetDefinedTypeMeta, Object serializedValue, IVoidFunction1<IFunction<Object>> effector, Queue<IVoidFunction> subTaskQueue) {
 		
 		if(null == serializedValue) {
 			if(!targetDefinedTypeMeta.rawClazz.isPrimitive())
@@ -125,7 +124,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			}
 		} else if(null != (specialTypeCodec = getDeserializeCodec(definedClazz))) {
 			revertedResult = specialTypeCodec.decode(serializedValue);
-		} else if(ParameterizedTypeUtil.isDirectSerializableType(definedClazz)) {
+		} else if(SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
 			/// 定义为可直接序列化类型
 			revertedResult = serializedValue;
 		} else if (definedClazz.isEnum()) {
@@ -136,7 +135,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				logger.warn("Enum data should represent as a String!");
 				throw new RuntimeException(String.format("Revert %s#%s faild!!! serializedValue: %s", "", "", serializedValue.toString()));
 			}
-		} else if (ParameterizedTypeUtil.hasSublevel(definedClazz)) {
+		} else if (SerializableCheckerUtil.hasSublevel(definedClazz)) {
 			if (Queue.class.isAssignableFrom(definedClazz)) {
 				if(!definedClazz.getSimpleName().endsWith("List"))
 					throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
@@ -164,7 +163,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				/// map的情况
 				/// 按照RelationshipTreeUtil的转化 map的key一定是string类型的。
 				revertedResult = new HashMap();
-				GenericDefinedTypeMeta valueTypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
+				GenericDefinedType valueTypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				Set keySet = disassemblyEval.getKeySet((ContainerKVP )serializedValue);
 				for(Object key:keySet) {
 					join(
@@ -310,6 +309,16 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		}
 		return result;
 	}
-	
+
+	private <T> T doCreateInstance(Class<T> clazz) {
+			Object newInstance;
+			try {
+				newInstance = clazz.newInstance();
+			} catch (InstantiationException|IllegalAccessException e) {
+				logger.error(String.format("Connot create new instance which type of %s", clazz.getName()), e);
+				throw new RuntimeException("Create new instance of ["+clazz.getName()+"] faild!!!", e);
+			}
+			return (T )newInstance;
+	}
 	
 }

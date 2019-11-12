@@ -13,6 +13,10 @@ public class AsyncWrapperException extends RuntimeException {
 	public AsyncWrapperException(Throwable cause) {
 		super("Please see cause!", cause);
 	}
+	
+	public AsyncWrapperException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
 	public final static Exception getActuallyCause(Throwable t) {
 		Throwable e = t;

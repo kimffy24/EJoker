@@ -2,11 +2,11 @@ package pro.jiefzz.ejoker.z.utils.genericity;
 
 public class GenericExpressionExportTuple {
 	
-	private final GenericDeclare refDeclare;
+	private final GenericDeclaration refDeclare;
 	
-	public final GenericDefinedTypeMeta declarationTypeMeta;
+	public final GenericDefinedType declarationTypeMeta;
 
-	public GenericExpressionExportTuple(GenericDeclare refDeclare, GenericDefinedTypeMeta declarationType) {
+	public GenericExpressionExportTuple(GenericDeclaration refDeclare, GenericDefinedType declarationType) {
 		super();
 		this.refDeclare = refDeclare;
 		this.declarationTypeMeta = declarationType;
