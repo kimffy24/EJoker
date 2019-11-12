@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.Ensure;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
@@ -75,7 +75,7 @@ public class EventCommittingContextMailBox {
 	}
 
 	public void enqueueMessage(EventCommittingContext message) {
-		Map<String, Byte> eventDict = MapHelper.getOrAddConcurrent(aggregateDictDict, message.getEventStream().getAggregateRootId(), () -> new ConcurrentHashMap<>());
+		Map<String, Byte> eventDict = MapUtil.getOrAdd(aggregateDictDict, message.getEventStream().getAggregateRootId(), () -> new ConcurrentHashMap<>());
 		// 添加成功，则...
 		if(null == eventDict.putIfAbsent(message.getEventStream().getId(), (byte )1)) {
 			message.setMailBox(this);

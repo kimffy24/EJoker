@@ -26,12 +26,12 @@ import pro.jiefzz.ejoker.z.context.dev2.EjokerRootDefinationStore;
 import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerClazzScannerHook;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
@@ -247,7 +247,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	@Override
 	public void destroyRegister(IVoidFunction vf, int priority) {
 		if(!onService.get()) {
-			Queue<IVoidFunction> taskQueue = MapHelper.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
+			Queue<IVoidFunction> taskQueue = MapUtil.getOrAdd(destroyTasks, priority, () -> new LinkedList<>());
 			taskQueue.offer(vf);
 		}
 	}
@@ -508,7 +508,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);
 					int priority = annotation.priority();
-					Queue<IVoidFunction> initTaskQueue = MapHelper.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
+					Queue<IVoidFunction> initTaskQueue = MapUtil.getOrAdd(initTasks, priority, () -> new LinkedBlockingQueue<>());
 					initTaskQueue.offer(() -> {
 						try {
 							method.invoke(instance);

@@ -35,8 +35,8 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
+import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
-import pro.jiefzz.ejoker.z.system.helper.MapHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
@@ -156,7 +156,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 						
 						// 这个位置用java stream操作不太顺手
 				        for(EventCommittingContext ecc : committingContexts) {
-				        	MapHelper
+				        	MapUtil
 				        		.getOrAdd(successCommittedContextDict, ecc.getEventStream().getAggregateRootId(), () -> new ArrayList<>())
 				        		.add(ecc);
 				        }
