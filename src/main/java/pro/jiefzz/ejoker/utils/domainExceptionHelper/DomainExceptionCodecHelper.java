@@ -8,8 +8,8 @@ import java.util.Map;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.z.context.dev2.EJokerInstanceBuilder;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.utils.SerializableCheckerUtil;
 
 public final class DomainExceptionCodecHelper {
@@ -23,7 +23,7 @@ public final class DomainExceptionCodecHelper {
 		Map<String, String> rMap = new HashMap<>();
 		
 		Map<String, Field> reflectFields = getReflectFields(exception.getClass());
-		ForEachHelper.processForEach(reflectFields, (n, f) -> {
+		ForEachUtil.processForEach(reflectFields, (n, f) -> {
 
 			if(!loggerUse)
 				// 忽略特定两个字段，他们会被显式地设置到发送的message对象，没必要多做一次序列化
@@ -49,7 +49,7 @@ public final class DomainExceptionCodecHelper {
 				.getOrAdd(builderMap, exceptionClazz, () -> new EJokerInstanceBuilder(exceptionClazz))
 				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
-			ForEachHelper.processForEach(reflectFields, (n, f) -> {
+			ForEachUtil.processForEach(reflectFields, (n, f) -> {
 				
 
 				// 忽略特定两个字段
@@ -78,7 +78,7 @@ public final class DomainExceptionCodecHelper {
 					!RuntimeException.class.equals(current);
 					current = current.getSuperclass()) {
 				
-				ForEachHelper.processForEach(current.getDeclaredFields(), (field) -> {
+				ForEachUtil.processForEach(current.getDeclaredFields(), (field) -> {
 					
 					String fieldName = field.getName();
 					Class<?> fieldType = field.getType();

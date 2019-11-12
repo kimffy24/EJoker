@@ -18,8 +18,8 @@ import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
@@ -65,7 +65,7 @@ public class InMemoryEventStore implements IEventStore {
 	        EventAppendResult eventAppendResult = new EventAppendResult();
 			
 	        List<Future<Void>> fList = new ArrayList<>();
-	        ForEachHelper.processForEach(eventStreamDict, (k, v) -> fList.add(systemAsyncHelper.submit(() ->batchAppend(k, v, eventAppendResult))));
+	        ForEachUtil.processForEach(eventStreamDict, (k, v) -> fList.add(systemAsyncHelper.submit(() ->batchAppend(k, v, eventAppendResult))));
 	        for(Future<Void> f : fList) {
 	        	await(f);
 	        }

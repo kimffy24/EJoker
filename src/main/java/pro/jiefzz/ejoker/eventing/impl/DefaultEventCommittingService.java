@@ -35,8 +35,8 @@ import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.service.IJSONConverter;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
@@ -139,7 +139,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 	private void batchPersistEventAsync(List<EventCommittingContext> committingContexts) {
 		
 		LinkedList<DomainEventStream> domainEventStreams = new LinkedList<>();
-		ForEachHelper.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
+		ForEachUtil.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
 		
 		ioHelper.tryAsyncAction2(
 				"BatchPersistEventAsync",
@@ -165,7 +165,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        	StringBuilder sb = new StringBuilder();
 				        	
 				        	sb.append('{');
-				        	ForEachHelper.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
+				        	ForEachUtil.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
 				        		sb.append('"');
 				        		sb.append(aggrId);
 				        		sb.append("\": [");
@@ -191,7 +191,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        }
 				        
 				        systemAsyncHelper.submit(() -> {
-				        	ForEachHelper.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
+				        	ForEachUtil.processForEach(successCommittedContextDict, (aggrId, contexts) -> {
 				        		for(EventCommittingContext ecc : contexts) {
 				        			publishDomainEventAsync(ecc.getProcessingCommand(), ecc.getEventStream());
 				        		}

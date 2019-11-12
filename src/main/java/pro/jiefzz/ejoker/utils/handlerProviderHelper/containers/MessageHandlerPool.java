@@ -24,11 +24,11 @@ import pro.jiefzz.ejoker.messaging.IMessage;
 import pro.jiefzz.ejoker.messaging.IMessageHandler;
 import pro.jiefzz.ejoker.messaging.IMessageHandlerProxy;
 import pro.jiefzz.ejoker.z.context.dev2.IEjokerContextDev2;
+import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IFunction1;
-import pro.jiefzz.ejoker.z.system.helper.ForEachHelper;
 import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 /**
@@ -201,7 +201,7 @@ public class MessageHandlerPool {
 			for(IMessage msg : messages) {
 				orderlyArgs.put(msg.getClass().getName(), msg);
 			}
-			ForEachHelper.processForEach(orderlyArgs, (k, v) -> {
+			ForEachUtil.processForEach(orderlyArgs, (k, v) -> {
 				orderlyPsSb.append(k);
 				orderlyMsgs[ai.getAndIncrement()] = v;
 			});
@@ -209,7 +209,7 @@ public class MessageHandlerPool {
 		}
 		
 		Map<Long, List<MessageHandlerReflectionTuple>> proxyAsyncMultiHandlers = getProxyAsyncMultiHandlers(orderlyPs, orderlyMsgs);
-		ForEachHelper.processForEach(proxyAsyncMultiHandlers, (b, l) -> {
+		ForEachUtil.processForEach(proxyAsyncMultiHandlers, (b, l) -> {
 			
 			for(MessageHandlerReflectionTuple reflectionTuple : l) {
 				IMessage[] invokeList = contructPTable(b, reflectionTuple.asciiOrder, orderlyMsgs);
