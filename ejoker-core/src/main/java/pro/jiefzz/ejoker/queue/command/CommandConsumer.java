@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.queue.command;
 
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -18,6 +18,14 @@ import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import pro.jiefzz.ejoker.commanding.ICommandProcessor;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
+import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateStorage;
 import pro.jiefzz.ejoker.domain.IRepository;
@@ -27,14 +35,6 @@ import pro.jiefzz.ejoker.queue.SendReplyService;
 import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueConsumer;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 @EService
 public class CommandConsumer extends AbstractEJokerQueueConsumer {

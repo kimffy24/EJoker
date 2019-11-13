@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.utils.MObjectId;
-import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
 
 public abstract class AbstractDomainException extends RuntimeException implements IDomainException, Serializable {
 

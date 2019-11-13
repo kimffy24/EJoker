@@ -1,8 +1,8 @@
 package pro.jiefzz.ejoker.utils.handlerProviderHelper;
 
+import pro.jiefzz.ejoker.common.context.annotation.assemblies.AggregateRoot;
 import pro.jiefzz.ejoker.domain.AbstractAggregateRoot;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.AggregateRootHandlerPool;
-import pro.jiefzz.ejoker.z.context.annotation.assemblies.AggregateRoot;
 
 public class RegistDomainEventHandlerHelper {
 

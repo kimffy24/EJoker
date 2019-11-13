@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.utils.genericity.GenericDefinedField;
+import pro.jiefzz.ejoker.common.utils.genericity.GenericExpression;
+import pro.jiefzz.ejoker.common.utils.genericity.GenericExpressionFactory;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.z.system.helper.Ensure;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
-import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
 
 public final class IDHelper {
 	

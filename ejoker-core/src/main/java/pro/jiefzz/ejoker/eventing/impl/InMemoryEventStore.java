@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.eventing.impl;
 
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,19 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.common.system.wrapper.LockWrapper;
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
 import pro.jiefzz.ejoker.eventing.EventAppendResult;
 import pro.jiefzz.ejoker.eventing.IEventSerializer;
 import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
-import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.LockWrapper;
 
 /**
  * 供演示和测试排错使用

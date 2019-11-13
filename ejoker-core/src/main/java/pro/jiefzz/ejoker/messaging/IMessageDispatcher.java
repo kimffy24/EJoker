@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.messaging;
 import java.util.Collection;
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 
 public interface IMessageDispatcher {
 

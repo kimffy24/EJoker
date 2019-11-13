@@ -3,12 +3,12 @@ package pro.jiefzz.ejoker.queue.skeleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.service.IScheduleService;
+import pro.jiefzz.ejoker.common.service.IWorkerService;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.service.IScheduleService;
-import pro.jiefzz.ejoker.z.service.IWorkerService;
 
 public abstract class AbstractEJokerQueueConsumer implements IWorkerService {
 

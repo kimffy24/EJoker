@@ -25,16 +25,16 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.MessageQueue;
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.RemotingException;
 
+import pro.jiefzz.ejoker.common.algorithm.ConsistentHashShard;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.task.io.IOExceptionOnRuntime;
+import pro.jiefzz.ejoker.common.system.wrapper.CountDownLatchWrapper;
+import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
-import pro.jiefzz.ejoker.z.algorithm.ConsistentHashShard;
-import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.extension.AsyncWrapperException;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.task.io.IOExceptionOnRuntime;
-import pro.jiefzz.ejoker.z.system.wrapper.CountDownLatchWrapper;
-import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
 
 /**
  * Use consistent hash algorithm to select a queue, as default.<br>

@@ -2,7 +2,7 @@ package pro.jiefzz.ejoker.eventing.qeventing;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 
 /**
  * Represents a storage to store the aggregate published event version.

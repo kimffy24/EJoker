@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.queue.domainEvent;
 import java.io.Serializable;
 import java.util.Map;
 
-import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
+import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
 
 public class EventStreamMessage implements Serializable {
 

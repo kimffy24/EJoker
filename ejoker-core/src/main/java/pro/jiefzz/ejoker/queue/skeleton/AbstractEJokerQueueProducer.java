@@ -2,14 +2,14 @@ package pro.jiefzz.ejoker.queue.skeleton;
 
 import java.util.concurrent.Future;
 
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.service.IWorkerService;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.messaging.IMessage;
 import pro.jiefzz.ejoker.messaging.IMessagePublisher;
 import pro.jiefzz.ejoker.queue.SendQueueMessageService;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.service.IWorkerService;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> implements IMessagePublisher<TMessage>, IWorkerService {
 

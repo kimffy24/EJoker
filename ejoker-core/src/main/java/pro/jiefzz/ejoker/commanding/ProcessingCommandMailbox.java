@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.commanding;
 
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
-import pro.jiefzz.ejoker.z.framework.enhance.EasyCleanMailbox;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
-import pro.jiefzz.ejoker.z.system.helper.AcquireHelper;
-import pro.jiefzz.ejoker.z.system.helper.Ensure;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.DiscardWrapper;
+import pro.jiefzz.ejoker.common.framework.enhance.EasyCleanMailbox;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jiefzz.ejoker.common.system.helper.AcquireHelper;
+import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 
 public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
