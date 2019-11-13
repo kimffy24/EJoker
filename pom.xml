@@ -1,16 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	
 	<groupId>pro.jiefzz</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>1.2.0-snapshot-3</version>
-	<name>EJoker</name>
-	<url>http://maven.apache.org</url>
+	<version>2.0.0-snapshot-3</version>
+	<packaging>pom</packaging>
 
+	<name>ejoker</name>
+    <description>EJoker is a CQRS + EventSourcing framwork</description>
+	<url>https://github.com/kimffy24/EJoker</url>
+	
+	<modules>
+		<module>ejoker-common</module>
+		<module>ejoker-core</module>
+		<module>ejoker-mq</module>
+	</modules>
+	
+    <developers>
+        <developer>
+            <name>JiefzzLon</name>
+            <email>jiefzz@aliyun.com</email>
+            <organization>x</organization>
+            <organizationUrl>http://www.example.com</organizationUrl>
+        </developer>
+    </developers>
+    
+    <scm>
+        <connection>scm:git:https://github.com/kimffy24/EJoker.git</connection>
+        <url>https://github.com/kimffy24/EJoker</url>
+        <developerConnection>scm:git:https://github.com/kimffy24/EJoker.git</developerConnection>
+    </scm>
+    
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+		
+		<version.plugin.maven-compiler-plugin>3.8.1</version.plugin.maven-compiler-plugin>
+		
+		<version.jdk>1.8</version.jdk>
+		<version.junit.jupiter>5.5.2</version.junit.jupiter>
+		<version.slf4j>1.7.25</version.slf4j>
+		
+		<version.smartjson>2.3</version.smartjson>
+		<version.netty.all>4.1.34.Final</version.netty.all>
+		<version.quasar>0.7.10</version.quasar>
+		
 	</properties>
 
 	<dependencies>
@@ -19,54 +63,15 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.5.2</version>
+			<version>${version.junit.jupiter}</version>
 			<scope>test</scope>
 		</dependency>
-
 
 		<!-- 日志组件 -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.25</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<!-- 号称最快的json包 -->
-		<dependency>
-			<groupId>net.minidev</groupId>
-			<artifactId>json-smart</artifactId>
-			<version>2.3</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-all</artifactId>
-			<version>4.1.34.Final</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-client -->
-		<dependency>
-			<groupId>org.apache.rocketmq</groupId>
-			<artifactId>rocketmq-client</artifactId>
-			<version>4.4.0</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.aliyun.openservices/ons-client -->
-		<dependency>
-			<groupId>com.aliyun.openservices</groupId>
-			<artifactId>ons-client</artifactId>
-			<version>1.7.9.Final</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
-		<dependency>
-			<groupId>co.paralleluniverse</groupId>
-			<artifactId>quasar-core</artifactId>
-			<version>0.7.10</version>
+			<version>${version.slf4j}</version>
 		</dependency>
 
 	</dependencies>
@@ -102,39 +107,6 @@
 					<generateBackupPoms>false</generateBackupPoms>
 				</configuration>
 			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
-				<configuration>
-					<source>8</source>
-					<release>8</release>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<!-- JUnit 5 requires Surefire version 2.22.0 or higher -->
-				<version>2.22.2</version>
-				<configuration>
-					<includes>
-						<include>**/T5*.java</include>
-					</includes>
-				</configuration>
-			</plugin>
-
-			<!-- <plugin> <groupId>com.github.wvengen</groupId> <artifactId>proguard-maven-plugin</artifactId> 
-				<version>2.0.11</version> <executions> <execution> <phase>package</phase> 
-				<goals> <goal>proguard</goal> </goals> </execution> </executions> <configuration> 
-				<obfuscate>true</obfuscate> <proguardInclude>${basedir}/proguard.conf</proguardInclude> 
-				添加依赖，这里你可以按你的需要修改 <libs> <lib>${java.home}/lib/rt.jar</lib> <lib>${java.home}/lib/jce.jar</lib> 
-				</libs> <addMavenDescriptor>false</addMavenDescriptor> </configuration> <dependencies> 
-				使用4.8版本来混淆 <dependency> <groupId>net.sf.proguard</groupId> <artifactId>proguard-base</artifactId> 
-				<version>6.0.3</version> <scope>runtime</scope> </dependency> </dependencies> 
-				</plugin> -->
-
 
 			<plugin>
 				<groupId>org.eclipse.m2e</groupId>

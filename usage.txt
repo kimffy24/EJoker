@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# 统一所有的.gitignore
+cat .gitignore > ejoker-common/.gitignore 
+cat .gitignore > ejoker-core/.gitignore 
+cat .gitignore > ejoker-mq/.gitignore 
+cat .gitignore > ejoker-mq/ejoker-mq-javaqueue/.gitignore 
+cat .gitignore > ejoker-mq/ejoker-mq-ons/.gitignore 
+cat .gitignore > ejoker-mq/ejoker-mq-rocketmq/.gitignore
+
+
+#group update version by maven
+mvn versions:set -DnewVersion=XX
+
+
+# 安装到随包发布的minimal仓库
+
+MINIMAL_REPOSITORY=/server/data/eclipse/jee-mars/demo/minimal-maven-repository
+VERSION=2.0.0-snapshot-3
+SOURCEROOT=/server/data/eJoker
+
+mvn deploy:deploy-file -Dfile="${SOURCEROOT}/pom.xml" -Dpackaging=pom \
+    -DgroupId=pro.jiefzz -DartifactId=ejoker -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+submodulepath="ejoker-common ejoker-core"
+for i in $submodulepath ; do
+	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${i}/pom.xml" -Dpackaging=pom \
+	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${i}/target/${i}-${VERSION}.jar" -Dpackaging=jar \
+	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+done
+
+submoduleroot="ejoker-mq"
+mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/pom.xml" -Dpackaging=pom \
+    -DgroupId=pro.jiefzz -DartifactId=${submoduleroot} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+submodulepathmq="ejoker-mq-javaqueue ejoker-mq-ons ejoker-mq-rocketmq"
+for i in $submodulepathmq ; do
+	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/${i}/pom.xml" -Dpackaging=pom \
+	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/${i}/target/${i}-${VERSION}.jar" -Dpackaging=jar \
+	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+done
