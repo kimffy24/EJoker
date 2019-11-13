@@ -1,10 +1,45 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>pro.jiefzz</groupId>
-    <artifactId>ejoker-mq</artifactId>
-    <version>${rootVersion}</version>
-  </parent>
-  <artifactId>ejoker-mq-rocketmq</artifactId>
-  <description>Use rocketmq as the message middlware</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>pro.jiefzz</groupId>
+		<artifactId>ejoker-mq</artifactId>
+		<version>2.0.0-snapshot-3</version>
+	</parent>
+	<artifactId>ejoker-mq-rocketmq</artifactId>
+	<description>Use rocketmq as the message middlware</description>
+
+	<dependencies>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-client -->
+		<dependency>
+			<groupId>org.apache.rocketmq</groupId>
+			<artifactId>rocketmq-client</artifactId>
+			<version>4.4.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${version.plugin.maven-compiler-plugin}</version>
+				<configuration>
+					<source>${version.jdk}</source>
+					<release>${version.jdk}</release>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>pro.jiefzz</groupId>
 		<artifactId>ejoker</artifactId>
-		<version>${rootVersion}</version>
+		<version>2.0.0-snapshot-3</version>
 	</parent>
 	<artifactId>ejoker-mq</artifactId>
 	<packaging>pom</packaging>
@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>pro.jiefzz</groupId>
 			<artifactId>ejoker-core</artifactId>
-			<version>${rootVersion}</version>
+			<version>2.0.0-snapshot-3</version>
 		</dependency>
 	</dependencies>
 </project>
