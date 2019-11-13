@@ -23,11 +23,12 @@ import pro.jiefzz.ejoker.z.utils.ClassNamesScanner;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.z.utils.genericity.GenericExpressionFactory;
-import pro.jiefzz.ejoker_support.equasar.EJoker;
 
 public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	
 	private final static Logger logger = LoggerFactory.getLogger(EjokerRootDefinationStore.class);
+	
+	public static final String SELF_PACKAGE_NAME = "pro.jiefzz.ejoker";
 
 	/**
 	 * EService类里面有等待被注入的属性
@@ -73,12 +74,12 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 		// ## 此段导致不同jar中的同名包会被忽略，产生意料之外的错误
 //		for ( String key : hasScanPackage )
 //			if(specificPackage.startsWith(key)) return;// 传入的包是某个已经被分析的包的子包或就是已存在的包，则不再分析
-		if ( EJoker.SELF_PACKAGE_NAME.equals(specificPackage) ) {
+		if ( SELF_PACKAGE_NAME.equals(specificPackage) ) {
 			if( !rootSkeletonScanFlag.compareAndSet(false, true) ) {
-				throw new ContextRuntimeException("Unsupport your owner package is same with " + EJoker.SELF_PACKAGE_NAME + " or scan it twice!!!");
+				throw new ContextRuntimeException("Unsupport your owner package is same with " + SELF_PACKAGE_NAME + " or scan it twice!!!");
 			}
-		} else if ( specificPackage.startsWith(EJoker.SELF_PACKAGE_NAME) ) {
-			logger.warn(" !!! YOUR owner package's name sequence in \"" + EJoker.SELF_PACKAGE_NAME + "\" maybe result is some unexcepted status!");
+		} else if ( specificPackage.startsWith(SELF_PACKAGE_NAME) ) {
+			logger.warn(" !!! YOUR owner package's name sequence in \"" + SELF_PACKAGE_NAME + "\" maybe result is some unexcepted status!");
 		}
 		
 		List<Class<?>> clazzInSpecificPackage;

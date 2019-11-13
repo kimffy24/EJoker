@@ -2,7 +2,6 @@ package pro.jiefzz.ejoker.z.system.task.context;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 import pro.jiefzz.ejoker.z.system.functional.IFunction;
 import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
@@ -16,6 +15,13 @@ import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
  */
 @EService
 public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
+	
+	// 默认 取线程数的两倍 + 1 作为线程池大小
+	private static int defaultPoolSize = Runtime.getRuntime().availableProcessors() * 2 + 1;
+	
+	public static void setDefaultPoolSize(int poolSize) {
+		defaultPoolSize = poolSize;
+	}
 
 	@Override
 	protected boolean prestartAll() {
@@ -24,7 +30,7 @@ public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
 	
 	@Override
 	protected int usePoolSize() {
-		return EJokerEnvironment.ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE;
+		return defaultPoolSize;
 	}
 
 	public Future<Void> submit(IVoidFunction vf) {
