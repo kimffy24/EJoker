@@ -3,9 +3,9 @@ package pro.jiefzz.ejoker.commanding.impl;
 import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ICommandHandlerProvider;
 import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.CommandHandlerPool;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 
 /**
  * 

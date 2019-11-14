@@ -12,16 +12,16 @@ import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandReturnType;
 import pro.jiefzz.ejoker.commanding.CommandStatus;
 import pro.jiefzz.ejoker.commanding.ICommand;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.service.IWorkerService;
+import pro.jiefzz.ejoker.common.service.rpc.IClientNodeIPAddressProvider;
+import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.service.IWorkerService;
-import pro.jiefzz.ejoker.z.service.rpc.IClientNodeIPAddressProvider;
-import pro.jiefzz.ejoker.z.service.rpc.IRPCService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
 
 @EService
 public class CommandResultProcessor implements IWorkerService {

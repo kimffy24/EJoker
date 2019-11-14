@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.queue.command;
 
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
 import java.nio.charset.Charset;
 import java.util.concurrent.Future;
@@ -9,22 +9,22 @@ import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandReturnType;
 import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ICommandService;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.service.IWorkerService;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
+import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.queue.ITopicProvider;
 import pro.jiefzz.ejoker.queue.QueueMessageTypeCode;
 import pro.jiefzz.ejoker.queue.SendQueueMessageService;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.service.IWorkerService;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.z.system.helper.Ensure;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
 
 /**
  * @author JiefzzLon

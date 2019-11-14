@@ -2,10 +2,10 @@ package pro.jiefzz.ejoker.domain.impl;
 
 import java.util.concurrent.Future;
 
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.domain.IAggregateRepository;
 import pro.jiefzz.ejoker.domain.IAggregateRepositoryProxy;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
 
 /**
  * TODO 考虑更好的，更java的实现

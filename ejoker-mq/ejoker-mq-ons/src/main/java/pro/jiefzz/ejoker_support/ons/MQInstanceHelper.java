@@ -4,8 +4,8 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.rebala
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.rebalance.AllocateMessageQueueConsistentHash;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
-import pro.jiefzz.ejoker.z.context.dev2.IEJokerSimpleContext;
-import pro.jiefzz.ejoker.z.service.Scavenger;
+import pro.jiefzz.ejoker.common.context.dev2.IEJokerSimpleContext;
+import pro.jiefzz.ejoker.common.service.Scavenger;
 
 public class MQInstanceHelper {
 

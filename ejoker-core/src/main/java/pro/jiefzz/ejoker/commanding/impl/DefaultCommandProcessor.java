@@ -14,14 +14,14 @@ import pro.jiefzz.ejoker.commanding.ICommandProcessor;
 import pro.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
 import pro.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IScheduleService;
-import pro.jiefzz.ejoker.z.service.Scavenger;
-import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IScheduleService;
+import pro.jiefzz.ejoker.common.service.Scavenger;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 
 /**
  * 默认的命令处理类<br>

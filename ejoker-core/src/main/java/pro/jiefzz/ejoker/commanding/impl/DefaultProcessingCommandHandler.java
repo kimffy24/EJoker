@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.commanding.impl;
 
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
@@ -17,6 +17,14 @@ import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import pro.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import pro.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IMemoryCache;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
@@ -29,14 +37,6 @@ import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.messaging.IApplicationMessage;
 import pro.jiefzz.ejoker.messaging.IMessagePublisher;
 import pro.jiefzz.ejoker.utils.domainExceptionHelper.DomainExceptionCodecHelper;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureUtil;
-import pro.jiefzz.ejoker.z.system.helper.StringHelper;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
-import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
 @EService
 public class DefaultProcessingCommandHandler implements IProcessingCommandHandler {

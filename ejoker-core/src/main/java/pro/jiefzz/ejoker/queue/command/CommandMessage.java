@@ -2,7 +2,7 @@ package pro.jiefzz.ejoker.queue.command;
 
 import java.io.Serializable;
 
-import pro.jiefzz.ejoker.z.context.annotation.persistent.PersistentIgnore;
+import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
 
 public class CommandMessage implements Serializable {
 

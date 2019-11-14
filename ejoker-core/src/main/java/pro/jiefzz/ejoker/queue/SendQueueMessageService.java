@@ -12,20 +12,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.Scavenger;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.functional.IFunction;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
+import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
+import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.common.system.wrapper.MixedThreadPoolExecutor;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.Scavenger;
-import pro.jiefzz.ejoker.z.system.extension.acrossSupport.EJokerFutureTaskUtil;
-import pro.jiefzz.ejoker.z.system.functional.IFunction;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.z.system.task.AsyncTaskStatus;
-import pro.jiefzz.ejoker.z.system.task.context.EJokerTaskAsyncHelper;
-import pro.jiefzz.ejoker.z.system.wrapper.MixedThreadPoolExecutor;
 
 @EService
 public class SendQueueMessageService {

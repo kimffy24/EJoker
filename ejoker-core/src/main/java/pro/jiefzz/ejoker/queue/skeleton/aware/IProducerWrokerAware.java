@@ -1,7 +1,7 @@
 package pro.jiefzz.ejoker.queue.skeleton.aware;
 
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 
 public interface IProducerWrokerAware {
 

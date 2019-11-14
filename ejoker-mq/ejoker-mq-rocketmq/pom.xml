@@ -35,7 +35,7 @@
 				<version>${version.plugin.maven-compiler-plugin}</version>
 				<configuration>
 					<source>${version.jdk}</source>
-					<release>${version.jdk}</release>
+					<target>${version.jdk}</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>

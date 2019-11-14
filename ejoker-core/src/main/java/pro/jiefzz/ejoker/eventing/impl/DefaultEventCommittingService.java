@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.eventing.impl;
 
-import static pro.jiefzz.ejoker.z.system.extension.LangUtil.await;
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +21,14 @@ import pro.jiefzz.ejoker.commanding.CommandStatus;
 import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
 import pro.jiefzz.ejoker.commanding.ProcessingCommandMailbox;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRootFactory;
 import pro.jiefzz.ejoker.domain.IAggregateStorage;
 import pro.jiefzz.ejoker.domain.IMemoryCache;
@@ -31,14 +39,6 @@ import pro.jiefzz.ejoker.eventing.EventCommittingContextMailBox;
 import pro.jiefzz.ejoker.eventing.IEventCommittingService;
 import pro.jiefzz.ejoker.eventing.IEventStore;
 import pro.jiefzz.ejoker.messaging.IMessagePublisher;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EInitialize;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.enhance.ForEachUtil;
-import pro.jiefzz.ejoker.z.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.z.system.task.context.SystemAsyncHelper;
-import pro.jiefzz.ejoker.z.system.task.io.IOHelper;
 
 @EService
 public class DefaultEventCommittingService implements IEventCommittingService {

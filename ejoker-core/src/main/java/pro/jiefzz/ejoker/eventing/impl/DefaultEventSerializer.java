@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.eventing.IEventSerializer;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
 
 /**
  * 线性化和立体化协议，此职责应该由用户自己负起，<br>

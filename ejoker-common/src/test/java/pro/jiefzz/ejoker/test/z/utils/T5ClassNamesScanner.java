@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import pro.jiefzz.ejoker.z.utils.ClassNamesScanner;
+import pro.jiefzz.ejoker.common.utils.ClassNamesScanner;
 
 class T5ClassNamesScanner {
 

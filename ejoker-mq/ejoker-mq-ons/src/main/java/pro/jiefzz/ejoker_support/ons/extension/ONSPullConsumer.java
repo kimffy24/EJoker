@@ -15,7 +15,7 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.UtilAll;
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.logging.InternalLogger;
 import com.aliyun.openservices.shade.org.apache.commons.lang3.StringUtils;
 
-import pro.jiefzz.ejoker.z.system.functional.IFunction1;
+import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 
 public class ONSPullConsumer extends ONSClientAbstract {
     final static InternalLogger LOGGER = ClientLoggerUtil.getClientLogger();

@@ -1,8 +1,8 @@
 package pro.jiefzz.ejoker.domain.impl;
 
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateRootFactory;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
 
 @EService
 public class DefaultAggregateRootFactory implements IAggregateRootFactory {

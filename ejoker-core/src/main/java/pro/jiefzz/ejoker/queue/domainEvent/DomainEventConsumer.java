@@ -6,6 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.commanding.CommandReturnType;
+import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
+import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import pro.jiefzz.ejoker.eventing.IEventSerializer;
 import pro.jiefzz.ejoker.eventing.qeventing.IEventProcessContext;
@@ -15,10 +19,6 @@ import pro.jiefzz.ejoker.queue.SendReplyService;
 import pro.jiefzz.ejoker.queue.skeleton.AbstractEJokerQueueConsumer;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jiefzz.ejoker.z.context.annotation.context.Dependence;
-import pro.jiefzz.ejoker.z.context.annotation.context.EService;
-import pro.jiefzz.ejoker.z.service.IJSONConverter;
-import pro.jiefzz.ejoker.z.system.helper.StringHelper;
 
 @EService
 public class DomainEventConsumer extends AbstractEJokerQueueConsumer {

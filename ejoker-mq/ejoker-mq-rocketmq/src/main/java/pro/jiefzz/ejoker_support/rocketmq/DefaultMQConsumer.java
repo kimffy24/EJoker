@@ -26,12 +26,12 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.common.system.functional.IFunction3;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jiefzz.ejoker.z.system.functional.IFunction3;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction2;
-import pro.jiefzz.ejoker.z.system.functional.IVoidFunction3;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer implements IConsumerWrokerAware {
 	
