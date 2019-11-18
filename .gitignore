@@ -1,7 +1,24 @@
-/target/
+# root dir
+/.idea/*
+/build/*
+/out/*
+/target/*
+/*.iml
 .DS_Store
 /.gradle
 /.classpath
 /.project
 /.settings
-build
+
+
+# sub dir
+/**/.idea/*
+/**/build/*
+/**/out/*
+/**/target/*
+/**/*.iml
+/**/.DS_Store
+/**/.gradle
+/**/.classpath
+/**/.project
+/**/.settings

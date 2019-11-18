@@ -4,9 +4,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import pro.jiefzz.ejoker.common.context.dev2.EjokerRootDefinationStore;
 import pro.jiefzz.ejoker.common.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
@@ -30,8 +27,6 @@ import pro.jiefzz.ejoker.utils.idHelper.IDHelper;
 public class EJoker {
 
 	//////  properties:
-	
-	private final static Logger logger = LoggerFactory.getLogger(EJoker.class);
 	
 	public static final String SELF_PACKAGE_NAME;
 	
@@ -74,14 +69,6 @@ public class EJoker {
 	}
 	
 	static {
-//		String packageName = EjokerContextDev2Impl.class.getName();
-//		String[] split = packageName.split("\\.");
-//		SELF_PACKAGE_NAME = split[0]
-//				+ "."
-//				+ split[1]
-//				+ "."
-//				+ split[2];
-//		logger.debug("SELF_PACNAGE_NAME = {}", SELF_PACKAGE_NAME);
 		
 		SELF_PACKAGE_NAME = EjokerRootDefinationStore.SELF_PACKAGE_NAME;
 		
