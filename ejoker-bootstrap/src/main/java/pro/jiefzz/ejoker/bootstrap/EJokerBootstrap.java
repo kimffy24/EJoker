@@ -1,6 +1,8 @@
 package pro.jiefzz.ejoker.bootstrap;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -156,7 +158,32 @@ public class EJokerBootstrap {
 			messageType = IApplicationMessage.class;
 			groupName = this.eJokerApplicationMessageGroup;
 		} else if(DomainEventConsumer.class.equals(consumerType)) {
-			messageType = IDomainEvent.class;
+			// #7 有点隐晦难懂，其实就是自己按照反射的结果组装一个Type实例。 按照反射得到的实例的结构跟这下边组装的结构是相同的。
+			messageType = new ParameterizedType() {
+				@Override
+				public Type getRawType() {
+					return IDomainEvent.class;
+				}
+				@Override
+				public Type getOwnerType() {
+					return null;
+				}
+				@Override
+				public Type[] getActualTypeArguments() {
+					return new Type[] {
+							new WildcardType() {
+								@Override
+								public Type[] getUpperBounds() {
+									return null;
+								}
+								@Override
+								public Type[] getLowerBounds() {
+									return null;
+								}
+							}
+					};
+				}
+			};
 			groupName = this.eJokerDomainEventGroup;
 		} else if(CommandConsumer.class.equals(consumerType)) {
 			messageType = ICommand.class;
