@@ -76,6 +76,11 @@ public abstract class AbstractEJokerQueueConsumer implements IWorkerService {
 		return this;
 	}
 	
+	@Override
+	public boolean isAllReady() {
+		return this.consumer.isAllReady();
+	}
+
 	abstract public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context);
 	
 	/**

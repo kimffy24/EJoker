@@ -81,6 +81,11 @@ public class CommandService implements ICommandService, IWorkerService {
 	}
 	
 	@Override
+	public boolean isAllReady() {
+		return true;
+	}
+
+	@Override
 	public Future<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
 		try {
 			return sendQueueMessageService.sendMessageAsync(

@@ -59,6 +59,11 @@ public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> imp
 				message.getItems());
 	}
 	
+	@Override
+	public boolean isAllReady() {
+		return true;
+	}
+
 	abstract protected String getMessageType(TMessage message);
 	
 	abstract protected String getRoutingKey(TMessage message);

@@ -56,7 +56,7 @@ public class SendQueueMessageService {
 					routingKey,
 					messageClass,
 					messageId,
-					messageExtensionItems.toString()
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
 				);
 		};
 		
@@ -69,7 +69,7 @@ public class SendQueueMessageService {
 					routingKey,
 					messageClass,
 					messageId,
-					messageExtensionItems.toString()
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
 				);
 		};
 
@@ -81,7 +81,8 @@ public class SendQueueMessageService {
 					routingKey,
 					messageClass,
 					messageId,
-					messageExtensionItems.toString()),
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
+					),
 				e);
 		};
 
