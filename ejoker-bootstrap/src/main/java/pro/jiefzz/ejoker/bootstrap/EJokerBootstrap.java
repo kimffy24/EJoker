@@ -21,6 +21,7 @@ import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.messaging.IApplicationMessage;
@@ -109,10 +110,29 @@ public class EJokerBootstrap {
 		this.initPublisher(ApplicationMessagePublisher.class);
 		this.initPublisher(DomainExceptionPublisher.class);
 		
-		this.initConsumer(DomainExceptionConsumer.class);
-		this.initConsumer(ApplicationMessageConsumer.class);
-		this.initConsumer(DomainEventConsumer.class);
-		this.initConsumer(CommandConsumer.class);
+		DomainExceptionConsumer domainExceptionConsumer = this.initConsumer(DomainExceptionConsumer.class);
+		ApplicationMessageConsumer applicationMessageConsumer = this.initConsumer(ApplicationMessageConsumer.class);
+		DomainEventConsumer domainEventConsumer = this.initConsumer(DomainEventConsumer.class);
+		CommandConsumer commandConsumer = this.initConsumer(CommandConsumer.class);
+		
+		logger.info("Waiting for rebalance of all comsumer...");
+		while(true) {
+			DiscardWrapper.sleepInterruptable(1000l);
+			if(!domainExceptionConsumer.isAllReady()) {
+				continue;
+			}
+			if(!applicationMessageConsumer.isAllReady()) {
+				continue;
+			}
+			if(!domainEventConsumer.isAllReady()) {
+				continue;
+			}
+			if(!commandConsumer.isAllReady()) {
+				continue;
+			}
+			
+			break;
+		}
 		
 		if(null != postInitAll)
 			postInitAll.trigger(eJokerContext);
