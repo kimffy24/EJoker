@@ -111,13 +111,15 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 	public com.aliyun.openservices.shade.com.alibaba.rocketmq.client.consumer.DefaultMQPullConsumer getRealConsumer() {
 		return this.consumer;
 	}
-	
+
+	@Override
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.messageProcessor = vf;
 	}
 
+	@Override
 	public void subscribe(String topic, String subExpression) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
@@ -125,7 +127,8 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 
 		rebalanceMonitor.setName("rebalanceMonitor-topic-" + topic);
 	}
-	
+
+	@Override
 	public void start() throws MQClientException {
 		if(!onRunning.compareAndSet(false, true))
 			throw new RuntimeException("Consumer has been started before!!!");
@@ -150,7 +153,8 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		rebalanceMonitor.start();
 		
 	}
-	
+
+	@Override
 	public void shutdown() {
 
 		onRunning.compareAndSet(true, false);
@@ -161,7 +165,8 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 
 		ONSPullConsumer.shutdown();
 	}
-	
+
+	@Override
 	public void loopInterval() {
 		
 		if(this.onPasue.get())
@@ -197,6 +202,11 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 //			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 //		this.sumbiter = sumbiter;
 //	}
+	
+	@Override
+	public boolean isAllReady() {
+		return !onPasue.get();
+	}
 	
 	/**
 	 * 1 返回值boolean是否要求流控 true:是 false:不是
