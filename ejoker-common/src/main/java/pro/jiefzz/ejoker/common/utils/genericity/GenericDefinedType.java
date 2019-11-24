@@ -8,6 +8,9 @@ import java.lang.reflect.WildcardType;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
@@ -20,6 +23,8 @@ import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
  *
  */
 public class GenericDefinedType extends GenericDefinationEssential {
+	
+	private final static Logger logger = LoggerFactory.getLogger(GenericDefinedType.class);
 	
 	/**
 	 * 是否完全具现化，具现化即所有泛型变量都被替换为实际类型<br />
@@ -55,7 +60,6 @@ public class GenericDefinedType extends GenericDefinationEssential {
 	public GenericDefinedType(Type regionTye, GenericDefination referMeta, int level) {
 		super(referMeta);
 		this.originTye = regionTye;
-		this.typeName = regionTye.getTypeName();
 		this.level = level;
 		boolean tmpHasMaterialized = true;
 		
@@ -72,7 +76,7 @@ public class GenericDefinedType extends GenericDefinationEssential {
 				isArray = true;
 				rawClazz = regionClazz.getComponentType();
 				componentTypeMeta = new GenericDefinedType(rawClazz, referMeta, level + 1);
-				// TODO 待处理: java在定义数组的时候会抹掉泛型，那么反序列化时会导致不可预测的错误
+				// TODO_ 待处理: java在定义数组的时候会抹掉泛型，那么反序列化时会导致不可预测的错误
 				// eg: 定义3个类如下
 				// public class A<T> {}
 				// public class B extends A<String> {}
@@ -87,6 +91,17 @@ public class GenericDefinedType extends GenericDefinationEssential {
 				isArray = false;
 				rawClazz = regionClazz;
 				componentTypeMeta = null;
+			}
+			
+			// fixed: 无需处理，当if (Class.class.equals(regionTye.getClass())) 满足条件时，
+			// 数组的Component声明类型不会跟任何泛型相关，那么存在两种情况
+			// 1 Component声明类型的定义本身不包含任何相关泛型，符合预期
+			// 2 Component声明类型的定义有泛型但是声明时被用户隐去了，属于不可猜测的用户意图，因此只能给适当的警告
+			{
+				TypeVariable<?>[] typeParameters = rawClazz.getTypeParameters();
+				if(null != typeParameters && 0 < typeParameters.length) {
+					logger.warn("Without Generic declare of {}, it maybe produce unpredictable errors!", regionTye.getTypeName());
+				}
 			}
 		} else if(regionTye instanceof ParameterizedType) {
 			hasGenericDeclare = true;
@@ -177,6 +192,48 @@ public class GenericDefinedType extends GenericDefinationEssential {
 		}
 		
 		allHasMaterialized = tmpHasMaterialized;
+
+		String tmpTypeName;
+		{
+			if (Class.class.equals(regionTye.getClass())) {
+				tmpTypeName = regionTye.getTypeName();
+				if(isArray)
+					tmpTypeName += "[]";
+			} else if(regionTye instanceof ParameterizedType) {
+				StringBuilder sb = new StringBuilder();
+				sb.append(rawClazz.getName());
+				sb.append('<');
+				for(GenericDefinedType pt : deliveryTypeMetasTable) {
+					sb.append(pt.typeName);
+					sb.append(GenericTypeUtil.SEPARATOR);
+				}
+				sb.append('>');
+				tmpTypeName = sb.toString().replaceFirst(GenericTypeUtil.SEPARATOR+">$", ">");
+			} else if(regionTye instanceof GenericArrayType) {
+				tmpTypeName = componentTypeMeta.typeName + "[]";
+			} else if(regionTye instanceof WildcardType) {
+				tmpTypeName = regionTye.getTypeName();
+				// 上下界只能出现其中一个
+				// 上界和和下届只要出现，都只能有1个，因此不用考虑 boundsLower[1] 或 boundsLower[1]，
+				// java语法上确定他不可能出现
+				if ( null != boundsLower && 0 < boundsLower.length) {
+					tmpTypeName += " super " + boundsLower[0].typeName;
+				} else if ( null != boundsUpper && 0 < boundsUpper.length) {
+					if(!Class.class.getName().contentEquals(boundsUpper[0].typeName))
+						tmpTypeName += " extends " + boundsUpper[0].typeName;
+				}
+			} else if(regionTye instanceof TypeVariable<?>) {
+				tmpTypeName = regionTye.getTypeName();
+				// 泛型类型表达符， 如果是反射进来的，断然是不会有$这种内部类的标识的；
+				// 面对用户可能自定义构造泛型表达式的时候，不应该出现 没完成具现化的中间态表达式
+				if(tmpTypeName.indexOf('$')>=0)
+					throw new RuntimeException("Do you ensure that this statement will happen???");
+			} else {
+				throw new RuntimeException("Do you ensure that this statement will happen???");
+			}
+		}
+		
+		typeName = tmpTypeName;
 	}
 	
 	public GenericDefinedType(Type regionTye, GenericDefination referMeta) {
@@ -269,25 +326,17 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			{
 				StringBuilder sb = new StringBuilder();
 				sb.append('?');
-				if( null != boundsUpper ) {
-					if(1 == boundsUpper.length && Object.class.getName().equals(boundsUpper[0].typeName)) {
-						; // eliminate the case  <? extends java.lang.Object>
-					} else {
+				if( null != boundsLower && 0 < boundsLower.length) {
+					sb.append(" super ");
+					sb.append(boundsLower[0].typeName);
+				} else if( null != boundsUpper && 0 < boundsUpper.length) {
+					// eliminate the case  <? extends java.lang.Object>
+					if(!Object.class.getName().equals(boundsUpper[0].typeName)) {
 						sb.append(" extends ");
-						for(GenericDefinedType upperBound : boundsUpper) {
-							sb.append(upperBound.typeName);
-							sb.append(GenericTypeUtil.SEPARATOR);
-						}
-					}
-				} else if( null != boundsLower ) {
-					sb.append("? super ");
-					for(GenericDefinedType lowerBound : boundsLower) {
-						sb.append(lowerBound.typeName);
-						sb.append(GenericTypeUtil.SEPARATOR);
+						sb.append(boundsUpper[0].typeName);
 					}
 				}
-				
-				tmpTypeName = sb.toString().replaceFirst(GenericTypeUtil.SEPARATOR + "$", "");
+				tmpTypeName = sb.toString();
 			}
 		} else if (null == rawClazz) {
 			/// this statement is satisfy for TypeVariable.
