@@ -48,8 +48,8 @@ public class SendQueueMessageService {
 			Map<String, String> messageExtensionItems)
 	{
 		IVoidFunction sa = () -> {
-			logger.error(
-					"EJoker {} message send failed, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}",
+			logger.debug(
+					"EJoker {} message send suceess, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}",
 					messageType,
 					message,
 					"ok",
