@@ -284,7 +284,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 							for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
 								queueAll += String.format("[broker=%s, qId=%s], ", rbmq.getBrokerName(), rbmq.getQueueId());
 							}
-							logger.info("Topoc[topic={}] rbalance allocate: {}", focusTopic, queueAll);
+							logger.info("Topic[topic={}] rbalance allocate: {}", focusTopic, queueAll);
 						}
 					}
 					
