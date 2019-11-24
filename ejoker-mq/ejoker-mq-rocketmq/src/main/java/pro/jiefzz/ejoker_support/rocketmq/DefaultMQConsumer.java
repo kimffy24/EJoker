@@ -32,6 +32,7 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
+import pro.jiefzz.ejoker_support.rocketmq.DefaultMQConsumer.ControlStruct;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer implements IConsumerWrokerAware {
 	
@@ -97,12 +98,14 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		postInit();
 	}
 	
+	@Override
 	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.messageProcessor = vf;
 	}
 
+	@Override
 	public void subscribe(String topic, String subExpression) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
@@ -110,32 +113,34 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 		rebalanceMonitor.setName("rebalanceMonitor-topic-" + topic);
 	}
-	
+
+	@Override
 	public void start() throws MQClientException {
 		if(!onRunning.compareAndSet(false, true))
 			throw new RuntimeException("Consumer has been started before!!!");
 		
 		super.start();
-
-		Set<MessageQueue> messageQueues = fetchSubscribeMessageQueues(focusTopic);
 		
 		matchQueue.clear();
 		dashboards.clear();
 
-		for (final MessageQueue mq : messageQueues)
-			createControlStruct(mq);
-		
-		onPasue.set(false);
-		
-		dashboards.forEach((mq, dashboard) -> {
-			dashboard.workThread.start(); 
-		});
+
+//		Set<MessageQueue> messageQueues = fetchSubscribeMessageQueues(focusTopic);
+//		for (final MessageQueue mq : messageQueues)
+//			createControlStruct(mq);
+//		
+//		onPasue.set(false);
+//		
+//		dashboards.forEach((mq, dashboard) -> {
+//			dashboard.workThread.start(); 
+//		});
 
 		processComsumedSequenceThread.start();
 		rebalanceMonitor.start();
 		
 	}
-	
+
+	@Override
 	public void shutdown() {
 
 		Thread shutdownHook = new Thread(() -> {
@@ -160,7 +165,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		});
 		shutdownHook.start();
 	}
-	
+
+	@Override
 	public void loopInterval() {
 		
 		if(!this.onRunning.get())
@@ -193,6 +199,11 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 	}
 	
+	@Override
+	public boolean isAllReady() {
+		return !onPasue.get();
+	}
+
 	/**
 	 * 1 返回值boolean是否要求流控 true:是 false:不是
 	 * 参数1 当前队列
@@ -227,20 +238,41 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			do {
 				sleepmilliSecWrapper(1000l);
 				if(loop++%30 == 0)
-					logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
+					logger.debug("consumer: {}@{}, state: initial rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
 				try {
-					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
+					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchSubscribeMessageQueues(focusTopic);
 				} catch (MQClientException e) {
-					if(onRunning.get())
-						e.printStackTrace();
+					logger.error("IOException occur while invoke DefaultMQConsumer.super.fetchSubscribeMessageQueues({})", focusTopic, e);
+					throw new RuntimeException(e);
 				}
 			} while(null == fetchMessageQueuesInBalance || fetchMessageQueuesInBalance.isEmpty());
+
+			MessageQueue firstMq = fetchMessageQueuesInBalance.iterator().next();
+			ControlStruct firstCs = createControlStruct(firstMq);
+			firstCs.workThread.start();
+			// 先注册1个消费线程到broker，onPause=true 这个状态会阻止这个线程消费的，
+			// 然后等待re-balance作用，re-balance生效后会 会更改onPause=false，消费者将开始工作
+
+			sleepmilliSecWrapper(1000l);
+			boolean isFirst = true;
+			
 			while (DefaultMQConsumer.this.onRunning.get()) {
 				
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
 					e.printStackTrace();
+				}
+				
+				if(isFirst) {
+					if(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size()) {
+						logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
+						sleepmilliSecWrapper(1000l);
+						continue;
+						// TODO 如果节点数远远多于队列数，是不是有部分一直没分配到的节点会一直load这个re-balance接口？？？
+						// 有没有一种又服务器反推的过程?
+					}
+					isFirst = false;
 				}
 
 				if (queueHash.get() != fetchMessageQueuesInBalance.hashCode()) {
@@ -319,16 +351,15 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			throw new RuntimeException(e3);
 		}
 		
-		ControlStruct cs;
-
-		matchQueue.add(mq);
-		dashboards.put(mq, cs = new ControlStruct(
+		ControlStruct cs = new ControlStruct(
 				mq,
 				consumedOffset,
 				maxOffset,
 				this::queueConsume
-			)
 		);
+
+		dashboards.put(mq, cs);
+		matchQueue.add(mq);
 		
 		return cs;
 		
@@ -367,11 +398,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			throw new RuntimeException(e);
 		}
 
-		if(0 == DefaultMQConsumer.this.queueHash.get()) {
-			// waiting for re-balance...
+		if(onPasue.get()) {
+			// waiting for re-balance ...
 			sleepmilliSecWrapper(1000l);
 			return;
 		} else if (this.queueHash.get() != controlStruct.currentMatchHash.get()) {
+			// Maybe discard on latest Processing of re-balance
 			sleepmilliSecWrapper(1000l);
 			return;
 		}
@@ -514,39 +546,39 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 		
 		private void process() {
-			boolean isFirstProcess = true;
+//			boolean isFirstProcess = true;
 			while (DefaultMQConsumer.this.onRunning.get()) {
 				
 				if(ControlStruct.this.removedFlag.get())
 					return;
 
-				if(!isFirstProcess) {
-					if(0 == DefaultMQConsumer.this.queueHash.get()) {
-						// waiting for re-balance...
-						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
-						continue;
-					} else if (DefaultMQConsumer.this.queueHash.get() != ControlStruct.this.currentMatchHash.get()) {
-						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
-						continue;
-					}
-				} else {
-					isFirstProcess = false;
-				}
-				
-				int waitingTimes = 0;
-				while (onPasue.get()) {
-					DefaultMQConsumer.this.sleepmilliSecWrapper(200l);
-					
-					if (0 == (++waitingTimes % 35))
-						logger.debug("The consumer has been pause, waiting resume... ");
-				}
-				
-				if (waitingTimes > 0) {
-					logger.debug("The consumer has been resume... ");
-					waitingTimes = 0;
-					if (!DefaultMQConsumer.this.onRunning.get())
-						return;
-				}
+//				if(!isFirstProcess) {
+//					if(0 == DefaultMQConsumer.this.queueHash.get()) {
+//						// waiting for re-balance...
+//						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
+//						continue;
+//					} else if (DefaultMQConsumer.this.queueHash.get() != ControlStruct.this.currentMatchHash.get()) {
+//						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
+//						continue;
+//					}
+//				} else {
+//					isFirstProcess = false;
+//				}
+//				
+//				int waitingTimes = 0;
+//				while (onPasue.get()) {
+//					DefaultMQConsumer.this.sleepmilliSecWrapper(200l);
+//					
+//					if (0 == (++waitingTimes % 35))
+//						logger.debug("The consumer has been pause, waiting resume... ");
+//				}
+//				
+//				if (waitingTimes > 0) {
+//					logger.debug("The consumer has been resume... ");
+//					waitingTimes = 0;
+//					if (!DefaultMQConsumer.this.onRunning.get())
+//						return;
+//				}
 				
 				try {
 					ControlStruct.this.messageHandlingJob.trigger(ControlStruct.this.mq, ControlStruct.this);
