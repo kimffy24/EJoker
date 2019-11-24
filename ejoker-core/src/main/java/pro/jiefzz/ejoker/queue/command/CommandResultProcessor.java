@@ -68,6 +68,11 @@ public class CommandResultProcessor implements IWorkerService {
 		return this;
 	}
 
+	@Override
+	public boolean isAllReady() {
+		return true;
+	}
+
 	public String getBindingAddress() {
 		if(65056 - EJokerEnvironment.REPLY_PORT == 0)
 			return clientNodeIPAddressProvider.getClientNodeIPAddress();

@@ -10,4 +10,5 @@ public interface IWorkerService {
     	return this.shutdown();
     }
     
+    public boolean isAllReady();
 }
