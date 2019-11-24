@@ -180,8 +180,16 @@ public class EJokerBootstrap {
 								public Type[] getLowerBounds() {
 									return null;
 								}
+								@Override
+								public String getTypeName() {
+									return "?";
+								}
 							}
 					};
+				}
+				@Override
+				public String getTypeName() {
+					return IDomainEvent.class.getName();
 				}
 			};
 			groupName = this.eJokerDomainEventGroup;
