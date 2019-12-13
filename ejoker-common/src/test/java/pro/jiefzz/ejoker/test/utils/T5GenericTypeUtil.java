@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.test.z.utils;
+package pro.jiefzz.ejoker.test.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -13,12 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
-import pro.jiefzz.ejoker.test.z.utils.demo.ClassA;
-import pro.jiefzz.ejoker.test.z.utils.demo.ClassB;
-import pro.jiefzz.ejoker.test.z.utils.demo.ClassC;
-import pro.jiefzz.ejoker.test.z.utils.demo.ClassD;
-import pro.jiefzz.ejoker.test.z.utils.demo.ClassE;
-import pro.jiefzz.ejoker.test.z.utils.demo.ClassF;
+import pro.jiefzz.ejoker.test.ins.ClassA;
+import pro.jiefzz.ejoker.test.ins.ClassB;
+import pro.jiefzz.ejoker.test.ins.ClassC;
+import pro.jiefzz.ejoker.test.ins.ClassD;
+import pro.jiefzz.ejoker.test.ins.ClassE;
+import pro.jiefzz.ejoker.test.ins.ClassF;
 
 class T5GenericTypeUtil {
 
