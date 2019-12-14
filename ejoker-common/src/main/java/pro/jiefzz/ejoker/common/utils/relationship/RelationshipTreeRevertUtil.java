@@ -126,7 +126,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			revertedResult = specialTypeCodec.decode(serializedValue);
 		} else if(SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
 			/// 定义为可直接序列化类型
-			revertedResult = serializedValue;
+			revertedResult = baseTypeConvert(definedClazz, serializedValue);
 		} else if (definedClazz.isEnum()) {
 			// 枚举还原
 			if(!String.class.equals(serializedValue)) {
@@ -209,6 +209,42 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			logger.error("Cannot access field!!!", e);
 			throw new RuntimeException(e);
 		}
+	}
+	
+	private Object baseTypeConvert(Class<?> definedClazz, Object target) {
+		Object res = null;
+		Class<?> targetClazz = target.getClass();
+		if(definedClazz.equals(targetClazz)) {
+			res = target;
+		} else if(Number.class.isAssignableFrom(targetClazz)) {
+			if(Long.class.equals(definedClazz) || long.class.equals(definedClazz)) {
+				res = ((Number )target).longValue();
+			} else if(Integer.class.equals(definedClazz) || int.class.equals(definedClazz)) {
+				res = ((Number )target).intValue();
+			} else if(Short.class.equals(definedClazz) || short.class.equals(definedClazz)) {
+				res = ((Number )target).shortValue();
+			} else if(Byte.class.equals(definedClazz) || byte.class.equals(definedClazz)) {
+				res = ((Number )target).byteValue();
+			} else if(Double.class.equals(definedClazz) || double.class.equals(definedClazz)) {
+				res = ((Number )target).doubleValue();
+			} else if(Float.class.equals(definedClazz) || float.class.equals(definedClazz)) {
+				res = ((Number )target).floatValue();
+			}
+		} else if(
+				(Character.class.equals(definedClazz) || char.class.equals(definedClazz)) &&
+				(Character.class.equals(targetClazz) || char.class.equals(targetClazz))
+			) {
+			res = target;
+		} else if(
+				(Boolean.class.equals(definedClazz) || boolean.class.equals(definedClazz)) &&
+				(Boolean.class.equals(targetClazz) || boolean.class.equals(targetClazz))
+			) {
+			res = target;
+		}
+
+		if(null == res)
+			throw new RuntimeException(String.format("Type convert faild!!! defined type: [%s], data type: [%s], data value: ", definedClazz.getName(), target.getClass().getName()) + target);
+		return res;
 	}
 
 	/**
