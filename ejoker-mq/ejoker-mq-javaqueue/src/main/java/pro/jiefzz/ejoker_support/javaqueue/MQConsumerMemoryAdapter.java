@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker_support.javaqueue;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
@@ -13,6 +14,8 @@ import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 
 public class MQConsumerMemoryAdapter implements ICQProvider, IConsumerWrokerAware {
+	
+	private DSH dsh = null;
 
 	private Queue<EJokerQueueMessage> queue = null;
 	
@@ -23,6 +26,8 @@ public class MQConsumerMemoryAdapter implements ICQProvider, IConsumerWrokerAwar
 	private AtomicBoolean readyFlag = new AtomicBoolean(false);
 	
 	private AtomicLong finishedAmount = new AtomicLong(0);
+	
+	private AtomicInteger sentAmount = null;
 	
 	@Override
 	public void start() throws Exception {
@@ -52,12 +57,15 @@ public class MQConsumerMemoryAdapter implements ICQProvider, IConsumerWrokerAwar
 
 	@Override
 	public void shutdown() throws Exception {
+		while(finishedAmount.get() < sentAmount.get() )
+			DiscardWrapper.sleepInterruptable(TimeUnit.MILLISECONDS, 10l);
 		shutdownFlag.set(true);
 	}
 
 	@Override
 	public void subscribe(String topic, String filter) {
-		queue = MapUtil.getOrAdd(mockMsgQueues, topic, () -> new DSH()).queue;
+		queue = (dsh = MapUtil.getOrAdd(mockMsgQueues, topic, () -> new DSH())).queue;
+		sentAmount = dsh.ai;
 	}
 
 	@Override

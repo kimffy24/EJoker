@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import pro.jiefzz.ejoker.common.system.task.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 
 public interface ICQProvider {
@@ -19,8 +20,10 @@ public interface ICQProvider {
 		public final AtomicInteger ai = new AtomicInteger(0);
 		
 		public void offer(EJokerQueueMessage msg) {
-			ai.getAndIncrement();
-			queue.offer(msg);
+			if(queue.offer(msg))
+				ai.getAndIncrement();
+			else
+				throw IOExceptionOnRuntime.encapsulation(new RuntimeException(""));
 		}
 	}
 	
