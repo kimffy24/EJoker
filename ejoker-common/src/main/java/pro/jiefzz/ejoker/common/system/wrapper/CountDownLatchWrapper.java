@@ -3,7 +3,6 @@ package pro.jiefzz.ejoker.common.system.wrapper;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 
@@ -64,8 +63,8 @@ public class CountDownLatchWrapper {
 
 	public final static void setProvider(
 			IFunction1<Object, Integer> vf,
-			IVF_await1 vf2,
-			IVF_await2 vf3,
+			_IVF_await1 vf2,
+			_IVF_await2 vf3,
 			IVoidFunction1<Object> vf4,
 			IFunction1<Long, Object> vf5
 			) {
@@ -83,9 +82,9 @@ public class CountDownLatchWrapper {
 
 	private static IFunction1<Object, Integer> provider = null;
 
-	private static IVF_await1 awaiter = null;
+	private static _IVF_await1 awaiter = null;
 
-	private static IVF_await2 awaiterLimit = null;
+	private static _IVF_await2 awaiterLimit = null;
 
 	private static IVoidFunction1<Object> countDownTrigger = null;
 
@@ -99,17 +98,17 @@ public class CountDownLatchWrapper {
 	}
 	
 
-	public static interface IVF_await1 {
+	public static interface _IVF_await1 {
 		
-		@Suspendable
+//		@Suspendable
 	    public void trigger(Object cdl) throws InterruptedException;
 		
 	}
 
 
-	public static interface IVF_await2 {
+	public static interface _IVF_await2 {
 		
-		@Suspendable
+//		@Suspendable
 	    public boolean trigger(Object cdl, Long l, TimeUnit u) throws InterruptedException;
 		
 	}

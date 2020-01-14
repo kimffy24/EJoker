@@ -26,13 +26,6 @@
 			<version>${version.netty.all}</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
-		<dependency>
-			<groupId>co.paralleluniverse</groupId>
-			<artifactId>quasar-core</artifactId>
-			<version>${version.quasar}</version>
-		</dependency>
-
 	</dependencies>
 
 	<build>

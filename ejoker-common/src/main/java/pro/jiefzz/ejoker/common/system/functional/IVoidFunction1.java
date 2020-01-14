@@ -1,12 +1,9 @@
 package pro.jiefzz.ejoker.common.system.functional;
 
-import co.paralleluniverse.fibers.Suspendable;
-
 @FunctionalInterface
-@Suspendable
 public interface IVoidFunction1<TP1> {
 
-	@Suspendable
+//	@Suspendable
 	public void trigger(TP1 p1);
 	
 }

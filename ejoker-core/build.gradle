@@ -5,7 +5,7 @@ apply plugin: 'java'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-ext.classifier      = ':jdk8' // ':'
+ext.classifier      = 'jdk8' // ':'
 ext.quasarVer       = '0.7.10'
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -33,14 +33,15 @@ repositories {
 // 给有冲突的 jar 包强制指定一个版本
 configurations.all{
     resolutionStrategy{
-        force 'org.slf4j:slf4j-api:1.7.24'
-        force 'io.netty:netty-all:4.1.34.Final'
+        force 'org.slf4j:slf4j-api:1.7.25'
+        force 'io.netty:netty-all:4.1.42.Final'
     }
 }
+
 dependencies {
 	// https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core
 	compile group: 'co.paralleluniverse', name: 'quasar-core', version: "${quasarVer}"
-    quasar "co.paralleluniverse:quasar-core:${quasarVer}${classifier}@jar"
+    // quasar "co.paralleluniverse:quasar-core:${quasarVer}:${classifier}@jar"
     
     // mvn -Dmaven.test.skip=true clean \
     //		compile \
@@ -59,7 +60,7 @@ dependencies {
     // 如果不需要使用quasar，则前4个声明周期即可构建功能完备的ejoker
     // gradle-maven-plugin:invoke 就是调用此gradle任务的起点。
     // 后一个instal则是安装已经instrumentation的包的。
-    compile "pro.jiefzz:ejoker:1.2.0-snapshot-2"
+    compile "pro.jiefzz:ejoker-common:2.0.0-snapshot-4"
     
 }
 
@@ -68,10 +69,10 @@ sourceSets {
     // 设置源代码所在目录
     main {
         java {
-            srcDirs = ['src/main/java']
+            srcDirs = ["src/main/java"]
         }
         resources {
-            srcDirs = ['src/main/resources'] // 资源目录
+            srcDirs = ["src/main/resources"] // 资源目录
         }
         output.classesDir = file('target/classes')
         output.resourcesDir = file('target/classes')
@@ -83,6 +84,17 @@ buildDir = 'target'
 
 task scanSuspendables() {
 	doFirst {
+		File iSrcFile = new File("${project.rootDir}/src/main/resources/metaInf/suspendables")
+		File iDestFile = new File("$sourceSets.main.output.resourcesDir/META-INF/suspendables")
+		(new File(iDestFile.getParent())).mkdirs()
+		iDestFile << iSrcFile.text
+		
+		File sSrcFile = new File("${project.rootDir}/src/main/resources/metaInf/suspendable-supers")
+		File sDestFile = new File("$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers")
+		(new File(sDestFile.getParent())).mkdirs()
+		sDestFile << sSrcFile.text
+	}
+	doLast {
 		ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
 		    classpath: "target/classes:${configurations.runtime.asPath}")
 		ant.scanSuspendables(
@@ -92,15 +104,6 @@ task scanSuspendables() {
 		    append: true) {
 		    fileset(dir: sourceSets.main.output.classesDir)
 		}
-	}
-	doLast {
-		File iSrcFile = new File("src/main/resources/metaInf/suspendables")
-		File iDestFile = new File("$sourceSets.main.output.resourcesDir/META-INF/suspendables")
-		iDestFile << iSrcFile.text
-		
-		File sSrcFile = new File("src/main/resources/metaInf/suspendable-supers")
-		File sDestFile = new File("$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers")
-		sDestFile << sSrcFile.text
 	}
 }
 

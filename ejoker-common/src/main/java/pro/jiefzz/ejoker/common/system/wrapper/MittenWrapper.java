@@ -3,10 +3,11 @@ package pro.jiefzz.ejoker.common.system.wrapper;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
-import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 
 /**
  * 其实可以直接使用 quasar 提供的Strand类 <br /><br /><br />
@@ -18,27 +19,27 @@ public final class MittenWrapper {
 	
 	// 代理LockSupport方法
 	
-	@Suspendable
+//	@Suspendable
 	public final static void park() {
 		action_park.trigger();
 	}
 
-	@Suspendable
+//	@Suspendable
 	public final static void park(Object broker) {
 		action_parkWithBlocker.trigger(broker);
 	}
 
-	@Suspendable
+//	@Suspendable
 	public final static void parkNanos(long nanos) {
 		action_parkNanos_1.trigger(nanos);
 	}
 
-	@Suspendable
+//	@Suspendable
 	public final static void parkNanos(Object broker, long nanos) {
 		action_parkNanos_2.trigger(broker, nanos);
 	}
 	
-	@Suspendable
+//	@Suspendable
 	public final static void parkUntil(Object broker, long nanos) {
 		action_parkUntil.trigger(broker, nanos);
 	}
@@ -98,12 +99,12 @@ public final class MittenWrapper {
 	
 	private static IFunction<Object> action_getCurrent;
 
-	private static IVoidFunction_ action_park;
-	private static IVoidFunction_Object action_parkWithBlocker;
+	private static IVoidFunction action_park;
+	private static IVoidFunction1<Object> action_parkWithBlocker;
 	private static IVoidFunction1<Object> action_unpark;
-	private static IVoidFunction_long action_parkNanos_1;
-	private static IVoidFunction_Object_long action_parkNanos_2;
-	private static IVoidFunction_Object_long action_parkUntil;
+	private static IVoidFunction1<Long> action_parkNanos_1;
+	private static IVoidFunction2<Object, Long> action_parkNanos_2;
+	private static IVoidFunction2<Object, Long> action_parkUntil;
 
 	private static IVoidFunction1<Object> action_interrupt;
 	private static IFunction1<Boolean, Object> action_isInterrupted;
@@ -115,11 +116,11 @@ public final class MittenWrapper {
 	
 	public final static void setProvider(
 			IFunction<Object> action_getCurrent,
-			IVoidFunction_ action_park,
-			IVoidFunction_Object action_parkWithBlocker,
-			IVoidFunction_long action_parkNanos_1,
-			IVoidFunction_Object_long action_parkNanos_2,
-			IVoidFunction_Object_long action_parkUntil,
+			IVoidFunction action_park,
+			IVoidFunction1<Object> action_parkWithBlocker,
+			IVoidFunction1<Long> action_parkNanos_1,
+			IVoidFunction2<Object, Long> action_parkNanos_2,
+			IVoidFunction2<Object, Long> action_parkUntil,
 			IVoidFunction1<Object> action_unpark,
 			IVoidFunction1<Object> action_interrupt,
 			IFunction1<Boolean, Object> action_isInterrupted,
@@ -142,34 +143,6 @@ public final class MittenWrapper {
 		MittenWrapper.action_isAlive = action_isAlive;
 		MittenWrapper.action_getName = action_getName;
 		MittenWrapper.action_getId = action_getId;
-		
-	}
-	
-	public interface IVoidFunction_Object_long {
-
-		@Suspendable
-		public void trigger(Object broker, long nanos);
-		
-	}
-	
-	public interface IVoidFunction_long {
-
-		@Suspendable
-		public void trigger(long nanos);
-		
-	}
-	
-	public interface IVoidFunction_Object {
-
-		@Suspendable
-		public void trigger(Object blocker);
-		
-	}
-	
-	public interface IVoidFunction_ {
-
-		@Suspendable
-		public void trigger();
 		
 	}
 }
