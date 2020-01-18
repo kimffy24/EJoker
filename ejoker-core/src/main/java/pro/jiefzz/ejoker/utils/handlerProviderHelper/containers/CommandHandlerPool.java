@@ -11,6 +11,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.commanding.AbstractCommandHandler;
 import pro.jiefzz.ejoker.commanding.CommandRuntimeException;
 import pro.jiefzz.ejoker.commanding.ICommand;
@@ -113,6 +114,7 @@ public class CommandHandlerPool {
 			return asyncHandler;
 		}
 		
+		@Suspendable
 		@Override
 		public Future<Void> handleAsync(ICommandContext context, ICommand command) {
 				try {

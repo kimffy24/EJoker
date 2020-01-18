@@ -1,18 +1,12 @@
 #!/bin/bash
 
-# 统一所有的.gitignore
-cat .gitignore > ejoker-common/.gitignore 
-cat .gitignore > ejoker-core/.gitignore 
-cat .gitignore > ejoker-bootstrap/.gitignore 
-cat .gitignore > ejoker-mq/.gitignore 
-cat .gitignore > ejoker-mq/ejoker-mq-javaqueue/.gitignore 
-cat .gitignore > ejoker-mq/ejoker-mq-ons/.gitignore 
-cat .gitignore > ejoker-mq/ejoker-mq-rocketmq/.gitignore
-
 
 #group update version by maven
-mvn versions:set -DnewVersion=XX
+#mvn versions:set -DnewVersion=XX
 
+rm -fr ~/.m2/repository/pro/
+rm -fr {.,ejoker-common,ejoker-core,ejoker-mq{,ejoker-mq-javaqueue,ejoker-mq-ons,ejoker-mq-rocketmq}}/gradle
+mvn clean install -Dmaven.test.skip=true
 
 # 安装到随包发布的minimal仓库
 
@@ -22,21 +16,25 @@ SOURCEROOT=/server/data/eJoker
 
 mvn deploy:deploy-file -Dfile="${SOURCEROOT}/pom.xml" -Dpackaging=pom \
     -DgroupId=pro.jiefzz -DartifactId=ejoker -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+
 submodulepath="ejoker-common ejoker-core ejoker-bootstrap"
 for i in $submodulepath ; do
-	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${i}/pom.xml" -Dpackaging=pom \
-	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
 	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${i}/target/${i}-${VERSION}.jar" -Dpackaging=jar \
+	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${i}/pom.xml" -Dpackaging=pom \
 	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
 done
 
 submoduleroot="ejoker-mq"
 mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/pom.xml" -Dpackaging=pom \
     -DgroupId=pro.jiefzz -DartifactId=${submoduleroot} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+
 submodulepathmq="ejoker-mq-javaqueue ejoker-mq-ons ejoker-mq-rocketmq"
 for i in $submodulepathmq ; do
-	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/${i}/pom.xml" -Dpackaging=pom \
-	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
 	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/${i}/target/${i}-${VERSION}.jar" -Dpackaging=jar \
 	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
+	mvn deploy:deploy-file -Dfile="${SOURCEROOT}/${submoduleroot}/${i}/pom.xml" -Dpackaging=pom \
+	    -DgroupId=pro.jiefzz -DartifactId=${i} -Dversion=${VERSION} -Durl=file:${MINIMAL_REPOSITORY}/ -DrepositoryId=minimal-maven-repository -DupdateReleaseInfo=true -DgeneratePom=false
 done
+
+rm -fr ~/.m2/repository/pro/

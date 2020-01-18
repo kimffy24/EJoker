@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker.common.system.wrapper;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
+import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
@@ -19,27 +20,27 @@ public final class MittenWrapper {
 	
 	// 代理LockSupport方法
 	
-//	@Suspendable
+	@Suspendable
 	public final static void park() {
 		action_park.trigger();
 	}
 
-//	@Suspendable
+	@Suspendable
 	public final static void park(Object broker) {
 		action_parkWithBlocker.trigger(broker);
 	}
 
-//	@Suspendable
+	@Suspendable
 	public final static void parkNanos(long nanos) {
 		action_parkNanos_1.trigger(nanos);
 	}
 
-//	@Suspendable
+	@Suspendable
 	public final static void parkNanos(Object broker, long nanos) {
 		action_parkNanos_2.trigger(broker, nanos);
 	}
 	
-//	@Suspendable
+	@Suspendable
 	public final static void parkUntil(Object broker, long nanos) {
 		action_parkUntil.trigger(broker, nanos);
 	}

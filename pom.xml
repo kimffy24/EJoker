@@ -74,6 +74,20 @@
 			<version>${version.slf4j}</version>
 		</dependency>
 
+		<!-- 号称最快的json包 -->
+		<dependency>
+			<groupId>net.minidev</groupId>
+			<artifactId>json-smart</artifactId>
+			<version>${version.smartjson}</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>${version.netty.all}</version>
+		</dependency>
+
 	</dependencies>
 
 

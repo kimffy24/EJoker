@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker.common.system.wrapper;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 
@@ -100,7 +101,7 @@ public class CountDownLatchWrapper {
 
 	public static interface _IVF_await1 {
 		
-//		@Suspendable
+		@Suspendable
 	    public void trigger(Object cdl) throws InterruptedException;
 		
 	}
@@ -108,7 +109,7 @@ public class CountDownLatchWrapper {
 
 	public static interface _IVF_await2 {
 		
-//		@Suspendable
+		@Suspendable
 	    public boolean trigger(Object cdl, Long l, TimeUnit u) throws InterruptedException;
 		
 	}
