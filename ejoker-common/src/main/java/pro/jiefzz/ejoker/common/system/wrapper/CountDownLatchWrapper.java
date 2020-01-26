@@ -2,10 +2,13 @@ package pro.jiefzz.ejoker.common.system.wrapper;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.CountDownLatchProviderContext;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler._IVF_await1;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler._IVF_await2;
 
 public class CountDownLatchWrapper {
 
@@ -61,25 +64,8 @@ public class CountDownLatchWrapper {
 	public final long getCount(Object handle) {
 		return countGetter.trigger(handle);
 	}
-
-	public final static void setProvider(
-			IFunction1<Object, Integer> vf,
-			_IVF_await1 vf2,
-			_IVF_await2 vf3,
-			IVoidFunction1<Object> vf4,
-			IFunction1<Long, Object> vf5
-			) {
-		if (hasRedefined)
-			throw new RuntimeException("CountDownLatchWrapper has been set before!!!");
-		hasRedefined = true;
-		provider = vf;
-		awaiter = vf2;
-		awaiterLimit = vf3;
-		countDownTrigger = vf4;
-		countGetter = vf5;
-	}
 	
-	private static boolean hasRedefined = false;
+	private static AtomicBoolean hasRedefined = new AtomicBoolean(false);
 
 	private static IFunction1<Object, Integer> provider = null;
 
@@ -96,21 +82,35 @@ public class CountDownLatchWrapper {
 		awaiter = o -> ((CountDownLatch) o).await();
 		countDownTrigger = o -> ((CountDownLatch) o).countDown();
 		awaiterLimit = (o, l, u) -> ((CountDownLatch )o).await(l, u);
-	}
-	
-
-	public static interface _IVF_await1 {
+		countGetter = o -> ((CountDownLatch )o).getCount();
 		
-		@Suspendable
-	    public void trigger(Object cdl) throws InterruptedException;
+		WrapperAssembler.setCountDownLatchProviderContext(new CountDownLatchProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2newCDL(IFunction1<Object, Integer> vf) {
+				provider=vf;
+			}
+			@Override
+			public void apply2await(_IVF_await1 vf2) {
+				awaiter = vf2;
+			}
+			@Override
+			public void apply2await(_IVF_await2 vf3) {
+				awaiterLimit = vf3;
+			}
+			@Override
+			public void apply2countDown(IVoidFunction1<Object> vf4) {
+				countDownTrigger = vf4;
+			}
+			@Override
+			public void apply2countGetter(IFunction1<Long, Object> vf5) {
+				countGetter = vf5;
+			}
+		});
 		
-	}
-
-
-	public static interface _IVF_await2 {
-		
-		@Suspendable
-	    public boolean trigger(Object cdl, Long l, TimeUnit u) throws InterruptedException;
 		
 	}
 }

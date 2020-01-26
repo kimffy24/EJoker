@@ -1,9 +1,12 @@
 package pro.jiefzz.ejoker.common.system.wrapper;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.DiscardProviderContext;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler._IVF2_TimeUnit_long;
 
 public class DiscardWrapper {
 	
@@ -45,23 +48,30 @@ public class DiscardWrapper {
 	public static void sleep(TimeUnit unit, long millis) throws InterruptedException {
 		vf2.trigger(unit, millis);
 	}
-
-	public final static void setProvider(_IVF2_TimeUnit_long vf2, IFunction<Boolean> interruptedAction) {
-		DiscardWrapper.vf2 = vf2;
-		DiscardWrapper.interruptedAction  =interruptedAction;
-	}
+	
+	private static AtomicBoolean hasRedefined = new AtomicBoolean(false);
 	
 	private static _IVF2_TimeUnit_long vf2;
 	
 	private static IFunction<Boolean> interruptedAction;
 	
-	public static interface _IVF2_TimeUnit_long {
-		@Suspendable
-		public void trigger(TimeUnit u, long l) throws InterruptedException;
-	}
-	
 	static {
 		vf2 = (u, l) -> Thread.sleep(u.toMillis(l));;
 		interruptedAction = Thread::interrupted;
+		
+		WrapperAssembler.setDiscardProviderContext(new DiscardProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2interrupted(IFunction<Boolean> interruptedAction) {
+				DiscardWrapper.interruptedAction = interruptedAction;
+			}
+			@Override
+			public void apply2discard(_IVF2_TimeUnit_long vf2) {
+				DiscardWrapper.vf2 = vf2;
+			}
+		});
 	}
 }

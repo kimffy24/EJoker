@@ -5,6 +5,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.LockProviderContext;
 
 public final class LockWrapper {
 
@@ -16,14 +17,18 @@ public final class LockWrapper {
 	
 	private static IFunction<Lock> lockCreator = null;
 	
-	public final static void setProvider(
-			IFunction<Lock> lockCreator) {
-		if (!hasRedefined.compareAndSet(false, true))
-			throw new RuntimeException("LockWrapper has been set before!!!");
-		LockWrapper.lockCreator = lockCreator;
-	}
-	
 	static {
 		lockCreator = ReentrantLock::new;
+		
+		WrapperAssembler.setLockProviderContext(new LockProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2lockCreator(IFunction<Lock> lockCreator) {
+				LockWrapper.lockCreator = lockCreator;
+			}
+		});
 	}
 }
