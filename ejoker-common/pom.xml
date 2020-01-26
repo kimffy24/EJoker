@@ -11,12 +11,6 @@
 	<artifactId>ejoker-common</artifactId>
 
 	<dependencies>
-		
-		<dependency>
-			<groupId>co.paralleluniverse</groupId>
-			<artifactId>quasar-core</artifactId>
-			<version>${version.quasar}</version>
-		</dependency>
 
 	</dependencies>
 
@@ -84,27 +78,6 @@
 					<target>${version.jdk}</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.fortasoft</groupId>
-				<artifactId>gradle-maven-plugin</artifactId>
-				<version>1.0.8</version>
-				<configuration>
-					<args>--refresh-dependencies</args>
-					<tasks>
-						<task>scanSuspendables</task>
-						<task>compileJava</task>
-					</tasks>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>compile</phase>
-						<goals>
-							<goal>invoke</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			
 			<plugin>
