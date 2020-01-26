@@ -1,8 +1,9 @@
 package pro.jiefzz.ejoker.common.system.task.io;
 
+import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
+
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
@@ -440,6 +442,7 @@ public class IOHelper {
 	 * 如果自己实现loopAction的话请务必在自定义的loopAction中执行当前调用
 	 * @param externalContext
 	 */
+	@Suspendable
 	public <T> void taskContinueAction(IOHelperContext<T> externalContext) {
 		
 		Future<AsyncTaskResult<T>> task = null;
@@ -448,15 +451,12 @@ public class IOHelper {
 		try {
 			try {
 				task = externalContext.mainAction.trigger();
-				result = task.get();
-			} catch (RuntimeException|InterruptedException|ExecutionException ex) {
-				Exception cause;
-				if(ex instanceof AsyncWrapperException || ex instanceof ExecutionException) {
-					cause = AsyncWrapperException.getActuallyCause(ex);
-				} else {
-					cause = (Exception )ex.getCause();
-				}
-				processTaskException(externalContext, null == cause ? ex : cause);
+				result = await(task);//task.get();
+			} catch (RuntimeException ex) {
+				Exception cause = (ex instanceof AsyncWrapperException)
+						? AsyncWrapperException.getActuallyCause(ex)
+								: ex;
+				processTaskException(externalContext, cause);
 				return;
 			}
 			if (task.isCancelled()) {
@@ -548,14 +548,14 @@ public class IOHelper {
 					ex);
 			executeRetryAction(externalContext);
 		} else {
+			logger.error(
+					String.format(
+							"Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
+							externalContext.actionName,
+							externalContext.contextInfo.trigger(),
+							externalContext.currentRetryTimes),
+					ex);
 			if (externalContext.retryWhenFailed) {
-				logger.error(
-						String.format(
-								"Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
-								externalContext.actionName,
-								externalContext.contextInfo.trigger(),
-								externalContext.currentRetryTimes),
-						ex);
 				executeRetryAction(externalContext);
 			} else {
 				executeFailedAction(externalContext, ex);

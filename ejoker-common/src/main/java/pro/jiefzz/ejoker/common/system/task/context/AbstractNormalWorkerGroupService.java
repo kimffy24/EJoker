@@ -11,6 +11,8 @@ import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.task.IAsyncEntrance;
 import pro.jiefzz.ejoker.common.system.task.defaultProvider.SystemAsyncPool;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.AsyncEntranceProviderContext;
 
 public abstract class AbstractNormalWorkerGroupService {
 
@@ -24,7 +26,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	@EInitialize(priority = 5)
 	private void init() {
 
-		if (lock.compareAndSet(false, true)) {
+		if (hasRedefined.compareAndSet(false, true)) {
 			AsyncEntranceProvider = AbstractNormalWorkerGroupService::getDefaultThreadPool;
 		}
 
@@ -39,29 +41,24 @@ public abstract class AbstractNormalWorkerGroupService {
 
 	protected abstract boolean prestartAll();
 
-//	protected <T> Future<T> submitInternal(IFunction<T> vf) {
-//		return asyncPool.execute(vf::trigger);
-//	}
-//
-//	protected Future<Void> submitInternal(IVoidFunction vf) {
-//		return asyncPool.execute(() -> {
-//			vf.trigger();
-//			return null;
-//		});
-//	}
-
 	protected static IAsyncEntrance getDefaultThreadPool(AbstractNormalWorkerGroupService service) {
 		return new SystemAsyncPool(service.usePoolSize(), service.prestartAll());
 	}
 
-	private static AtomicBoolean lock = new AtomicBoolean(false);
+	private static AtomicBoolean hasRedefined = new AtomicBoolean(false);
 
 	private static IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> AsyncEntranceProvider = null;
 
-	public static void setAsyncEntranceProvider(IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> f) {
-		if (!lock.compareAndSet(false, true))
-			throw new RuntimeException("AsyncEntranceProvider has been set before!!!");
-		AsyncEntranceProvider = f;
+	static {
+		WrapperAssembler.setASyncEntranceProviderContext(new AsyncEntranceProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2asyncEntranceProvider(IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> f) {
+				AbstractNormalWorkerGroupService.AsyncEntranceProvider = f;
+			}
+		});
 	}
-
 }

@@ -15,12 +15,7 @@ import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import co.paralleluniverse.strands.concurrent.ReentrantReadWriteLock;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.task.IAsyncEntrance;
-import pro.jiefzz.ejoker.common.system.task.context.AbstractNormalWorkerGroupService;
-import pro.jiefzz.ejoker.common.system.wrapper.CountDownLatchWrapper;
-import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
-import pro.jiefzz.ejoker.common.system.wrapper.LockWrapper;
-import pro.jiefzz.ejoker.common.system.wrapper.MittenWrapper;
-import pro.jiefzz.ejoker.common.system.wrapper.RWLockWrapper;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler;
 
 public class EJoker extends pro.jiefzz.ejoker.EJoker {
 
@@ -52,7 +47,7 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 	 */
 	private final static void useQuasar() {
 		
-		MittenWrapper.setProvider(
+		WrapperAssembler.setMittenProvider(
 				Strand::currentStrand,
 				() -> {
 					try {
@@ -84,7 +79,7 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 				},
 				(broker, nanos) -> {
 					try {
-						Strand.parkNanos(broker, nanos);
+						Strand.parkUntil(broker, nanos);
 					} catch (SuspendExecution s) {
 						throw new AssertionError(s);
 					}
@@ -96,15 +91,18 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 				s -> ((Strand )s).getName(),
 				s -> ((Strand )s).getId());
 		
-		DiscardWrapper.setProvider((u, l) -> {
-			try {
-				Strand.sleep(l, u);
-			} catch (SuspendExecution s) {
-				throw new AssertionError(s);
-			}
-		}, Strand::interrupted);
+		WrapperAssembler.setDiscardProvider(
+				(u, l) -> {
+					try {
+						Strand.sleep(l, u);
+					} catch (SuspendExecution s) {
+						throw new AssertionError(s);
+					}
+				},
+				Strand::interrupted
+		);
 		
-		AbstractNormalWorkerGroupService.setAsyncEntranceProvider(s -> new IAsyncEntrance() {
+		WrapperAssembler.setASyncEntranceProvider(s -> new IAsyncEntrance() {
 			
 			@Override
 			public void shutdown() {
@@ -135,12 +133,11 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 			
 		});
 		
-		LockWrapper.setProvider(ReentrantLock::new);
+		WrapperAssembler.setLockProvider(ReentrantLock::new);
 		
-		RWLockWrapper.setProvider(ReentrantReadWriteLock::new);
-		
+		WrapperAssembler.setRWLockProvider(ReentrantReadWriteLock::new);
 
-		CountDownLatchWrapper.setProvider(
+		WrapperAssembler.setCountDownLatchProvider(
 				CountDownLatch::new,
 				o -> ((CountDownLatch )o).await(),
 				(o, l, u) -> ((CountDownLatch )o).await(l, u),

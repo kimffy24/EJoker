@@ -3,7 +3,6 @@ package pro.jiefzz.ejoker.common.system.functional;
 import co.paralleluniverse.fibers.Suspendable;
 
 @FunctionalInterface
-@Suspendable
 public interface IVoidFunction5<TP1, TP2, TP3, TP4, TP5> {
 
 	@Suspendable

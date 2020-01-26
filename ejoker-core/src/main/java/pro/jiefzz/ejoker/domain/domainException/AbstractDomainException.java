@@ -21,6 +21,11 @@ public abstract class AbstractDomainException extends RuntimeException implement
 	private Map<String, String> items;
 	
 	public AbstractDomainException() {
+        this("Domain exception.");
+    }
+	
+	public AbstractDomainException(String msg) {
+		super(msg);
         id = MObjectId.get().toHexString();
         timestamp = System.currentTimeMillis();
         items = new HashMap<>();

@@ -32,7 +32,6 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jiefzz.ejoker_support.rocketmq.DefaultMQConsumer.ControlStruct;
 
 public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer implements IConsumerWrokerAware {
 	

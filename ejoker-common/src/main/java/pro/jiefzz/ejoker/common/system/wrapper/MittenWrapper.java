@@ -6,7 +6,10 @@ import java.util.concurrent.locks.LockSupport;
 import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
+import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.MittenProviderContext;
 
 /**
  * 其实可以直接使用 quasar 提供的Strand类 <br /><br /><br />
@@ -80,6 +83,7 @@ public final class MittenWrapper {
 	
 	static {
 
+		// default action;
 		action_park = LockSupport::park;
 		action_parkWithBlocker = LockSupport::park;
 		action_parkNanos_1 = LockSupport::parkNanos;
@@ -94,16 +98,72 @@ public final class MittenWrapper {
 		action_getName = o -> ((Thread )o).getName();
 		action_getId = o -> ((Thread )o).getId();
 		
+		WrapperAssembler.setMittenProviderContext(new MittenProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2park(IVoidFunction action_park) {
+				MittenWrapper.action_park = action_park;
+			}
+			@Override
+			public void apply2parkWithBlocker(IVoidFunction1<Object> action_parkWithBlocker) {
+				MittenWrapper.action_parkWithBlocker = action_parkWithBlocker;
+			}
+			@Override
+			public void apply2parkNanos(IVoidFunction1<Long> action_parkNanos_1) {
+				MittenWrapper.action_parkNanos_1 = action_parkNanos_1;
+			}
+			@Override
+			public void apply2parkNanos(IVoidFunction2<Object, Long> action_parkNanos_2) {
+				MittenWrapper.action_parkNanos_2 = action_parkNanos_2;
+			}
+			@Override
+			public void apply2parkUntil(IVoidFunction2<Object, Long> action_parkUntil) {
+				MittenWrapper.action_parkUntil = action_parkUntil;
+			}
+			@Override
+			public void apply2unpark(IVoidFunction1<Object> action_unpark) {
+				MittenWrapper.action_unpark = action_unpark;
+			}
+			
+			@Override
+			public void apply2getCurrent(IFunction<Object> action_getCurrent) {
+				MittenWrapper.action_getCurrent = action_getCurrent;
+			}
+			@Override
+			public void apply2interrupt(IVoidFunction1<Object> action_interrupt) {
+				MittenWrapper.action_interrupt = action_interrupt;
+			}
+			@Override
+			public void apply2isInterrupted(IFunction1<Boolean, Object> action_isInterrupted) {
+				MittenWrapper.action_isInterrupted = action_isInterrupted;
+			}
+			@Override
+			public void apply2isAlive(IFunction1<Boolean, Object> action_isAlive) {
+				MittenWrapper.action_isAlive = action_isAlive;
+			}
+			@Override
+			public void apply2getName(IFunction1<String, Object> action_getName) {
+				MittenWrapper.action_getName = action_getName;
+			}
+			@Override
+			public void apply2getId(IFunction1<Long, Object> action_getId) {
+				MittenWrapper.action_getId = action_getId;
+			}
+			
+		});
 	}
 	
 	private static IFunction<Object> action_getCurrent;
 
-	private static IVoidFunction_ action_park;
-	private static IVoidFunction_Object action_parkWithBlocker;
+	private static IVoidFunction action_park;
+	private static IVoidFunction1<Object> action_parkWithBlocker;
 	private static IVoidFunction1<Object> action_unpark;
-	private static IVoidFunction_long action_parkNanos_1;
-	private static IVoidFunction_Object_long action_parkNanos_2;
-	private static IVoidFunction_Object_long action_parkUntil;
+	private static IVoidFunction1<Long> action_parkNanos_1;
+	private static IVoidFunction2<Object, Long> action_parkNanos_2;
+	private static IVoidFunction2<Object, Long> action_parkUntil;
 
 	private static IVoidFunction1<Object> action_interrupt;
 	private static IFunction1<Boolean, Object> action_isInterrupted;
@@ -112,64 +172,4 @@ public final class MittenWrapper {
 	private static IFunction1<Long, Object> action_getId;
 	
 	private final static AtomicBoolean hasRedefined = new AtomicBoolean(false);
-	
-	public final static void setProvider(
-			IFunction<Object> action_getCurrent,
-			IVoidFunction_ action_park,
-			IVoidFunction_Object action_parkWithBlocker,
-			IVoidFunction_long action_parkNanos_1,
-			IVoidFunction_Object_long action_parkNanos_2,
-			IVoidFunction_Object_long action_parkUntil,
-			IVoidFunction1<Object> action_unpark,
-			IVoidFunction1<Object> action_interrupt,
-			IFunction1<Boolean, Object> action_isInterrupted,
-			IFunction1<Boolean, Object> action_isAlive,
-			IFunction1<String, Object> action_getName,
-			IFunction1<Long, Object> action_getId) {
-		if (!hasRedefined.compareAndSet(false, true))
-			throw new RuntimeException("MittenWrapper has been set before!!!");
-		
-		MittenWrapper.action_getCurrent = action_getCurrent;
-		MittenWrapper.action_park = action_park;
-		MittenWrapper.action_parkWithBlocker = action_parkWithBlocker;
-		MittenWrapper.action_parkNanos_1 = action_parkNanos_1;
-		MittenWrapper.action_parkNanos_2 = action_parkNanos_2;
-		MittenWrapper.action_parkUntil = action_parkUntil;
-		MittenWrapper.action_unpark = action_unpark;
-		
-		MittenWrapper.action_interrupt = action_interrupt;
-		MittenWrapper.action_isInterrupted = action_isInterrupted;
-		MittenWrapper.action_isAlive = action_isAlive;
-		MittenWrapper.action_getName = action_getName;
-		MittenWrapper.action_getId = action_getId;
-		
-	}
-	
-	public interface IVoidFunction_Object_long {
-
-		@Suspendable
-		public void trigger(Object broker, long nanos);
-		
-	}
-	
-	public interface IVoidFunction_long {
-
-		@Suspendable
-		public void trigger(long nanos);
-		
-	}
-	
-	public interface IVoidFunction_Object {
-
-		@Suspendable
-		public void trigger(Object blocker);
-		
-	}
-	
-	public interface IVoidFunction_ {
-
-		@Suspendable
-		public void trigger();
-		
-	}
 }

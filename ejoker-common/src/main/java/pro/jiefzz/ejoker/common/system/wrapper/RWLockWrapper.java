@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.RWLockProviderContext;
 
 public final class RWLockWrapper {
 	
@@ -16,15 +17,19 @@ public final class RWLockWrapper {
 		return lockCreator.trigger();
 	}
 	
-	public final static void setProvider(
-			IFunction<ReadWriteLock> lockCreator) {
-		if (!hasRedefined.compareAndSet(false, true))
-			throw new RuntimeException("RWLockWrapper has been set before!!!");
-		RWLockWrapper.lockCreator = lockCreator;
-	}
-	
 	static {
 		lockCreator = ReentrantReadWriteLock::new;
+		
+		WrapperAssembler.setRWLockProviderContext(new RWLockProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2rwLockCreator(IFunction<ReadWriteLock> lockCreator) {
+				RWLockWrapper.lockCreator = lockCreator;
+			}
+		});
 	}
 	
 }

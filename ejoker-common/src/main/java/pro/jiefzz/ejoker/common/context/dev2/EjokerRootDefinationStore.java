@@ -79,7 +79,8 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 				throw new ContextRuntimeException("Unsupport your owner package is same with " + SELF_PACKAGE_NAME + " or scan it twice!!!");
 			}
 		} else if ( specificPackage.startsWith(SELF_PACKAGE_NAME) ) {
-			logger.warn(" !!! YOUR owner package's name sequence in \"" + SELF_PACKAGE_NAME + "\" maybe result is some unexcepted status!");
+			if( !specificPackage.endsWith("defaultMemoryImpl") )
+				logger.warn(" !!! YOUR owner package's name sequence in \"" + SELF_PACKAGE_NAME + "\" maybe result is some unexcepted status!");
 		}
 		
 		List<Class<?>> clazzInSpecificPackage;

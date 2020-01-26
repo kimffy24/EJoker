@@ -1,9 +1,12 @@
 package pro.jiefzz.ejoker.common.system.wrapper;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler.DiscardProviderContext;
+import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler._IVF2_TimeUnit_long;
 
 public class DiscardWrapper {
 	
@@ -15,7 +18,7 @@ public class DiscardWrapper {
 	 * @param millis
 	 */
 	@Suspendable
-	public final static void sleepInterruptable(Long millis) {
+	public static void sleepInterruptable(long millis) {
 		sleepInterruptable(TimeUnit.MILLISECONDS, millis);
 	}
 	
@@ -28,7 +31,7 @@ public class DiscardWrapper {
 	 * @param millis
 	 */
 	@Suspendable
-	public final static void sleepInterruptable(TimeUnit unit, Long millis) {
+	public static void sleepInterruptable(TimeUnit unit, long millis) {
 		try {
 			sleep(unit, millis);
 		} catch (InterruptedException e) {
@@ -37,31 +40,38 @@ public class DiscardWrapper {
 	}
 
 	@Suspendable
-	public final static void sleep(Long millis) throws InterruptedException {
+	public static void sleep(long millis) throws InterruptedException {
 		sleep(TimeUnit.MILLISECONDS, millis);
 	}
 
 	@Suspendable
-	public final static void sleep(TimeUnit unit, Long millis) throws InterruptedException {
+	public static void sleep(TimeUnit unit, long millis) throws InterruptedException {
 		vf2.trigger(unit, millis);
 	}
-
-	public final static void setProvider(IVoidFunction2_TimeUnit_Long vf2, IFunction<Boolean> interruptedAction) {
-		DiscardWrapper.vf2 = vf2;
-		DiscardWrapper.interruptedAction  =interruptedAction;
-	}
 	
-	private static IVoidFunction2_TimeUnit_Long vf2;
+	private static AtomicBoolean hasRedefined = new AtomicBoolean(false);
+	
+	private static _IVF2_TimeUnit_long vf2;
 	
 	private static IFunction<Boolean> interruptedAction;
 	
-	public static interface IVoidFunction2_TimeUnit_Long {
-		@Suspendable
-		public void trigger(TimeUnit u, Long l) throws InterruptedException;
-	}
-	
 	static {
-		vf2 = TimeUnit::sleep;
+		vf2 = (u, l) -> Thread.sleep(u.toMillis(l));;
 		interruptedAction = Thread::interrupted;
+		
+		WrapperAssembler.setDiscardProviderContext(new DiscardProviderContext() {
+			@Override
+			public boolean hasBeesSet() {
+				return !hasRedefined.compareAndSet(false, true);
+			}
+			@Override
+			public void apply2interrupted(IFunction<Boolean> interruptedAction) {
+				DiscardWrapper.interruptedAction = interruptedAction;
+			}
+			@Override
+			public void apply2discard(_IVF2_TimeUnit_long vf2) {
+				DiscardWrapper.vf2 = vf2;
+			}
+		});
 	}
 }

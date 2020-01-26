@@ -10,8 +10,7 @@
 	</parent>
 	<artifactId>ejoker-core</artifactId>
 	<packaging>jar</packaging>
-	<name>ejoker core framework</name>
-	
+
 	<dependencies>
 
 		<dependency>
@@ -20,10 +19,63 @@
 			<version>2.0.0-snapshot-4</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
+		<dependency>
+			<groupId>co.paralleluniverse</groupId>
+			<artifactId>quasar-core</artifactId>
+			<version>${version.quasar}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>co.paralleluniverse</groupId>
+			<artifactId>quasar-core</artifactId>
+			<version>${version.quasar}</version>
+			<classifier>jdk8</classifier>
+		</dependency>
+
 	</dependencies>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.eclipse.m2e</groupId>
+				<artifactId>lifecycle-mapping</artifactId>
+				<version>1.0.0</version>
+				<configuration>
+					<lifecycleMappingMetadata>
+						<pluginExecutions>
+							<pluginExecution>
+								<pluginExecutionFilter>
+									<groupId>org.apache.maven.plugins</groupId>
+									<artifactId>maven-dependency-plugin</artifactId>
+									<versionRange>[2.8,)</versionRange>
+									<goals>
+										<goal>properties</goal>
+									</goals>
+								</pluginExecutionFilter>
+								<action>
+									<ignore />
+								</action>
+							</pluginExecution>
+						</pluginExecutions>
+					</lifecycleMappingMetadata>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>getClasspathFilenames</id>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+						<phase>initialize</phase>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -34,7 +86,49 @@
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>instrument-classes</id>
+						<phase>compile</phase>
+						<configuration>
+							<tasks>
+								<property name="ant_classpath"
+									refid="maven.dependency.classpath" />
+								<taskdef name="scanSuspendables"
+									classname="co.paralleluniverse.fibers.instrument.SuspendablesScanner"
+									classpath="${ant_classpath}" />
+								<scanSuspendables auto="true" append="true"
+									supersFile="${project.build.directory}/classes/META-INF/suspendable-supers"
+									suspendablesFile="${project.build.directory}/classes/META-INF/suspendables">
+									<fileset dir="${project.build.directory}/classes/"
+										includes="**/*.class" />
+									<fileset dir="${basedir}/../ejoker-common/target/classes/"
+										includes="**/*.class" />
+								</scanSuspendables>
+								<!-- uncomment it to make AOT instrument work -->
+								<!-- <taskdef name="instrumentationTask"
+									classname="co.paralleluniverse.fibers.instrument.InstrumentationTask"
+									classpath="${ant_classpath}" />
+								<delete file="${basedir}/../ejoker-common/target/classes/co" />
+								<instrumentationTask verbose="true"
+									check="true" debug="true">
+									<fileset dir="${project.build.directory}/classes/"
+										includes="**/*.class" />
+								</instrumentationTask> -->
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
-	
+
 </project>
