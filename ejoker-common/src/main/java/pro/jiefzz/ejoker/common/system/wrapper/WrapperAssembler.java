@@ -10,6 +10,8 @@ import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
+import pro.jiefzz.ejoker.common.system.task.IAsyncEntrance;
+import pro.jiefzz.ejoker.common.system.task.context.AbstractNormalWorkerGroupService;
 
 public final class WrapperAssembler {
 	
@@ -194,6 +196,28 @@ public final class WrapperAssembler {
 	
 	
 	
+	/* IASyncEntrance Provider Area */
+	
+	private static AsyncEntranceProviderContext asyncEntranceProviderCxt = null;
+	
+	public final static void setASyncEntranceProviderContext(AsyncEntranceProviderContext asyncEntranceProviderCxt) {
+		WrapperAssembler.asyncEntranceProviderCxt = asyncEntranceProviderCxt;
+	}
+
+	public final static void setASyncEntranceProvider(
+			IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> f) {
+		if (asyncEntranceProviderCxt.hasBeesSet())
+			throw new RuntimeException("AsyncEntrance has been set before!!!");
+		
+		asyncEntranceProviderCxt.apply2asyncEntranceProvider(f);
+	}
+	
+	public static interface AsyncEntranceProviderContext extends OnceChecker {
+		public void apply2asyncEntranceProvider(IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> f);
+	}
+	
+	
+	
 	/* FIRST: load order static block */
 	/* This static block must at the tail of this class code */
 	static {
@@ -202,5 +226,8 @@ public final class WrapperAssembler {
 		new LockWrapper();
 		new MittenWrapper();
 		new RWLockWrapper();
+		
+		// AsyncEntrance is initializing under the EJoker context initialize rather than static block. 
+		// Don't create instance here
 	}
 }

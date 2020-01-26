@@ -15,7 +15,6 @@ import co.paralleluniverse.strands.concurrent.ReentrantLock;
 import co.paralleluniverse.strands.concurrent.ReentrantReadWriteLock;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.task.IAsyncEntrance;
-import pro.jiefzz.ejoker.common.system.task.context.AbstractNormalWorkerGroupService;
 import pro.jiefzz.ejoker.common.system.wrapper.WrapperAssembler;
 
 public class EJoker extends pro.jiefzz.ejoker.EJoker {
@@ -103,7 +102,7 @@ public class EJoker extends pro.jiefzz.ejoker.EJoker {
 				Strand::interrupted
 		);
 		
-		AbstractNormalWorkerGroupService.setAsyncEntranceProvider(s -> new IAsyncEntrance() {
+		WrapperAssembler.setASyncEntranceProvider(s -> new IAsyncEntrance() {
 			
 			@Override
 			public void shutdown() {

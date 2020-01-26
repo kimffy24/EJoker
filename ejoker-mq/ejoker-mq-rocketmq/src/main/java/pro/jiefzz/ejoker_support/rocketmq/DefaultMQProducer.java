@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
@@ -38,7 +37,6 @@ import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 public class DefaultMQProducer extends org.apache.rocketmq.client.producer.DefaultMQProducer implements IProducerWrokerAware {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQProducer.class);
-	
 
 	public DefaultMQProducer() {
 		super();
@@ -63,7 +61,6 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 			IVoidFunction successAction,
 			IVoidFunction1<String> faildAction,
 			IVoidFunction1<Exception> exceptionAction) {
-//	public void send(final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
 		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(),
 				message.getBody(), true);
 		// 使用一致性hash选择队列
@@ -83,7 +80,7 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 		successAction.trigger();
 	}
 	
-	@Override
+	/*@Override
 	public void start() throws MQClientException {
 		super.start();
 	}
@@ -91,7 +88,7 @@ public class DefaultMQProducer extends org.apache.rocketmq.client.producer.Defau
 	@Override
 	public void shutdown() {
 		super.shutdown();
-	}
+	}*/
 	
 	private final AtomicInteger noKeysIndex = new AtomicInteger(0);
 	
