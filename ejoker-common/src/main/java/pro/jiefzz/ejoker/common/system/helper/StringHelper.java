@@ -5,11 +5,19 @@ import java.io.UnsupportedEncodingException;
 public final class StringHelper {
 
 	public static boolean isNullOrEmpty(String targetString) {
-		return (null==targetString || "".equals(targetString))?true:false;
+		return null==targetString || "".equals(targetString);
+	}
+	
+	public static boolean notEmpty(String targetString) {
+		return null!=targetString && !"".equals(targetString);
 	}
 	
 	public static boolean isNullOrWhiteSpace(String targetString) {
-		return (null==targetString || "".equals(targetString.trim()))?true:false;
+		return null==targetString || "".equals(targetString.trim());
+	}
+	
+	public static boolean notSenseless(String targetString) {
+		return null!=targetString && !"".equals(targetString.trim());
 	}
 	
 	public static byte[] getBytes(String data, String charsetName) {

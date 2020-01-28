@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	private void init() {
 
 		scheduleService.startTask(
-				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveProcessingCommandMailbox()"),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
@@ -67,15 +66,6 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 		String aggregateRootId = processingCommand.getMessage().getAggregateRootId();
         if (aggregateRootId==null || "".equals(aggregateRootId))
             throw new ArgumentException("aggregateRootId of command cannot be null or empty, commandId:" + processingCommand.getMessage().getId());
-
-//        // 虽然内存操作比IO快得多得多，但是这样全部command开始都在这里竞争真的好吗？
-//        asyncLock.lock();
-//        try {
-//            ProcessingCommandMailbox mailbox = MapHelper.getOrAddConcurrent(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
-//            mailbox.enqueueMessage(processingCommand);
-//        } finally {
-//        	asyncLock.unlock();
-//        }
 
         ProcessingCommandMailbox mailbox;
         

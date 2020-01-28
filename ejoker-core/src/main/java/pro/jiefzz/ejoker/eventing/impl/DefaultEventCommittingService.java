@@ -280,7 +280,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 		return CompletableFuture.supplyAsync(() -> {
 
 			// 等待完全的pause状态
-			commandMailBox.acquireOnProcessing();
+			commandMailBox.acquireOnRunning();
 			
 			try {
 				

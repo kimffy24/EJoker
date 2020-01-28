@@ -2,9 +2,9 @@ package pro.jiefzz.ejoker.commanding.impl;
 
 import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,14 +12,15 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.commanding.CommandResult;
 import pro.jiefzz.ejoker.commanding.CommandStatus;
 import pro.jiefzz.ejoker.commanding.ICommand;
+import pro.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import pro.jiefzz.ejoker.commanding.ICommandHandlerProvider;
 import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
-import pro.jiefzz.ejoker.commanding.ICommandExecuteContext;
 import pro.jiefzz.ejoker.commanding.IProcessingCommandHandler;
 import pro.jiefzz.ejoker.commanding.ProcessingCommand;
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.helper.StringHelper;
@@ -257,11 +258,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                    // 到这里，说明当前command执行遇到异常，然后当前command之前也没执行过，是第一次被执行。
 	                    // 那就判断当前异常是否是需要被发布出去的异常，如果是，则发布该异常给所有消费者；
 	                    // 否则，就记录错误日志，然后认为该command处理失败即可；
-	                	IDomainException publishableException = tryGetDomainException(exception);
-	                    if (publishableException != null) {
-	                        publishExceptionAsync(processingCommand, publishableException);
+	                	Exception realException = getRealException(exception);
+	                    if (realException instanceof IDomainException) {
+	                        publishExceptionAsync(processingCommand, (IDomainException )realException);
 	                    } else {
-	                        completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), StringHelper.isNullOrWhiteSpace(errorMessage) ? exception.getMessage() : errorMessage);
+	                        completeCommandAsync(processingCommand, CommandStatus.Failed, realException.getClass().getName(),
+	                        		StringHelper.notSenseless(realException.getMessage()) ? realException.getMessage() : errorMessage);
 	                    }
 	                    
 	                } },
@@ -274,21 +276,20 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				);
 	}
 
-    private IDomainException tryGetDomainException(Exception exception) {
+    private Exception getRealException(Exception exception) {
         if (exception == null) {
             return null;
-        } else if (exception instanceof IDomainException) {
-            return (IDomainException )exception;
         }
-        // TODO unfinished: 未完成，找不到AggregateException在哪定义的
-        // TODO unfinished: java里没有聚合异常这个玩意吧？
-//        else if (exception is AggregateException)
-//        {
-//            var aggregateException = exception as AggregateException;
-//            var domainException = aggregateException.InnerExceptions.FirstOrDefault(x => x is IDomainException) as IDomainException;
-//            return domainException;
-//        }
-        return null;
+        for( ;; ) {
+        	// 对特定情况的异常进行扒皮操作。
+        	if (exception instanceof AsyncWrapperException) {
+        		exception = AsyncWrapperException.getActuallyCause(exception);
+	        } else if (exception instanceof InvocationTargetException) {
+	        	exception = (Exception )exception.getCause();
+	        } else
+	        	break;
+        }
+        return exception;
     }
 	
 	
