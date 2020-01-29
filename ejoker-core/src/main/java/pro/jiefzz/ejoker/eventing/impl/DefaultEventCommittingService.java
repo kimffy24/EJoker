@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,8 +209,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 						
 						for(String commandId : duplicateCommandIdList) {
 							Optional<EventCommittingContext> optional = committingContexts.stream().filter(x -> commandId.equals(x.getProcessingCommand().getMessage().getId())).findFirst();
-							EventCommittingContext eventCommittingContext = optional.get();
-							if(null != eventCommittingContext) {
+							if(optional.isPresent()) {
+								EventCommittingContext eventCommittingContext = optional.get();
 								resetCommandMailBoxConsumingSequence(eventCommittingContext, eventCommittingContext.getProcessingCommand().getSequence() + 1)
 									.thenAcceptAsync(t -> {
 										tryToRepublishEventAsync(eventCommittingContext);

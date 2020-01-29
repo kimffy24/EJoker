@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +85,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 		do {
 			mailBox = MapUtil.getOrAdd(mailboxDict, aggregateRootId, () -> {
 				long v = getAggregateRootLatestHandledEventVersion(processingMessage.getMessage().getAggregateRootTypeName(), aggregateRootId);
-				return new ProcessingEventMailBox(aggregateRootId, v, this::dispatchProcessingMessageAsync, systemAsyncHelper);
+				return new ProcessingEventMailBox(aggregateRootId, v+1, this::dispatchProcessingMessageAsync, systemAsyncHelper);
 			});
 			if(mailBox.tryUse()) {
 				try {

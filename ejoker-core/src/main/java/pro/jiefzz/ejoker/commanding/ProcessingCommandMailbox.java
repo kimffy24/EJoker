@@ -41,8 +41,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	private long consumingSequence = 0l;
 
-	private long consumedSequence = -1l;
-
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
 	private AtomicBoolean onPaused = new AtomicBoolean(false);
@@ -69,10 +67,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	public long getConsumingSequence() {
 		return consumingSequence;
-	}
-
-	public long getConsumedSequence() {
-		return consumedSequence;
 	}
 
 	public long getMaxMessageSequence() {
@@ -122,7 +116,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	 * 请求完成MailBox的单次运行，如果MailBox中还有剩余消息，则继续尝试运行下一次
 	 */
 	public void finishRun() {
-		logger.debug("{} finsh run, aggregateRootId: {}", this.getClass().getSimpleName(), aggregateRootId);
+		logger.debug("{} finish run, aggregateRootId: {}", this.getClass().getSimpleName(), aggregateRootId);
 //		setAsNotRunning();
 		onRunning.set(false);
 		if (hasNextMessage()) {
