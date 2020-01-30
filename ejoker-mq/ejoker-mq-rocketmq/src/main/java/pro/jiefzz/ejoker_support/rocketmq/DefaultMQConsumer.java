@@ -26,6 +26,7 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction3;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
@@ -150,8 +151,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				onPasue.compareAndSet(true, false);
 				
 				logger.debug("Waiting all comsumer Thread quit... [{}]", focusTopic);
-				dashboards.entrySet().stream().forEach(e -> {
-					ControlStruct dashboard = e.getValue();
+				ForEachUtil.processForEach(dashboards, (__, dashboard) -> {
 					while(dashboard.workThread.isAlive()) {
 						try {
 							TimeUnit.MILLISECONDS.sleep(50l);
@@ -222,7 +222,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				sleepmilliSecWrapper(1000l);
 			}
 			while (onRunning.get()) {
-				dashboards.forEach((q, d) -> processComsumedSequence(d));
+				ForEachUtil.processForEach(dashboards, (__, d) -> processComsumedSequence(d));
 				// thread will be unPark while end of the call to method `tryMarkCompletion`
 				LockSupport.park();
 			}

@@ -268,9 +268,9 @@ public class MessageHandlerPool {
 				bitGraph.put(new Long(x), subSet);
 			}
 			
-			bitGraph.forEach((b, l) -> {
+			ForEachUtil.processForEach(bitGraph, (b, l) -> {
 				StringBuilder pSignature = new StringBuilder();
-				l.forEach(t -> pSignature.append(t.getName()));
+				ForEachUtil.processForEach(l, t -> pSignature.append(t.getName()));
 				String pS = pSignature.toString();
 				List<MessageHandlerReflectionTuple> invokerList = handlerFullContraintMapper.get(pS);
 				
@@ -290,7 +290,7 @@ public class MessageHandlerPool {
 	 */
 	private static String getFullPs(Set<String> pSet) {
 		StringBuilder fullPSignature = new StringBuilder();
-		pSet.forEach(fullPSignature::append);
+		ForEachUtil.processForEach(pSet, fullPSignature::append);
 		return fullPSignature.toString();
 	}
 

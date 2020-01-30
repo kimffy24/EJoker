@@ -134,7 +134,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 			return;
 		
 		LinkedList<DomainEventStream> domainEventStreams = new LinkedList<>();
-		committingContexts.forEach(item -> domainEventStreams.add(item.getEventStream()));
+		ForEachUtil.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
 		// List<DomainEventStream> collect = committingContexts.stream().map(EventCommittingContext::getEventStream).collect(Collectors.toList());
 		
 		ioHelper.tryAsyncAction2(
@@ -180,7 +180,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					
 					if(null != appendResult.getDuplicateCommandAggregateRootIdList() && !appendResult.getDuplicateCommandAggregateRootIdList().isEmpty()) {
 		                //针对持久化出现重复的命令ID，则重新发布这些命令对应的领域事件到Q端
-						appendResult.getDuplicateCommandAggregateRootIdList().forEach((aggregateRootId, duplicateCommandIdList) -> {
+						ForEachUtil.processForEach(appendResult.getDuplicateCommandAggregateRootIdList(), (aggregateRootId, duplicateCommandIdList) -> {
 							List<EventCommittingContext> contextList = groupCommittedContextDict.get(aggregateRootId);
 							if(null == contextList || contextList.isEmpty()) return;
 							EventCommittingContext eventCommittingContextDuplicated = contextList.get(0);

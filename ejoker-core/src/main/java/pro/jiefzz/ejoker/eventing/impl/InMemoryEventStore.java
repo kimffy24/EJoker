@@ -63,7 +63,7 @@ public class InMemoryEventStore implements IEventStore {
         }
 
         EventAppendResult eventAppendResult = new EventAppendResult();
-        eventStreamDict.forEach((k, v) -> batchAppend(k, v, eventAppendResult));
+        ForEachUtil.processForEach(eventStreamDict, (k, v) -> batchAppend(k, v, eventAppendResult));
         return EJokerFutureTaskUtil.completeTask(eventAppendResult);
 	}
 

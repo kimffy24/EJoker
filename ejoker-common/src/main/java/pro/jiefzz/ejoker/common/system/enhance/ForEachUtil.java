@@ -1,35 +1,33 @@
 package pro.jiefzz.ejoker.common.system.enhance;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 
-import java.util.Set;
-
 /**
  * 在jdk1.8之后集合接口上都已经准备了 forEach方法了，大可用集合接口上的forEach方法 <br />
  * 而且java的stream/parallelStream越来越成熟和好用了。 <br />
- * 
+ * 如果使用quasar协程，那么这个工具可以提供更友好的quasar织入能力<br />
  * @author kimffy
  *
  */
 public class ForEachUtil {
 
 	/**
-	 * @deprecated 请用 {@link Map#forEach(java.util.function.BiConsumer)}
 	 * @param <K>
 	 * @param <V>
 	 * @param targetMap
 	 * @param vf
 	 */
-	@Deprecated
 	public static <K, V> void processForEach(Map<K, V> targetMap, IVoidFunction2<K, V> vf) {
 		if(null == targetMap || targetMap.isEmpty())
 			return;
@@ -74,20 +72,16 @@ public class ForEachUtil {
 		else
 			while(iterator.hasNext()) {
 				Entry<K, V> current = iterator.next();
-				K key = current.getKey();
-				V value = current.getValue();
-				if(prediction.trigger(key, value))
+				if(prediction.trigger(current.getKey(), current.getValue()))
 					iterator.remove();
 			}
 	}
 	
 	/**
-	 * @deprecated 请用 {@link List#forEach(java.util.function.Consumer)}
 	 * @param <V>
 	 * @param targetList
 	 * @param vf
 	 */
-	@Deprecated
 	public static <V> void processForEach(List<V> targetList, IVoidFunction1<V> vf) {
 		if(null == targetList || targetList.isEmpty())
 			return;
@@ -126,19 +120,16 @@ public class ForEachUtil {
 			}
 		else
 			while(iterator.hasNext()) {
-				V current = iterator.next();
-				if(prediction.trigger(current))
+				if(prediction.trigger(iterator.next()))
 					iterator.remove();
 			}
 	}
 	
 	/**
-	 * @deprecated 请用 {@link Set#forEach(java.util.function.Consumer)}
 	 * @param <V>
 	 * @param targetList
 	 * @param vf
 	 */
-	@Deprecated
 	public static <V> void processForEach(Set<V> targetList, IVoidFunction1<V> vf) {
 		if(null == targetList || targetList.isEmpty())
 			return;
@@ -177,8 +168,7 @@ public class ForEachUtil {
 			}
 		else
 			while(iterator.hasNext()) {
-				V current = iterator.next();
-				if(prediction.trigger(current))
+				if(prediction.trigger(iterator.next()))
 					iterator.remove();
 			}
 	}
@@ -197,7 +187,7 @@ public class ForEachUtil {
 	}
 
 	/**
-	 * 对每一个项进行vf处理
+	 * 对每一个项进行vf处理<br />
 	 * @param <V>
 	 * @param target
 	 * @param vf 第一个参当前迭代到的元素，第二个参数是元素的序号
@@ -217,29 +207,13 @@ public class ForEachUtil {
 	 * @return 返回是一个LinkedList实例
 	 */
 	public static <V> List<V> processSelect(V[] target, IFunction1<Boolean, V> prediction) {
-		List<V> resList = new LinkedList<>(); // Why use LinkedList? Cause we just consider the write speed.
 		if(null == target || 0 == target.length)
-			return resList;
+			return new ArrayList<>();
+		List<V> resList = new LinkedList<>(); // Why use LinkedList? Cause we just consider the write speed.
 		for(int i = 0; i< target.length; i++)
 			if(prediction.trigger(target[i]))
 				resList.add(target[i]);
 		return resList;
 	}
 
-	/**
-	 * 在数组中反选出不符合条件的元素，并把结果组装成list
-	 * @param <V>
-	 * @param target
-	 * @param prediction
-	 * @return 返回是一个LinkedList实例
-	 */
-	public static <V> List<V> processEliminate(V[] target, IFunction1<Boolean, V> prediction) {
-		List<V> resList = new LinkedList<>(); // Why use LinkedList? Cause we just consider the write speed.
-		if(null == target || 0 == target.length)
-			return resList;
-		for(int i = 0; i< target.length; i++)
-			if(!prediction.trigger(target[i]))
-				resList.add(target[i]);
-		return resList;
-	}
 }

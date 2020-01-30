@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
+import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
@@ -127,19 +128,18 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			if (target instanceof Collection) {
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
-				if(!((List )target).isEmpty())
-					((List )target).forEach(item -> 
-						join( () -> 
-							assemblyStructure(
-									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
-									item,
-									(result) -> eval.addToValueSet(createValueSet, result),
-									() -> key + "(#foreach in list)",
-									subTaskQueue
-							),
-							subTaskQueue
-						)
-					);
+				ForEachUtil.processForEach((List )target, item ->
+					join( () ->
+						assemblyStructure(
+								targetDefinedTypeMeta.deliveryTypeMetasTable[0],
+								item,
+								(result) -> eval.addToValueSet(createValueSet, result),
+								() -> key + "(#foreach in list)",
+								subTaskQueue
+						),
+						subTaskQueue
+					)
+				);
 			} else if (target instanceof Map) {
 				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
 				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
@@ -153,8 +153,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				GenericDefinedType pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
-				if(!((Map )target).isEmpty())
-					((Map )target).forEach((k, v) -> {
+				ForEachUtil.processForEach((Map )target, (k, v) -> {
 						join(() -> assemblyStructure(
 								pass2TypeMeta,
 								v,
@@ -162,7 +161,8 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 								() -> k.toString(),
 								subTaskQueue),
 							subTaskQueue);
-					});
+					}
+				);
 			}
 		} else if (targetDefinedTypeMeta.isArray) {
 			// 数组类型

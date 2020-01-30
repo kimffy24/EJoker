@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
 import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
@@ -107,13 +108,14 @@ public class DomainEventStream extends AbstractMessage {
 
         if(null != events) {
         	eventSB.append('[');
-        	events.forEach(evt -> eventSB.append(evt.getClass().getName()).append("|"));
+        	for(IDomainEvent<?> evt : events)
+        		eventSB.append(evt.getClass().getName()).append("|");
         	eventSB.append(']');
         }
         Map<String, String> items = this.getItems();
         if(null != items) {
         	itemSB.append('[');
-        	items.forEach((k, v) -> itemSB.append(k).append(": ").append(v).append("|"));
+        	ForEachUtil.processForEach(items, (k, v) -> itemSB.append(k).append(": ").append(v).append("|"));
         	itemSB.append(']');
         }
         

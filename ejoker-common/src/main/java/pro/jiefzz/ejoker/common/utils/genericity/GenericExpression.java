@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
@@ -275,7 +276,7 @@ public class GenericExpression {
 				fieldExpressions = null;
 			} else {
 				fieldExpressions = new HashMap<>();
-				target.fieldExpressions.forEach((fieldName, genericDefinedField) -> {
+				ForEachUtil.processForEach(target.fieldExpressions, (fieldName, genericDefinedField) -> {
 					GenericDefinedType currentGenericDefinedTypeMeta;
 					if(genericDefinedField.isGenericVariable) {
 						/// 如果是泛型类型变量，则从 exportMapper 泛型导出表中获取对应具现化类型
@@ -359,7 +360,7 @@ public class GenericExpression {
 	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
 		if(null == fieldExpressions || fieldExpressions.isEmpty())
 			return;
-		fieldExpressions.forEach(vf::trigger);
+		ForEachUtil.processForEach(fieldExpressions, vf);
 	}
 	
 	public void forEachFieldExpressionsDeeply(IVoidFunction2<String, GenericDefinedField> vf) {
