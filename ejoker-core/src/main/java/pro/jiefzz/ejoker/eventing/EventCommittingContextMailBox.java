@@ -119,7 +119,7 @@ public class EventCommittingContextMailBox {
 	/**
 	 * 请求完成MailBox的单次运行，如果MailBox中还有剩余消息，则继续尝试运行下一次
 	 */
-	public void completeRun() {
+	public void finishRun() {
 		lastActiveTime = System.currentTimeMillis();
 		logger.debug("{} complete run, mailboxNumber: {}",
 				this.getClass().getSimpleName(), number);
@@ -163,8 +163,8 @@ public class EventCommittingContextMailBox {
 				}
 			}
 			
-			// 在列表为空或遇到异常时才在这里执行completeRun()调用
-			// 正常情况下的completeRun()调用由handler负责
+			// 在列表为空或遇到异常时才在这里执行finishRun()调用
+			// 正常情况下的finishRun()调用由handler负责
 			if(!messageList.isEmpty()) {
 				try {
 					handler.trigger(messageList);
@@ -172,10 +172,10 @@ public class EventCommittingContextMailBox {
 					logger.error(String.format("%s run has unknown exception, mailboxNumber: %d",
 							this.getClass().getSimpleName(), number), ex);
 					DiscardWrapper.sleepInterruptable(1l);
-					completeRun();
+					finishRun();
 				}
 			} else {
-				completeRun();
+				finishRun();
 			}
 		return EJokerFutureUtil.completeFuture();
 	}

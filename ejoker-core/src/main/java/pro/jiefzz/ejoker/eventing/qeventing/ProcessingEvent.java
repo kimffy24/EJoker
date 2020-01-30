@@ -17,10 +17,10 @@ public class ProcessingEvent {
 		this.processContext = processContext;
 	}
 
-	 public void complete() {
+	 public void finish() {
          processContext.notifyEventProcessed();
          if (null != mailBox) {
-        	 mailBox.completeRun();
+        	 mailBox.finishRun();
          }
      }
 	 

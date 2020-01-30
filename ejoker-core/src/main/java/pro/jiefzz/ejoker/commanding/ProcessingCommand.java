@@ -22,7 +22,7 @@ public class ProcessingCommand {
     	this.items = (null != items ? items : new HashMap<>());
     }
 
-    public Future<Void> completeAsync(CommandResult commandResult) {
+    public Future<Void> finishAsync(CommandResult commandResult) {
     	return commandExecuteContext.onCommandExecutedAsync(commandResult);
     }
     

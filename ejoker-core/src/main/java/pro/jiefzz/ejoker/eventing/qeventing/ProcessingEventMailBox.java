@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.esotericsoftware.minlog.Log;
-
 import pro.jiefzz.ejoker.common.framework.enhance.EasyCleanMailbox;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
@@ -142,9 +140,9 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	/**
 	 * 请求完成MailBox的单次运行，如果MailBox中还有剩余消息，则继续尝试运行下一次
 	 */
-	public void completeRun() {
+	public void finishRun() {
 		lastActiveTime = System.currentTimeMillis();
-		logger.debug("{} complete run, mailboxNumber: {}",
+		logger.debug("{} finish run, mailboxNumber: {}",
 				this.getClass().getSimpleName(), aggregateRootId);
 		onRunning.compareAndSet(true, false);
 		if (isContinuable()) {
@@ -166,15 +164,15 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 			lastActiveTime = System.currentTimeMillis();
 			try {
 				handler.trigger(message);
-				// handler调用最好应该会执行completeRun()方法
+				// handler调用最后会执行finishRun()方法
 			} catch (RuntimeException ex) {
 				logger.error("{} run has unknown exception, aggregateRootId: {}",
 						this.getClass().getSimpleName(), aggregateRootId, ex);
 				DiscardWrapper.sleepInterruptable(1l);
-				completeRun();
+				finishRun();
 			}
 		} else {
-			completeRun();
+			finishRun();
 		}
 	}
 	

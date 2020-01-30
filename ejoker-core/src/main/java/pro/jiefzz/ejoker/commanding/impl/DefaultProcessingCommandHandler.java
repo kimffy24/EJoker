@@ -83,7 +83,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 					"The aggregateId of commmand is null or empty! commandType=%s commandId=%s.", message.getClass().getName(),
 					message.getId());
 			logger.error(errorInfo);
-			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+			finishCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 		}
 
 		ICommandHandlerProxy asyncHandler = commandAsyncHandlerPrivider.getHandler(message.getClass());
@@ -95,7 +95,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 					message.getClass().getName(),
 					message.getId());
 			logger.error(errorMessage);
-			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorMessage);
+			finishCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorMessage);
 		}
 			
 		return EJokerFutureUtil.completeFuture();
@@ -137,7 +137,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			                        command.getId(),
 			                        command.getAggregateRootId()),
 									ex);
-							completeCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(), "Unknown exception caught when committing changes of command.");
+							finishCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(), "Unknown exception caught when committing changes of command.");
 						}
 					}
 				},
@@ -176,7 +176,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 							command.getId()
 					);
 					logger.error(errorInfo);
-					completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
+					finishCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
 					return;
 				}
 				dirtyAggregateRoot=aggregateRoot;
@@ -233,7 +233,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
                     if (null != existingEventStream) {
                         eventCommittingService.publishDomainEventAsync(processingCommand, existingEventStream);
                     } else {
-                    	completeCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
+                    	finishCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
                     }
                 },
     			() -> String.format("[commandId: %s]", command.getId()),
@@ -262,7 +262,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                    if (realException instanceof IDomainException) {
 	                        publishExceptionAsync(processingCommand, (IDomainException )realException);
 	                    } else {
-	                        completeCommandAsync(processingCommand, CommandStatus.Failed, realException.getClass().getName(),
+	                        finishCommandAsync(processingCommand, CommandStatus.Failed, realException.getClass().getName(),
 	                        		StringHelper.notSenseless(realException.getMessage()) ? realException.getMessage() : errorMessage);
 	                    }
 	                    
@@ -298,7 +298,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		ioHelper.tryAsyncAction2(
 				"PublishExceptionAsync",
 				() -> exceptionPublisher.publishAsync(exception),
-				r -> completeCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
+				r -> finishCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
 				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), DomainExceptionCodecHelper.serialize(exception)),
 				true
 				);
@@ -311,10 +311,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				message.mergeItems(processingCommand.getMessage().getItems());
 				publishMessageAsync(processingCommand, message);
 			} else {
-				completeCommandAsync(processingCommand, CommandStatus.Success, null, null);
+				finishCommandAsync(processingCommand, CommandStatus.Success, null, null);
 			}
 		} else {
-			completeCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorMessage);
+			finishCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorMessage);
 		}
 	}
 
@@ -324,20 +324,20 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		ioHelper.tryAsyncAction2(
 				"PublishApplicationMessageAsync",
 				() -> applicationMessagePublisher.publishAsync(message),
-				r -> completeCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
+				r -> finishCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
 				() -> String.format("[application message:[id: %s, type: %s],command:[id: %s, type: %s]]", message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
 				ex -> logger.error(String.format("Publish application message has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
 				true
 				);
 	}
 
-	private void completeCommandAsync(ProcessingCommand processingCommand,
+	private void finishCommandAsync(ProcessingCommand processingCommand,
 			CommandStatus commandStatus, String resultType, String result) {
 		CommandResult commandResult = new CommandResult(commandStatus, processingCommand.getMessage().getId(),
 				processingCommand.getMessage().getAggregateRootId(), result, resultType);
 		
         // TODO @await
-		await(processingCommand.getMailBox().completeMessage(processingCommand, commandResult));
+		await(processingCommand.getMailBox().finishMessage(processingCommand, commandResult));
 	}
 	
 }

@@ -173,14 +173,14 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 				this.getClass().getSimpleName(), aggregateRootId, consumingSequence);
 	}
 
-	public Future<Void> completeMessage(ProcessingCommand message, CommandResult result) {
+	public Future<Void> finishMessage(ProcessingCommand message, CommandResult result) {
 		try {
 			if(null != messageDict.remove(message.getSequence())) {
 				lastActiveTime = System.currentTimeMillis();
-				await(message.completeAsync(result));
+				await(message.finishAsync(result));
 			};
 		} catch (RuntimeException e) {
-			logger.error("{} complete message with result failed, aggregateRootId: {}, messageId: {}, messageSequence: {}, result: {}",
+			logger.error("{} finish message with result failed, aggregateRootId: {}, messageId: {}, messageSequence: {}, result: {}",
 				this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), message.getSequence(), result, e);
 		}
 		

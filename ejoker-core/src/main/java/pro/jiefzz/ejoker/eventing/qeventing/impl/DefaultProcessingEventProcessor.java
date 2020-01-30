@@ -141,7 +141,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				"UpdatePublishedVersionAsync",
 				() -> publishedVersionStore.updatePublishedVersionAsync(processorName,
 						message.getAggregateRootTypeName(), message.getAggregateRootId(), message.getVersion()),
-				() -> processingMessage.complete(),
+				() -> processingMessage.finish(),
 				() -> String.format(
 						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
 						message.getId(), message.getClass().getName(), message.getAggregateRootId(),

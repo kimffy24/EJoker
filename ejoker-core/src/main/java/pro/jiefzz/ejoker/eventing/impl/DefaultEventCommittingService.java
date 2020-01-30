@@ -237,7 +237,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 						}
 					}
 					
-					eventMailBox.completeRun();
+					eventMailBox.finishRun();
 					
 				},
 				() -> String.format("[contextListCount: %d]", committingContexts.size()),
@@ -328,7 +328,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                             command.getAggregateRootId());
                         logger.error(errorMessage);
                         CommandResult commandResult = new CommandResult(CommandStatus.Failed, command.getId(), command.getAggregateRootId(), "Command should be exist in the event store, but we cannot find it from the event store.", String.class.getName());
-                        completeCommandAsync(context.getProcessingCommand(), commandResult);
+                        finishCommandAsync(context.getProcessingCommand(), commandResult);
                         
                     }
         		},
@@ -377,7 +377,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 										CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,
 												eventStream.getAggregateRootId(), "Duplicate aggregate creation.",
 												String.class.getName());
-										completeCommandAsync(context.getProcessingCommand(), commandResult);
+										finishCommandAsync(context.getProcessingCommand(), commandResult);
 									});
                             
     					}
@@ -396,7 +396,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 											eventStream.getAggregateRootId(),
 											"Duplicate aggregate creation, but we cannot find the existing eventstream from eventstore.",
 											String.class.getName());
-									completeCommandAsync(context.getProcessingCommand(), commandResult);
+									finishCommandAsync(context.getProcessingCommand(), commandResult);
 									return null;
 								});
     				}
@@ -422,15 +422,15 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 							eventStream.getAggregateRootId(),
 							commandHandleResult,
 							String.class.getName());
-					completeCommandAsync(processingCommand, commandResult);
+					finishCommandAsync(processingCommand, commandResult);
 					},
 				() -> String.format("[eventStream: %s]", eventStream.toString()),
 				true
 				);
 	}
 
-	private Future<Void> completeCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
-		return processingCommand.getMailBox().completeMessage(processingCommand, commandResult);
+	private Future<Void> finishCommandAsync(ProcessingCommand processingCommand, CommandResult commandResult) {
+		return processingCommand.getMailBox().finishMessage(processingCommand, commandResult);
 	}
 
 }
