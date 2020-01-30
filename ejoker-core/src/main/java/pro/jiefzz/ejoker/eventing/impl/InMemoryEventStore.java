@@ -15,6 +15,8 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -59,36 +61,26 @@ public class InMemoryEventStore implements IEventStore {
         		.getOrAdd(eventStreamDict, es.getAggregateRootId(), () -> new ArrayList<>())
         		.add(es);
         }
-        
-		return eJokerAsyncHelper.submit(() -> {
-	        
-	        EventAppendResult eventAppendResult = new EventAppendResult();
-			
-	        List<Future<Void>> fList = new ArrayList<>();
-	        ForEachUtil.processForEach(eventStreamDict, (k, v) -> fList.add(systemAsyncHelper.submit(() ->batchAppend(k, v, eventAppendResult))));
-	        for(Future<Void> f : fList) {
-	        	await(f);
-	        }
-	        
-	        return eventAppendResult;
-	        
-		});
+
+        EventAppendResult eventAppendResult = new EventAppendResult();
+        eventStreamDict.forEach((k, v) -> batchAppend(k, v, eventAppendResult));
+        return EJokerFutureTaskUtil.completeTask(eventAppendResult);
 	}
 
 	@Override
 	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, long version) {
-		return eJokerAsyncHelper.submit(() -> find(aggregateRootId, version));
+        return EJokerFutureTaskUtil.completeTask(find(aggregateRootId, version));
 	}
 
 	@Override
 	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
-		return eJokerAsyncHelper.submit(() -> find(aggregateRootId, commandId));
+        return EJokerFutureTaskUtil.completeTask(find(aggregateRootId, commandId));
 	}
 
 	@Override
 	public Future<AsyncTaskResult<List<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
 			long maxVersion) {
-		return eJokerAsyncHelper.submit(() -> queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
+        return EJokerFutureTaskUtil.completeTask(queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
 	}
 
 	private void batchAppend(String aggregateRootId, List<DomainEventStream> eventStreamList, EventAppendResult eventAppendResult) {
@@ -114,12 +106,14 @@ public class InMemoryEventStore implements IEventStore {
 	        }
 	        
 	        // 检查重复处理的命令ID
+	        LinkedList<String> duplicateCommandIds = new LinkedList<>();
 	        for (DomainEventStream eventStream : eventStreamList) {
 	            if (aggregateInfo.commandDict.containsKey(eventStream.getCommandId())) {
-	                eventAppendResult.addDuplicateCommandId(eventStream.getCommandId());
+	            	duplicateCommandIds.add(eventStream.getCommandId());
 	            }
 	        }
-	        if (!eventAppendResult.getDuplicateCommandIdList().isEmpty()) {
+	        if (!duplicateCommandIds.isEmpty()) {
+	        	eventAppendResult.addDuplicateCommandIds(aggregateRootId, duplicateCommandIds);
 	            return;
 	        }
 

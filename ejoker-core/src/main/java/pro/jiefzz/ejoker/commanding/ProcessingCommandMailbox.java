@@ -5,11 +5,15 @@ import static pro.jiefzz.ejoker.common.system.extension.LangUtil.await;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import pro.jiefzz.ejoker.EJokerEnvironment;
 import pro.jiefzz.ejoker.common.framework.enhance.EasyCleanMailbox;
@@ -27,13 +31,15 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	private final SystemAsyncHelper systemAsyncHelper;
 	
 	private final IProcessingCommandHandler handler;
+	// # end
 
 	private final String aggregateRootId;
-	// # end
 	
 	private final Map<Long, ProcessingCommand> messageDict = new ConcurrentHashMap<>();
 
-	private final int batchSize;
+	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
+	
+	private final Cache<String, Object> duplicateCommandIdDict = CacheBuilder.newBuilder().expireAfterAccess(5000l, TimeUnit.MILLISECONDS).build();
 	
 	// nextSequence是需要竞态获取的，需要使用原子数
 	// private long nextSequence = 0l;
@@ -83,16 +89,17 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		this.systemAsyncHelper = systemAsyncHelper;
 		this.aggregateRootId = aggregateRootId;
 		this.handler = messageHandler;
-		batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	}
 	
 	public void enqueueMessage(ProcessingCommand message) {
 		message.setMailBox(this);
 		long currentSequence;
 		// 无锁cas抢占序号
+		// AtomicLong.getAndIncrement()调用是不会产生相同的结果的，放在while块中算是历史遗留吧。
 		while(null != messageDict.putIfAbsent(currentSequence = nextSequence.getAndIncrement(), message));
 		message.setSequence(currentSequence);
-		logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
+		if(logger.isDebugEnabled())
+			logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
 				this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), currentSequence);
 		lastActiveTime = System.currentTimeMillis();
 		tryRun();
@@ -117,7 +124,6 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	 */
 	public void finishRun() {
 		logger.debug("{} finish run, aggregateRootId: {}", this.getClass().getSimpleName(), aggregateRootId);
-//		setAsNotRunning();
 		onRunning.set(false);
 		if (hasNextMessage()) {
 			tryRun();
@@ -172,6 +178,10 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		logger.debug("{} reset consumingSequence, aggregateRootId: {}, consumingSequence: {}",
 				this.getClass().getSimpleName(), aggregateRootId, consumingSequence);
 	}
+	
+	public void addDuplicateCommandId(String commandId) {
+		duplicateCommandIdDict.put(commandId, 1);
+	}
 
 	public Future<Void> finishMessage(ProcessingCommand message, CommandResult result) {
 		try {
@@ -211,6 +221,8 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 			while (hasNextMessage() && scannedCount < batchSize && !onPaused.get()) {
 				if (null == (message = messageDict.get(consumingSequence)))
 					break;
+				if(null != duplicateCommandIdDict.getIfPresent(message.getMessage().getId()))
+					message.setDuplicated(true);
 				await(handler.handleAsync(message));
 				scannedCount++;
 				consumingSequence++;

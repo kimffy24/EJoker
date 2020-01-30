@@ -109,6 +109,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		
 		commandContext.clear();
 		
+		if(processingCommand.isDuplicated()) {
+			return republishCommandEvents(processingCommand);
+		}
+		
 		ioHelper.tryAsyncAction2(
 				"HandleCommandAsync", 
 				() -> {
@@ -192,7 +196,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
         //所以，我们要考虑到这种情况，尝试再次发布该命令产生的事件到MQ；
         //否则，如果我们直接将当前command设置为完成，即对MQ进行ack操作，那该command的事件就永远不会再发布到MQ了，这样就无法保证CQRS数据的最终一致性了。
 		if(0 == dirtyAggregateRootCount || null == changeEvents || changeEvents.isEmpty() ) {
-			processIfNoEventsOfCommand(processingCommand);
+			republishCommandEvents(processingCommand);
 			return;
 		}
 		
@@ -224,10 +228,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		
 	}
 	
-    private void processIfNoEventsOfCommand(ProcessingCommand processingCommand) {
+    private Future<Void> republishCommandEvents(ProcessingCommand processingCommand) {
     	ICommand command = processingCommand.getMessage();
     	ioHelper.tryAsyncAction2(
-    			"ProcessIfNoEventsOfCommand",
+    			"RepublishCommandEvents",
     			() -> eventStore.findAsync(command.getAggregateRootId(), command.getId()),
     			existingEventStream -> {
                     if (null != existingEventStream) {
@@ -239,6 +243,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
     			() -> String.format("[commandId: %s]", command.getId()),
     			true
     			);
+		return EJokerFutureUtil.completeFuture();
     }
 	
 	private void handleExceptionAsync(ProcessingCommand processingCommand, ICommandHandlerProxy commandHandler, Exception exception, String errorMessage) {

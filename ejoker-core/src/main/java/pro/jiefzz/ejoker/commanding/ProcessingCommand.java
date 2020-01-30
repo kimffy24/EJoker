@@ -15,6 +15,8 @@ public class ProcessingCommand {
 	private ICommandExecuteContext commandExecuteContext;
 	
     private Map<String, String> items;
+    
+    private boolean duplicated = false;
 
     public ProcessingCommand(ICommand command, ICommandExecuteContext commandExecuteContext, Map<String, String> items) {
     	this.message = command;
@@ -57,4 +59,12 @@ public class ProcessingCommand {
 		this.mailBox = mailbox;
 	}
 
+	public boolean isDuplicated() {
+		return duplicated;
+	}
+
+	public void setDuplicated(boolean duplicated) {
+		this.duplicated = duplicated;
+	}
+	
 }

@@ -1,62 +1,50 @@
 package pro.jiefzz.ejoker.eventing;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EventAppendResult {
 	
-    private List<String> successAggregateRootIdList;
+    private Map<String, Object> successAggregateRootIdList;
     
-    private List<String> duplicateEventAggregateRootIdList;
+    private Map<String, Object> duplicateEventAggregateRootIdList;
     
-    private List<String> duplicateCommandIdList;
+    private Map<String, List<String>> duplicateCommandAggregateRootIdList;
 
     public EventAppendResult() {
-        successAggregateRootIdList = new ArrayList<>();
-        duplicateCommandIdList = new ArrayList<>();
-        duplicateEventAggregateRootIdList = new ArrayList<>();
+        successAggregateRootIdList = new ConcurrentHashMap<>();
+        duplicateEventAggregateRootIdList = new ConcurrentHashMap<>();
+        duplicateCommandAggregateRootIdList = new ConcurrentHashMap<>();
     }
 
     public void addSuccessAggregateRootId(String aggregateRootId) {
-        if (!successAggregateRootIdList.contains(aggregateRootId)) {
-            successAggregateRootIdList.add(aggregateRootId);
+        if (!successAggregateRootIdList.containsKey(aggregateRootId)) {
+            successAggregateRootIdList.put(aggregateRootId, 1);
         }
     }
     public void addDuplicateEventAggregateRootId(String aggregateRootId) {
-        if (!duplicateEventAggregateRootIdList.contains(aggregateRootId)) {
-            duplicateEventAggregateRootIdList.add(aggregateRootId);
+        if (!duplicateEventAggregateRootIdList.containsKey(aggregateRootId)) {
+            duplicateEventAggregateRootIdList.put(aggregateRootId, 1);
         }
     }
-    public void addDuplicateCommandId(String commandId) {
-        if (!duplicateCommandIdList.contains(commandId)) {
-            duplicateCommandIdList.add(commandId);
+    public void addDuplicateCommandIds(String aggregateRootId, List<String> aggregateDuplicateCommandIdList) {
+        if (!duplicateCommandAggregateRootIdList.containsKey(aggregateRootId)) {
+        	duplicateCommandAggregateRootIdList.put(aggregateRootId, aggregateDuplicateCommandIdList);
         }
     }
-
     
-    
-	public List<String> getSuccessAggregateRootIdList() {
-		return successAggregateRootIdList;
+	public Set<String> getSuccessAggregateRootIdList() {
+		return successAggregateRootIdList.keySet();
 	}
 
-	public void setSuccessAggregateRootIdList(List<String> successAggregateRootIdList) {
-		this.successAggregateRootIdList = successAggregateRootIdList;
+	public Set<String> getDuplicateEventAggregateRootIdList() {
+		return duplicateEventAggregateRootIdList.keySet();
 	}
 
-	public List<String> getDuplicateEventAggregateRootIdList() {
-		return duplicateEventAggregateRootIdList;
+	public Map<String, List<String>> getDuplicateCommandAggregateRootIdList() {
+		return duplicateCommandAggregateRootIdList;
 	}
-
-	public void setDuplicateEventAggregateRootIdList(List<String> duplicateEventAggregateRootIdList) {
-		this.duplicateEventAggregateRootIdList = duplicateEventAggregateRootIdList;
-	}
-
-	public List<String> getDuplicateCommandIdList() {
-		return duplicateCommandIdList;
-	}
-
-	public void setDuplicateCommandIdList(List<String> duplicateCommandIdList) {
-		this.duplicateCommandIdList = duplicateCommandIdList;
-	}
-
+	
 }
