@@ -26,7 +26,7 @@ import pro.jiefzz.ejoker.common.context.dev2.EjokerRootDefinationStore;
 import pro.jiefzz.ejoker.common.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerClazzScannerHook;
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
-import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
@@ -196,7 +196,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		refreshContextRecord();
 		
-		ForEachUtil.processForEach(conflictMapperRecord, (clazz, conflictSet) -> {
+		EachUtil.forEach(conflictMapperRecord, (clazz, conflictSet) -> {
 			StringBuilder sb = new StringBuilder();
 			for(Class<?> cClazz : conflictSet) {
 				sb.append("\n\tCondidate class:\t\t");
@@ -371,7 +371,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			}
 		});
 
-		ForEachUtil.processForEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
+		EachUtil.forEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
 			instanceCandidateGenericTypeMap.remove(expressionSignature);
 		});
 		
@@ -394,7 +394,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private void preparePreviouslyLoad() {
 		
-		ForEachUtil.processForEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
+		EachUtil.forEach(superMapperRecord, (upperClazz, eServiceClazz) -> {
 			
 			GenericExpression eServiceClazzMiddleStatementGenericExpression = GenericExpressionFactory.getMiddleStatementGenericExpression(eServiceClazz);
 			/// 预加载
@@ -421,7 +421,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 
 			Object instance = instanceMap.get(clazz.getName());
 			
-			ForEachUtil.processForEach(
+			EachUtil.forEach(
 					defaultRootDefinationStore.getEDependenceRecord(clazz),
 					(fieldName, genericDefinedField) -> injectDependence(
 							fieldName,
@@ -503,7 +503,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private void enqueueInitMethod(Object instance) {
 		final Class<?> instanceClazz = instance.getClass();
-		ForEachUtil.processForEach(
+		EachUtil.forEach(
 				defaultRootDefinationStore.getEInitializeRecord(instanceClazz),
 				(methodName, method) -> {
 					EInitialize annotation = method.getAnnotation(EInitialize.class);

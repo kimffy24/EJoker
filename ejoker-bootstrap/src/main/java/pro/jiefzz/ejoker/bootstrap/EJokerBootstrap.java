@@ -17,7 +17,7 @@ import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.common.context.dev2.IEJokerSimpleContext;
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.common.service.Scavenger;
-import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
@@ -81,7 +81,7 @@ public class EJokerBootstrap {
 		
 		{
 			IEjokerContextDev2 eJokerFullContext = (IEjokerContextDev2 )eJokerContext;
-			ForEachUtil.processForEach(packages, eJokerFullContext::scanPackage);
+			EachUtil.forEach(packages, eJokerFullContext::scanPackage);
 			eJokerFullContext.refresh();
 		}
 	}

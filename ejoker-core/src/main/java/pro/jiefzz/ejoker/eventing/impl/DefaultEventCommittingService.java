@@ -25,7 +25,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
-import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -134,7 +134,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 			return;
 		
 		LinkedList<DomainEventStream> domainEventStreams = new LinkedList<>();
-		ForEachUtil.processForEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
+		EachUtil.forEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
 		// List<DomainEventStream> collect = committingContexts.stream().map(EventCommittingContext::getEventStream).collect(Collectors.toList());
 		
 		ioHelper.tryAsyncAction2(
@@ -162,7 +162,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					Set<String> successIds = appendResult.getSuccessAggregateRootIdList();
 					if(null != successIds && !successIds.isEmpty()) {
 						// 针对持久化成功的聚合根，发布这些聚合根的事件到Q端
-				        ForEachUtil.processForEach(successIds, aggregateRootId -> {
+				        EachUtil.forEach(successIds, aggregateRootId -> {
 							List<EventCommittingContext> committingContextList = groupCommittedContextDict.get(aggregateRootId);
 							if(null != committingContextList && !committingContextList.isEmpty()) {
 								for(EventCommittingContext ecc : committingContextList) {
@@ -180,7 +180,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					
 					if(null != appendResult.getDuplicateCommandAggregateRootIdList() && !appendResult.getDuplicateCommandAggregateRootIdList().isEmpty()) {
 		                //针对持久化出现重复的命令ID，则重新发布这些命令对应的领域事件到Q端
-						ForEachUtil.processForEach(appendResult.getDuplicateCommandAggregateRootIdList(), (aggregateRootId, duplicateCommandIdList) -> {
+						EachUtil.forEach(appendResult.getDuplicateCommandAggregateRootIdList(), (aggregateRootId, duplicateCommandIdList) -> {
 							List<EventCommittingContext> contextList = groupCommittedContextDict.get(aggregateRootId);
 							if(null == contextList || contextList.isEmpty()) return;
 							EventCommittingContext eventCommittingContextDuplicated = contextList.get(0);

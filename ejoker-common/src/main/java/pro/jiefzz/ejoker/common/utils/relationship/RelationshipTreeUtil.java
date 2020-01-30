@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
-import pro.jiefzz.ejoker.common.system.enhance.ForEachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
@@ -128,7 +128,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			if (target instanceof Collection) {
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
-				ForEachUtil.processForEach((List )target, item ->
+				EachUtil.forEach((List )target, item ->
 					join( () ->
 						assemblyStructure(
 								targetDefinedTypeMeta.deliveryTypeMetasTable[0],
@@ -153,7 +153,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				GenericDefinedType pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
 				ContainerKVP createNode = eval.createKeyValueSet();
 				node = createNode;
-				ForEachUtil.processForEach((Map )target, (k, v) -> {
+				EachUtil.forEach((Map )target, (k, v) -> {
 						join(() -> assemblyStructure(
 								pass2TypeMeta,
 								v,

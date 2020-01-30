@@ -20,7 +20,7 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
  * @author kimffy
  *
  */
-public class ForEachUtil {
+public class EachUtil {
 
 	/**
 	 * @param <K>
@@ -28,7 +28,7 @@ public class ForEachUtil {
 	 * @param targetMap
 	 * @param vf
 	 */
-	public static <K, V> void processForEach(Map<K, V> targetMap, IVoidFunction2<K, V> vf) {
+	public static <K, V> void forEach(Map<K, V> targetMap, IVoidFunction2<K, V> vf) {
 		if(null == targetMap || targetMap.isEmpty())
 			return;
 		Set<Entry<K,V>> entrySet = targetMap.entrySet();
@@ -43,8 +43,8 @@ public class ForEachUtil {
 	 * @param targetMap
 	 * @param prediction
 	 */
-	public static <K, V> void processForEachAndEliminate(Map<K, V> targetMap, IFunction2<Boolean, K, V> prediction) {
-		processForEachAndEliminate(targetMap, null, prediction);
+	public static <K, V> void forEachAndEliminate(Map<K, V> targetMap, IFunction2<Boolean, K, V> prediction) {
+		forEachAndEliminate(targetMap, null, prediction);
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class ForEachUtil {
 	 * @param vf
 	 * @param prediction
 	 */
-	public static <K, V> void processForEachAndEliminate(Map<K, V> targetMap, IVoidFunction2<K, V> vf, IFunction2<Boolean, K, V> prediction) {
+	public static <K, V> void forEachAndEliminate(Map<K, V> targetMap, IVoidFunction2<K, V> vf, IFunction2<Boolean, K, V> prediction) {
 		if(null == targetMap || targetMap.isEmpty())
 			return;
 		Iterator<Entry<K, V>> iterator = targetMap.entrySet().iterator();
@@ -82,7 +82,7 @@ public class ForEachUtil {
 	 * @param targetList
 	 * @param vf
 	 */
-	public static <V> void processForEach(List<V> targetList, IVoidFunction1<V> vf) {
+	public static <V> void forEach(List<V> targetList, IVoidFunction1<V> vf) {
 		if(null == targetList || targetList.isEmpty())
 			return;
 		for(V item : targetList)
@@ -95,8 +95,8 @@ public class ForEachUtil {
 	 * @param targetList
 	 * @param prediction
 	 */
-	public static <V> void processForEachAndEliminate(List<V> targetList, IFunction1<Boolean, V> prediction) {
-		processForEachAndEliminate(targetList, null, prediction);
+	public static <V> void forEachAndEliminate(List<V> targetList, IFunction1<Boolean, V> prediction) {
+		forEachAndEliminate(targetList, null, prediction);
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class ForEachUtil {
 	 * @param vf
 	 * @param prediction
 	 */
-	public static <V> void processForEachAndEliminate(List<V> targetList, IVoidFunction1<V> vf, IFunction1<Boolean, V> prediction) {
+	public static <V> void forEachAndEliminate(List<V> targetList, IVoidFunction1<V> vf, IFunction1<Boolean, V> prediction) {
 		if(null == targetList || targetList.isEmpty())
 			return;
 		Iterator<V> iterator = targetList.iterator();
@@ -130,7 +130,7 @@ public class ForEachUtil {
 	 * @param targetList
 	 * @param vf
 	 */
-	public static <V> void processForEach(Set<V> targetList, IVoidFunction1<V> vf) {
+	public static <V> void forEach(Set<V> targetList, IVoidFunction1<V> vf) {
 		if(null == targetList || targetList.isEmpty())
 			return;
 		for(V item : targetList)
@@ -143,8 +143,8 @@ public class ForEachUtil {
 	 * @param targetList
 	 * @param prediction
 	 */
-	public static <V> void processForEachAndEliminate(Set<V> targetList, IFunction1<Boolean, V> prediction) {
-		processForEachAndEliminate(targetList, null, prediction);
+	public static <V> void forEachAndEliminate(Set<V> targetList, IFunction1<Boolean, V> prediction) {
+		forEachAndEliminate(targetList, null, prediction);
 	}
 	
 	/**
@@ -155,7 +155,7 @@ public class ForEachUtil {
 	 * @param vf
 	 * @param prediction
 	 */
-	public static <V> void processForEachAndEliminate(Set<V> targetList, IVoidFunction1<V> vf, IFunction1<Boolean, V> prediction) {
+	public static <V> void forEachAndEliminate(Set<V> targetList, IVoidFunction1<V> vf, IFunction1<Boolean, V> prediction) {
 		if(null == targetList || targetList.isEmpty())
 			return;
 		Iterator<V> iterator = targetList.iterator();
@@ -179,7 +179,7 @@ public class ForEachUtil {
 	 * @param target
 	 * @param vf
 	 */
-	public static <V> void processForEach(V[] target, IVoidFunction1<V> vf) {
+	public static <V> void forEach(V[] target, IVoidFunction1<V> vf) {
 		if(null == target || 0 == target.length)
 			return;
 		for(int i = 0; i< target.length; i++)
@@ -192,7 +192,7 @@ public class ForEachUtil {
 	 * @param target
 	 * @param vf 第一个参当前迭代到的元素，第二个参数是元素的序号
 	 */
-	public static <V> void processForEach(V[] target, IVoidFunction2<V, Integer> vf) {
+	public static <V> void forEach(V[] target, IVoidFunction2<V, Integer> vf) {
 		if(null == target || 0 == target.length)
 			return;
 		for(int i = 0; i< target.length; i++)
@@ -206,7 +206,7 @@ public class ForEachUtil {
 	 * @param prediction
 	 * @return 返回是一个LinkedList实例
 	 */
-	public static <V> List<V> processSelect(V[] target, IFunction1<Boolean, V> prediction) {
+	public static <V> List<V> select(V[] target, IFunction1<Boolean, V> prediction) {
 		if(null == target || 0 == target.length)
 			return new ArrayList<>();
 		List<V> resList = new LinkedList<>(); // Why use LinkedList? Cause we just consider the write speed.
