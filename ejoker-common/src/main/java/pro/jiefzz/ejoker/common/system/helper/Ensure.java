@@ -70,12 +70,6 @@ public class Ensure {
 			throw new ArgumentOutOfRangeException(argumentName, " should be non negative.");
 	}
 
-	//     public static void NotEmptyGuid(Guid guid, String argumentName)
-	//     {
-	//         if (Guid.Empty == guid)
-	//             throw new ArgumentException(argumentName, argumentName + " shoud be non-empty GUID.");
-	//     }
-
 	/**
 	 * 断言值相等
 	 * @param expected

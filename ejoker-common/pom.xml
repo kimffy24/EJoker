@@ -34,7 +34,7 @@
 				<version>2.22.2</version>
 				<configuration>
 					<includes>
-						<include>**/T5*.java</include>
+						<include>**/*Test.java</include>
 					</includes>
 				</configuration>
 			</plugin>
