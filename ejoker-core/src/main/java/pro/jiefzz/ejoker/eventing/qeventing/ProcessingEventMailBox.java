@@ -115,6 +115,9 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 				
 			}
 			if(processingVersion == nextExpectingEventVersion) {
+				// 如果在re-balance的时候，刚刚被安排到另一个节点上？？
+				// 仔细想想先
+				// TODO 待验证
 				tryRun();
 				return EnqueueMessageResult.Success;
 			} else {

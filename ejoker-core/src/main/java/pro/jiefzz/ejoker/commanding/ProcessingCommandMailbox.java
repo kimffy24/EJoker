@@ -39,6 +39,9 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 
 	private final int batchSize = EJokerEnvironment.MAX_BATCH_COMMANDS;
 	
+	/**
+	 * 重复命令在内存中保留一段时间，后会被清除掉。
+	 */
 	private final Cache<String, Object> duplicateCommandIdDict = CacheBuilder.newBuilder().expireAfterAccess(5000l, TimeUnit.MILLISECONDS).build();
 	
 	// nextSequence是需要竞态获取的，需要使用原子数

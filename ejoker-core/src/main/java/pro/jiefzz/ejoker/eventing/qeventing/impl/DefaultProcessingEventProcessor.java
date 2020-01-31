@@ -24,6 +24,7 @@ import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.eventing.DomainEventStreamMessage;
+import pro.jiefzz.ejoker.eventing.qeventing.EnqueueMessageResult;
 import pro.jiefzz.ejoker.eventing.qeventing.IProcessingEventProcessor;
 import pro.jiefzz.ejoker.eventing.qeventing.IPublishedVersionStore;
 import pro.jiefzz.ejoker.eventing.qeventing.ProcessingEvent;
@@ -81,6 +82,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 		}
 		
 		ProcessingEventMailBox mailBox;
+		EnqueueMessageResult enqueueResult = null;
 		
 		do {
 			mailBox = MapUtil.getOrAdd(mailboxDict, aggregateRootId, () -> {
@@ -89,7 +91,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 			});
 			if(mailBox.tryUse()) {
 				try {
-					mailBox.enqueueMessage(processingMessage);
+					enqueueResult = mailBox.enqueueMessage(processingMessage);
 					break;
 				} finally {
 					mailBox.releaseUse();
@@ -99,6 +101,15 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 			}
 		} while (true);
 		
+		if(null != enqueueResult) {
+			switch (enqueueResult) {
+				case Ignored:
+					processingMessage.getProcessContext().notifyEventProcessed();
+					break;
+				default:
+					break;
+			}
+		}
 	}
 	
 	private void dispatchProcessingMessageAsync(ProcessingEvent processingMessage) {
