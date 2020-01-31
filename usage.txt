@@ -8,7 +8,7 @@ rm -fr ~/.m2/repository/pro/
 rm -fr {.,ejoker-common,ejoker-core,ejoker-mq{,ejoker-mq-javaqueue,ejoker-mq-ons,ejoker-mq-rocketmq}}/gradle
 mvn clean install -Dmaven.test.skip=true
 
-exit 0
+#exit 0
 
 # 安装到随包发布的minimal仓库
 

@@ -532,7 +532,7 @@ public class IOHelper {
 		}
 	}
 
-	private void processTaskException(IOHelperContext<?> externalContext, Exception exception) {
+	private <T> void processTaskException(IOHelperContext<T> externalContext, Exception exception) {
 		
 		Exception ex = exception;
 		while(ex instanceof AsyncWrapperException)
@@ -585,15 +585,15 @@ public class IOHelper {
 		}
 	}
 	
-	private void executeFailedAction(IOHelperContext<?> externalContext, Exception exception) {
+	private <T> void executeFailedAction(IOHelperContext<T> externalContext, Exception exception) {
 		executeFailedAction(externalContext, exception, exception.getMessage());
 	}
 
-	private void executeFailedAction(IOHelperContext<?> externalContext, Exception exception, String errorMsg) {
+	private <T> void executeFailedAction(IOHelperContext<T> externalContext, Exception exception, String errorMsg) {
 		externalContext.markFinish();
 		try {
 			if(null != externalContext.faildAction)
-				externalContext.faildAction.trigger((IOHelperContext )externalContext, exception, errorMsg);
+				externalContext.faildAction.trigger(externalContext, exception, errorMsg);
 	    } catch (RuntimeException ex) {
 	        logger.error(
 	        		String.format(
