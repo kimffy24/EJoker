@@ -2,6 +2,8 @@ package pro.jiefzz.ejoker.queue.skeleton.aware;
 
 import java.io.Serializable;
 
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+
 public class EJokerQueueMessage implements Serializable {
 
 	private static final long serialVersionUID = 8472364779319333477L;
@@ -82,7 +84,7 @@ public class EJokerQueueMessage implements Serializable {
 	}
 
 	public String toString() {
-		return String.format("[ Topic=%s, Code=%d, Tag=%s, CreatedTime=%d, BodyLength=%d ]", topic, code, tag, createdTime,
-				body.length);
+		return StringHelper.fill("\\{topic={}, code={}, tag={}, createdTime={}, bodyLength={}\\}",
+				topic, code, tag, createdTime, body.length);
 	}
 }

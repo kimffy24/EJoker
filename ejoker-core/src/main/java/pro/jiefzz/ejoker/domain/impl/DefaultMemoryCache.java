@@ -59,8 +59,10 @@ public class DefaultMemoryCache implements IMemoryCache {
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
-				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "CleanInactiveAggregates()"),
-				this::cleanInactiveAggregates, cleanInactivalMillis, cleanInactivalMillis);
+				StringHelper.fill("{}@{}#cleanInactiveAggregates()", this.getClass().getName(), this.hashCode()),
+				this::cleanInactiveAggregates,
+				cleanInactivalMillis,
+				cleanInactivalMillis);
 	}
 
 	@Override
@@ -87,7 +89,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		try {
 			type = (Class<IAggregateRoot> )typeNameProvider.getType(aggregateRootTypeName);
 		} catch (RuntimeException ex) {
-			logger.error("Could not find aggregate root type by aggregate root type name [{}].", aggregateRootTypeName);
+			logger.error("Could not find aggregate root type!!! [aggregateRootType: {}]", aggregateRootTypeName);
 			return EJokerFutureUtil.completeFuture(null);
 		}
 		
@@ -106,8 +108,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		if (null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString()))) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
 			if (!aggregateRoot.getClass().equals(aggregateRootType))
-				throw new RuntimeException(String.format(
-						"Incorrect aggregate root type, aggregateRootId:%s, type:%s, expecting type:%s",
+				throw new RuntimeException(StringHelper.fill("Incorrect aggregate root type!!! [aggregateRootId: {}, type: {}, expectingType: {}]",
 						aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
 			if (!aggregateRoot.getChanges().isEmpty()) {
 
@@ -134,9 +135,8 @@ public class DefaultMemoryCache implements IMemoryCache {
 			}
 			return aggregateRoot;
 		} catch (RuntimeException ex) {
-			logger.error(String.format(
-					"Refresh aggregate from event store has unknown exception, aggregateRootTypeName:%s, aggregateRootId:%s",
-					typeNameProvider.getTypeName(aggregateRootType), aggregateRootId), ex);
+			logger.error("Refresh aggregate from event store has unknown exception!!! [aggregateRootTypeName: {}, aggregateRootId: {}]",
+					typeNameProvider.getTypeName(aggregateRootType), aggregateRootId, ex);
 			return null;
 		}
 	}
@@ -150,7 +150,8 @@ public class DefaultMemoryCache implements IMemoryCache {
 			AggregateCacheInfo previous = MapUtil.getOrAdd(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
 					() -> {
 						isInitCache.set(true);
-						logger.debug("Aggregate root in-memory cache init, aggregateRootType: {}, aggregateRootId: {}, aggregateRootVersion: {}",
+						if(logger.isDebugEnabled())
+							logger.debug("Aggregate root in-memory cache init. [aggregateRootType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
 								typeNameProvider.getTypeName(aggregateRoot.getClass()), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
 						return new AggregateCacheInfo(aggregateRoot);
 					});

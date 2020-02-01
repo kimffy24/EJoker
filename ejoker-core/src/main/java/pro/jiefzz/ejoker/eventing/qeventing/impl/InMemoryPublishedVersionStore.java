@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.eventing.qeventing.IPublishedVersionStore;
 
@@ -42,7 +43,7 @@ public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 	}
 
 	private String buildKey(String eventProcessorName, String aggregateRootId) {
-		return String.format("%s-%s", eventProcessorName, aggregateRootId);
+		return StringHelper.fill("{}-{}", eventProcessorName, aggregateRootId);
 	}
 	
 }

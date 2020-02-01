@@ -72,7 +72,7 @@ public class ScheduleServiceImpl implements IScheduleService {
 			try {
 				action.run();
 			} catch (Exception re) {
-				logger.warn(String.format("Caught an exception on task[name=%s]. You should handle exception on your finally block or ignore this message if you ensure what happens!", taskName), re);
+				logger.warn("Caught an exception on task!!! You should handle exception on your finally block or ignore this message if you ensure what happens. [taskName={}]", taskName, re);
 			}
 		}
 	}

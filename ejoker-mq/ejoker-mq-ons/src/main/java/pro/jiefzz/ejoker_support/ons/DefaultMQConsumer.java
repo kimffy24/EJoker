@@ -305,11 +305,11 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		rebalanceMonitor.setPriority(Thread.MAX_PRIORITY);
 		
 		exHandler = (e, mq, d) -> logger.error(
-					String.format("Some exception occur!!! dashboard.offsetConsumedLocal: %d, dashboard.offsetFetchLocal: %d, mq: %s",
+				"Some exception occur!!! [dashboard.offsetConsumedLocal: {}, dashboard.offsetFetchLocal: {}, mq: {}]",
 						d.offsetConsumedLocal.get(),
 						d.offsetFetchLocal.get(),
-						mq.toString()),
-					e);
+						mq.toString(),
+						e);
 
 	}
 	

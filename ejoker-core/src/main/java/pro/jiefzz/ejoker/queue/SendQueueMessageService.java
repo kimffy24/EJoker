@@ -16,7 +16,6 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
-import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
@@ -49,7 +48,7 @@ public class SendQueueMessageService {
 	{
 		IVoidFunction sa = () -> {
 			logger.debug(
-					"EJoker {} message send suceess, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}",
+					"EJoker message send suceess. [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
 					messageType,
 					message,
 					"ok",
@@ -62,7 +61,7 @@ public class SendQueueMessageService {
 		
 		IVoidFunction1<String> fa = s -> {
 			logger.error(
-					"EJoker {} message send failed, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}",
+					"EJoker message send failed! [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
 					messageType,
 					message,
 					s,
@@ -74,16 +73,15 @@ public class SendQueueMessageService {
 		};
 
 		IVoidFunction1<Exception> ea = e -> {
-			logger.error(String.format(
-					"EJoker %s message send failed, message: %s, routingKey: %s, messageType: %s, messageId: %s, messageExtensionItems: %s",
+			logger.error(
+					"EJoker message send failed!!! [topType: {}, message: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
 					messageType,
 					message,
 					routingKey,
 					messageClass,
 					messageId,
-					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
-					),
-				e);
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString()),
+					e);
 		};
 
 		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {

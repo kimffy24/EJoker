@@ -21,6 +21,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.common.system.wrapper.CountDownLatchWrapper;
 
@@ -103,7 +104,7 @@ public class NettySimpleClient {
 		
 		CountDownLatchWrapper.awaitInterruptable(connectBlocker);
 		if(!ready.get()) {
-			throw new IOExceptionOnRuntime(new IOException(String.format("Clien[to: %s] create faild!!!", clientDesc)));
+			throw new IOExceptionOnRuntime(new IOException(StringHelper.fill("Clien create faild!!! [connectTo: {}] ", clientDesc)));
 		}
 	}
 

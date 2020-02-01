@@ -28,6 +28,7 @@ import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRootFactory;
@@ -218,7 +219,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					eventMailBox.finishRun();
 					
 				},
-				() -> String.format("[contextListCount: %d]", committingContexts.size()),
+				() -> StringHelper.fill("[contextListCount: {}]", committingContexts.size()),
 				true
 			);
 	}
@@ -263,9 +264,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				commandMailBox.resetConsumingSequence(consumingSequence);
 				
 			} catch (RuntimeException ex) {
-				logger.error(String.format(
-						"ResetCommandMailBoxConsumingOffset has unknown exception, aggregateRootId: %s",
-						command.getAggregateRootId()), ex);
+				logger.error("ResetCommandMailBoxConsumingOffset has unknown exception!!! [aggregateRootId: {}]",
+						command.getAggregateRootId(), ex);
 			} finally {
 				commandMailBox.resume();
 				commandMailBox.tryRun();
@@ -300,17 +300,22 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                         //到这里，说明当前command想添加到eventStore中时，提示command重复，但是尝试从eventStore中取出该command时却找不到该command。
                         //出现这种情况，我们就无法再做后续处理了，这种错误理论上不会出现，除非eventStore的Add接口和Get接口出现读写不一致的情况；
                         //框架会记录错误日志，让开发者排查具体是什么问题。
-                    	String errorMessage = String.format("Command should be exist in the event store, but we cannot find it from the event store, this should not be happen, and we cannot continue again. commandType: %s, commandId: %s, aggregateRootId: %s",
-                            command.getClass().getName(),
-                            command.getId(),
-                            command.getAggregateRootId());
+                    	String errorMessage = StringHelper.fill(
+                    			"Command should be exist in the event store, but we cannot find it from the event store, this should not be happen, and we cannot continue again!!! [commandType: {}, commandId: {}, aggregateRootId: {}]",
+	                            command.getClass().getName(),
+	                            command.getId(),
+	                            command.getAggregateRootId());
                         logger.error(errorMessage);
-                        CommandResult commandResult = new CommandResult(CommandStatus.Failed, command.getId(), command.getAggregateRootId(), "Command should be exist in the event store, but we cannot find it from the event store.", String.class.getName());
+                        CommandResult commandResult = new CommandResult(CommandStatus.Failed,
+                        		command.getId(),
+                        		command.getAggregateRootId(),
+                        		"Command should be exist in the event store, but we cannot find it from the event store.",
+                        		String.class.getName());
                         finishCommandAsync(context.getProcessingCommand(), commandResult);
                         
                     }
         		},
-        		() -> String.format("[aggregateRootId: %s, commandId: %s]", command.getAggregateRootId(), command.getId()),
+        		() -> StringHelper.fill("[aggregateRootId: {}, commandId: {}]", command.getAggregateRootId(), command.getId()),
         		true
         		);
 	}
@@ -343,12 +348,12 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     					} else {
 
                             //如果不是同一个command，则认为是两个不同的command重复创建ID相同的聚合根，我们需要记录错误日志，然后通知当前command的处理完成；
-    						String errorMessage = String.format("Duplicate aggregate creation. current commandId: %s, existing commandId: %s, aggregateRootId: %s, aggregateRootTypeName: %s",
-    								commandId,
-                                firstEventStream.getCommandId(),
-                                firstEventStream.getAggregateRootId(),
-                                firstEventStream.getAggregateRootTypeName());
-							logger.error(errorMessage);
+							logger.error(
+									"Duplicate aggregate creation. [currentCommandId: {}, existingCommandId: {}, aggregateRootId: {}, aggregateRootTypeName: {}]",
+									commandId,
+									firstEventStream.getCommandId(),
+									firstEventStream.getAggregateRootId(),
+									firstEventStream.getAggregateRootTypeName());
 
 							resetCommandMailBoxConsumingSequence(context,
 									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
@@ -361,12 +366,10 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     					}
     				} else {
     					
-    					String errorMessage = String.format(
-    							"Duplicate aggregate creation, but we cannot find the existing eventstream from eventstore, this should not be happen, and we cannot continue again. commandId: %s, aggregateRootId: %s, aggregateRootTypeName: %s",
+						logger.error("Duplicate aggregate creation, but we cannot find the existing eventstream from eventstore, this should not be happen, and we cannot continue again!!! [commandId: {}, aggregateRootId: {}, aggregateRootTypeName: {}]",
     	                        eventStream.getCommandId(),
     	                        eventStream.getAggregateRootId(),
     	                        eventStream.getAggregateRootTypeName());
-						logger.error(errorMessage);
 
 						resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
 								.thenApplyAsync(t -> {
@@ -379,7 +382,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 								});
     				}
         		},
-        		() -> String.format("[eventStream: %s]", jsonSerializer.convert(eventStream)),
+        		() -> StringHelper.fill("[eventStream: {}]", jsonSerializer.convert(eventStream)),
         		true
         		);
 
@@ -404,7 +407,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 							String.class.getName());
 					finishCommandAsync(processingCommand, commandResult);
 					},
-				() -> String.format("[eventStream: %s]", eventStream.toString()),
+				() -> StringHelper.fill("[eventStream: {}]", eventStream.toString()),
 				true
 				);
 	}

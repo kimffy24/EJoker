@@ -11,6 +11,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -50,19 +51,13 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 							"HandleSingleMessageAsync",
 							() -> proxyAsyncHandler.handleAsync(message),
 							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
-							() -> String.format(
-									"[messages: [%s], handlerType: %s]",
-									String.format(
-											"id: %s, type: %s",
-											message.getId(),
-											message.getClass().getSimpleName()),
+							() -> StringHelper.fill("[messageType: {}, messageId: {}, handlerType: {}]",
+									message.getClass().getSimpleName(),
+									message.getId(),
 									proxyAsyncHandler.toString()
 								),
-							ex -> logger.error(
-									String.format(
-											"Handle single message has unknown exception, the code should not be run to here, errorMessage: %s!!!",
-											ex.getMessage()),
-									ex),
+							ex -> logger.error("Handle single message has unknown exception, the framework should not be run to here!!!",
+										ex),
 							true)
 				);
 			}

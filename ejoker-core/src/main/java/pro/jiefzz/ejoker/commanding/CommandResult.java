@@ -1,5 +1,7 @@
 package pro.jiefzz.ejoker.commanding;
 
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+
 public class CommandResult {
 
 	private CommandStatus status;
@@ -25,8 +27,7 @@ public class CommandResult {
 	
 	@Override
 	public String toString() {
-		return String.format(
-				"[commandId=%s, status=%s, aggregateRootId=%s, result=%s, resultType=%s]",
+		return StringHelper.fill("\\{commandId: {}, status: {}, aggregateRootId: {}, result: {}, resultType: {}\\}",
 				commandId,
 				status.toString(),
 				aggregateRootId,

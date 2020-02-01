@@ -132,7 +132,7 @@ public class DefaultMQProducer implements IProducerWrokerAware {
 					predispatchControl.chShard = new ConsistentHashShard<>(fetchPublishMessageQueues);
 					predispatchControl.lastMqsHashCode.set(mqsHashCode);
 				} catch (Exception e) {
-					logger.error(String.format("Create ConsistentHashShard faild for topic[name=%s]!!!", topic), e);
+					logger.error("Create ConsistentHashShard faild for topic!!! [topicName: {}]", topic, e);
 					e.printStackTrace();
 				} finally {
 					// 无论哈希环更新/创建成功与否，都要释放等待线程

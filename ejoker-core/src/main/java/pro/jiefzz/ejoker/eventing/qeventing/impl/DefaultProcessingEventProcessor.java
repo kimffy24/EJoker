@@ -67,7 +67,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	private void init() {
 
 		scheduleService.startTask(
-				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveMailbox()"),
+				StringHelper.fill("{}@{}#cleanInactiveMailbox{}", this.getClass().getName(), this.hashCode()),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
@@ -119,9 +119,11 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				"DispatchProcessingMessageAsync",
 				() -> dispatcher.dispatchMessagesAsync(message.getEvents()),
 				() -> updatePublishedVersionAsync(processingMessage),
-				() -> String.format(
-						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
-						message.getId(), message.getClass().getName(), message.getAggregateRootId(),
+				() -> StringHelper.fill(
+						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
+						message.getId(),
+						message.getClass().getName(),
+						message.getAggregateRootId(),
 						message.getVersion()),
 				true);
 		
@@ -154,8 +156,10 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 						message.getAggregateRootTypeName(), message.getAggregateRootId(), message.getVersion()),
 				() -> processingMessage.finish(),
 				() -> String.format(
-						"sequence message [messageId:%s, messageType:%s, aggregateRootId:%s, aggregateRootVersion:%d]",
-						message.getId(), message.getClass().getName(), message.getAggregateRootId(),
+						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
+						message.getId(),
+						message.getClass().getName(),
+						message.getAggregateRootId(),
 						message.getVersion()),
 				true);
 		

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -87,9 +88,8 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 			return null;
 		
 		if(!aggregateRootType.equals(aggregateRoot.getClass()) || !aggregateRootId.equals(aggregateRoot.getUniqueId()))
-			throw new RuntimeException(String.format(
-					"AggregateRoot recovery from snapshot is invalid as %s or aggregateRootId is not match!!! Snapshot: [aggregateRootType=%s, aggregateRootId=%s], expected: [aggregateRootType=%s, aggregateRootId=%s]",
-					aggregateRootType.getName(),
+			throw new RuntimeException(StringHelper.fill(
+					"AggregateRoot recovery from snapshot is invalid, aggregateRootType or aggregateRootId is not match!!! [snapshotAggregateRootType: {}, snapshotAggregateRootId: {}, expectedAggregateRootType: {}, expectedAggregateRootId: {}]",
 					aggregateRoot.getClass().getName(),
 					aggregateRoot.getUniqueId(),
 					aggregateRootType.getName(),

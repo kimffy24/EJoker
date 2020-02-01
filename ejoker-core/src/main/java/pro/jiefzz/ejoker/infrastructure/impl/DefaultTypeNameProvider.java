@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 
 @EService
@@ -29,7 +30,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 			try {
 				return Class.forName(null != decorator ? decorator.preGetType(typeName) : typeName);
 			} catch (ClassNotFoundException e) {
-				logger.error("Could not find aggregate root type by aggregate root type name [{}].", typeName);
+				logger.error("Could not find aggregate root type!!! [typeName: {}]", typeName);
 				throw new RuntimeException(e);
 			}
 		});
@@ -51,20 +52,18 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 		for(Entry<Class<?>, String> entry : entrySet) {
 			Class<?> preClazz;
 			if(null != (preClazz = this.typeDict.putIfAbsent(entry.getValue(), entry.getKey()))) {
-				String msg = String.format(" name:%s -> type:%s conflict with name:%s -> type:%s !!!",
+				String msg = StringHelper.fill("Type alias conflict!!! [aliasName: {}, currentType: {}, previousType: {}]",
 						entry.getValue(),
 						entry.getKey().getName(),
-						entry.getValue(),
 						preClazz.getName());
 				logger.error(msg);
 				throw new RuntimeException(msg);
 			}
 			String preName;
 			if(null != (preName = this.nameDict.putIfAbsent(entry.getKey(), entry.getValue()))) {
-				String msg = String.format(" type:%s -> name:%s conflict with type:%s -> name:%s !!!",
+				String msg = StringHelper.fill("Name alias conflict!!! [realType: {}, currentAlias: {}, previousAlias: {}]",
 						entry.getKey().getName(),
 						entry.getValue(),
-						entry.getKey().getName(),
 						preName);
 				logger.error(msg);
 				throw new RuntimeException(msg);

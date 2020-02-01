@@ -6,6 +6,7 @@ import java.util.Map;
 
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
 public class DomainEventStream extends AbstractMessage {
@@ -45,11 +46,11 @@ public class DomainEventStream extends AbstractMessage {
         for (IDomainEvent<?> evnt : this.events) {
         	if(!aggregateRootId.equals(evnt.getAggregateRootId())) {
         		// 这真是丑陋的java
-        		throw new RuntimeException(String.format(
-        				"Invalid domain event aggregateRootId, aggregateRootTypeName: %s expected aggregateRootId: %s, but was: %s",
-        				this.aggregateRootTypeName,
+        		throw new RuntimeException(StringHelper.fill(
+        				"Invalid domain event, aggregateRootId is not match!!! [expectedAggregateRootId: {}, currentAggregateRootId: {}, aggregateRootTypeName: {}]",
         				this.aggregateRootId.toString(),
-        				evnt.getAggregateRootId().toString()
+        				evnt.getAggregateRootId().toString(),
+        				this.aggregateRootTypeName
         				));
         	}
         	if(-1l == this.version) {
@@ -57,12 +58,12 @@ public class DomainEventStream extends AbstractMessage {
         		// 序号为1以后的事件则做确认版本相等操作
         		this.version = evnt.getVersion();
         	} else if (evnt.getVersion() != getVersion()) {
-                throw new UnmatchEventVersionException(String.format(
-                		"Invalid domain event version, aggregateRootTypeName: %s, aggregateRootId: %s, expected version: %d, but was: %d",
-                		this.aggregateRootTypeName,
-                		this.aggregateRootId,
+                throw new UnmatchEventVersionException(StringHelper.fill(
+                		"Invalid domain event, version is not match!!! [expectedVersion: {}, currentVersion: {}, aggregateRootTypeName: {}, aggregateRootId: {}]",
                 		this.version,
-                		evnt.getVersion()
+                		evnt.getVersion(),
+                		this.aggregateRootTypeName,
+                		this.aggregateRootId
                 		));
             }
             evnt.setCommandId(commandId);
@@ -102,32 +103,38 @@ public class DomainEventStream extends AbstractMessage {
 
 	@Override
 	public String toString() {
-        String format = "[id=%s, commandId=%s, aggregateRootTypeName=%s, aggregateRootId=%s, version=%d, timestamp=%d, events=%s, items=%s]";
-        StringBuffer eventSB = new StringBuffer();
-        StringBuffer itemSB = new StringBuffer();
+        String eventS = "";
+        String itemS = "";
 
-        if(null != events) {
-        	eventSB.append('[');
+        if(null != events && !events.isEmpty()) {
+            StringBuffer eventSB = new StringBuffer();
+        	eventSB.append('<');
         	for(IDomainEvent<?> evt : events)
-        		eventSB.append(evt.getClass().getName()).append("|");
-        	eventSB.append(']');
-        }
-        Map<String, String> items = this.getItems();
-        if(null != items) {
-        	itemSB.append('[');
-        	EachUtil.forEach(items, (k, v) -> itemSB.append(k).append(": ").append(v).append("|"));
-        	itemSB.append(']');
+        		eventSB.append("|").append(evt.getClass().getName());
+        	eventSB.append('>');
+        	eventSB.deleteCharAt(1);
+        	eventS = eventSB.toString();
         }
         
-        return String.format(format,
+        Map<String, String> items = this.getItems();
+        if(null != items && !items.isEmpty()) {
+        	StringBuffer itemSB = new StringBuffer();
+        	itemSB.append('<');
+        	EachUtil.forEach(items, (k, v) -> itemSB.append("|").append(k).append(": ").append(v));
+        	itemSB.append('>');
+        	itemSB.deleteCharAt(1);
+        	itemS = itemSB.toString();
+        }
+        
+        return StringHelper.fill("\\{id={}, commandId={}, aggregateRootTypeName={}, aggregateRootId={}, version={}, timestamp={}, events={}, items={}\\}",
         		this.getId(),
         		commandId,
         		aggregateRootTypeName,
             	aggregateRootId,
             	version,
             	this.getTimestamp(),
-            	eventSB.toString(),
-            	itemSB.toString());
+            	eventS,
+            	itemS);
     }
 
 }

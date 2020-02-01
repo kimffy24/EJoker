@@ -19,6 +19,7 @@ import pro.jiefzz.ejoker.common.service.IWorkerService;
 import pro.jiefzz.ejoker.common.service.rpc.IClientNodeIPAddressProvider;
 import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
@@ -83,7 +84,7 @@ public class CommandResultProcessor implements IWorkerService {
 			RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
 		CommandTaskCompletionSource commandTaskCompletionSource = new CommandTaskCompletionSource(commandReturnType, taskCompletionSource);
 		if (null != commandTaskMap.putIfAbsent(command.getId(), commandTaskCompletionSource)) {
-			throw new RuntimeException(String.format("Duplicate processing command registion, [type=%s, id=%s]",
+			throw new RuntimeException(StringHelper.fill("Duplicate processing command registion!!! [type: {}, id: {}]",
 					command.getClass().getName(), command.getId()));
 		}
 	}

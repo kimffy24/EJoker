@@ -20,6 +20,7 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 
@@ -460,32 +461,26 @@ public class IOHelper {
 				return;
 			}
 			if (task.isCancelled()) {
-				logger.error("Async task '{}' was cancelled, context info: {}, current retryTimes: {}.",
+				logger.warn("Async task was cancelled! [taskName: {}, contextInfo: {}, retryTimes: {}]",
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes);
+				String cancleInfo = StringHelper.fill("Async task was cancelled! [taskName: {}]", externalContext.actionName);
 				executeFailedAction(
 						externalContext,
-						new CancellationException (
-								String.format(
-										"Async task '%s' was cancelled.",
-										externalContext.actionName)
-						),
-						String.format(
-								"Async task '%s' was cancelled.",
-								externalContext.actionName)
-						);
+						new CancellationException(cancleInfo),
+						cancleInfo);
 				return;
 			}
 			if (result == null) {
-				logger.error("Async task '{}' result is null, context info: {}, current retryTimes: {}",
+				logger.error("Async task result is `null`!!! [taskName: {}, contextInfo: {}, retryTimes: {}]",
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes);
 				if (externalContext.retryWhenFailed) {
 					executeRetryAction(externalContext);
 				} else {
-					executeFailedAction(externalContext, new RuntimeException("task result is null!!!"));
+					executeFailedAction(externalContext, new RuntimeException("task result is `null`!!!"));
 				}
 				return;
 			}
@@ -497,7 +492,7 @@ public class IOHelper {
 				break;
 			case IOException:
 				logger.error(
-						"Async task '{}' result status is io exception, context info: {}, current retryTimes:{}, errorMsg:{}, try to run the async task again.",
+						"Async task result status is io exception, try to run the async task again. [taskName: {}, contextInfo: {}, retryTimes: {}, errorMsg:{}]",
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes,
@@ -505,7 +500,7 @@ public class IOHelper {
 				executeRetryAction(externalContext);
 				break;
 			case Failed:
-				logger.error("Async task '{}' failed, context info: {}, current retryTimes:{}, errorMsg:{}",
+				logger.error("Async task failed!!! [taskName: {}, contextInfo: {}, retryTimes: {}, errorMsg: {}]",
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes,
@@ -520,14 +515,8 @@ public class IOHelper {
 				assert false;
 			}
 		} catch (RuntimeException ex) {
-			logger.error(
-					String.format(
-							"Failed to execute the taskContinueAction, asyncActionName: %s, contextInfo: %s, mainAction finished or not: %s",
-							externalContext.actionName,
-							externalContext.contextInfo.trigger(),
-							(null == result ? "no" : "yes")
-							),
-					ex);
+			logger.error("Failed to execute the taskContinueAction!!! [taskName: {}, contextInfo: {}, isMainActionFinished: {}]",
+					externalContext.actionName, externalContext.contextInfo.trigger(), (null == result ? "no" : "yes"), ex);
 			// 这里不再做出处理，会有别的问题吗？？
 		}
 	}
@@ -539,22 +528,12 @@ public class IOHelper {
 			ex = AsyncWrapperException.getActuallyCause(ex);
 		
 		if (ex instanceof IOException || ex instanceof IOExceptionOnRuntime) {
-			logger.error(
-					String.format(
-							"Async task '%s' has io exception, context info: %s, current retryTimes: %d, try to run the async task again.",
-							externalContext.actionName,
-							externalContext.contextInfo.trigger(),
-							externalContext.currentRetryTimes),
-					ex);
+			logger.error("Async task result status is io exception, try to run the async task again. [taskName: {}, contextInfo: {}, retryTimes: {}, errorMsg:{}]",
+					externalContext.actionName, externalContext.contextInfo.trigger(), externalContext.currentRetryTimes, ex.getMessage(), ex);
 			executeRetryAction(externalContext);
 		} else {
-			logger.error(
-					String.format(
-							"Async task '%s' has unknown exception, context info: %s, current retryTimes: %d",
-							externalContext.actionName,
-							externalContext.contextInfo.trigger(),
-							externalContext.currentRetryTimes),
-					ex);
+			logger.error("Async task has unknown exception! [taskName: {}, contextInfo: {}, retryTimes: {}, errorMsg:{}]",
+					externalContext.actionName, externalContext.contextInfo.trigger(), externalContext.currentRetryTimes, ex.getMessage(), ex);
 			if (externalContext.retryWhenFailed) {
 				executeRetryAction(externalContext);
 			} else {
@@ -576,12 +555,8 @@ public class IOHelper {
 //				externalContext.loopAction.trigger(externalContext);
 			}
 		} catch (RuntimeException ex) {
-			logger.error(
-					String.format(
-							"Failed to execute the retryAction, asyncActionName: %s, context info: %s",
-							externalContext.actionName,
-							externalContext.contextInfo.trigger()),
-					ex);
+			logger.error("Failed to execute the retryAction!!! [taskName: {}, contextInfo: {}]",
+					externalContext.actionName, externalContext.contextInfo.trigger(), ex);
 		}
 	}
 	
@@ -595,12 +570,8 @@ public class IOHelper {
 			if(null != externalContext.faildAction)
 				externalContext.faildAction.trigger(externalContext, exception, errorMsg);
 	    } catch (RuntimeException ex) {
-	        logger.error(
-	        		String.format(
-	        				"Failed to execute the failedAction of asyncAction: %s, contextInfo: %s",
-	        				externalContext.actionName,
-	        				externalContext.contextInfo.trigger()),
-	        		ex);
+	        logger.error("Failed to execute the failedAction!!! [taskName: {}, contextInfo: {}]",
+	        				externalContext.actionName, externalContext.contextInfo.trigger(), ex);
 	    }
 	}
 	

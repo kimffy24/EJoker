@@ -79,8 +79,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		
 		ICommand message = processingCommand.getMessage();
 		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
-			String errorInfo = String.format(
-					"The aggregateId of commmand is null or empty! commandType=%s commandId=%s.", message.getClass().getName(),
+			String errorInfo = StringHelper.fill("The aggregateId of commmand is null or empty! [commandType: {} commandId: {}]",
+					message.getClass().getName(),
 					message.getId());
 			logger.error(errorInfo);
 			finishCommandAsync(processingCommand, CommandStatus.Failed, String.class.getName(), errorInfo);
@@ -91,7 +91,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			// TODO @await
 			await(handleCommandInternal(processingCommand, asyncHandler));
 		} else {
-			String errorMessage = String.format("No command handler found of command. commandType: %s, commandId: %s",
+			String errorMessage = StringHelper.fill("No command handler found of command! [commandType: {}, commandId: {}]",
 					message.getClass().getName(),
 					message.getId());
 			logger.error(errorMessage);
@@ -120,7 +120,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 					/// TODO @await
 					await(commandHandler.handleAsync(commandContext, command));
 					if(logger.isDebugEnabled()) {
-						logger.debug("Handle command success. handlerType:{}, commandType:{}, commandId:{}, aggregateRootId:{}",
+						logger.debug("Handle command success. [handlerType: {}, commandType: {}, commandId: {}, aggregateRootId: {}]",
 	                        commandHandler.getInnerObject().getClass().getName(),
 	                        command.getClass().getName(),
 	                        command.getId(),
@@ -135,17 +135,17 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 						try {
 							commitAggregateChanges(processingCommand);
 						} catch (RuntimeException ex) {
-							logger.error(String.format("Commit aggregate changes has unknown exception, handlerType:%s, commandType:%s, commandId:%s, aggregateRootId:%s",
+							logger.error("Commit aggregate changes has unknown exception. [handlerType: {}, commandType: {}, commandId: {}, aggregateRootId: {}]",
 									commandHandler.getInnerObject().getClass().getName(),
 			                        command.getClass().getName(),
 			                        command.getId(),
-			                        command.getAggregateRootId()),
+			                        command.getAggregateRootId(),
 									ex);
 							finishCommandAsync(processingCommand, CommandStatus.Failed, ex.getClass().getName(), "Unknown exception caught when committing changes of command.");
 						}
 					}
 				},
-				() -> String.format("[command:[id:%s,type:%s],handlerType:%s,aggregateRootId:%s]",
+				() -> StringHelper.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
 						command.getId(),
 						command.getClass().getName(),
 						commandHandler.getInnerObject().getClass().getName(),
@@ -174,8 +174,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			if(null!=changes && !changes.isEmpty()) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
-					String errorInfo = String.format(
-							"Detected more than one aggregate created or modified by command!!! commandType=%s commandId=%s",
+					String errorInfo = StringHelper.fill(
+							"Detected more than one aggregate created or modified by command!!! [commandType: {} commandId: {}]",
 							command.getClass().getName(),
 							command.getId()
 					);
@@ -240,7 +240,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
                     	finishCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
                     }
                 },
-    			() -> String.format("[commandId: %s]", command.getId()),
+    			() -> StringHelper.fill("[commandId: {}]", command.getId()),
     			true
     			);
 		return EJokerFutureUtil.completeFuture();
@@ -272,7 +272,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                    }
 	                    
 	                } },
-				() -> String.format("[command:[id:%s,type:%s],handlerType:%s,aggregateRootId:%s]",
+				() -> StringHelper.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
 						command.getId(),
 						command.getClass().getName(),
 						commandHandler.getInnerObject().getClass().getName(),
@@ -304,7 +304,10 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishExceptionAsync",
 				() -> exceptionPublisher.publishAsync(exception),
 				r -> finishCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
-				() -> String.format("[commandId: %s, exceptionType: %s, exceptionInfo: %s]", processingCommand.getMessage().getId(), exception.getClass().getName(), DomainExceptionCodecHelper.serialize(exception)),
+				() -> StringHelper.fill("[commandId: {}, exceptionType: {}, exceptionInfo: {}]",
+						processingCommand.getMessage().getId(),
+						exception.getClass().getName(),
+						DomainExceptionCodecHelper.serialize(exception)),
 				true
 				);
 	}
@@ -330,8 +333,9 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishApplicationMessageAsync",
 				() -> applicationMessagePublisher.publishAsync(message),
 				r -> finishCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
-				() -> String.format("[application message:[id: %s, type: %s],command:[id: %s, type: %s]]", message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
-				ex -> logger.error(String.format("Publish application message has unknown exception, the code should not be run to here, errorMessage: {}", ex.getMessage()), ex),
+				() -> StringHelper.fill("[applicationMessageId: {}, applicationMessageIype: {}, commandId: {}, commandType: {}]",
+						message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
+				ex -> logger.error("Publish application message has unknown exception, the code should not be run to here!!! [errorMessage: {}]", ex.getMessage(), ex),
 				true
 				);
 	}

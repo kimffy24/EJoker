@@ -20,6 +20,7 @@ import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 
 /**
@@ -54,7 +55,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	private void init() {
 
 		scheduleService.startTask(
-				String.format("%s@%d#%s", this.getClass().getName(), this.hashCode(), "cleanInactiveProcessingCommandMailbox()"),
+				StringHelper.fill("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveProcessingCommandMailbox()"),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);

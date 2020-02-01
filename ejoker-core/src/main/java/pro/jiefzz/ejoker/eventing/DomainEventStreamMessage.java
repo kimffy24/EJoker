@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import pro.jiefzz.ejoker.messaging.AbstractMessage;
-
 import java.util.Set;
+
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
 public class DomainEventStreamMessage extends AbstractMessage {
 	
@@ -41,20 +41,25 @@ public class DomainEventStreamMessage extends AbstractMessage {
 	
 	@Override
 	public String toString(){
+		
 		String eventString = "";
 		if(null != events && !events.isEmpty()) {
 			for(IDomainEvent<?> event:events)
-				eventString += event.getClass().getName() +"|";
+				eventString += "|" + event.getClass().getName();
+			eventString = eventString.substring(1);
 		}
-		Map<String, String> items = this.getItems();
+		
 		String itemString = "";
+		Map<String, String> items = this.getItems();
 		if(null != items && !items.isEmpty()) {
 			Set<Entry<String,String>> entrySet = items.entrySet();
 			for(Entry<String,String> entry:entrySet)
-				itemString += entry.getKey() +":" +entry.getValue() +"|";
+				itemString += "|" + entry.getKey() +":" +entry.getValue();
+			itemString = itemString.substring(1);
 		}
-		return String.format(
-				"[id=%s, commandId=%s, aggregateRootId=%s, aggregateRootTypeName=%s, version=%d, events=%s, items=%s, timestamp=%d]",
+		
+		return StringHelper.fill(
+				"\\{id={}, commandId={}, aggregateRootId={}, aggregateRootTypeName={}, version={}, events={}, items={}, timestamp={}\\}",
 				this.getId(),
 				commandId,
 				aggregateRootId,

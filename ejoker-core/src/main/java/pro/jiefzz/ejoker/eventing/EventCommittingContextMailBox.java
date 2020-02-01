@@ -84,12 +84,11 @@ public class EventCommittingContextMailBox {
 				String eIds = "";
 				Iterator<IDomainEvent<?>> iterator = message.getEventStream().getEvents().iterator();
 				while(iterator.hasNext()) {
-					eIds += "|";
-					eIds += iterator.next().getId();
+					eIds += "|" + iterator.next().getId();
 				}
 				eIds = eIds.substring(1);
-				logger.debug(String.format(
-						"%s enqueued new message, mailboxNumber: %d, aggregateRootId: %s, commandId: %s, eventVersion: %d, eventStreamId: %s, eventIds: %s",
+				logger.debug(
+						"{} enqueued new message. [mailboxNumber: {}, aggregateRootId: {}, commandId: {}, eventVersion: {}, eventStreamId: {}, eventIds: {}]",
 						this.getClass().getSimpleName(),
 						number,
 						message.getAggregateRoot().getUniqueId(),
@@ -97,7 +96,7 @@ public class EventCommittingContextMailBox {
 						message.getEventStream().getVersion(),
 						message.getEventStream().getId(),
 						eIds
-						));
+						);
 			}
 			lastActiveTime = System.currentTimeMillis();
 			tryRun();
@@ -169,8 +168,8 @@ public class EventCommittingContextMailBox {
 				try {
 					handler.trigger(messageList);
 				} catch (RuntimeException ex) {
-					logger.error(String.format("%s run has unknown exception, mailboxNumber: %d",
-							this.getClass().getSimpleName(), number), ex);
+					logger.error("{} run has unknown exception!!! [mailboxNumber: {}]",
+							this.getClass().getSimpleName(), number, ex);
 					DiscardWrapper.sleepInterruptable(1l);
 					finishRun();
 				}

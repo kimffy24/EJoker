@@ -32,6 +32,7 @@ import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.helper.AcquireHelper;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericExpressionFactory;
@@ -159,10 +160,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		if(null == dependence)
 			throw new ContextRuntimeException(
-					String.format(
-							"No implementations or extensions found! \n\t type: %s!!!",
-							instanceTypeName
-							));
+					StringHelper.fill("No implementations or extensions found!!! [fetchType: {}]", instanceTypeName));
 		
 		return (T )dependence;
 	}
@@ -475,7 +473,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			/// upper泛型 eService无泛型
 			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
 			if(null == eServiceClazz) {
-				throw new ContextRuntimeException(String.format("Cound not found EService for [%s]", instanceTypeName));
+				throw new ContextRuntimeException(StringHelper.fill("Cound not found EService!!! [superType: {}]", instanceTypeName));
 			}
 			dependence = instanceMap.get(eServiceClazz.getName());
 			

@@ -9,6 +9,7 @@ import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.common.system.exceptions.InvalidOperationException;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 import pro.jiefzz.ejoker.utils.handlerProviderHelper.containers.AggregateRootHandlerPool;
@@ -43,7 +44,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	protected AbstractAggregateRoot(TAggregateRootId id, long version) {
 		this(id);
 		if (version < 0)
-			throw new ArgumentException(String.format("Version can not small than 0, aggregateRootId=%s version=%s", id, version));
+			throw new ArgumentException(StringHelper.fill("Version can not small than 0. [aggregateRootId: {}, version: {}]", id, version));
 		this.version = version;
 	}
 
@@ -103,8 +104,9 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 			Class<?> eType = domainEvent.getClass();
 			for(IDomainEvent<?> x : uncommittedEvents) {
 				if(eType.equals(x.getClass())) {
-					throw new InvalidOperationException(String.format(
-							"Cannot apply duplicated domain event type: %s, current aggregateRoot type: %s, id: %s",
+					throw new InvalidOperationException(
+						StringHelper.fill(
+							"Cannot apply duplicated domain event!!! [domainEventType: {}, aggregateRootType: {}, aggregateRootTd: {}",
 							eType.getName(),
 							AbstractAggregateRoot.this.getClass().getName(),
 							id
@@ -119,18 +121,18 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 
 	private void verifyEvent(DomainEventStream eventStream){
 		if (eventStream.getVersion() > 1 &&  !this.getUniqueId().equals(eventStream.getAggregateRootId())) {
-			throw new InvalidOperationException(String.format(
-					"Invalid domain event stream, aggregateRootId: %s, expected aggregateRootId: %s, type: %s", 
+			throw new InvalidOperationException(StringHelper.fill(
+					"Invalid domain event stream, uniqueId isn't match!!! [currentAggregateRootId: {}, expectedAggregateRootId: {}, aggregateRootType: {}]",
 					eventStream.getAggregateRootId(),
 					this.getUniqueId(),
 					this.getClass().getName()));
 		}
 		
 		if (eventStream.getVersion() != this.getVersion() + 1l) {
-			throw new InvalidOperationException(String.format(
-					"Invalid domain event stream, version: %d, expected version: %d, current aggregateRoot type: %s, id:%s",
+			throw new InvalidOperationException(StringHelper.fill(
+					"Invalid domain event stream, asked version isn't match!!! [currentVersion: {}, expectedVersion: {}, aggregateRootType: {}, aggregateRootId: {}]",
 					eventStream.getVersion(),
-					this.getVersion(),
+					this.getVersion() + 1l,
 					this.getClass().getName(),
 					this.getUniqueId()));
 		}

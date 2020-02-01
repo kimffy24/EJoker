@@ -11,6 +11,7 @@ import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
 
 public class GenericExpression {
@@ -212,7 +213,7 @@ public class GenericExpression {
 		int genericTypeAmount = target.genericDefination.getGenericDeclareAmount();
 		if(genericTypeAmount > 0) {
 			if(null == definedTypeMetas || genericTypeAmount != definedTypeMetas.length) {
-				String errInfo = String.format("Unmatch amount of parameterized type!!! target=%s",
+				String errInfo = StringHelper.fill("Unmatch amount of parameterized type!!! [target={}]",
 						target.genericDefination.genericPrototypeClazz.getName());
 				throw new RuntimeException(errInfo);
 			}

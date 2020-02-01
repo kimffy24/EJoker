@@ -30,6 +30,7 @@ import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction3;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
@@ -310,12 +311,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					onPasue.set(false);
 					
 					{
-						if(logger.isInfoEnabled()) {
+						if(logger.isDebugEnabled()) {
 							String queueAll = "";
 							for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
-								queueAll += String.format("[broker=%s, qId=%s], ", rbmq.getBrokerName(), rbmq.getQueueId());
+								queueAll += StringHelper.fill("<broker: {}, qId: {}>, ", rbmq.getBrokerName(), rbmq.getQueueId());
 							}
-							logger.info("Topic[topic={}] rbalance allocate: {}", focusTopic, queueAll);
+							logger.debug("Topic rbalance finished. [topicName: {}, allocateQueue: {}]", focusTopic, queueAll);
 						}
 					}
 					
@@ -328,10 +329,10 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		rebalanceMonitor.setPriority(Thread.MAX_PRIORITY);
 		
 		exHandler = (e, mq, d) -> logger.error(
-					String.format("Some exception occur!!! dashboard.offsetConsumedLocal: %d, dashboard.offsetFetchLocal: %d, mq: %s",
-						d.offsetConsumedLocal.get(),
-						d.offsetFetchLocal.get(),
-						mq.toString()),
+					"Some exception occur!!! [dashboard.offsetConsumedLocal: {}, dashboard.offsetFetchLocal: {}, mq: {}]",
+					d.offsetConsumedLocal.get(),
+					d.offsetFetchLocal.get(),
+					mq.toString(),
 					e);
 
 	}
@@ -539,7 +540,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			this.removedFlag = new AtomicBoolean(false);
 			
 			this.workThread = new Thread(ControlStruct.this::process,
-					String.format("DashboardWorkThread-%s-%d", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
+				StringHelper.fill("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
 			this.workThread.setDaemon(true);
 
 		}

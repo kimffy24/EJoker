@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericDefinedField;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericExpression;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericExpressionFactory;
@@ -48,7 +49,7 @@ public final class IDHelper {
 	public static void setAggregateRootId(IAggregateRoot aggr, String stringId) {
 		GenericDefinedField gdf;
 		if (null == (gdf = idGdcCache.get(aggr.getClass())))
-			throw new RuntimeException(String.format("Type defined for %s is not found!!!", aggr.getClass()));
+			throw new RuntimeException(StringHelper.fill("Type defined is not found!!! [aggregateRootType: {}]", aggr.getClass().getName()));
 
 		Object decode = codecStore.get(gdf.genericDefinedType.rawClazz).decode(stringId);
 		try {
@@ -56,8 +57,8 @@ public final class IDHelper {
 		} catch (IllegalArgumentException | IllegalAccessException ex) {
 			ex.printStackTrace();
 			throw new RuntimeException(
-					String.format("Set value[value=%s] to field[fieldName=%s, aggregate=%s is faild!!!", stringId, "id",
-							aggr.getClass()),
+					StringHelper.fill("Faild to set id to AggregateRoot!!! [aggregateType: {}, idValue: {}]",
+							aggr.getClass().getName(), stringId),
 					ex);
 		}
 	}

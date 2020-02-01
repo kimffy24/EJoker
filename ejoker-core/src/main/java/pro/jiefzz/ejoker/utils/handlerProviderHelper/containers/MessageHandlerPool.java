@@ -25,6 +25,7 @@ import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.infrastructure.impl.AbstractMessageHandler;
 import pro.jiefzz.ejoker.messaging.IMessage;
@@ -120,7 +121,7 @@ public class MessageHandlerPool {
 						}
 					}
 					if(!isOK) {
-						String errorDesc = String.format("%s#%s should return Future<AsyncTaskResult<Void>> !!!", actuallyHandlerName, HANDLER_METHOD_NAME);
+						String errorDesc = String.format("The method which Proxy will point to should return Future<AsyncTaskResult<Void>> !!! [currentMethod: {}#{}]", actuallyHandlerName, HANDLER_METHOD_NAME);
 						logger.error(errorDesc);
 						throw new RuntimeException(errorDesc);
 					}
@@ -359,7 +360,7 @@ public class MessageHandlerPool {
 		public MessageHandlerReflectionTuple(Method handleReflectionMethod, String pList, List<Integer> asciiOrder, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
-			identification = String.format("Proxy[ forward: %s#%s(%s) ]",
+			identification = StringHelper.fill("Proxy::{}#{}({})",
 					handlerClass.getSimpleName(),
 					MessageHandlerPool.HANDLER_METHOD_NAME,
 					pList);

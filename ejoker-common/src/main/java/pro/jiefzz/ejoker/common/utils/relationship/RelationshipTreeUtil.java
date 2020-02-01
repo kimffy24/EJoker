@@ -17,6 +17,7 @@ import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
+import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
 import pro.jiefzz.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericDefinedType;
@@ -144,8 +145,8 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
 				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
 					throw new RuntimeException(
-							String.format(
-									"We just support java base data type on the key while opera in serializing map!!! Here %s provider, on type %s#%s",
+							StringHelper.fill(
+									"We just support java base data type on the key while opera in serializing map!!! [map.keyType: {}, field: {}#{}]",
 									pass1TypeMeta.rawClazz.getSimpleName(),
 									targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
 									key));
