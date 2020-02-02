@@ -44,6 +44,8 @@ public final class StringHelper {
 		
 		MarkTuple analyzeOccupation = analyzeOccupation(template);
 		
+		if(null == args)
+			args = emptyArgs;
 		char[] chars = template.toCharArray();
 		
 		int esIndex = -1;
@@ -79,7 +81,7 @@ public final class StringHelper {
 			lr = occupation[2*i+1];
 			if(lr < 0)
 				break;
-			if(i < args.length)
+			if(i < args.length && null != args[i])
 				sb.append(args[i]);
 			else if(i >= args.length) {
 				if(lr>0)
@@ -97,6 +99,8 @@ public final class StringHelper {
 	private final static Map<String, MarkTuple> CacheMarks = new ConcurrentHashMap<>();
 	
 	private final static int appendSize = 16;
+	
+	private final static Object[] emptyArgs = new Object[] {null};
 	
 	private final static MarkTuple analyzeOccupation(String template) {
 		return MapUtil.getOrAdd(CacheMarks, template, () -> {

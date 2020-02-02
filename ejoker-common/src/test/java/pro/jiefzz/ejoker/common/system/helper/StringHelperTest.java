@@ -125,9 +125,43 @@ public class StringHelperTest {
 				StringHelper.fill(r1_tpl, "jiefzz", "java");
 			}, "formatTest.13.RuntimeExtion");
 		}
+
+		{
+			String r1_tpl = "null is {}. a new value is {}.";
+			String r1Expected = "null is . a new value is .";
+			String r1Result = StringHelper.fill(r1_tpl, null, null);
+			
+			Assertions.assertEquals(r1Expected, r1Result, "formatTest.14");
+		}
+
+		{
+			String nullValue = null;
+			String r1_tpl = "null is {}.";
+			String r1Expected = "null is .";
+			String r1Result = StringHelper.fill(r1_tpl, nullValue);
+			
+			Assertions.assertEquals(r1Expected, r1Result, "formatTest.15");
+		}
+
+		{
+			String r1_tpl = "null is {}.";
+			String r1Expected = "null is .";
+			String r1Result = StringHelper.fill(r1_tpl, null);
+			
+			Assertions.assertEquals(r1Expected, r1Result, "formatTest.16");
+		}
+
+		{
+			String nullValue = null;
+			String r1_tpl = "{} is a null value.";
+			String r1Expected = " is a null value.";
+			String r1Result = StringHelper.fill(r1_tpl, nullValue);
+			
+			Assertions.assertEquals(r1Expected, r1Result, "formatTest.17");
+		}
 	}
 
-	@Test
+//	@Test
 	public void TimeUseTest() {
 		
 		int loopAmount = 1000000;
