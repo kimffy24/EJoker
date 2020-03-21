@@ -20,7 +20,7 @@ public final class StringHelper {
 		return null==targetString || "".equals(targetString.trim());
 	}
 	
-	public static boolean notSenseless(String targetString) {
+	public static boolean isSenseful(String targetString) {
 		return null!=targetString && !"".equals(targetString.trim());
 	}
 	
