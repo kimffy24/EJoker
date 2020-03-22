@@ -163,66 +163,85 @@ public class StringHelperTest {
 		}
 	}
 
-//	@Test
+	@Test
 	public void TimeUseTest() {
 		
-		int loopAmount = 1000000;
+		int loopAmount = 10000000;
+		long ts = 0, te = 0;
+
 		{
-			String tpl = "Hello {}, welcome to the {} world. here \\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\} ok";
+			String tpl = "Hello {}, welcome to the {} world. No# {} here ok";
 			StringUtilx.fmt(tpl, "jiefzz", "java");
-			long ts = System.currentTimeMillis();
-			for(int i=0; i<loopAmount; i++) {
-				StringUtilx.fmt(tpl, "jiefzz", "java");
-			}
-			long te = System.currentTimeMillis();
-			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
-			
-			tpl = "Hello %s, welcome to the %s world. here \\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\} ok";
 			ts = System.currentTimeMillis();
 			for(int i=0; i<loopAmount; i++) {
-				String.format(tpl, "jiefzz", "java");
+				StringUtilx.fmt(tpl, "jiefzz", "java", i);
 			}
 			te = System.currentTimeMillis();
 			System.err.println(StringUtilx.fmt("xTime use: {}ms.", te-ts));
+			
+			tpl = "Hello %s, welcome to the %s world. No# %d here ok";
+			ts = System.currentTimeMillis();
+			for(int i=0; i<loopAmount; i++) {
+				String.format(tpl, "jiefzz", "java", i);
+			}
+			te = System.currentTimeMillis();
+			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
 		}
 		
+		
 		{
-			String tpl = "AHello {}, welcome to the {} world. here \\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\} ok";
-			long ts = System.currentTimeMillis();
-			for(int i=0; i<loopAmount; i++) {
-				StringUtilx.fmt(tpl, "jiefzz", "java");
-			}
-			long te = System.currentTimeMillis();
-			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
-		}
-
-		{
-			String r1_tpl = "Hello {}, welcome to the {} world. next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}.";
-			StringUtilx.fmt(r1_tpl, "jiefzz", "java", 1234, 2345, 3456, 4567, 5678, 6789, 7890, 1, 2, 3, 4, 5, 6, 7);
-			long ts = System.currentTimeMillis();
-			for(int i=0; i<loopAmount; i++) {
-				StringUtilx.fmt(r1_tpl, "jiefzz", "java", 1234, 2345, 3456, 4567, 5678, 6789, 7890, 1, 2, 3, 4, 5, 6, 7);
-			}
-			long te = System.currentTimeMillis();
-			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
-		}
-
-		{
-			String r1_tpl = "AHello {}, welcome to the {} world. next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}.";
-			long ts = System.currentTimeMillis();
-			for(int i=0; i<loopAmount; i++) {
-				StringUtilx.fmt(r1_tpl, "jiefzz", "java", 1234, 2345, 3456, 4567, 5678, 6789, 7890, 1, 2, 3, 4, 5, 6, 7);
-			}
-			long te = System.currentTimeMillis();
-			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
-
-			r1_tpl = "AHello %s, welcome to the %s world. next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d.";
+			String tpl = "Hello {}, welcome to the {} world. No# {} here \\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\} ok";
+			StringUtilx.fmt(tpl, "jiefzz", "java");
 			ts = System.currentTimeMillis();
 			for(int i=0; i<loopAmount; i++) {
-				String.format(r1_tpl, "jiefzz", "java", 1234, 2345, 3456, 4567, 5678, 6789, 7890, 1, 2, 3, 4, 5, 6, 7);
+				StringUtilx.fmt(tpl, "jiefzz", "java", i);
 			}
 			te = System.currentTimeMillis();
 			System.err.println(StringUtilx.fmt("xTime use: {}ms.", te-ts));
+			
+			tpl = "Hello %s, welcome to the %s world. No# %d here \\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\}\\} ok";
+			ts = System.currentTimeMillis();
+			for(int i=0; i<loopAmount; i++) {
+				String.format(tpl, "jiefzz", "java", i);
+			}
+			te = System.currentTimeMillis();
+			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
+		}
+
+		{
+			String r1_tpl = "loop {}, AHello {}, welcome to the {} world. next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}.";
+			ts = System.currentTimeMillis();
+			for(int i=0; i<loopAmount; i++) {
+				StringUtilx.fmt(r1_tpl, i, "jiefzz", "java", 1234, 2345, 3456, 4567, 5678, 6789, 7890, 1, 2, 3, 4, 5, 6, 7);
+			}
+			te = System.currentTimeMillis();
+			System.err.println(StringUtilx.fmt("xTime use: {}ms.", te-ts));
+
+			r1_tpl = "loop %d, AHello %s, welcome to the %s world. next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d, next %d.";
+			ts = System.currentTimeMillis();
+			for(int i=0; i<loopAmount; i++) {
+				String.format(r1_tpl, i, "jiefzz", "java", 1234, 2345, 3456, 4567, 5678, 6789, 7890, 1, 2, 3, 4, 5, 6, 7);
+			}
+			te = System.currentTimeMillis();
+			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
+		}
+
+		{
+			String r1_tpl = "loop {}, AHello {}, welcome to the {} world. next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}, next {}.";
+			ts = System.currentTimeMillis();
+			for(int i=0; i<loopAmount; i++) {
+				StringUtilx.fmt(r1_tpl, i, "jiefzz", "java", "a", "b", "3456", "4567", "5678", "6789", "7890", "1", "2", "3", "4", "5", "6", "7");
+			}
+			te = System.currentTimeMillis();
+			System.err.println(StringUtilx.fmt("xTime use: {}ms.", te-ts));
+
+			r1_tpl = "loop %d, AHello %s, welcome to the %s world. next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s, next %s.";
+			ts = System.currentTimeMillis();
+			for(int i=0; i<loopAmount; i++) {
+				String.format(r1_tpl, i, "jiefzz", "java", "a", "b", "3456", "4567", "5678", "6789", "7890", "1", "2", "3", "4", "5", "6", "7");
+			}
+			te = System.currentTimeMillis();
+			System.err.println(StringUtilx.fmt("Time use: {}ms.", te-ts));
 		}
 	}
 }
