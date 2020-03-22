@@ -20,10 +20,10 @@ import pro.jiefzz.ejoker.common.framework.enhance.EasyCleanMailbox;
 import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateStorage;
@@ -59,7 +59,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
-				StringHelper.fill("{}@{}#cleanInactiveAggregates()", this.getClass().getName(), this.hashCode()),
+				StringUtilx.fill("{}@{}#cleanInactiveAggregates()", this.getClass().getName(), this.hashCode()),
 				this::cleanInactiveAggregates,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
@@ -83,7 +83,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	public Future<IAggregateRoot> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName,
 			Object aggregateRootId) {
 
-		if(StringHelper.isNullOrEmpty(aggregateRootTypeName))
+		if(StringUtilx.isNullOrEmpty(aggregateRootTypeName))
 			throw new ArgumentNullException("aggregateRootTypeName");
 		Class<IAggregateRoot> type;
 		try {
@@ -108,7 +108,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		if (null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString()))) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
 			if (!aggregateRoot.getClass().equals(aggregateRootType))
-				throw new RuntimeException(StringHelper.fill("Incorrect aggregate root type!!! [aggregateRootId: {}, type: {}, expectingType: {}]",
+				throw new RuntimeException(StringUtilx.fill("Incorrect aggregate root type!!! [aggregateRootId: {}, type: {}, expectingType: {}]",
 						aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
 			if (!aggregateRoot.getChanges().isEmpty()) {
 

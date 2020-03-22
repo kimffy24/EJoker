@@ -27,8 +27,8 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRootFactory;
@@ -219,7 +219,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					eventMailBox.finishRun();
 					
 				},
-				() -> StringHelper.fill("[contextListCount: {}]", committingContexts.size()),
+				() -> StringUtilx.fill("[contextListCount: {}]", committingContexts.size()),
 				true
 			);
 	}
@@ -300,7 +300,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                         //到这里，说明当前command想添加到eventStore中时，提示command重复，但是尝试从eventStore中取出该command时却找不到该command。
                         //出现这种情况，我们就无法再做后续处理了，这种错误理论上不会出现，除非eventStore的Add接口和Get接口出现读写不一致的情况；
                         //框架会记录错误日志，让开发者排查具体是什么问题。
-                    	String errorMessage = StringHelper.fill(
+                    	String errorMessage = StringUtilx.fill(
                     			"Command should be exist in the event store, but we cannot find it from the event store, this should not be happen, and we cannot continue again!!! [commandType: {}, commandId: {}, aggregateRootId: {}]",
 	                            command.getClass().getName(),
 	                            command.getId(),
@@ -315,7 +315,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                         
                     }
         		},
-        		() -> StringHelper.fill("[aggregateRootId: {}, commandId: {}]", command.getAggregateRootId(), command.getId()),
+        		() -> StringUtilx.fill("[aggregateRootId: {}, commandId: {}]", command.getAggregateRootId(), command.getId()),
         		true
         		);
 	}
@@ -382,7 +382,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 								});
     				}
         		},
-        		() -> StringHelper.fill("[eventStream: {}]", jsonSerializer.convert(eventStream)),
+        		() -> StringUtilx.fill("[eventStream: {}]", jsonSerializer.convert(eventStream)),
         		true
         		);
 
@@ -407,7 +407,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 							String.class.getName());
 					finishCommandAsync(processingCommand, commandResult);
 					},
-				() -> StringHelper.fill("[eventStream: {}]", eventStream.toString()),
+				() -> StringUtilx.fill("[eventStream: {}]", eventStream.toString()),
 				true
 				);
 	}

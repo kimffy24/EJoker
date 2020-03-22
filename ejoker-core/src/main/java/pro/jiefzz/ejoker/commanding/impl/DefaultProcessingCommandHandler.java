@@ -20,10 +20,10 @@ import pro.jiefzz.ejoker.commanding.ProcessingCommand;
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
@@ -78,8 +78,8 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	public Future<Void> handleAsync(ProcessingCommand processingCommand) {
 		
 		ICommand message = processingCommand.getMessage();
-		if (StringHelper.isNullOrEmpty(message.getAggregateRootId())) {
-			String errorInfo = StringHelper.fill("The aggregateId of commmand is null or empty! [commandType: {} commandId: {}]",
+		if (StringUtilx.isNullOrEmpty(message.getAggregateRootId())) {
+			String errorInfo = StringUtilx.fill("The aggregateId of commmand is null or empty! [commandType: {} commandId: {}]",
 					message.getClass().getName(),
 					message.getId());
 			logger.error(errorInfo);
@@ -91,7 +91,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			// TODO @await
 			await(handleCommandInternal(processingCommand, asyncHandler));
 		} else {
-			String errorMessage = StringHelper.fill("No command handler found of command! [commandType: {}, commandId: {}]",
+			String errorMessage = StringUtilx.fill("No command handler found of command! [commandType: {}, commandId: {}]",
 					message.getClass().getName(),
 					message.getId());
 			logger.error(errorMessage);
@@ -145,7 +145,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 						}
 					}
 				},
-				() -> StringHelper.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
+				() -> StringUtilx.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
 						command.getId(),
 						command.getClass().getName(),
 						commandHandler.getInnerObject().getClass().getName(),
@@ -174,7 +174,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			if(null!=changes && !changes.isEmpty()) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
-					String errorInfo = StringHelper.fill(
+					String errorInfo = StringUtilx.fill(
 							"Detected more than one aggregate created or modified by command!!! [commandType: {} commandId: {}]",
 							command.getClass().getName(),
 							command.getId()
@@ -240,7 +240,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
                     	finishCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
                     }
                 },
-    			() -> StringHelper.fill("[commandId: {}]", command.getId()),
+    			() -> StringUtilx.fill("[commandId: {}]", command.getId()),
     			true
     			);
 		return EJokerFutureUtil.completeFuture();
@@ -268,11 +268,11 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                        publishExceptionAsync(processingCommand, (IDomainException )realException);
 	                    } else {
 	                        finishCommandAsync(processingCommand, CommandStatus.Failed, realException.getClass().getName(),
-	                        		StringHelper.notSenseless(realException.getMessage()) ? realException.getMessage() : errorMessage);
+	                        		StringUtilx.isSenseful(realException.getMessage()) ? realException.getMessage() : errorMessage);
 	                    }
 	                    
 	                } },
-				() -> StringHelper.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
+				() -> StringUtilx.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
 						command.getId(),
 						command.getClass().getName(),
 						commandHandler.getInnerObject().getClass().getName(),
@@ -304,7 +304,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishExceptionAsync",
 				() -> exceptionPublisher.publishAsync(exception),
 				r -> finishCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
-				() -> StringHelper.fill("[commandId: {}, exceptionType: {}, exceptionInfo: {}]",
+				() -> StringUtilx.fill("[commandId: {}, exceptionType: {}, exceptionInfo: {}]",
 						processingCommand.getMessage().getId(),
 						exception.getClass().getName(),
 						DomainExceptionCodecHelper.serialize(exception)),
@@ -333,7 +333,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishApplicationMessageAsync",
 				() -> applicationMessagePublisher.publishAsync(message),
 				r -> finishCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
-				() -> StringHelper.fill("[applicationMessageId: {}, applicationMessageIype: {}, commandId: {}, commandType: {}]",
+				() -> StringUtilx.fill("[applicationMessageId: {}, applicationMessageIype: {}, commandId: {}, commandType: {}]",
 						message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
 				ex -> logger.error("Publish application message has unknown exception, the code should not be run to here!!! [errorMessage: {}]", ex.getMessage(), ex),
 				true

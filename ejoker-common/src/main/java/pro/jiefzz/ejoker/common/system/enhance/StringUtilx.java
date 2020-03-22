@@ -1,12 +1,10 @@
-package pro.jiefzz.ejoker.common.system.helper;
+package pro.jiefzz.ejoker.common.system.enhance;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
-
-public final class StringHelper {
+public final class StringUtilx {
 
 	public static boolean isNullOrEmpty(String targetString) {
 		return null==targetString || "".equals(targetString);

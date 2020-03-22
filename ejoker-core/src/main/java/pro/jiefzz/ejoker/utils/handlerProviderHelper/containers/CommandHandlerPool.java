@@ -18,10 +18,10 @@ import pro.jiefzz.ejoker.commanding.ICommand;
 import pro.jiefzz.ejoker.commanding.ICommandContext;
 import pro.jiefzz.ejoker.commanding.ICommandHandlerProxy;
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 
 public class CommandHandlerPool {
 	
@@ -69,7 +69,7 @@ public class CommandHandlerPool {
 					isOK = true;
 				
 				if(!isOK) {
-					String errorDesc = StringHelper.fill("The method which Proxy will point to should return Future<Void> or declare return void!!! [currentMethod: {}#{}({}, {})]", implementationHandlerClass.getName(), "handleAsync", parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
+					String errorDesc = StringUtilx.fill("The method which Proxy will point to should return Future<Void> or declare return void!!! [currentMethod: {}#{}({}, {})]", implementationHandlerClass.getName(), "handleAsync", parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
 					logger.error(errorDesc);
 					throw new RuntimeException(errorDesc);
 				}
@@ -99,7 +99,7 @@ public class CommandHandlerPool {
 			this.asyncHandleReflectionMethod = asyncHandleReflectionMethod;
 			this.asyncHandlerClass = (Class<? extends AbstractCommandHandler> )asyncHandleReflectionMethod.getDeclaringClass();
 			Class<?>[] parameterTypes = asyncHandleReflectionMethod.getParameterTypes();
-			identification = StringHelper.fill("Proxy::{}#{}({}, {})",
+			identification = StringUtilx.fill("Proxy::{}#{}({}, {})",
 					asyncHandlerClass.getSimpleName(),
 					asyncHandleReflectionMethod.getName(),
 					parameterTypes[0].getSimpleName(),

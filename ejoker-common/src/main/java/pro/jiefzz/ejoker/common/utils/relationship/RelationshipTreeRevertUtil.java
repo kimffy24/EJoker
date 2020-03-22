@@ -17,11 +17,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericDefinedType;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericExpression;
@@ -352,7 +352,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			try {
 				newInstance = clazz.newInstance();
 			} catch (InstantiationException|IllegalAccessException e) {
-				String errInfo = StringHelper.fill("Connot create new instance!!! [type: {}]", clazz.getName());
+				String errInfo = StringUtilx.fill("Connot create new instance!!! [type: {}]", clazz.getName());
 				logger.error(errInfo, e);
 				throw new RuntimeException(errInfo, e);
 			}

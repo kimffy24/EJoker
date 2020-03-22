@@ -25,10 +25,10 @@ import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 
@@ -58,7 +58,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@EInitialize
 	private void init() {
 		scavenger.addFianllyJob(this::exitHook);
-		scheduleService.startTask(StringHelper.fill("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
+		scheduleService.startTask(StringUtilx.fill("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
 				this::cleanInactiveClient,
 				2000l,
 				2000l);
@@ -68,7 +68,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void export(IVoidFunction1<String> action, int port, boolean waitFinished) {
 		if (portMap.containsKey(port)) {
-			throw new RuntimeException(StringHelper.fill("Port conflict!!! [port: {}]!!!", port));
+			throw new RuntimeException(StringUtilx.fill("Port conflict!!! [port: {}]!!!", port));
 		}
 
 		RPCTuple currentTuple = null;
@@ -182,7 +182,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 					return EJokerFutureTaskUtil.completeTask();
 				},
 				() -> {},
-				() -> StringHelper.fill("RemoteInvoke::{}:{}", host, port),
+				() -> StringUtilx.fill("RemoteInvoke::{}:{}", host, port),
 				e -> logger.error("Send data to remote host faild!!! [remoteAddress: {}, port: {}, data: {}]", host, port, data, e),
 				true);
 	}

@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.commanding;
 
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 
 public class CommandResult {
 
@@ -27,7 +27,7 @@ public class CommandResult {
 	
 	@Override
 	public String toString() {
-		return StringHelper.fill("\\{commandId: {}, status: {}, aggregateRootId: {}, result: {}, resultType: {}\\}",
+		return StringUtilx.fill("\\{commandId: {}, status: {}, aggregateRootId: {}, result: {}, resultType: {}\\}",
 				commandId,
 				status.toString(),
 				aggregateRootId,

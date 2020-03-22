@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.infrastructure.impl.AbstractMessageHandler;
 import pro.jiefzz.ejoker.messaging.IMessage;
@@ -360,7 +360,7 @@ public class MessageHandlerPool {
 		public MessageHandlerReflectionTuple(Method handleReflectionMethod, String pList, List<Integer> asciiOrder, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
-			identification = StringHelper.fill("Proxy::{}#{}({})",
+			identification = StringUtilx.fill("Proxy::{}#{}({})",
 					handlerClass.getSimpleName(),
 					MessageHandlerPool.HANDLER_METHOD_NAME,
 					pList);

@@ -1,5 +1,6 @@
 package pro.jiefzz.ejoker.common.system.extension.pipeline;
 
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IFunction2;
@@ -13,7 +14,6 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction4;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction5;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction6;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 
 public class Pipeline<R> implements Runnable {
 
@@ -151,7 +151,7 @@ public class Pipeline<R> implements Runnable {
 				if(this.hook.isPreventThrow())
 					return;
 			}
-			throw new RuntimeException(StringHelper.fill("Pipeline exec faild!!! [{}]", null == pre ? getCxtInfo(this.argCxt) : getCxtInfo(pre.argCxt)), e);
+			throw new RuntimeException(StringUtilx.fill("Pipeline exec faild!!! [{}]", null == pre ? getCxtInfo(this.argCxt) : getCxtInfo(pre.argCxt)), e);
 		}
 	}
 	

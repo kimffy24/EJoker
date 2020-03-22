@@ -8,8 +8,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.domain.AbstractAggregateRoot;
 import pro.jiefzz.ejoker.eventing.IDomainEvent;
 
@@ -56,7 +56,7 @@ public class AggregateRootHandlerPool {
 		private HandlerReflectionMapper(Method handleReflectionMethod) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
-			identification = StringHelper.fill("Proxy::{}#{}({})]",
+			identification = StringUtilx.fill("Proxy::{}#{}({})]",
 					handleReflectionMethod.getDeclaringClass().getName(),
 					handleReflectionMethod.getName(),
 					parameterTypes[0].getSimpleName());

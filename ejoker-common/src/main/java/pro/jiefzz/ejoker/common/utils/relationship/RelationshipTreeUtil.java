@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
 import pro.jiefzz.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.common.utils.genericity.GenericDefinedType;
@@ -145,7 +145,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
 				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
 					throw new RuntimeException(
-							StringHelper.fill(
+							StringUtilx.fill(
 									"We just support java base data type on the key while opera in serializing map!!! [map.keyType: {}, field: {}#{}]",
 									pass1TypeMeta.rawClazz.getSimpleName(),
 									targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),

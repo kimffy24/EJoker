@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
 public class DomainEventStreamMessage extends AbstractMessage {
@@ -58,7 +58,7 @@ public class DomainEventStreamMessage extends AbstractMessage {
 			itemString = itemString.substring(1);
 		}
 		
-		return StringHelper.fill(
+		return StringUtilx.fill(
 				"\\{id={}, commandId={}, aggregateRootId={}, aggregateRootTypeName={}, version={}, events={}, items={}, timestamp={}\\}",
 				this.getId(),
 				commandId,

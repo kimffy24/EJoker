@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import co.paralleluniverse.fibers.Suspendable;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
@@ -20,7 +21,6 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 
@@ -465,7 +465,7 @@ public class IOHelper {
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes);
-				String cancleInfo = StringHelper.fill("Async task was cancelled! [taskName: {}]", externalContext.actionName);
+				String cancleInfo = StringUtilx.fill("Async task was cancelled! [taskName: {}]", externalContext.actionName);
 				executeFailedAction(
 						externalContext,
 						new CancellationException(cancleInfo),

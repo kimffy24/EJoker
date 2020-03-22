@@ -17,8 +17,8 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -67,7 +67,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	private void init() {
 
 		scheduleService.startTask(
-				StringHelper.fill("{}@{}#cleanInactiveMailbox{}", this.getClass().getName(), this.hashCode()),
+				StringUtilx.fill("{}@{}#cleanInactiveMailbox{}", this.getClass().getName(), this.hashCode()),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
@@ -77,7 +77,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	@Override
 	public void process(ProcessingEvent processingMessage) {
 		String aggregateRootId = processingMessage.getMessage().getAggregateRootId();
-		if(StringHelper.isNullOrWhiteSpace(aggregateRootId)) {
+		if(StringUtilx.isNullOrWhiteSpace(aggregateRootId)) {
 			throw new ArgumentException("aggregateRootId of domain event stream cannot be null or empty, domainEventStreamId: " + processingMessage.getMessage().getId());
 		}
 		
@@ -119,7 +119,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				"DispatchProcessingMessageAsync",
 				() -> dispatcher.dispatchMessagesAsync(message.getEvents()),
 				() -> updatePublishedVersionAsync(processingMessage),
-				() -> StringHelper.fill(
+				() -> StringUtilx.fill(
 						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
 						message.getId(),
 						message.getClass().getName(),

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 
 @EService
@@ -52,7 +52,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 		for(Entry<Class<?>, String> entry : entrySet) {
 			Class<?> preClazz;
 			if(null != (preClazz = this.typeDict.putIfAbsent(entry.getValue(), entry.getKey()))) {
-				String msg = StringHelper.fill("Type alias conflict!!! [aliasName: {}, currentType: {}, previousType: {}]",
+				String msg = StringUtilx.fill("Type alias conflict!!! [aliasName: {}, currentType: {}, previousType: {}]",
 						entry.getValue(),
 						entry.getKey().getName(),
 						preClazz.getName());
@@ -61,7 +61,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 			}
 			String preName;
 			if(null != (preName = this.nameDict.putIfAbsent(entry.getKey(), entry.getValue()))) {
-				String msg = StringHelper.fill("Name alias conflict!!! [realType: {}, currentAlias: {}, previousAlias: {}]",
+				String msg = StringUtilx.fill("Name alias conflict!!! [realType: {}, currentAlias: {}, previousAlias: {}]",
 						entry.getKey().getName(),
 						entry.getValue(),
 						preName);

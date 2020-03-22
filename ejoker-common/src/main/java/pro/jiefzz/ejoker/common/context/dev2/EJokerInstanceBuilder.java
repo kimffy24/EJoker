@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.ContextRuntimeException;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 
 public class EJokerInstanceBuilder {
 	
@@ -22,7 +22,7 @@ public class EJokerInstanceBuilder {
 		try {
 			newInstance = clazz.newInstance();
 		} catch (InstantiationException | IllegalAccessException ex) {
-			String errInfo = StringHelper.fill("Cannot create new instance!!! [type: {}]", clazz.getName());
+			String errInfo = StringUtilx.fill("Cannot create new instance!!! [type: {}]", clazz.getName());
 			logger.error(errInfo, ex);
 			throw new ContextRuntimeException(errInfo, ex);
 		}

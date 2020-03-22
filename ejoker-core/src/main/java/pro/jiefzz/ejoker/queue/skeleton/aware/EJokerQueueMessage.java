@@ -2,7 +2,7 @@ package pro.jiefzz.ejoker.queue.skeleton.aware;
 
 import java.io.Serializable;
 
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 
 public class EJokerQueueMessage implements Serializable {
 
@@ -84,7 +84,7 @@ public class EJokerQueueMessage implements Serializable {
 	}
 
 	public String toString() {
-		return StringHelper.fill("\\{topic={}, code={}, tag={}, createdTime={}, bodyLength={}\\}",
+		return StringUtilx.fill("\\{topic={}, code={}, tag={}, createdTime={}, bodyLength={}\\}",
 				topic, code, tag, createdTime, body.length);
 	}
 }

@@ -27,10 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IFunction3;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
@@ -314,7 +314,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						if(logger.isDebugEnabled()) {
 							String queueAll = "";
 							for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
-								queueAll += StringHelper.fill("<broker: {}, qId: {}>, ", rbmq.getBrokerName(), rbmq.getQueueId());
+								queueAll += StringUtilx.fill("<broker: {}, qId: {}>, ", rbmq.getBrokerName(), rbmq.getQueueId());
 							}
 							logger.debug("Topic rbalance finished. [topicName: {}, allocateQueue: {}]", focusTopic, queueAll);
 						}
@@ -540,7 +540,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			this.removedFlag = new AtomicBoolean(false);
 			
 			this.workThread = new Thread(ControlStruct.this::process,
-				StringHelper.fill("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
+				StringUtilx.fill("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
 			this.workThread.setDaemon(true);
 
 		}

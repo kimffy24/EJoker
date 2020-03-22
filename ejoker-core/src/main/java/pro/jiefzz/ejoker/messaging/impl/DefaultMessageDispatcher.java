@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -51,7 +51,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 							"HandleSingleMessageAsync",
 							() -> proxyAsyncHandler.handleAsync(message),
 							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
-							() -> StringHelper.fill("[messageType: {}, messageId: {}, handlerType: {}]",
+							() -> StringUtilx.fill("[messageType: {}, messageId: {}, handlerType: {}]",
 									message.getClass().getSimpleName(),
 									message.getId(),
 									proxyAsyncHandler.toString()

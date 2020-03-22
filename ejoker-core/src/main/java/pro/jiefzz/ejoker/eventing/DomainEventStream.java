@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
 import pro.jiefzz.ejoker.messaging.AbstractMessage;
 
 public class DomainEventStream extends AbstractMessage {
@@ -46,7 +46,7 @@ public class DomainEventStream extends AbstractMessage {
         for (IDomainEvent<?> evnt : this.events) {
         	if(!aggregateRootId.equals(evnt.getAggregateRootId())) {
         		// 这真是丑陋的java
-        		throw new RuntimeException(StringHelper.fill(
+        		throw new RuntimeException(StringUtilx.fill(
         				"Invalid domain event, aggregateRootId is not match!!! [expectedAggregateRootId: {}, currentAggregateRootId: {}, aggregateRootTypeName: {}]",
         				this.aggregateRootId.toString(),
         				evnt.getAggregateRootId().toString(),
@@ -58,7 +58,7 @@ public class DomainEventStream extends AbstractMessage {
         		// 序号为1以后的事件则做确认版本相等操作
         		this.version = evnt.getVersion();
         	} else if (evnt.getVersion() != getVersion()) {
-                throw new UnmatchEventVersionException(StringHelper.fill(
+                throw new UnmatchEventVersionException(StringUtilx.fill(
                 		"Invalid domain event, version is not match!!! [expectedVersion: {}, currentVersion: {}, aggregateRootTypeName: {}, aggregateRootId: {}]",
                 		this.version,
                 		evnt.getVersion(),
@@ -126,7 +126,7 @@ public class DomainEventStream extends AbstractMessage {
         	itemS = itemSB.toString();
         }
         
-        return StringHelper.fill("\\{id={}, commandId={}, aggregateRootTypeName={}, aggregateRootId={}, version={}, timestamp={}, events={}, items={}\\}",
+        return StringUtilx.fill("\\{id={}, commandId={}, aggregateRootTypeName={}, aggregateRootId={}, version={}, timestamp={}, events={}, items={}\\}",
         		this.getId(),
         		commandId,
         		aggregateRootTypeName,

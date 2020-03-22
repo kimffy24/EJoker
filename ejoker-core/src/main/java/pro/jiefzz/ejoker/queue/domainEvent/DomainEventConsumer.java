@@ -9,7 +9,7 @@ import pro.jiefzz.ejoker.commanding.CommandReturnType;
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
-import pro.jiefzz.ejoker.common.system.helper.StringHelper;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.eventing.DomainEventStreamMessage;
 import pro.jiefzz.ejoker.eventing.IEventSerializer;
 import pro.jiefzz.ejoker.eventing.qeventing.IEventProcessContext;
@@ -97,7 +97,7 @@ public class DomainEventConsumer extends AbstractEJokerQueueConsumer {
 				return;
 
 			String replyAddress;
-			if (StringHelper.isNullOrEmpty(replyAddress = domainEventStreamMessage.getItems().getOrDefault("CommandReplyAddress", null)))
+			if (StringUtilx.isNullOrEmpty(replyAddress = domainEventStreamMessage.getItems().getOrDefault("CommandReplyAddress", null)))
 				return;
 			String commandResult = domainEventStreamMessage.getItems().get("CommandResult");
 			DomainEventHandledMessage domainEventHandledMessage = new DomainEventHandledMessage();
