@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
@@ -202,7 +202,7 @@ public class MessageHandlerPool {
 			for(IMessage msg : messages) {
 				orderlyArgs.put(msg.getClass().getName(), msg);
 			}
-			EachUtil.forEach(orderlyArgs, (k, v) -> {
+			EachUtilx.forEach(orderlyArgs, (k, v) -> {
 				orderlyPsSb.append(k);
 				orderlyMsgs[ai.getAndIncrement()] = v;
 			});
@@ -210,7 +210,7 @@ public class MessageHandlerPool {
 		}
 		
 		Map<Long, List<MessageHandlerReflectionTuple>> proxyAsyncMultiHandlers = getProxyAsyncMultiHandlers(orderlyPs, orderlyMsgs);
-		EachUtil.forEach(proxyAsyncMultiHandlers, (b, l) -> {
+		EachUtilx.forEach(proxyAsyncMultiHandlers, (b, l) -> {
 			
 			for(MessageHandlerReflectionTuple reflectionTuple : l) {
 				IMessage[] invokeList = contructPTable(b, reflectionTuple.asciiOrder, orderlyMsgs);
@@ -269,9 +269,9 @@ public class MessageHandlerPool {
 				bitGraph.put(new Long(x), subSet);
 			}
 			
-			EachUtil.forEach(bitGraph, (b, l) -> {
+			EachUtilx.forEach(bitGraph, (b, l) -> {
 				StringBuilder pSignature = new StringBuilder();
-				EachUtil.forEach(l, t -> pSignature.append(t.getName()));
+				EachUtilx.forEach(l, t -> pSignature.append(t.getName()));
 				String pS = pSignature.toString();
 				List<MessageHandlerReflectionTuple> invokerList = handlerFullContraintMapper.get(pS);
 				
@@ -291,7 +291,7 @@ public class MessageHandlerPool {
 	 */
 	private static String getFullPs(Set<String> pSet) {
 		StringBuilder fullPSignature = new StringBuilder();
-		EachUtil.forEach(pSet, fullPSignature::append);
+		EachUtilx.forEach(pSet, fullPSignature::append);
 		return fullPSignature.toString();
 	}
 

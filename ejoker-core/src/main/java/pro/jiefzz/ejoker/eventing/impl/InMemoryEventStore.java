@@ -11,7 +11,7 @@ import java.util.concurrent.locks.Lock;
 
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
@@ -60,7 +60,7 @@ public class InMemoryEventStore implements IEventStore {
         }
 
         EventAppendResult eventAppendResult = new EventAppendResult();
-        EachUtil.forEach(eventStreamDict, (k, v) -> batchAppend(k, v, eventAppendResult));
+        EachUtilx.forEach(eventStreamDict, (k, v) -> batchAppend(k, v, eventAppendResult));
         return EJokerFutureTaskUtil.completeTask(eventAppendResult);
 	}
 

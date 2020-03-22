@@ -20,7 +20,7 @@ import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
  * @author kimffy
  *
  */
-public class EachUtil {
+public class EachUtilx {
 
 	/**
 	 * @param <K>

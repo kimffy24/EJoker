@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
 import pro.jiefzz.ejoker.messaging.AbstractMessage;
@@ -120,7 +120,7 @@ public class DomainEventStream extends AbstractMessage {
         if(null != items && !items.isEmpty()) {
         	StringBuffer itemSB = new StringBuffer();
         	itemSB.append('<');
-        	EachUtil.forEach(items, (k, v) -> itemSB.append("|").append(k).append(": ").append(v));
+        	EachUtilx.forEach(items, (k, v) -> itemSB.append("|").append(k).append(": ").append(v));
         	itemSB.append('>');
         	itemSB.deleteCharAt(1);
         	itemS = itemSB.toString();

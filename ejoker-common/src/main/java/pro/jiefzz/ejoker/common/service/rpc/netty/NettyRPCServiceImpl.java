@@ -23,7 +23,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
@@ -211,13 +211,13 @@ public class NettyRPCServiceImpl implements IRPCService {
 		clientConnectionOccupation.clear();
 		serverPortOccupation.clear();
 		
-		EachUtil.forEach(clientStore, (k, c) -> {
+		EachUtilx.forEach(clientStore, (k, c) -> {
 			logger.debug("Close netty rpc client {}", k);
 			c.close();
 		});
 		clientStore.clear();
 		
-		EachUtil.forEach(closeHookTrigger, (p, a) -> {
+		EachUtilx.forEach(closeHookTrigger, (p, a) -> {
 			a.trigger();
 			portMap.remove(p);
 		});

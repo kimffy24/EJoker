@@ -29,7 +29,7 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.MessageQueue;
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.RemotingException;
 
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IFunction3;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
@@ -146,7 +146,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		
 		onPasue.set(false);
 		
-		EachUtil.forEach(dashboards, (__, dashboard) -> {
+		EachUtilx.forEach(dashboards, (__, dashboard) -> {
 			dashboard.workThread.start(); 
 		});
 
@@ -228,7 +228,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 				sleepmilliSecWrapper(1000l);
 			}
 			while (onRunning.get()) {
-				EachUtil.forEach(dashboards, (__, d) -> processComsumedSequence(d));
+				EachUtilx.forEach(dashboards, (__, d) -> processComsumedSequence(d));
 				// 流控日志打印的许可检查，
 				// 每完成一个获得1个许可，同一时间最多1个许可，多于1个无效
 				flowControlLoggerAccquired.compareAndSet(false, true);

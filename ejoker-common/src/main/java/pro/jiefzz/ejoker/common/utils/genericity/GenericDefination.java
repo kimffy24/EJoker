@@ -8,7 +8,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
 import java.util.Map;
 
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 
@@ -254,13 +254,13 @@ public final class GenericDefination {
 	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefination> vf) {
 		if(null == interfaceDefinations || interfaceDefinations.isEmpty())
 			return;
-		EachUtil.forEach(interfaceDefinations, vf);
+		EachUtilx.forEach(interfaceDefinations, vf);
 	}
 	
 	public void forEachFieldDefinations(IVoidFunction2<String, GenericDefinedField> vf) {
 		if(null == fieldDefinations || fieldDefinations.isEmpty())
 			return;
-		EachUtil.forEach(fieldDefinations, vf);
+		EachUtilx.forEach(fieldDefinations, vf);
 	}
 	
 	public int getGenericDeclareAmount() {

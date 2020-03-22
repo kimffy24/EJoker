@@ -7,7 +7,7 @@ import java.util.Map;
 
 import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.common.context.dev2.EJokerInstanceBuilder;
-import pro.jiefzz.ejoker.common.system.enhance.EachUtil;
+import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
 import pro.jiefzz.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
@@ -23,7 +23,7 @@ public final class DomainExceptionCodecHelper {
 		Map<String, String> rMap = new HashMap<>();
 		
 		Map<String, Field> reflectFields = getReflectFields(exception.getClass());
-		EachUtil.forEach(reflectFields, (n, f) -> {
+		EachUtilx.forEach(reflectFields, (n, f) -> {
 
 			if(!loggerUse)
 				// 忽略特定两个字段，他们会被显式地设置到发送的message对象，没必要多做一次序列化
@@ -49,7 +49,7 @@ public final class DomainExceptionCodecHelper {
 				.getOrAdd(builderMap, exceptionClazz, () -> new EJokerInstanceBuilder(exceptionClazz))
 				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
-			EachUtil.forEach(reflectFields, (n, f) -> {
+			EachUtilx.forEach(reflectFields, (n, f) -> {
 				
 
 				// 忽略特定两个字段
@@ -78,7 +78,7 @@ public final class DomainExceptionCodecHelper {
 					!RuntimeException.class.equals(current);
 					current = current.getSuperclass()) {
 				
-				EachUtil.forEach(current.getDeclaredFields(), (field) -> {
+				EachUtilx.forEach(current.getDeclaredFields(), (field) -> {
 					
 					String fieldName = field.getName();
 					Class<?> fieldType = field.getType();
