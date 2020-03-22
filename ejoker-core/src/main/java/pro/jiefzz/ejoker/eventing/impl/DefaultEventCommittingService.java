@@ -147,7 +147,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					EventCommittingContextMailBox eventMailBox = firstEventCommittingContext.getMailBox();
 					
 					if(null == appendResult) {
-						logger.error("Batch persist events success, but the persist result is null, the current event committing mailbox should be pending, mailboxNumber: {}",
+						logger.error("Batch persist events success, but the persist result is null, the current event committing mailbox should be pending. [mailboxNumber: {}]",
 								eventMailBox.getNumber());
 						return;
 					}
@@ -170,7 +170,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        			publishDomainEventAsync(ecc.getProcessingCommand(), ecc.getEventStream());
 				        		}
 								if (logger.isDebugEnabled()) {
-									logger.debug("Batch persist events success, mailboxNumber: {}, aggregateRootId: {}",
+									logger.debug("Batch persist events success. [mailboxNumber: {}, aggregateRootId: {}]",
 	                                    eventMailBox.getNumber(),
 	                                    aggregateRootId);
 	                            }
@@ -186,7 +186,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 							if(null == contextList || contextList.isEmpty()) return;
 							EventCommittingContext eventCommittingContextDuplicated = contextList.get(0);
 							
-							logger.warn("Batch persist events has duplicate commandIds, mailboxNumber: {}, aggregateRootId: {}, commandIds: {}",
+							logger.warn("Batch persist events has duplicate commandIds. [mailboxNumber: {}, aggregateRootId: {}, commandIds: {}]",
 	                                eventMailBox.getNumber(), aggregateRootId, duplicateCommandIdList);
 							
 							await(resetCommandMailBoxConsumingSequence(eventCommittingContextDuplicated, eventCommittingContextDuplicated.getProcessingCommand().getSequence(), duplicateCommandIdList));
@@ -202,7 +202,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 							Optional<EventCommittingContext> committingContextOp = committingContexts.stream().filter(x -> aggregateRootId.equals(x.getEventStream().getAggregateRootId())).findFirst();
 							if(committingContextOp.isPresent()) {
 								EventCommittingContext eventCommittingContext = committingContextOp.get();
-								logger.warn("Batch persist events has version confliction, mailboxNumber: {}, aggregateRootId: {}, conflictVersion: {}",
+								logger.warn("Batch persist events has version confliction. [mailboxNumber: {}, aggregateRootId: {}, conflictVersion: {}]",
 										eventMailBox.getNumber(), aggregateRootId, eventCommittingContext.getEventStream().getVersion()
 										);
 
@@ -396,7 +396,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				() -> domainEventPublisher.publishAsync(eventStream),
 				r -> {
 					
-					logger.debug("Publish event success, {}", eventStream.toString());
+					logger.debug("Publish event success. [eventStream: {}]", eventStream.toString());
 
 					String commandHandleResult = processingCommand.getCommandExecuteContext().getResult();
 					CommandResult commandResult = new CommandResult(

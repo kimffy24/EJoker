@@ -105,7 +105,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 		        		continue;
 		        	}
 		        	it.remove();
-		        	logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
+		        	logger.debug("Removed inactive command mailbox. [aggregateRootId: {}]", current.getKey());
 		        } finally {
 		        	mailbox.releaseClean();
 		        }

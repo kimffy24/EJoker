@@ -49,7 +49,7 @@ public class DomainExceptionConsumer extends AbstractEJokerQueueConsumer {
         exception.setTimestamp(exceptionMessage.getTimestamp());
         
         logger.debug(
-        		"EJoker publishable message received, messageId: {}, exceptionType: {}",
+        		"EJoker publishable message received. [messageId: {}, exceptionType: {}]",
         		exceptionMessage.getUniqueId(),
         		exceptionType.getSimpleName());
         systemAsyncHelper.submit(() -> {

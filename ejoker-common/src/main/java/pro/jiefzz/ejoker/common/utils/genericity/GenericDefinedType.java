@@ -100,7 +100,7 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			{
 				TypeVariable<?>[] typeParameters = rawClazz.getTypeParameters();
 				if(null != typeParameters && 0 < typeParameters.length) {
-					logger.warn("Without Generic declare of {}, it maybe produce unpredictable errors!", regionTye.getTypeName());
+					logger.warn("Without Generic declare, it maybe produce unpredictable errors! [targetClass: {}]", regionTye.getTypeName());
 				}
 			}
 		} else if(regionTye instanceof ParameterizedType) {

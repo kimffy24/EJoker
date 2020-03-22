@@ -32,7 +32,7 @@ public abstract class AbstractNormalWorkerGroupService {
 
 		asyncPool = AsyncEntranceProvider.trigger(this);
 		ejokerContext.destroyRegister(asyncPool::shutdown, 95);
-		logger.debug("Create a new AsyncEntrance[{}] for {}.", asyncPool.getClass().getName(),
+		logger.debug("Create a new AsyncEntrance. [asyncEntranceType: {}, requireClass: {}]", asyncPool.getClass().getName(),
 				this.getClass().getName());
 
 	}

@@ -182,7 +182,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 					if(mailbox.hasRemindMessage())
 						continue;
 			        it.remove();
-			        logger.debug("Removed inactive command mailbox, aggregateRootId: {}", current.getKey());
+			        logger.debug("Removed an inactive command mailbox. [aggregateRootId: {}]", current.getKey());
 				} finally {
 					mailbox.releaseClean();
 				}

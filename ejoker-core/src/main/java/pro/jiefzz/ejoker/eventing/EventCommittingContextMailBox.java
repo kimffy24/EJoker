@@ -108,7 +108,7 @@ public class EventCommittingContextMailBox {
 	 */
 	public void tryRun() {
 		if(onRunning.compareAndSet(false, true)) {
-			logger.debug("{} start run, mailboxNumber: {}",
+			logger.debug("{} start run. [mailboxNumber: {}]",
 					this.getClass().getSimpleName(),
 					number);
 			systemAsyncHelper.submit(this::processMessages, false);
@@ -120,7 +120,7 @@ public class EventCommittingContextMailBox {
 	 */
 	public void finishRun() {
 		lastActiveTime = System.currentTimeMillis();
-		logger.debug("{} complete run, mailboxNumber: {}",
+		logger.debug("{} complete run. [mailboxNumber: {}]",
 				this.getClass().getSimpleName(), number);
 		onRunning.compareAndSet(true, false);
 		if (hasRemindMessage()) {

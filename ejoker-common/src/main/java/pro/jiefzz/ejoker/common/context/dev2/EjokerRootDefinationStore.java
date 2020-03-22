@@ -177,7 +177,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	@Override
 	public void registeScannerHook(IEjokerClazzScannerHook hook) {
 		if(null != hookMap.putIfAbsent(hook.getClass(), hook)) {
-			logger.warn("Context Hook[Type: {}] has regist before! It will ignore this invokation.");
+			logger.warn("Context Hook has regist before! It will ignore this invokation. [hookType: {}] ", hook.getClass().getName());
 		};
 	}
 	

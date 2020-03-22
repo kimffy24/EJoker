@@ -186,7 +186,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 			boolean status = false;
 			try {
 				consumer.updateConsumeOffset(mq, localOffsetConsumed);
-				logger.debug("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
+				logger.debug("Update comsumed offset to server. [{}, ConsumedLocal: {}]", mq.toString(), localOffsetConsumed);
 				status = true;
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
@@ -247,7 +247,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 			do {
 				sleepmilliSecWrapper(1000l);
 				if(loop++%30 == 0)
-					logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.consumer.getConsumerGroup(), DefaultMQConsumer.this.consumer.getInstanceName());
+					logger.debug("consumer's state is waiting rebalance ... [consumer: {}@{}]", DefaultMQConsumer.this.consumer.getConsumerGroup(), DefaultMQConsumer.this.consumer.getInstanceName());
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.this.consumer.fetchMessageQueuesInBalance(focusTopic);
 				} catch (MQClientException e) {
@@ -392,7 +392,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 						int cAmount = 0;
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), ++ frezon)) {
 							if(flowControlLoggerAccquired.compareAndSet(true, false))
-								logger.warn("Flow control protected! Amount of on processing message is {}", cAmount);
+								logger.warn("Flow control protected! [queue: {}, processing message amount: {}, protect round: {}]", mq.toString(), cAmount, frezon);
 							sleepmilliSecWrapper(100l);
 						}
 						consumingAmount.getAndIncrement();
@@ -432,7 +432,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 		}
 		if(null != controlStruct.aheadCompletion.putIfAbsent(comsumedOffset, ""))
 			throw new RuntimeException();
-		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
+		logger.debug("Receive local completion. [queue: {}, offset {}]", mq, comsumedOffset);
 		
 		LockSupport.unpark(processComsumedSequenceThread);
 		

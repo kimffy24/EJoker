@@ -41,7 +41,7 @@ public class ApplicationMessageConsumer extends AbstractEJokerQueueConsumer {
         Class<? extends IApplicationMessage> applicationMessageType = (Class<? extends IApplicationMessage> )typeNameProvider.getType(queueMessage.getTag());
         IApplicationMessage message = jsonSerializer.revert(new String(queueMessage.getBody(), Charset.forName("UTF-8")), applicationMessageType);
 
-        logger.debug("EJoker application message received, messageId: {}, messageType: {}", message.getId(), applicationMessageType.getSimpleName());
+        logger.debug("EJoker application message received. [messageId: {}, messageType: {}]", message.getId(), applicationMessageType.getSimpleName());
         systemAsyncHelper.submit(() -> {
         	await(messageDispatcher.dispatchMessageAsync(message));
         	context.onMessageHandled(queueMessage);

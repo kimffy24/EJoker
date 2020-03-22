@@ -47,7 +47,7 @@ public class DomainEventConsumer extends AbstractEJokerQueueConsumer {
 		DomainEventStreamProcessContext processContext = new DomainEventStreamProcessContext(this, domainEventStreamMessage, queueMessage, context);
 		ProcessingEvent processingMessage = new ProcessingEvent(domainEventStreamMessage, processContext);
 		logger.debug(
-				"EJoker event message received, messageId: {}, aggregateRootId: {}, aggregateRootType: {}, version: {}",
+				"EJoker event message received. [messageId: {}, aggregateRootId: {}, aggregateRootType: {}, version: {}]",
 				domainEventStreamMessage.getId(),
 				domainEventStreamMessage.getAggregateRootId(),
 				domainEventStreamMessage.getAggregateRootTypeName(),

@@ -79,14 +79,14 @@ public class NettySimpleClient {
 				await(future);
 				// 判断是否连接成功
 				if (future.isSuccess()) {
-					logger.debug("Client[to: {}:{} ] create success ...", host, port);
+					logger.debug("Client create success. [to: {}:{} ]", host, port);
 					// 得到管道，便于通信
 					socketChannel = (SocketChannel )future.channel();
 					ready.set(true);
 					CountDownLatchWrapper.countDown(connectBlocker);
 					socketChannel.closeFuture().awaitUninterruptibly();
 				} else {
-					logger.debug("Client[to: {}:{} ] create faild ...", host, port);
+					logger.debug("Client create faild!!! [to: {}:{} ]", host, port);
 					CountDownLatchWrapper.countDown(connectBlocker);
 				}
 			} finally {

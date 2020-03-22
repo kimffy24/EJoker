@@ -102,7 +102,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 				eIds = eIds.substring(1);
 				
 				logger.debug(
-						"{} enqueued new message, aggregateRootType: {}, aggregateRootId: {}, commandId: {}, eventVersion: {}, eventStreamId: {}, eventTypes: {}, eventIds: {}",
+						"{} enqueued new message. [aggregateRootType: {}, aggregateRootId: {}, commandId: {}, eventVersion: {}, eventStreamId: {}, eventTypes: {}, eventIds: {}]",
 						this.getClass().getSimpleName(),
 						eventStream.getAggregateRootTypeName(),
 						eventStream.getAggregateRootId(),
@@ -135,7 +135,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	 */
 	public void tryRun() {
 		if(onRunning.compareAndSet(false, true)) {
-			logger.debug("{} start run, aggregateRootId: {}", this.getClass().getSimpleName(), aggregateRootId);
+			logger.debug("{} start run. [aggregateRootId: {}]", this.getClass().getSimpleName(), aggregateRootId);
 			systemAsyncHelper.submit(this::processMessage, false);
 		}
 	}
@@ -145,7 +145,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	 */
 	public void finishRun() {
 		lastActiveTime = System.currentTimeMillis();
-		logger.debug("{} finish run, mailboxNumber: {}",
+		logger.debug("{} finish run. [mailboxNumber: {}]",
 				this.getClass().getSimpleName(), aggregateRootId);
 		onRunning.compareAndSet(true, false);
 		if (isContinuable()) {
@@ -169,7 +169,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 				handler.trigger(message);
 				// handler调用最后会执行finishRun()方法
 			} catch (RuntimeException ex) {
-				logger.error("{} run has unknown exception, aggregateRootId: {}",
+				logger.error("{} run has unknown exception. [aggregateRootId: {}]",
 						this.getClass().getSimpleName(), aggregateRootId, ex);
 				DiscardWrapper.sleepInterruptable(1l);
 				finishRun();

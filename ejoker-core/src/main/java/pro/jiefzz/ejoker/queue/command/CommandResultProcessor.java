@@ -48,7 +48,7 @@ public class CommandResultProcessor implements IWorkerService {
 			logger.warn("{} has started!", this.getClass().getName());
 		} else {
 			rpcService.export((parameter) -> {
-				logger.debug("receive: \"{}\"", parameter);
+				logger.debug("{} receive msg. [msg: \"{}\"]", parameter);
 				ReplyMessage revert = jsonConverter.revert(parameter, ReplyMessage.class);
 				if(null!=revert.c)
 					CommandResultProcessor.this.handlerResult(revert.t, revert.c);
@@ -113,14 +113,14 @@ public class CommandResultProcessor implements IWorkerService {
 				commandTaskMap.remove(commandResult.getCommandId());
 				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
 				if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
-					logger.debug("Command result return, {}", commandResult);
+					logger.debug("Command result return. [commandResult: {}]", commandResult);
 			} else if (CommandReturnType.EventHandled.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				if (CommandStatus.Failed.equals(commandResult.getStatus())
 						|| CommandStatus.NothingChanged.equals(commandResult.getStatus())) {
 					commandTaskMap.remove(commandResult.getCommandId());
 					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
 					if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
-						logger.debug("Command result return, {}", commandResult);
+						logger.debug("Command result return. [commandResult: {}]", commandResult);
 				}
 			}
 		}
@@ -137,7 +137,7 @@ public class CommandResultProcessor implements IWorkerService {
 					message.getCommandResult() != null ? message.getCommandResult().getClass().getName() : null);
 			if (commandTaskCompletionSource.taskCompletionSource
 					.trySetResult(new AsyncTaskResult<>(commandResult)))
-				logger.debug("Command result return, {}", commandResult.toString());
+				logger.debug("Command result return. [commandResult: {}]", commandResult.toString());
 		}
 	}
 

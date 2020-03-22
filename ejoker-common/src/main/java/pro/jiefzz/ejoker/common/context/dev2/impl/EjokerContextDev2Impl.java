@@ -123,7 +123,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	public <T> T get(Class<T> clazz) {
 		
 		AcquireHelper.waitAcquire(onService, true, 50, count -> {
-			logger.warn("Context is not on service!!! Current retry {} times", count);
+			logger.warn("Context is not on service!!! [currentLoop: {}]", count);
 		});
 		
 		return (T )instanceMap.get(clazz.getName());
@@ -134,7 +134,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	public <T> T get(Class<T> clazz, Type... types) {
 
 		AcquireHelper.waitAcquire(onService, true, 50, count -> {
-			logger.warn("Context is not on service!!! Current retry {} times", count);
+			logger.warn("Context is not on service!!! [currentLoop: {}]", count);
 		});
 		
 		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz, types);

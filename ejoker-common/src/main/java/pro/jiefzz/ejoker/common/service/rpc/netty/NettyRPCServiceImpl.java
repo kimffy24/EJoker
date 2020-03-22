@@ -200,7 +200,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 			if(null != ab)
 				ab.set(false);
 			client.close();
-			logger.debug("Close rpc client: {}", clientIdentify);
+			logger.debug("Close rpc client. [clientDesct: {}]", clientIdentify);
 		}
 	}
 	
@@ -212,7 +212,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		serverPortOccupation.clear();
 		
 		EachUtilx.forEach(clientStore, (k, c) -> {
-			logger.debug("Close netty rpc client {}", k);
+			logger.debug("Close netty rpc client. [clientDesc: {}]", k);
 			c.close();
 		});
 		clientStore.clear();

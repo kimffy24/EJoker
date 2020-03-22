@@ -161,7 +161,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 						long aggregateRootOldVersion = previous.aggregateRoot.getVersion();
 						previous.aggregateRoot = aggregateRoot;
 						previous.lastUpdateTime = System.currentTimeMillis();
-						logger.debug("Aggregate root in-memory cache reset, aggregateRootType: {}, aggregateRootId: {}, aggregateRootNewVersion: {}, aggregateRootOldVersion: {}",
+						logger.debug("Aggregate root in-memory cache reset. [aggregateRootType: {}, aggregateRootId: {}, aggregateRootNewVersion: {}, aggregateRootOldVersion: {}]",
 								typeNameProvider.getTypeName(aggregateRoot.getClass()), aggregateRoot.getUniqueId(), aggregateRoot.getVersion(), aggregateRootOldVersion);
 					} finally {
 						previous.releaseUse();
@@ -183,7 +183,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 					&& aggregateCacheInfo.tryClean()) {
 				try {
 					it.remove();
-					logger.debug("Removed inactive aggregate root, id: {}, type: {}", current.getKey(), aggregateCacheInfo.aggregateRoot.getClass().getName());
+					logger.debug("Removed an inactive aggregate root. [id: {}, type: {}]", current.getKey(), aggregateCacheInfo.aggregateRoot.getClass().getName());
 				} finally {
 					aggregateCacheInfo.releaseClean();
 				}

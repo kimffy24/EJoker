@@ -102,7 +102,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		while(null != messageDict.putIfAbsent(currentSequence = nextSequence.getAndIncrement(), message));
 		message.setSequence(currentSequence);
 		if(logger.isDebugEnabled())
-			logger.debug("{} enqueued new message, aggregateRootId: {}, messageId: {}, messageSequence: {}",
+			logger.debug("{} enqueued new message. [aggregateRootId: {}, messageId: {}, messageSequence: {}]",
 				this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), currentSequence);
 		lastActiveTime = System.currentTimeMillis();
 		tryRun();
@@ -116,7 +116,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 			return;
 		if(onRunning.compareAndSet(false, true)) {
 			// 保证任意时刻只有一个执行processMessages()的线程
-			logger.debug("{} start run, aggregateRootId: {}, consumingSequence: {}", this.getClass().getSimpleName(),
+			logger.debug("{} start run. [aggregateRootId: {}, consumingSequence: {}]", this.getClass().getSimpleName(),
 					aggregateRootId, consumingSequence);
 			systemAsyncHelper.submit(this::processMessages, false);
 		}
@@ -126,7 +126,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	 * 请求完成MailBox的单次运行，如果MailBox中还有剩余消息，则继续尝试运行下一次
 	 */
 	public void finishRun() {
-		logger.debug("{} finish run, aggregateRootId: {}", this.getClass().getSimpleName(), aggregateRootId);
+		logger.debug("{} finish run. [aggregateRootId: {}]", this.getClass().getSimpleName(), aggregateRootId);
 		onRunning.set(false);
 		if (hasNextMessage()) {
 			tryRun();
@@ -141,11 +141,11 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		// ** 那么这一次开始系统就会彻底被饿死，哪一方都等不到自己要的资源。
 		// ** 那么，在java中，请使用pauseOnly() 和 acquireOnRunning() 组合。
 		onPaused.set(true);
-		logger.debug("{} pause requested, aggregateRootId: {}", this.getClass().getSimpleName(), aggregateRootId);
+		logger.debug("{} pause requested. [aggregateRootId: {}]", this.getClass().getSimpleName(), aggregateRootId);
 		AcquireHelper.waitAcquire(onRunning, 10l, // 1000l,
 				r -> {
 					if (0 == r % 100)
-						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while, aggregateRootId: {}, waitTime: {} ms",
+						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while. [aggregateRootId: {}, waitTime(ms): {}]",
 								this.getClass().getSimpleName(), aggregateRootId, r * 10);
 				});
 	}
@@ -159,7 +159,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		AcquireHelper.waitAcquire(onRunning, 5l, // 1000l,
 				r -> {
 					if (0 == r % 100)
-						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while, aggregateRootId: {}, waitTime: {} ms",
+						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while. [aggregateRootId: {}, waitTime(ms): {}]",
 								this.getClass().getSimpleName(), aggregateRootId, r * 10);
 				});
 		lastActiveTime = System.currentTimeMillis();
@@ -171,14 +171,14 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	public void resume() {
 		lastActiveTime = System.currentTimeMillis();
 		onPaused.set(false);
-		logger.debug("{} resume requested, aggregateRootId: {}, consumingSequence: {}", this.getClass().getSimpleName(),
+		logger.debug("{} resume requested. [aggregateRootId: {}, consumingSequence: {}]", this.getClass().getSimpleName(),
 				aggregateRootId, consumingSequence);
 	}
 
 	public void resetConsumingSequence(long consumingSequence) {
 		lastActiveTime = System.currentTimeMillis();
 		this.consumingSequence = consumingSequence;
-		logger.debug("{} reset consumingSequence, aggregateRootId: {}, consumingSequence: {}",
+		logger.debug("{} reset consumingSequence. [aggregateRootId: {}, consumingSequence: {}]",
 				this.getClass().getSimpleName(), aggregateRootId, consumingSequence);
 	}
 	
@@ -193,7 +193,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 				await(message.finishAsync(result));
 			};
 		} catch (RuntimeException e) {
-			logger.error("{} finish message with result failed, aggregateRootId: {}, messageId: {}, messageSequence: {}, result: {}",
+			logger.error("{} finish message with result failed. [aggregateRootId: {}, messageId: {}, messageSequence: {}, result: {}]",
 				this.getClass().getSimpleName(), aggregateRootId, message.getMessage().getId(), message.getSequence(), result, e);
 		}
 		
@@ -231,7 +231,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 				consumingSequence++;
 			}
 		} catch (RuntimeException ex) {
-			logger.error("{} run has unknown exception, aggregateRootId: {}",
+			logger.error("{} run has unknown exception. [aggregateRootId: {}]",
 				this.getClass().getSimpleName(), aggregateRootId, ex);
 			DiscardWrapper.sleepInterruptable(1l);
 		} finally {

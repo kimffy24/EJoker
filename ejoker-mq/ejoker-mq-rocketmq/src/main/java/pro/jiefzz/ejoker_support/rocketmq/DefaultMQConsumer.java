@@ -186,7 +186,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			boolean status = false;
 			try {
 				updateConsumeOffset(mq, localOffsetConsumed);
-				logger.debug("Update comsumed offset to server. {}, ConsumedLocal: {}", mq.toString(), localOffsetConsumed);
+				logger.debug("Update comsumed offset to server. [{}, ConsumedLocal: {}]", mq.toString(), localOffsetConsumed);
 				status = true;
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
@@ -238,7 +238,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			do {
 				sleepmilliSecWrapper(1000l);
 				if(loop++%30 == 0)
-					logger.debug("consumer: {}@{}, state: initial rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
+					logger.debug("consumer's state is waiting rebalance ... [consumer: {}@{}]", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
 				try {
 					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchSubscribeMessageQueues(focusTopic);
 				} catch (MQClientException e) {
@@ -419,7 +419,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						int cAmount = 0;
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), ++ frezon)) {
 							if(System.currentTimeMillis() % 30000l < 101l)
-								logger.warn("Flow control protected! queue: {}, processing message amount: {}, protect round: {}", mq.toString(), cAmount, frezon);
+								logger.warn("Flow control protected! [queue: {}, processing message amount: {}, protect round: {}]", mq.toString(), cAmount, frezon);
 							sleepmilliSecWrapper(100l);
 						}
 						consumingAmount.getAndIncrement();
@@ -459,7 +459,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 		if(null != controlStruct.aheadCompletion.putIfAbsent(comsumedOffset, ""))
 			throw new RuntimeException();
-		logger.debug("Receive local completion. Queue: {}, offset {}", mq, comsumedOffset);
+		logger.debug("Receive local completion. [queue: {}, offset {}]", mq, comsumedOffset);
 		
 		LockSupport.unpark(processComsumedSequenceThread);
 		
