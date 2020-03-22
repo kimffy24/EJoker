@@ -67,7 +67,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	private void init() {
 
 		scheduleService.startTask(
-				StringUtilx.fill("{}@{}#cleanInactiveMailbox{}", this.getClass().getName(), this.hashCode()),
+				StringUtilx.fmt("{}@{}#cleanInactiveMailbox{}", this.getClass().getName(), this.hashCode()),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
@@ -119,7 +119,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				"DispatchProcessingMessageAsync",
 				() -> dispatcher.dispatchMessagesAsync(message.getEvents()),
 				() -> updatePublishedVersionAsync(processingMessage),
-				() -> StringUtilx.fill(
+				() -> StringUtilx.fmt(
 						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
 						message.getId(),
 						message.getClass().getName(),
@@ -155,7 +155,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				() -> publishedVersionStore.updatePublishedVersionAsync(processorName,
 						message.getAggregateRootTypeName(), message.getAggregateRootId(), message.getVersion()),
 				() -> processingMessage.finish(),
-				() -> String.format(
+				() -> StringUtilx.fmt(
 						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
 						message.getId(),
 						message.getClass().getName(),

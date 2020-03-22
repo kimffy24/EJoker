@@ -145,7 +145,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
 				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
 					throw new RuntimeException(
-							StringUtilx.fill(
+							StringUtilx.fmt(
 									"We just support java base data type on the key while opera in serializing map!!! [map.keyType: {}, field: {}#{}]",
 									pass1TypeMeta.rawClazz.getSimpleName(),
 									targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),

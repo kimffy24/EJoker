@@ -69,7 +69,7 @@ public class CommandHandlerPool {
 					isOK = true;
 				
 				if(!isOK) {
-					String errorDesc = StringUtilx.fill("The method which Proxy will point to should return Future<Void> or declare return void!!! [currentMethod: {}#{}({}, {})]", implementationHandlerClass.getName(), "handleAsync", parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
+					String errorDesc = StringUtilx.fmt("The method which Proxy will point to should return Future<Void> or declare return void!!! [currentMethod: {}#{}({}, {})]", implementationHandlerClass.getName(), "handleAsync", parameterTypes[0].getSimpleName(), parameterTypes[1].getSimpleName());
 					logger.error(errorDesc);
 					throw new RuntimeException(errorDesc);
 				}
@@ -99,7 +99,7 @@ public class CommandHandlerPool {
 			this.asyncHandleReflectionMethod = asyncHandleReflectionMethod;
 			this.asyncHandlerClass = (Class<? extends AbstractCommandHandler> )asyncHandleReflectionMethod.getDeclaringClass();
 			Class<?>[] parameterTypes = asyncHandleReflectionMethod.getParameterTypes();
-			identification = StringUtilx.fill("Proxy::{}#{}({}, {})",
+			identification = StringUtilx.fmt("Proxy::{}#{}({}, {})",
 					asyncHandlerClass.getSimpleName(),
 					asyncHandleReflectionMethod.getName(),
 					parameterTypes[0].getSimpleName(),

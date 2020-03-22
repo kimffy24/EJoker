@@ -84,7 +84,7 @@ public class CommandResultProcessor implements IWorkerService {
 			RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
 		CommandTaskCompletionSource commandTaskCompletionSource = new CommandTaskCompletionSource(commandReturnType, taskCompletionSource);
 		if (null != commandTaskMap.putIfAbsent(command.getId(), commandTaskCompletionSource)) {
-			throw new RuntimeException(StringUtilx.fill("Duplicate processing command registion!!! [type: {}, id: {}]",
+			throw new RuntimeException(StringUtilx.fmt("Duplicate processing command registion!!! [type: {}, id: {}]",
 					command.getClass().getName(), command.getId()));
 		}
 	}

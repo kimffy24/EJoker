@@ -79,7 +79,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		
 		ICommand message = processingCommand.getMessage();
 		if (StringUtilx.isNullOrEmpty(message.getAggregateRootId())) {
-			String errorInfo = StringUtilx.fill("The aggregateId of commmand is null or empty! [commandType: {} commandId: {}]",
+			String errorInfo = StringUtilx.fmt("The aggregateId of commmand is null or empty! [commandType: {} commandId: {}]",
 					message.getClass().getName(),
 					message.getId());
 			logger.error(errorInfo);
@@ -91,7 +91,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			// TODO @await
 			await(handleCommandInternal(processingCommand, asyncHandler));
 		} else {
-			String errorMessage = StringUtilx.fill("No command handler found of command! [commandType: {}, commandId: {}]",
+			String errorMessage = StringUtilx.fmt("No command handler found of command! [commandType: {}, commandId: {}]",
 					message.getClass().getName(),
 					message.getId());
 			logger.error(errorMessage);
@@ -145,7 +145,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 						}
 					}
 				},
-				() -> StringUtilx.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
+				() -> StringUtilx.fmt("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
 						command.getId(),
 						command.getClass().getName(),
 						commandHandler.getInnerObject().getClass().getName(),
@@ -174,7 +174,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			if(null!=changes && !changes.isEmpty()) {
 				dirtyAggregateRootCount++;
 				if(dirtyAggregateRootCount>1) {
-					String errorInfo = StringUtilx.fill(
+					String errorInfo = StringUtilx.fmt(
 							"Detected more than one aggregate created or modified by command!!! [commandType: {} commandId: {}]",
 							command.getClass().getName(),
 							command.getId()
@@ -240,7 +240,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
                     	finishCommandAsync(processingCommand, CommandStatus.NothingChanged, String.class.getName(), processingCommand.getCommandExecuteContext().getResult());
                     }
                 },
-    			() -> StringUtilx.fill("[commandId: {}]", command.getId()),
+    			() -> StringUtilx.fmt("[commandId: {}]", command.getId()),
     			true
     			);
 		return EJokerFutureUtil.completeFuture();
@@ -272,7 +272,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                    }
 	                    
 	                } },
-				() -> StringUtilx.fill("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
+				() -> StringUtilx.fmt("[commandId: {}, commandType: {}, handlerType: {}, aggregateRootId: {}]",
 						command.getId(),
 						command.getClass().getName(),
 						commandHandler.getInnerObject().getClass().getName(),
@@ -304,7 +304,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishExceptionAsync",
 				() -> exceptionPublisher.publishAsync(exception),
 				r -> finishCommandAsync(processingCommand, CommandStatus.Failed, exception.getClass().getName(), ((Exception )exception).getMessage()),
-				() -> StringUtilx.fill("[commandId: {}, exceptionType: {}, exceptionInfo: {}]",
+				() -> StringUtilx.fmt("[commandId: {}, exceptionType: {}, exceptionInfo: {}]",
 						processingCommand.getMessage().getId(),
 						exception.getClass().getName(),
 						DomainExceptionCodecHelper.serialize(exception)),
@@ -333,7 +333,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				"PublishApplicationMessageAsync",
 				() -> applicationMessagePublisher.publishAsync(message),
 				r -> finishCommandAsync(processingCommand, CommandStatus.Success, message.getClass().getName(), jsonSerializer.convert(message)),
-				() -> StringUtilx.fill("[applicationMessageId: {}, applicationMessageIype: {}, commandId: {}, commandType: {}]",
+				() -> StringUtilx.fmt("[applicationMessageId: {}, applicationMessageIype: {}, commandId: {}, commandType: {}]",
 						message.getId(), message.getClass().getName(), command.getId(), command.getClass().getName()),
 				ex -> logger.error("Publish application message has unknown exception, the code should not be run to here!!! [errorMessage: {}]", ex.getMessage(), ex),
 				true

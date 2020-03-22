@@ -58,7 +58,7 @@ public class DomainEventStreamMessage extends AbstractMessage {
 			itemString = itemString.substring(1);
 		}
 		
-		return StringUtilx.fill(
+		return StringUtilx.fmt(
 				"\\{id={}, commandId={}, aggregateRootId={}, aggregateRootTypeName={}, version={}, events={}, items={}, timestamp={}\\}",
 				this.getId(),
 				commandId,

@@ -45,7 +45,7 @@ public class PipelineTest {
 	
 	public Map<String, String> doCalculateOrStatistics(List<String> dataFromApi) {
 		Map<String, String> res = new HashMap<>();
-		dataFromApi.forEach(s -> res.put(s, StringUtilx.fill("Hello {}, today is '{}', have a nice day~", s, new Date().toString())));
+		dataFromApi.forEach(s -> res.put(s, StringUtilx.fmt("Hello {}, today is '{}', have a nice day~", s, new Date().toString())));
 		return res;
 	}
 	
@@ -90,7 +90,7 @@ public class PipelineTest {
 	
 	public List<String> doSth(Map<String, String> src) {
 		List<String> res = new LinkedList<>();
-		src.forEach((k, v) -> res.add(StringUtilx.fill("Hello {}, u r {}, have a nice day~", k, v)));
+		src.forEach((k, v) -> res.add(StringUtilx.fmt("Hello {}, u r {}, have a nice day~", k, v)));
 		return res;
 	}
 
@@ -118,7 +118,7 @@ public class PipelineTest {
 	}
 	
 	private String buildGoods(String name, String desc, AtomicInteger ai) {
-		return StringUtilx.fill("Curr index: {}, Today is {}, {} did great! and he/she is {}", ai.getAndIncrement(), new Date(), name, desc);
+		return StringUtilx.fmt("Curr index: {}, Today is {}, {} did great! and he/she is {}", ai.getAndIncrement(), new Date(), name, desc);
 	}
 
 //	@Test
@@ -172,7 +172,7 @@ public class PipelineTest {
 		AtomicInteger ai = new AtomicInteger();
 		decs.entrySet().parallelStream().forEach(e -> {
 			fixedThreadPool.execute(new Pipeline<>(this::fixName, e.getKey())
-					.addPipelineHook(new PipelineHook((cxt, ex, args) -> { System.err.println(StringUtilx.fill("{} [{}]", ex.getMessage(), getCxtInfo(args)));ex.printStackTrace(); cxt.setPreventThrow();/**/}))
+					.addPipelineHook(new PipelineHook((cxt, ex, args) -> { System.err.println(StringUtilx.fmt("{} [{}]", ex.getMessage(), getCxtInfo(args)));ex.printStackTrace(); cxt.setPreventThrow();/**/}))
 					.add(this::buildGoods, e.getValue(), ai)
 					.add(this::decorate, (new Date()).toString(), System.getenv("HOME"), System.currentTimeMillis(), Math.PI, (System.currentTimeMillis() % 2 == 0))
 					.add(s -> { System.err.println(s); }));
@@ -190,7 +190,7 @@ public class PipelineTest {
 //			double x = 1/0;
 //			System.err.println(x);
 //		}
-		return StringUtilx.fill("OK! a: {}, b: {}, c: {}, d:{}, source: {}", a, b, c, d, source);
+		return StringUtilx.fmt("OK! a: {}, b: {}, c: {}, d:{}, source: {}", a, b, c, d, source);
 	}
 	
 	private final static String getCxtInfo(Object[] argCxt) {

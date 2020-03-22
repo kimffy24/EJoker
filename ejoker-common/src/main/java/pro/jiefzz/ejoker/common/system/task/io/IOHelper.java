@@ -465,7 +465,7 @@ public class IOHelper {
 						externalContext.actionName,
 						externalContext.contextInfo.trigger(),
 						externalContext.currentRetryTimes);
-				String cancleInfo = StringUtilx.fill("Async task was cancelled! [taskName: {}]", externalContext.actionName);
+				String cancleInfo = StringUtilx.fmt("Async task was cancelled! [taskName: {}]", externalContext.actionName);
 				executeFailedAction(
 						externalContext,
 						new CancellationException(cancleInfo),

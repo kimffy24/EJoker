@@ -43,7 +43,7 @@ public class InMemoryPublishedVersionStore implements IPublishedVersionStore {
 	}
 
 	private String buildKey(String eventProcessorName, String aggregateRootId) {
-		return StringUtilx.fill("{}-{}", eventProcessorName, aggregateRootId);
+		return StringUtilx.fmt("{}-{}", eventProcessorName, aggregateRootId);
 	}
 	
 }

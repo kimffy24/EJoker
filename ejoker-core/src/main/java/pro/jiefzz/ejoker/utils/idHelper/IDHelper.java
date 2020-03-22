@@ -49,7 +49,7 @@ public final class IDHelper {
 	public static void setAggregateRootId(IAggregateRoot aggr, String stringId) {
 		GenericDefinedField gdf;
 		if (null == (gdf = idGdcCache.get(aggr.getClass())))
-			throw new RuntimeException(StringUtilx.fill("Type defined is not found!!! [aggregateRootType: {}]", aggr.getClass().getName()));
+			throw new RuntimeException(StringUtilx.fmt("Type defined is not found!!! [aggregateRootType: {}]", aggr.getClass().getName()));
 
 		Object decode = codecStore.get(gdf.genericDefinedType.rawClazz).decode(stringId);
 		try {
@@ -57,7 +57,7 @@ public final class IDHelper {
 		} catch (IllegalArgumentException | IllegalAccessException ex) {
 			ex.printStackTrace();
 			throw new RuntimeException(
-					StringUtilx.fill("Faild to set id to AggregateRoot!!! [aggregateType: {}, idValue: {}]",
+					StringUtilx.fmt("Faild to set id to AggregateRoot!!! [aggregateType: {}, idValue: {}]",
 							aggr.getClass().getName(), stringId),
 					ex);
 		}

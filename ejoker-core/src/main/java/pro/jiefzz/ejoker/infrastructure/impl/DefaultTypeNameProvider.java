@@ -52,7 +52,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 		for(Entry<Class<?>, String> entry : entrySet) {
 			Class<?> preClazz;
 			if(null != (preClazz = this.typeDict.putIfAbsent(entry.getValue(), entry.getKey()))) {
-				String msg = StringUtilx.fill("Type alias conflict!!! [aliasName: {}, currentType: {}, previousType: {}]",
+				String msg = StringUtilx.fmt("Type alias conflict!!! [aliasName: {}, currentType: {}, previousType: {}]",
 						entry.getValue(),
 						entry.getKey().getName(),
 						preClazz.getName());
@@ -61,7 +61,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 			}
 			String preName;
 			if(null != (preName = this.nameDict.putIfAbsent(entry.getKey(), entry.getValue()))) {
-				String msg = StringUtilx.fill("Name alias conflict!!! [realType: {}, currentAlias: {}, previousAlias: {}]",
+				String msg = StringUtilx.fmt("Name alias conflict!!! [realType: {}, currentAlias: {}, previousAlias: {}]",
 						entry.getKey().getName(),
 						entry.getValue(),
 						preName);

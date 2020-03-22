@@ -58,7 +58,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@EInitialize
 	private void init() {
 		scavenger.addFianllyJob(this::exitHook);
-		scheduleService.startTask(StringUtilx.fill("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
+		scheduleService.startTask(StringUtilx.fmt("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveClient()"),
 				this::cleanInactiveClient,
 				2000l,
 				2000l);
@@ -68,7 +68,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	@Override
 	public void export(IVoidFunction1<String> action, int port, boolean waitFinished) {
 		if (portMap.containsKey(port)) {
-			throw new RuntimeException(StringUtilx.fill("Port conflict!!! [port: {}]!!!", port));
+			throw new RuntimeException(StringUtilx.fmt("Port conflict!!! [port: {}]!!!", port));
 		}
 
 		RPCTuple currentTuple = null;
@@ -182,7 +182,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 					return EJokerFutureTaskUtil.completeTask();
 				},
 				() -> {},
-				() -> StringUtilx.fill("RemoteInvoke::{}:{}", host, port),
+				() -> StringUtilx.fmt("RemoteInvoke::{}:{}", host, port),
 				e -> logger.error("Send data to remote host faild!!! [remoteAddress: {}, port: {}, data: {}]", host, port, data, e),
 				true);
 	}

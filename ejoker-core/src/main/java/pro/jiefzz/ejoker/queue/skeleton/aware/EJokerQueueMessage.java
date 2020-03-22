@@ -84,7 +84,7 @@ public class EJokerQueueMessage implements Serializable {
 	}
 
 	public String toString() {
-		return StringUtilx.fill("\\{topic={}, code={}, tag={}, createdTime={}, bodyLength={}\\}",
+		return StringUtilx.fmt("\\{topic={}, code={}, tag={}, createdTime={}, bodyLength={}\\}",
 				topic, code, tag, createdTime, body.length);
 	}
 }

@@ -13,7 +13,7 @@ public class DefaultAggregateRootFactory implements IAggregateRootFactory {
 		try {
 			return aggregateRootType.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
-			throw new RuntimeException(StringUtilx.fill("Could not create new instance!!! [type: {}]", aggregateRootType.getName()), e) ;
+			throw new RuntimeException(StringUtilx.fmt("Could not create new instance!!! [type: {}]", aggregateRootType.getName()), e) ;
 		}
 	}
 

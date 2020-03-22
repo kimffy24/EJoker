@@ -27,7 +27,7 @@ public class CommandResult {
 	
 	@Override
 	public String toString() {
-		return StringUtilx.fill("\\{commandId: {}, status: {}, aggregateRootId: {}, result: {}, resultType: {}\\}",
+		return StringUtilx.fmt("\\{commandId: {}, status: {}, aggregateRootId: {}, result: {}, resultType: {}\\}",
 				commandId,
 				status.toString(),
 				aggregateRootId,

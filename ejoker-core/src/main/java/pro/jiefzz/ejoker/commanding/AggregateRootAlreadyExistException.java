@@ -9,7 +9,7 @@ public class AggregateRootAlreadyExistException extends RuntimeException {
 	private final static String exceptionMessageFillTpl = "Aggregate root already exist in command context, cannot be added again. [aggregateRootId: {}, aggregateRootType: {}]";
 
 	public AggregateRootAlreadyExistException(Object id, @SuppressWarnings("rawtypes") Class type) {
-		super(StringUtilx.fill(exceptionMessageFillTpl, id, type.getName()));
+		super(StringUtilx.fmt(exceptionMessageFillTpl, id, type.getName()));
 	}
 
 }

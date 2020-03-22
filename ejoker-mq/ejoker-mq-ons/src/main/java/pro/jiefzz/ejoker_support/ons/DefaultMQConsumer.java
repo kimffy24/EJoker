@@ -30,6 +30,7 @@ import com.aliyun.openservices.shade.com.alibaba.rocketmq.common.message.Message
 import com.aliyun.openservices.shade.com.alibaba.rocketmq.remoting.exception.RemotingException;
 
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
+import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IFunction3;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction3;
@@ -516,7 +517,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 			this.removedFlag = new AtomicBoolean(false);
 			
 			this.workThread = new Thread(ControlStruct.this::process,
-					String.format("DashboardWorkThread-%s-%d", DefaultMQConsumer.this.consumer.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
+					StringUtilx.fmt("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.consumer.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement())) {};
 			this.workThread.setDaemon(true);
 
 		}

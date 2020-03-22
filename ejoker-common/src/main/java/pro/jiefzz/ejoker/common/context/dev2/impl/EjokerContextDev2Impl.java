@@ -160,7 +160,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		if(null == dependence)
 			throw new ContextRuntimeException(
-					StringUtilx.fill("No implementations or extensions found!!! [fetchType: {}]", instanceTypeName));
+					StringUtilx.fmt("No implementations or extensions found!!! [fetchType: {}]", instanceTypeName));
 		
 		return (T )dependence;
 	}
@@ -473,15 +473,14 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			/// upper泛型 eService无泛型
 			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
 			if(null == eServiceClazz) {
-				throw new ContextRuntimeException(StringUtilx.fill("Cound not found EService!!! [superType: {}]", instanceTypeName));
+				throw new ContextRuntimeException(StringUtilx.fmt("Cound not found EService!!! [superType: {}]", instanceTypeName));
 			}
 			dependence = instanceMap.get(eServiceClazz.getName());
 			
 		} 
 		
 		if(null == dependence)
-			throw new ContextRuntimeException(
-					String.format(
+			throw new ContextRuntimeException(String.format(
 							"No implementations or extensions found! \n\t field: %s#%s\n\t type: %s!!!",
 							genericDefinedField.genericDefinedType.rawClazz.getName(),
 							fieldName,
@@ -511,8 +510,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 						try {
 							method.invoke(instance);
 						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-							throw new ContextRuntimeException(
-									String.format("Faild on invoke init method!!! target: %s, method: %s",
+							throw new ContextRuntimeException(String.format("Faild on invoke init method!!! target: %s, method: %s",
 											instanceClazz.getName(), methodName),
 									e);
 						}

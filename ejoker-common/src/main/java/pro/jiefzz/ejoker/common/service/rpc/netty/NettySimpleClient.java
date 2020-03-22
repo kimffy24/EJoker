@@ -104,7 +104,7 @@ public class NettySimpleClient {
 		
 		CountDownLatchWrapper.awaitInterruptable(connectBlocker);
 		if(!ready.get()) {
-			throw new IOExceptionOnRuntime(new IOException(StringUtilx.fill("Clien create faild!!! [connectTo: {}] ", clientDesc)));
+			throw new IOExceptionOnRuntime(new IOException(StringUtilx.fmt("Clien create faild!!! [connectTo: {}] ", clientDesc)));
 		}
 	}
 

@@ -56,7 +56,7 @@ public class AggregateRootHandlerPool {
 		private HandlerReflectionMapper(Method handleReflectionMethod) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			Class<?>[] parameterTypes = handleReflectionMethod.getParameterTypes();
-			identification = StringUtilx.fill("Proxy::{}#{}({})]",
+			identification = StringUtilx.fmt("Proxy::{}#{}({})]",
 					handleReflectionMethod.getDeclaringClass().getName(),
 					handleReflectionMethod.getName(),
 					parameterTypes[0].getSimpleName());

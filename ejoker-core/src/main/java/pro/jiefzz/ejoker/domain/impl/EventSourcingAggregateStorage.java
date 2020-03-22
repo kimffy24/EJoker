@@ -88,7 +88,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 			return null;
 		
 		if(!aggregateRootType.equals(aggregateRoot.getClass()) || !aggregateRootId.equals(aggregateRoot.getUniqueId()))
-			throw new RuntimeException(StringUtilx.fill(
+			throw new RuntimeException(StringUtilx.fmt(
 					"AggregateRoot recovery from snapshot is invalid, aggregateRootType or aggregateRootId is not match!!! [snapshotAggregateRootType: {}, snapshotAggregateRootId: {}, expectedAggregateRootType: {}, expectedAggregateRootId: {}]",
 					aggregateRoot.getClass().getName(),
 					aggregateRoot.getUniqueId(),

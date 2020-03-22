@@ -360,7 +360,7 @@ public class MessageHandlerPool {
 		public MessageHandlerReflectionTuple(Method handleReflectionMethod, String pList, List<Integer> asciiOrder, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
-			identification = StringUtilx.fill("Proxy::{}#{}({})",
+			identification = StringUtilx.fmt("Proxy::{}#{}({})",
 					handlerClass.getSimpleName(),
 					MessageHandlerPool.HANDLER_METHOD_NAME,
 					pList);

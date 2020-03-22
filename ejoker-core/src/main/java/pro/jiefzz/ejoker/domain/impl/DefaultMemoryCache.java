@@ -59,7 +59,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 	@EInitialize
 	private void init() {
 		scheduleService.startTask(
-				StringUtilx.fill("{}@{}#cleanInactiveAggregates()", this.getClass().getName(), this.hashCode()),
+				StringUtilx.fmt("{}@{}#cleanInactiveAggregates()", this.getClass().getName(), this.hashCode()),
 				this::cleanInactiveAggregates,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
@@ -108,7 +108,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		if (null != (aggregateRootInfo = aggregateRootInfoDict.get(aggregateRootId.toString()))) {
 			IAggregateRoot aggregateRoot = aggregateRootInfo.aggregateRoot;
 			if (!aggregateRoot.getClass().equals(aggregateRootType))
-				throw new RuntimeException(StringUtilx.fill("Incorrect aggregate root type!!! [aggregateRootId: {}, type: {}, expectingType: {}]",
+				throw new RuntimeException(StringUtilx.fmt("Incorrect aggregate root type!!! [aggregateRootId: {}, type: {}, expectingType: {}]",
 						aggregateRootId.toString(), aggregateRoot.getClass().getName(), aggregateRootType.getName()));
 			if (!aggregateRoot.getChanges().isEmpty()) {
 

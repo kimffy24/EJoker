@@ -151,7 +151,7 @@ public class Pipeline<R> implements Runnable {
 				if(this.hook.isPreventThrow())
 					return;
 			}
-			throw new RuntimeException(StringUtilx.fill("Pipeline exec faild!!! [{}]", null == pre ? getCxtInfo(this.argCxt) : getCxtInfo(pre.argCxt)), e);
+			throw new RuntimeException(StringUtilx.fmt("Pipeline exec faild!!! [{}]", null == pre ? getCxtInfo(this.argCxt) : getCxtInfo(pre.argCxt)), e);
 		}
 	}
 	

@@ -213,7 +213,7 @@ public class GenericExpression {
 		int genericTypeAmount = target.genericDefination.getGenericDeclareAmount();
 		if(genericTypeAmount > 0) {
 			if(null == definedTypeMetas || genericTypeAmount != definedTypeMetas.length) {
-				String errInfo = StringUtilx.fill("Unmatch amount of parameterized type!!! [target={}]",
+				String errInfo = StringUtilx.fmt("Unmatch amount of parameterized type!!! [target={}]",
 						target.genericDefination.genericPrototypeClazz.getName());
 				throw new RuntimeException(errInfo);
 			}

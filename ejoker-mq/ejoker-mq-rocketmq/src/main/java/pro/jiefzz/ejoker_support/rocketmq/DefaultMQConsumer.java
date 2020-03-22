@@ -314,7 +314,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						if(logger.isDebugEnabled()) {
 							String queueAll = "";
 							for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
-								queueAll += StringUtilx.fill("<broker: {}, qId: {}>, ", rbmq.getBrokerName(), rbmq.getQueueId());
+								queueAll += StringUtilx.fmt("<broker: {}, qId: {}>, ", rbmq.getBrokerName(), rbmq.getQueueId());
 							}
 							logger.debug("Topic rbalance finished. [topicName: {}, allocateQueue: {}]", focusTopic, queueAll);
 						}
@@ -540,7 +540,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			this.removedFlag = new AtomicBoolean(false);
 			
 			this.workThread = new Thread(ControlStruct.this::process,
-				StringUtilx.fill("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
+				StringUtilx.fmt("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
 			this.workThread.setDaemon(true);
 
 		}

@@ -352,7 +352,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 			try {
 				newInstance = clazz.newInstance();
 			} catch (InstantiationException|IllegalAccessException e) {
-				String errInfo = StringUtilx.fill("Connot create new instance!!! [type: {}]", clazz.getName());
+				String errInfo = StringUtilx.fmt("Connot create new instance!!! [type: {}]", clazz.getName());
 				logger.error(errInfo, e);
 				throw new RuntimeException(errInfo, e);
 			}

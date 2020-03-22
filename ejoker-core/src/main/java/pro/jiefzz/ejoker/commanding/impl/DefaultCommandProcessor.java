@@ -55,7 +55,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
 	private void init() {
 
 		scheduleService.startTask(
-				StringUtilx.fill("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveProcessingCommandMailbox()"),
+				StringUtilx.fmt("{}@{}#{}", this.getClass().getName(), this.hashCode(), "cleanInactiveProcessingCommandMailbox()"),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);

@@ -44,7 +44,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 	protected AbstractAggregateRoot(TAggregateRootId id, long version) {
 		this(id);
 		if (version < 0)
-			throw new ArgumentException(StringUtilx.fill("Version can not small than 0. [aggregateRootId: {}, version: {}]", id, version));
+			throw new ArgumentException(StringUtilx.fmt("Version can not small than 0. [aggregateRootId: {}, version: {}]", id, version));
 		this.version = version;
 	}
 
@@ -105,7 +105,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 			for(IDomainEvent<?> x : uncommittedEvents) {
 				if(eType.equals(x.getClass())) {
 					throw new InvalidOperationException(
-						StringUtilx.fill(
+						StringUtilx.fmt(
 							"Cannot apply duplicated domain event!!! [domainEventType: {}, aggregateRootType: {}, aggregateRootTd: {}",
 							eType.getName(),
 							AbstractAggregateRoot.this.getClass().getName(),
@@ -121,7 +121,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 
 	private void verifyEvent(DomainEventStream eventStream){
 		if (eventStream.getVersion() > 1 &&  !this.getUniqueId().equals(eventStream.getAggregateRootId())) {
-			throw new InvalidOperationException(StringUtilx.fill(
+			throw new InvalidOperationException(StringUtilx.fmt(
 					"Invalid domain event stream, uniqueId isn't match!!! [currentAggregateRootId: {}, expectedAggregateRootId: {}, aggregateRootType: {}]",
 					eventStream.getAggregateRootId(),
 					this.getUniqueId(),
@@ -129,7 +129,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		}
 		
 		if (eventStream.getVersion() != this.getVersion() + 1l) {
-			throw new InvalidOperationException(StringUtilx.fill(
+			throw new InvalidOperationException(StringUtilx.fmt(
 					"Invalid domain event stream, asked version isn't match!!! [currentVersion: {}, expectedVersion: {}, aggregateRootType: {}, aggregateRootId: {}]",
 					eventStream.getVersion(),
 					this.getVersion() + 1l,

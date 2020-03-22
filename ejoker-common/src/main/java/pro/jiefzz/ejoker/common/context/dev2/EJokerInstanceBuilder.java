@@ -22,7 +22,7 @@ public class EJokerInstanceBuilder {
 		try {
 			newInstance = clazz.newInstance();
 		} catch (InstantiationException | IllegalAccessException ex) {
-			String errInfo = StringUtilx.fill("Cannot create new instance!!! [type: {}]", clazz.getName());
+			String errInfo = StringUtilx.fmt("Cannot create new instance!!! [type: {}]", clazz.getName());
 			logger.error(errInfo, ex);
 			throw new ContextRuntimeException(errInfo, ex);
 		}

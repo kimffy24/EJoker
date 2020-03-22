@@ -36,7 +36,7 @@ public final class StringUtilx {
 	 * @param args
 	 * @return
 	 */
-	public static String fill(String template, Object... args) {
+	public static String fmt(String template, Object... args) {
 		if(null == template || "".equals(template))
 			return "";
 		
@@ -53,37 +53,37 @@ public final class StringUtilx {
 
 		int[] occupation = analyzeOccupation.marks;
 		StringBuilder sb = new StringBuilder();
-		int ll = -2;
-		int lr = -1;
+		int lx = -2;
+		int ly = -1;
 		int i = 0;
 		do {
-			ll = occupation[2*i];
+			lx = occupation[2*i];
 			if(esIndex>=0) {
 				int latestEsPoint = escapes[esIndex];
-				if(latestEsPoint >= lr+1 && latestEsPoint < ll) {
-					int startAt = lr+1;
+				if(latestEsPoint >= ly+1 && latestEsPoint < lx) {
+					int startAt = ly+1;
 					do {
 						sb.append(chars, startAt, latestEsPoint-startAt);
 						startAt = latestEsPoint+1;
-					} while((latestEsPoint = escapes[++esIndex]) >= lr+1 && escapes[esIndex] < ll);
-					sb.append(chars, startAt, ll-startAt);
+					} while((latestEsPoint = escapes[++esIndex]) >= ly+1 && escapes[esIndex] < lx);
+					sb.append(chars, startAt, lx-startAt);
 				} else {
-					sb.append(chars, lr+1, ll-lr-1);
+					sb.append(chars, ly+1, lx-(ly+1));
 				}
 				if(latestEsPoint<0)
 					esIndex = -1;
 			} else
-				sb.append(chars, lr+1, ll-lr-1);
+				sb.append(chars, ly+1, lx-(ly+1));
 			// if ll +1 != lr ??
 			// TODO 有特殊功能要实现不？
-			lr = occupation[2*i+1];
-			if(lr < 0)
+			ly = occupation[2*i+1];
+			if(ly < 0)
 				break;
 			if(i < args.length && null != args[i])
 				sb.append(args[i]);
 			else if(i >= args.length) {
-				if(lr>0)
-					sb.append(chars, lr-1, chars.length-lr+1);
+				if(ly>0)
+					sb.append(chars, ly-1, chars.length-(ly-1));
 			}
 		} while (i++ < args.length);
 		return sb.toString();

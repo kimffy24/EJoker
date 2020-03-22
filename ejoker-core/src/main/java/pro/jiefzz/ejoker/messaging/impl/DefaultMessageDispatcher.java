@@ -51,7 +51,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 							"HandleSingleMessageAsync",
 							() -> proxyAsyncHandler.handleAsync(message),
 							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
-							() -> StringUtilx.fill("[messageType: {}, messageId: {}, handlerType: {}]",
+							() -> StringUtilx.fmt("[messageType: {}, messageId: {}, handlerType: {}]",
 									message.getClass().getSimpleName(),
 									message.getId(),
 									proxyAsyncHandler.toString()
