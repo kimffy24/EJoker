@@ -8,7 +8,7 @@ import java.util.Map;
 import pro.jiefzz.ejoker.common.context.annotation.persistent.PersistentIgnore;
 import pro.jiefzz.ejoker.common.context.dev2.EJokerInstanceBuilder;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jiefzz.ejoker.domain.domainException.IDomainException;
 
@@ -45,7 +45,7 @@ public final class DomainExceptionCodecHelper {
 	
 	public static IDomainException deserialize(Map<String, String> pMap, Class<? extends IDomainException> exceptionClazz) {
 		
-		return (IDomainException )(MapUtil
+		return (IDomainException )(MapUtilx
 				.getOrAdd(builderMap, exceptionClazz, () -> new EJokerInstanceBuilder(exceptionClazz))
 				.doCreate(e -> {
 			Map<String, Field> reflectFields = getReflectFields(exceptionClazz);
@@ -70,7 +70,7 @@ public final class DomainExceptionCodecHelper {
 	}
 	
 	public static Map<String, Field> getReflectFields(Class<? extends IDomainException> exceptionClazz)  {
-		return MapUtil.getOrAdd(reflectMap, exceptionClazz, () -> {
+		return MapUtilx.getOrAdd(reflectMap, exceptionClazz, () -> {
 			
 			Map<String, Field> rMap = new HashMap<>();
 			

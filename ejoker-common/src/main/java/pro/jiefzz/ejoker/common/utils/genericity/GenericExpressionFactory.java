@@ -4,7 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 
 public final class GenericExpressionFactory {
 
@@ -41,7 +41,7 @@ public final class GenericExpressionFactory {
 				throw new RuntimeException(errInfo);
 			}
 		} else {
-			return MapUtil.getOrAdd(expressionStore, parameteriedSignature, s -> new GenericExpression(middleStatementGenericExpression, null, genericDefinedTypeMetas));
+			return MapUtilx.getOrAdd(expressionStore, parameteriedSignature, s -> new GenericExpression(middleStatementGenericExpression, null, genericDefinedTypeMetas));
 //			GenericExpression fullStatementGenericExpressp;
 //			while(defaultExpression.equals(fullStatementGenericExpressp = expressionStore.getOrDefault(parameteriedSignature, defaultExpression))) {
 //				expressionStore.putIfAbsent(parameteriedSignature, new GenericExpression(middleStatementGenericExpression, null, genericDefinedTypeMetas));
@@ -65,7 +65,7 @@ public final class GenericExpressionFactory {
 		
 		String expressionSignature = GenericExpression.getExpressionSignature(prototype);
 		
-		return MapUtil.getOrAdd(expressionStore, expressionSignature, k -> new GenericExpression(gdManager.getOrCreateDefination(prototype)));
+		return MapUtilx.getOrAdd(expressionStore, expressionSignature, k -> new GenericExpression(gdManager.getOrCreateDefination(prototype)));
 //		GenericExpression genericExpression;
 //		if(defaultExpression.equals(genericExpression = expressionStore.getOrDefault(expressionSignature, defaultExpression))) {
 //			expressionStore.putIfAbsent(expressionSignature, genericExpression = new GenericExpression(gdManager.getOrCreateDefination(prototype)));

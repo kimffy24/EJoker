@@ -19,7 +19,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.framework.enhance.EasyCleanMailbox;
 import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
@@ -147,7 +147,7 @@ public class DefaultMemoryCache implements IMemoryCache {
 		// Enode在这个位置使用了 初始-存在 的分支处理，但是java没有这个api
 		AtomicBoolean isInitCache = new AtomicBoolean(false);
 		do {
-			AggregateCacheInfo previous = MapUtil.getOrAdd(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
+			AggregateCacheInfo previous = MapUtilx.getOrAdd(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
 					() -> {
 						isInitCache.set(true);
 						if(logger.isDebugEnabled())

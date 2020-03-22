@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 
@@ -26,7 +26,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 	
 	@Override
 	public Class<?> getType(String typeName) {
-		return MapUtil.getOrAdd(typeDict, typeName, () -> {
+		return MapUtilx.getOrAdd(typeDict, typeName, () -> {
 			try {
 				return Class.forName(null != decorator ? decorator.preGetType(typeName) : typeName);
 			} catch (ClassNotFoundException e) {
@@ -38,7 +38,7 @@ public class DefaultTypeNameProvider implements ITypeNameProvider {
 
 	@Override
 	public String getTypeName(Class<?> clazz) {
-		return MapUtil.getOrAdd(nameDict, clazz, c -> {
+		return MapUtilx.getOrAdd(nameDict, clazz, c -> {
 			String originTypeName = c.getName();
 			return null != decorator ?
 					decorator.postGetTypeName(originTypeName) :

@@ -18,7 +18,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
@@ -71,7 +71,7 @@ public final class DefaultCommandProcessor implements ICommandProcessor {
         ProcessingCommandMailbox mailbox;
         
         do {
-			mailbox = MapUtil.getOrAdd(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
+			mailbox = MapUtilx.getOrAdd(mailboxDict, aggregateRootId, () -> new ProcessingCommandMailbox(aggregateRootId, handler, systemAsyncHelper));
         	if(mailbox.tryUse()) {
         		// tryUse()包装的是读锁，当前这个process调用是可以并行的。
         		try {

@@ -16,7 +16,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EInitialize;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
@@ -85,7 +85,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 		EnqueueMessageResult enqueueResult = null;
 		
 		do {
-			mailBox = MapUtil.getOrAdd(mailboxDict, aggregateRootId, () -> {
+			mailBox = MapUtilx.getOrAdd(mailboxDict, aggregateRootId, () -> {
 				long v = getAggregateRootLatestHandledEventVersion(processingMessage.getMessage().getAggregateRootTypeName(), aggregateRootId);
 				return new ProcessingEventMailBox(aggregateRootId, v+1, this::dispatchProcessingMessageAsync, systemAsyncHelper);
 			});

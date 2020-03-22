@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jiefzz.ejoker.common.context.dev2.IEjokerContextDev2;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
@@ -163,7 +163,7 @@ public class MessageHandlerPool {
 	}
 	
 	public final List<MessageHandlerReflectionTuple> getProxyAsyncHandlers(String messageTypeName) {
-		return MapUtil.getOrAdd(handlerFullContraintMapper, messageTypeName, () -> new ArrayList<>());
+		return MapUtilx.getOrAdd(handlerFullContraintMapper, messageTypeName, () -> new ArrayList<>());
 	}
 
 	public final List<MessageHandlerReflectionTuple> getProxyAsyncHandlers(Class<? extends IMessage> messageType) {
@@ -229,7 +229,7 @@ public class MessageHandlerPool {
 	 */
 	private final Map<Long, List<MessageHandlerReflectionTuple>> getProxyAsyncMultiHandlers(String fullPS, IMessage... messages) {
 
-		return MapUtil.getOrAdd(handlerMoreThanOneLocater, fullPS, () -> {
+		return MapUtilx.getOrAdd(handlerMoreThanOneLocater, fullPS, () -> {
 			
 			Map<Long, List<MessageHandlerReflectionTuple>> bitLocator = new HashMap<>();
 

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction2;
 import pro.jiefzz.ejoker.common.system.wrapper.DiscardWrapper;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
@@ -64,7 +64,7 @@ public class MQConsumerMemoryAdapter implements ICQProvider, IConsumerWrokerAwar
 
 	@Override
 	public void subscribe(String topic, String filter) {
-		queue = (dsh = MapUtil.getOrAdd(mockMsgQueues, topic, () -> new DSH())).queue;
+		queue = (dsh = MapUtilx.getOrAdd(mockMsgQueues, topic, () -> new DSH())).queue;
 		sentAmount = dsh.ai;
 	}
 

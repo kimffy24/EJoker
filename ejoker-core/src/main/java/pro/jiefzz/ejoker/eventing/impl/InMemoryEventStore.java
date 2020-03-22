@@ -12,7 +12,7 @@ import java.util.concurrent.locks.Lock;
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
@@ -54,7 +54,7 @@ public class InMemoryEventStore implements IEventStore {
 
         Map<String, List<DomainEventStream>> eventStreamDict = new HashMap<>();
         for(DomainEventStream es : eventStreams) {
-        	MapUtil
+        	MapUtilx
         		.getOrAdd(eventStreamDict, es.getAggregateRootId(), () -> new ArrayList<>())
         		.add(es);
         }
@@ -82,7 +82,7 @@ public class InMemoryEventStore implements IEventStore {
 
 	private void batchAppend(String aggregateRootId, List<DomainEventStream> eventStreamList, EventAppendResult eventAppendResult) {
 		
-		AggregateInfo aggregateInfo = MapUtil.getOrAdd(mStorage, aggregateRootId,
+		AggregateInfo aggregateInfo = MapUtilx.getOrAdd(mStorage, aggregateRootId,
 				AggregateInfo::new);
 
 		aggregateInfo.writeLock.lock();
@@ -128,12 +128,12 @@ public class InMemoryEventStore implements IEventStore {
 	}
 
 	private DomainEventStream find(String aggregateRootId, long version) {
-		AggregateInfo aggregateInfo = MapUtil.getOrAdd(mStorage, aggregateRootId, AggregateInfo::new);
+		AggregateInfo aggregateInfo = MapUtilx.getOrAdd(mStorage, aggregateRootId, AggregateInfo::new);
 		return aggregateInfo.eventDict.get(version);
 	}
 
 	private DomainEventStream find(String aggregateRootId, String commandId) {
-		AggregateInfo aggregateInfo = MapUtil.getOrAdd(mStorage, aggregateRootId, AggregateInfo::new);
+		AggregateInfo aggregateInfo = MapUtilx.getOrAdd(mStorage, aggregateRootId, AggregateInfo::new);
 		return aggregateInfo.commandDict.get(commandId);
 	}
 
@@ -142,7 +142,7 @@ public class InMemoryEventStore implements IEventStore {
 		
 		List<DomainEventStream> resultSet = new LinkedList<>();
 
-		AggregateInfo aggregateInfo = MapUtil.getOrAdd(mStorage, aggregateRootId, AggregateInfo::new);
+		AggregateInfo aggregateInfo = MapUtilx.getOrAdd(mStorage, aggregateRootId, AggregateInfo::new);
 		Map<Long, DomainEventStream> aggregateEventStore = aggregateInfo.eventDict;
 		
 		for(long cursor = minVersion; cursor <= maxVersion; cursor++) {

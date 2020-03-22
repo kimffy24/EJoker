@@ -24,7 +24,7 @@ import pro.jiefzz.ejoker.common.service.IScheduleService;
 import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
@@ -72,7 +72,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		}
 
 		RPCTuple currentTuple = null;
-		AtomicBoolean ab = MapUtil.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
+		AtomicBoolean ab = MapUtilx.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
 		if(ab.compareAndSet(false, true)) {
 			Thread ioThread = new Thread(
 					() -> {
@@ -129,7 +129,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 	// @unsafe on multiple thread process
 	@Override
 	public void removeExport(int port) {
-		AtomicBoolean atomicBoolean = MapUtil.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
+		AtomicBoolean atomicBoolean = MapUtilx.getOrAdd(serverPortOccupation, port, () -> new AtomicBoolean());
 		if(!atomicBoolean.compareAndSet(true, false))
 			return;
 		IVoidFunction closeAction = closeHookTrigger.remove(port);
@@ -149,7 +149,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 		String uniqueKey = host+":"+port;
 		NettySimpleClient nettySimpleClient = clientStore.get(uniqueKey);
 		while(null == nettySimpleClient) {
-			AtomicBoolean acquired = MapUtil.getOrAdd(clientConnectionOccupation, uniqueKey, () -> new AtomicBoolean());
+			AtomicBoolean acquired = MapUtilx.getOrAdd(clientConnectionOccupation, uniqueKey, () -> new AtomicBoolean());
 			if(acquired.compareAndSet(false, true)) {
 				nettySimpleClient = new NettySimpleClient(host, port);
 				nettySimpleClient.awaitReady();

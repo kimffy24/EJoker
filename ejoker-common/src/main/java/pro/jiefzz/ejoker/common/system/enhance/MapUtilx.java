@@ -5,7 +5,7 @@ import java.util.Map;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
 
-public final class MapUtil {
+public final class MapUtilx {
 
 	/**
 	 * 此方法并不负责线程安全，线程安全由具体的map实现类型负责

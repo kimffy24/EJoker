@@ -101,7 +101,7 @@ public final class StringUtilx {
 	private final static Object[] emptyArgs = new Object[] {null};
 	
 	private final static MarkTuple analyzeOccupation(String template) {
-		return MapUtil.getOrAdd(CacheMarks, template, () -> {
+		return MapUtilx.getOrAdd(CacheMarks, template, () -> {
 			char[] chars = template.toCharArray();
 			char latestSymbol = (char )0;
 			int[] marks = new int[appendSize];

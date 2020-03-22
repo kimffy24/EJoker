@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.common.utils.genericity;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 
 public class GenericDefinationManagement {
 	
@@ -17,7 +17,7 @@ public class GenericDefinationManagement {
 	private final Map<Class<?>, GenericDefination> definationStore= new ConcurrentHashMap<>();
 	
 	public final GenericDefination getOrCreateDefination(Class<?> prototype) {
-		return MapUtil.getOrAdd(definationStore, prototype, k -> {
+		return MapUtilx.getOrAdd(definationStore, prototype, k -> {
 			return (Object.class.equals(prototype))
 					? defaultGenericDefination
 							: new GenericDefination(GenericDefinationManagement.this, prototype);

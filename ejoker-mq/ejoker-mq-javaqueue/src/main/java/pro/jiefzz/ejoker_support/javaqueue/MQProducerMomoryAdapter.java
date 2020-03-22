@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker_support.javaqueue;
 
-import pro.jiefzz.ejoker.common.system.enhance.MapUtil;
+import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
@@ -20,7 +20,7 @@ public class MQProducerMomoryAdapter implements ICQProvider, IProducerWrokerAwar
 	@Override
 	public void send(EJokerQueueMessage message, String routingKey, IVoidFunction successAction,
 			IVoidFunction1<String> faildAction, IVoidFunction1<Exception> exceptionAction) {
-		MapUtil.getOrAdd(mockMsgQueues, message.getTopic(), DSH::new).offer(message);
+		MapUtilx.getOrAdd(mockMsgQueues, message.getTopic(), DSH::new).offer(message);
 	}
 
 }
