@@ -13,8 +13,6 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateRootFactory;
@@ -70,13 +68,13 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		
 		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRootType);
 
-		AsyncTaskResult<List<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
-		if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
-			aggregateRoot = rebuildAggregateRoot(aggregateRootType, taskResult.getData());
-			return aggregateRoot;
-		}
-		return null;
+		List<DomainEventStream> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
+		if(null == taskResult || taskResult.isEmpty())
+			return null;
 
+		aggregateRoot = rebuildAggregateRoot(aggregateRootType, taskResult);
+		return aggregateRoot;
+		
 	}
 	
 	private IAggregateRoot tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
@@ -99,13 +97,14 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRootType);
 
 		// TODO @await
-		AsyncTaskResult<List<DomainEventStream>> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion));
-		if(AsyncTaskStatus.Success.equals(taskResult.getStatus())) {
-            aggregateRoot.replayEvents(taskResult.getData());
-            return aggregateRoot;
-        }
+		List<DomainEventStream> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion));
 		
-		return null;
+		if(null == taskResult || taskResult.isEmpty())
+			return null;
+
+        aggregateRoot.replayEvents(taskResult);
+        return aggregateRoot;
+        
 	}
 
 	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, Collection<DomainEventStream> eventStreams) {

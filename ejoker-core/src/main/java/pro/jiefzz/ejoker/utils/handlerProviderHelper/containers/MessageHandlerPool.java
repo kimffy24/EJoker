@@ -26,7 +26,6 @@ import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IFunction1;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.infrastructure.impl.AbstractMessageHandler;
 import pro.jiefzz.ejoker.messaging.IMessage;
 import pro.jiefzz.ejoker.messaging.IMessageHandler;
@@ -96,7 +95,7 @@ public class MessageHandlerPool {
 				
 				{
 					// 约束返回类型。 java无法在编译时约束，那就推到运行时上约束吧
-					// 这里就是检查返回类型(带泛型)为 Future<AsyncTaskResult<Void>>
+					// 这里就是检查返回类型(带泛型)为 Future<Void>
 					boolean isOK = false;
 					Type genericReturnType = method.getGenericReturnType();
 					if(genericReturnType instanceof ParameterizedType) {
@@ -104,24 +103,14 @@ public class MessageHandlerPool {
 						if(parameterizedType.getRawType().equals(Future.class)) {
 							Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
 							if(null != actualTypeArguments && 1 == actualTypeArguments.length) {
-								Type type = actualTypeArguments[0];
-								if(type instanceof ParameterizedType) {
-									ParameterizedType parameterizedTypeInnerLv1 = (ParameterizedType )type;
-									if(parameterizedTypeInnerLv1.getRawType().equals(AsyncTaskResult.class)) {
-										Type[] actualTypeArgumentsLv1 = parameterizedTypeInnerLv1.getActualTypeArguments();
-										if(null != actualTypeArgumentsLv1 && 1 == actualTypeArgumentsLv1.length) {
-											Type typeLv2 = actualTypeArgumentsLv1[0];
-											if(Void.class.equals(typeLv2)) {
-												isOK = true;
-											}
-										}
-									}
+								if(Void.class.equals(actualTypeArguments[0])) {
+									isOK = true;
 								}
 							}
 						}
 					}
 					if(!isOK) {
-						String errorDesc = String.format("The method which Proxy will point to should return Future<AsyncTaskResult<Void>> !!! [currentMethod: {}#{}]", actuallyHandlerName, HANDLER_METHOD_NAME);
+						String errorDesc = String.format("The method which Proxy will point to should return Future<Void> !!! [currentMethod: {}#{}]", actuallyHandlerName, HANDLER_METHOD_NAME);
 						logger.error(errorDesc);
 						throw new RuntimeException(errorDesc);
 					}
@@ -377,9 +366,9 @@ public class MessageHandlerPool {
 		}
 
 		@Override
-		public Future<AsyncTaskResult<Void>> handleAsync(IMessage... messages) {
+		public Future<Void> handleAsync(IMessage... messages) {
 			try {
-				return (Future<AsyncTaskResult<Void>> )handleReflectionMethod.invoke(getInnerObject(), messages);
+				return (Future<Void> )handleReflectionMethod.invoke(getInnerObject(), messages);
 			} catch (IllegalAccessException|IllegalArgumentException e) {
 				String fullPs = MessageHandlerPool.getFullPs(MessageHandlerPool.getStringDescOrderly(m -> m.getClass().getSimpleName(), messages));
 				throw new RuntimeException("Message handle failed!!! " + fullPs, e);

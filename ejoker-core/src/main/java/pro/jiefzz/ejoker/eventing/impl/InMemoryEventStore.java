@@ -13,9 +13,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
-import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.wrapper.LockWrapper;
 import pro.jiefzz.ejoker.eventing.DomainEventStream;
@@ -44,13 +42,10 @@ public class InMemoryEventStore implements IEventStore {
 	private SystemAsyncHelper systemAsyncHelper;
 	
 	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
-	
-	@Dependence
 	private ITypeNameProvider typeNameProvider;
 	
 	@Override
-	public Future<AsyncTaskResult<EventAppendResult>> batchAppendAsync(List<DomainEventStream> eventStreams) {
+	public Future<EventAppendResult> batchAppendAsync(List<DomainEventStream> eventStreams) {
 
         Map<String, List<DomainEventStream>> eventStreamDict = new HashMap<>();
         for(DomainEventStream es : eventStreams) {
@@ -61,23 +56,23 @@ public class InMemoryEventStore implements IEventStore {
 
         EventAppendResult eventAppendResult = new EventAppendResult();
         EachUtilx.forEach(eventStreamDict, (k, v) -> batchAppend(k, v, eventAppendResult));
-        return EJokerFutureTaskUtil.completeTask(eventAppendResult);
+        return EJokerFutureUtil.completeFuture(eventAppendResult);
 	}
 
 	@Override
-	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, long version) {
-        return EJokerFutureTaskUtil.completeTask(find(aggregateRootId, version));
+	public Future<DomainEventStream> findAsync(String aggregateRootId, long version) {
+        return EJokerFutureUtil.completeFuture(find(aggregateRootId, version));
 	}
 
 	@Override
-	public Future<AsyncTaskResult<DomainEventStream>> findAsync(String aggregateRootId, String commandId) {
-        return EJokerFutureTaskUtil.completeTask(find(aggregateRootId, commandId));
+	public Future<DomainEventStream> findAsync(String aggregateRootId, String commandId) {
+        return EJokerFutureUtil.completeFuture(find(aggregateRootId, commandId));
 	}
 
 	@Override
-	public Future<AsyncTaskResult<List<DomainEventStream>>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
+	public Future<List<DomainEventStream>> queryAggregateEventsAsync(String aggregateRootId, String aggregateRootTypeName, long minVersion,
 			long maxVersion) {
-        return EJokerFutureTaskUtil.completeTask(queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
+        return EJokerFutureUtil.completeFuture(queryAggregateEvents(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
 	}
 
 	private void batchAppend(String aggregateRootId, List<DomainEventStream> eventStreamList, EventAppendResult eventAppendResult) {

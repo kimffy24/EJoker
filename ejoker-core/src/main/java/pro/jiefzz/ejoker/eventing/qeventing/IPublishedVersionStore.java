@@ -2,8 +2,6 @@ package pro.jiefzz.ejoker.eventing.qeventing;
 
 import java.util.concurrent.Future;
 
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-
 /**
  * Represents a storage to store the aggregate published event version.
  * @author kimffy
@@ -19,7 +17,7 @@ public interface IPublishedVersionStore {
 	 * @param publishedVersion
 	 * @return
 	 */
-	Future<AsyncTaskResult<Void>> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId, long publishedVersion);
+	Future<Void> updatePublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId, long publishedVersion);
     
     /**
      * Get the current published version for the given aggregate.
@@ -28,6 +26,6 @@ public interface IPublishedVersionStore {
      * @param aggregateRootId
      * @return
      */
-	Future<AsyncTaskResult<Long>> getPublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId);
+	Future<Long> getPublishedVersionAsync(String processorName, String aggregateRootTypeName, String aggregateRootId);
 
 }

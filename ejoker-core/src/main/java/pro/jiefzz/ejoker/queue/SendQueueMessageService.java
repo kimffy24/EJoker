@@ -1,5 +1,6 @@
 package pro.jiefzz.ejoker.queue;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -19,9 +20,8 @@ import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.system.functional.IFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
-import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
+import pro.jiefzz.ejoker.common.system.task.io.IOExceptionOnRuntime;
 import pro.jiefzz.ejoker.common.system.wrapper.MixedThreadPoolExecutor;
 import pro.jiefzz.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jiefzz.ejoker.queue.skeleton.aware.IProducerWrokerAware;
@@ -32,12 +32,12 @@ public class SendQueueMessageService {
 	private final static Logger logger = LoggerFactory.getLogger(SendQueueMessageService.class);
 
 	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
+	private SystemAsyncHelper systemAsyncHelper;
 	
 	@Dependence
 	private Scavenger scavenger;
 	
-	public Future<AsyncTaskResult<Void>> sendMessageAsync(
+	public Future<Void> sendMessageAsync(
 			IProducerWrokerAware producer,
 			String messageType,
 			String messageClass,
@@ -89,16 +89,16 @@ public class SendQueueMessageService {
 			return submitWithInnerExector(() -> {
 				try {
 					producer.send(message, routingKey, sa, fa, ea);
-					return AsyncTaskResult.Success;
+					return null;
 				} catch (Exception e) {
-					return new AsyncTaskResult<>(AsyncTaskStatus.IOException, e.getMessage(), null);
+					throw new IOExceptionOnRuntime(e instanceof IOException ? (IOException )e : new IOException(e));
 				}
 			});
 
 		} else {
 
 			// use eJoker inner executor service
-			return eJokerAsyncHelper.submit(() -> producer.send(message, routingKey, sa, fa, ea));
+			return systemAsyncHelper.submit(() -> producer.send(message, routingKey, sa, fa, ea));
 			
 		}
 

@@ -22,7 +22,6 @@ import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
-import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
@@ -126,7 +125,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	                        command.getId(),
 	                        command.getAggregateRootId());
 					}
-					return EJokerFutureTaskUtil.completeTask();
+					return EJokerFutureUtil.completeFuture();
 				},
 				() -> {
 					if(null != commandContext.getApplicationMessage()) {

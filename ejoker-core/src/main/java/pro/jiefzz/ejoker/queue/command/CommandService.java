@@ -13,11 +13,8 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.service.IWorkerService;
-import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
 import pro.jiefzz.ejoker.common.system.helper.Ensure;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.infrastructure.ITypeNameProvider;
 import pro.jiefzz.ejoker.queue.ITopicProvider;
@@ -86,19 +83,15 @@ public class CommandService implements ICommandService, IWorkerService {
 	}
 
 	@Override
-	public Future<AsyncTaskResult<Void>> sendAsync(final ICommand command) {
-		try {
-			return sendQueueMessageService.sendMessageAsync(
-					producer,
-					"command",
-					command.getClass().getSimpleName(),
-					buildCommandMessage(command),
-					command.getAggregateRootId(),
-					command.getId(),
-					command.getItems());
-		} catch (RuntimeException ex) {
-			return EJokerFutureTaskUtil.newFutureTask(AsyncTaskStatus.Failed, ex.getMessage());
-		}
+	public Future<Void> sendAsync(final ICommand command) {
+		return sendQueueMessageService.sendMessageAsync(
+				producer,
+				"command",
+				command.getClass().getSimpleName(),
+				buildCommandMessage(command),
+				command.getAggregateRootId(),
+				command.getId(),
+				command.getItems());
 	}
 
 	/**
@@ -106,31 +99,30 @@ public class CommandService implements ICommandService, IWorkerService {
 	 * Java中没有c# 的 async/await 调用，只能用最原始的创建线程任务对象的方法。
 	 */
 	@Override
-	public Future<AsyncTaskResult<CommandResult>> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
+	public Future<CommandResult> executeAsync(final ICommand command, final CommandReturnType commandReturnType) {
 
 		Ensure.notNull(commandResultProcessor, "commandResultProcessor");
 
-		RipenFuture<AsyncTaskResult<CommandResult>> remoteTaskCompletionSource = new RipenFuture<>();
+		RipenFuture<CommandResult> remoteTaskCompletionSource = new RipenFuture<>();
 		commandResultProcessor.regiesterProcessingCommand(command, commandReturnType, remoteTaskCompletionSource);
 		
-		AsyncTaskResult<Void> sendResult = await(systemAsyncHelper.submit(() -> {
-			
-			return await(sendQueueMessageService.sendMessageAsync(
-					producer,
-					"command",
-					command.getClass().getSimpleName(),
-					buildCommandMessage(command, true),
-					command.getAggregateRootId(),
-					command.getId(),
-					command.getItems()));
-		}));
-		
-		if(AsyncTaskStatus.Success.equals(sendResult.getStatus())) {
-			return remoteTaskCompletionSource;
-		} else {
+		try {
+			await(systemAsyncHelper.submit(() -> {
+				return await(sendQueueMessageService.sendMessageAsync(
+						producer,
+						"command",
+						command.getClass().getSimpleName(),
+						buildCommandMessage(command, true),
+						command.getAggregateRootId(),
+						command.getId(),
+						command.getItems()));
+			}));
+		} catch (Exception e) {
 			commandResultProcessor.processFailedSendingCommand(command);
-			return EJokerFutureTaskUtil.newFutureTask(sendResult.getStatus(), sendResult.getErrorMessage(), CommandResult.class);
+			throw e;
 		}
+
+		return remoteTaskCompletionSource;
 		
 	}
 

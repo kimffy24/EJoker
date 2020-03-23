@@ -26,7 +26,7 @@ import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.common.system.enhance.EachUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
-import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction;
 import pro.jiefzz.ejoker.common.system.functional.IVoidFunction1;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
@@ -179,7 +179,7 @@ public class NettyRPCServiceImpl implements IRPCService {
 				"RemoteInvoke",
 				() -> {
 					fetchNettySimpleClient(host, port).sendMessage(s);
-					return EJokerFutureTaskUtil.completeTask();
+					return EJokerFutureUtil.completeFuture();
 				},
 				() -> {},
 				() -> StringUtilx.fmt("RemoteInvoke::{}:{}", host, port),

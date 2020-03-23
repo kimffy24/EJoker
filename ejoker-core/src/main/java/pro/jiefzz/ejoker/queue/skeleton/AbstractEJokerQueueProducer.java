@@ -4,7 +4,6 @@ import java.util.concurrent.Future;
 
 import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.service.IWorkerService;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.messaging.IMessage;
 import pro.jiefzz.ejoker.messaging.IMessagePublisher;
 import pro.jiefzz.ejoker.queue.SendQueueMessageService;
@@ -48,7 +47,7 @@ public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> imp
 	}
 
 	@Override
-	public Future<AsyncTaskResult<Void>> publishAsync(TMessage message) {
+	public Future<Void> publishAsync(TMessage message) {
 		return sendQueueMessageService.sendMessageAsync(
 				producer,
 				this.getMessageType(message),

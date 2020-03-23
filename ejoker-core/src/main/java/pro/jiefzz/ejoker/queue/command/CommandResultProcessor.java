@@ -20,7 +20,6 @@ import pro.jiefzz.ejoker.common.service.rpc.IClientNodeIPAddressProvider;
 import pro.jiefzz.ejoker.common.service.rpc.IRPCService;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
 import pro.jiefzz.ejoker.queue.SendReplyService.ReplyMessage;
 import pro.jiefzz.ejoker.queue.domainEvent.DomainEventHandledMessage;
 
@@ -81,7 +80,7 @@ public class CommandResultProcessor implements IWorkerService {
 	}
 
 	public void regiesterProcessingCommand(ICommand command, CommandReturnType commandReturnType,
-			RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
+			RipenFuture<CommandResult> taskCompletionSource) {
 		CommandTaskCompletionSource commandTaskCompletionSource = new CommandTaskCompletionSource(commandReturnType, taskCompletionSource);
 		if (null != commandTaskMap.putIfAbsent(command.getId(), commandTaskCompletionSource)) {
 			throw new RuntimeException(StringUtilx.fmt("Duplicate processing command registion!!! [type: {}, id: {}]",
@@ -100,8 +99,7 @@ public class CommandResultProcessor implements IWorkerService {
 			CommandResult commandResult = new CommandResult(CommandStatus.Failed, command.getId(),
 					command.getAggregateRootId(), "Failed to send the command.", String.class.getName());
 
-			AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
-			commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult);
+			commandTaskCompletionSource.taskCompletionSource.trySetResult(commandResult);
 		}
 	}
 
@@ -111,15 +109,13 @@ public class CommandResultProcessor implements IWorkerService {
 
 			if (CommandReturnType.CommandExecuted.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				commandTaskMap.remove(commandResult.getCommandId());
-				AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
-				if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
+				if (commandTaskCompletionSource.taskCompletionSource.trySetResult(commandResult))
 					logger.debug("Command result return. [commandResult: {}]", commandResult);
 			} else if (CommandReturnType.EventHandled.equals(commandTaskCompletionSource.getCommandReturnType())) {
 				if (CommandStatus.Failed.equals(commandResult.getStatus())
 						|| CommandStatus.NothingChanged.equals(commandResult.getStatus())) {
 					commandTaskMap.remove(commandResult.getCommandId());
-					AsyncTaskResult<CommandResult> asyncTaskResult = new AsyncTaskResult<>(commandResult);
-					if (commandTaskCompletionSource.taskCompletionSource.trySetResult(asyncTaskResult))
+					if (commandTaskCompletionSource.taskCompletionSource.trySetResult(commandResult))
 						logger.debug("Command result return. [commandResult: {}]", commandResult);
 				}
 			}
@@ -136,7 +132,7 @@ public class CommandResultProcessor implements IWorkerService {
 					message.getAggregateRootId(), message.getCommandResult(),
 					message.getCommandResult() != null ? message.getCommandResult().getClass().getName() : null);
 			if (commandTaskCompletionSource.taskCompletionSource
-					.trySetResult(new AsyncTaskResult<>(commandResult)))
+					.trySetResult(commandResult))
 				logger.debug("Command result return. [commandResult: {}]", commandResult.toString());
 		}
 	}
@@ -145,10 +141,10 @@ public class CommandResultProcessor implements IWorkerService {
 
 		private final CommandReturnType commandReturnType;
 		
-		private final RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource;
+		private final RipenFuture<CommandResult> taskCompletionSource;
 
 		public CommandTaskCompletionSource(CommandReturnType commandReturnType,
-				RipenFuture<AsyncTaskResult<CommandResult>> taskCompletionSource) {
+				RipenFuture<CommandResult> taskCompletionSource) {
 			this.commandReturnType = commandReturnType;
 			this.taskCompletionSource = taskCompletionSource;
 		}
@@ -157,7 +153,7 @@ public class CommandResultProcessor implements IWorkerService {
 			return commandReturnType;
 		}
 
-		public RipenFuture<AsyncTaskResult<CommandResult>> getTaskCompletionSource() {
+		public RipenFuture<CommandResult> getTaskCompletionSource() {
 			return taskCompletionSource;
 		}
 	}

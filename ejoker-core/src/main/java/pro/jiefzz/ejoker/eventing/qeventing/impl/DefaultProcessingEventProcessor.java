@@ -19,8 +19,6 @@ import pro.jiefzz.ejoker.common.service.Scavenger;
 import pro.jiefzz.ejoker.common.system.enhance.MapUtilx;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentException;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskStatus;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.eventing.DomainEventStreamMessage;
@@ -131,7 +129,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	
 	private long getAggregateRootLatestHandledEventVersion (String aggregateRootType, String aggregateRootId) {
 		
-		AsyncTaskResult<Long> result;
+		Long result;
 		
 		try {
             result = await(
@@ -141,9 +139,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
         	throw new RuntimeException("_publishedVersionStore.GetPublishedVersionAsync has unknown exception.", ex);
         }
 		
-        if(AsyncTaskStatus.Success.equals(result.getStatus()))
-        	return result.getData();
-        throw new RuntimeException("_publishedVersionStore.GetPublishedVersionAsync has unknown exception, errorMessage: " + result.getErrorMessage());
+		return result;
     
     }
 

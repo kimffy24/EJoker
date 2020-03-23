@@ -24,7 +24,6 @@ import pro.jiefzz.ejoker.common.service.IJSONConverter;
 import pro.jiefzz.ejoker.common.system.exceptions.ArgumentNullException;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.extension.acrossSupport.RipenFuture;
-import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.domain.IAggregateRoot;
 import pro.jiefzz.ejoker.domain.IAggregateStorage;
@@ -62,9 +61,6 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
-
-	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
 
 	@Override
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {

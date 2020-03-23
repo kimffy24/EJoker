@@ -11,9 +11,7 @@ import pro.jiefzz.ejoker.common.context.annotation.context.Dependence;
 import pro.jiefzz.ejoker.common.context.annotation.context.EService;
 import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
 import pro.jiefzz.ejoker.common.system.extension.AsyncWrapperException;
-import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureTaskUtil;
-import pro.jiefzz.ejoker.common.system.task.AsyncTaskResult;
-import pro.jiefzz.ejoker.common.system.task.context.EJokerTaskAsyncHelper;
+import pro.jiefzz.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jiefzz.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jiefzz.ejoker.common.system.task.io.IOHelper;
 import pro.jiefzz.ejoker.common.system.wrapper.CountDownLatchWrapper;
@@ -31,23 +29,20 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	private IOHelper ioHelper;
 	
 	@Dependence
-	private EJokerTaskAsyncHelper eJokerAsyncHelper;
-	
-	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;
 	
 	@Dependence
 	private MessageHandlerPool messageHandlerPool;
 	
 	@Override
-	public Future<AsyncTaskResult<Void>> dispatchMessageAsync(IMessage message) {
+	public Future<Void> dispatchMessageAsync(IMessage message) {
 
 		List<? extends IMessageHandlerProxy> handlers = messageHandlerPool.getProxyAsyncHandlers(message.getClass());
 		if(null != handlers && !handlers.isEmpty()) {
 			Object countDownLatchHandle = CountDownLatchWrapper.newCountDownLatch(handlers.size());
 			
 			for(IMessageHandlerProxy proxyAsyncHandler:handlers) {
-				eJokerAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
+				systemAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
 							"HandleSingleMessageAsync",
 							() -> proxyAsyncHandler.handleAsync(message),
 							r -> CountDownLatchWrapper.countDown(countDownLatchHandle),
@@ -68,11 +63,11 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 				throw new AsyncWrapperException(e);
 			}
 		}
-		return EJokerFutureTaskUtil.completeTask();
+		return EJokerFutureUtil.completeFuture();
 	}
 
 	@Override
-	public Future<AsyncTaskResult<Void>> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
+	public Future<Void> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
 		
 		IMessage[] msgArray = messages.toArray(tRef);
 		
@@ -86,7 +81,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 		/// TODO 此处的异步语义是等待全部指派完成才返回？
 		/// 还是只要有一个完成就返回?
 		/// 还是执行到此就返回?
-		return eJokerAsyncHelper.submit(() -> {
+		return systemAsyncHelper.submit(() -> {
 
 			// 适配多个message的handler
 			// ...
