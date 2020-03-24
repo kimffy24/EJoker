@@ -142,7 +142,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 		// ** 那么，在java中，请使用pauseOnly() 和 acquireOnRunning() 组合。
 		onPaused.set(true);
 		logger.debug("{} pause requested. [aggregateRootId: {}]", this.getClass().getSimpleName(), aggregateRootId);
-		AcquireHelper.waitAcquire(onRunning, 10l, // 1000l,
+		AcquireHelper.waitAcquire(onRunning, false, 10l, // 1000l,
 				r -> {
 					if (0 == r % 100)
 						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while. [aggregateRootId: {}, waitTime(ms): {}]",
@@ -156,7 +156,7 @@ public class ProcessingCommandMailbox extends EasyCleanMailbox {
 	}
 
 	public void acquireOnRunning() {
-		AcquireHelper.waitAcquire(onRunning, 5l, // 1000l,
+		AcquireHelper.waitAcquire(onRunning, false, 5l, // 1000l,
 				r -> {
 					if (0 == r % 100)
 						logger.debug("{} pause requested, but the mailbox is currently processing message, so we should wait for a while. [aggregateRootId: {}, waitTime(ms): {}]",
