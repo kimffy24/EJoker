@@ -16,7 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
-import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
+import pro.jk.ejoker.common.system.enhance.StringUtilx;
+import pro.jk.ejoker.common.system.extension.pipeline.Pipeline;
+import pro.jk.ejoker.common.system.extension.pipeline.PipelineHook;
 
 public class PipelineTest {
 

@@ -3,7 +3,7 @@ package pro.jiefzz.ejoker.common.system.helper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import pro.jiefzz.ejoker.common.system.enhance.StringUtilx;
+import pro.jk.ejoker.common.system.enhance.StringUtilx;
 
 public class StringHelperTest {
 

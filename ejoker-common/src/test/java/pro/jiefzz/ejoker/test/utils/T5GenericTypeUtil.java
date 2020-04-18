@@ -12,13 +12,13 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import pro.jiefzz.ejoker.common.utils.GenericTypeUtil;
 import pro.jiefzz.ejoker.test.ins.ClassA;
 import pro.jiefzz.ejoker.test.ins.ClassB;
 import pro.jiefzz.ejoker.test.ins.ClassC;
 import pro.jiefzz.ejoker.test.ins.ClassD;
 import pro.jiefzz.ejoker.test.ins.ClassE;
 import pro.jiefzz.ejoker.test.ins.ClassF;
+import pro.jk.ejoker.common.utils.GenericTypeUtil;
 
 class T5GenericTypeUtil {
 
