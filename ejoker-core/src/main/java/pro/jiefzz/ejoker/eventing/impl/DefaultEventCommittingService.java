@@ -136,15 +136,13 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 		
 		LinkedList<DomainEventStream> domainEventStreams = new LinkedList<>();
 		EachUtilx.forEach(committingContexts, item -> domainEventStreams.add(item.getEventStream()));
-		// List<DomainEventStream> collect = committingContexts.stream().map(EventCommittingContext::getEventStream).collect(Collectors.toList());
 		
 		ioHelper.tryAsyncAction2(
 				"BatchPersistEventAsync",
 				() -> eventStore.batchAppendAsync(domainEventStreams),
 				appendResult -> {
-
-					EventCommittingContext firstEventCommittingContext = committingContexts.get(0);
-					EventCommittingContextMailBox eventMailBox = firstEventCommittingContext.getMailBox();
+					
+					EventCommittingContextMailBox eventMailBox = committingContexts.get(0).getMailBox();
 					
 					if(null == appendResult) {
 						logger.error("Batch persist events success, but the persist result is null, the current event committing mailbox should be pending. [mailboxNumber: {}]",
@@ -152,7 +150,6 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 						return;
 					}
 
-					// 这个位置用java stream操作不太顺手
 					Map<String, List<EventCommittingContext>> groupCommittedContextDict = new HashMap<>();
 			        for(EventCommittingContext ecc : committingContexts) {
 			        	MapUtilx

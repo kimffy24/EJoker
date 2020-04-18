@@ -69,10 +69,11 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	@Override
 	public Future<Void> dispatchMessagesAsync(Collection<? extends IMessage> messages) {
 		
-		IMessage[] msgArray = messages.toArray(tRef);
+		if(null == messages || messages.isEmpty()) {
+			throw new RuntimeException("null == messages || messages.isEmpty() !!!");
+		}
 		
-		if(null == msgArray || 0 == msgArray.length)
-			throw new RuntimeException("null == msgArray || 0 == msgArray.length !!!");
+		IMessage[] msgArray = messages.toArray(tRef);
 		
 		// 1个Message属于绝大多数情况，值得单独列出
 		if(1 == msgArray.length)
