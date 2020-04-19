@@ -17,9 +17,6 @@ import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EInitialize;
 import pro.jk.ejoker.common.context.annotation.context.EService;
 import pro.jk.ejoker.common.service.Scavenger;
-import pro.jk.ejoker.common.system.functional.IFunction;
-import pro.jk.ejoker.common.system.functional.IVoidFunction;
-import pro.jk.ejoker.common.system.functional.IVoidFunction1;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.common.system.task.io.IOExceptionOnRuntime;
 import pro.jk.ejoker.common.system.wrapper.MixedThreadPoolExecutor;
@@ -46,49 +43,14 @@ public class SendQueueMessageService {
 			String messageId,
 			Map<String, String> messageExtensionItems)
 	{
-		IVoidFunction sa = () -> {
-			logger.debug(
-					"EJoker message send suceess. [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
-					messageType,
-					message,
-					"ok",
-					routingKey,
-					messageClass,
-					messageId,
-					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
-				);
-		};
 		
-		IVoidFunction1<String> fa = s -> {
-			logger.error(
-					"EJoker message send failed! [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
-					messageType,
-					message,
-					s,
-					routingKey,
-					messageClass,
-					messageId,
-					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
-				);
-		};
-
-		IVoidFunction1<Exception> ea = e -> {
-			logger.error(
-					"EJoker message send failed!!! [topType: {}, message: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
-					messageType,
-					message,
-					routingKey,
-					messageClass,
-					messageId,
-					(null == messageExtensionItems ? "null" : messageExtensionItems.toString()),
-					e);
-		};
+		SendServiceContext cxt = new SendServiceContext(messageType, messageClass, message, routingKey, messageId, messageExtensionItems);
 
 		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
 
-			return submitWithInnerExector(() -> {
+			return threadPoolExecutor.submit(() -> {
 				try {
-					producer.send(message, routingKey, sa, fa, ea);
+					producer.send(message, routingKey, cxt);
 					return null;
 				} catch (Exception e) {
 					throw new IOExceptionOnRuntime(e instanceof IOException ? (IOException )e : new IOException(e));
@@ -98,14 +60,10 @@ public class SendQueueMessageService {
 		} else {
 
 			// use eJoker inner executor service
-			return systemAsyncHelper.submit(() -> producer.send(message, routingKey, sa, fa, ea));
+			return systemAsyncHelper.submit(() -> producer.send(message, routingKey, cxt));
 			
 		}
 
-	}
-	
-	public <T> Future<T> submitWithInnerExector(IFunction<T> vf) {
-		return threadPoolExecutor.submit(vf::trigger);
 	}
 	
 	private ThreadPoolExecutor threadPoolExecutor;
@@ -155,5 +113,78 @@ public class SendQueueMessageService {
 
 	}
 
+	public final static class SendServiceContext implements IProducerWrokerAware.ContextAware {
+
+		private final String messageType;
+		
+		private final String messageClass;
+		
+		private final EJokerQueueMessage message;
+		
+		private final String routingKey;
+		
+		private final String messageId;
+		
+		private final Map<String, String> messageExtensionItems;
+
+		public SendServiceContext(String messageType, String messageClass, EJokerQueueMessage message,
+				String routingKey, String messageId, Map<String, String> messageExtensionItems) {
+			super();
+			this.messageType = messageType;
+			this.messageClass = messageClass;
+			this.message = message;
+			this.routingKey = routingKey;
+			this.messageId = messageId;
+			this.messageExtensionItems = messageExtensionItems;
+		}
+		
+		@Override
+		public void triggerSuccess() {
+
+			logger.debug(
+					"EJoker message send suceess. [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
+					messageType,
+					message,
+					"ok",
+					routingKey,
+					messageClass,
+					messageId,
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
+				);
+			
+		}
+
+		@Override
+		public void triggerFaild(String reason) {
+			
+			logger.error(
+					"EJoker message send failed! [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
+					messageType,
+					message,
+					reason,
+					routingKey,
+					messageClass,
+					messageId,
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString())
+				);
+			
+		}
+
+		@Override
+		public void triggerException(Exception e) {
+			
+			logger.error(
+					"EJoker message send failed!!! [topType: {}, message: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
+					messageType,
+					message,
+					routingKey,
+					messageClass,
+					messageId,
+					(null == messageExtensionItems ? "null" : messageExtensionItems.toString()),
+					e);
+			
+		}
+		
+	}
 
 }

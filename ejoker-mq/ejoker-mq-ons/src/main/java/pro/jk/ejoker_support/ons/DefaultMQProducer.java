@@ -35,6 +35,7 @@ import pro.jk.ejoker.common.system.wrapper.CountDownLatchWrapper;
 import pro.jk.ejoker.common.system.wrapper.DiscardWrapper;
 import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jk.ejoker.queue.skeleton.aware.IProducerWrokerAware;
+import pro.jk.ejoker.queue.skeleton.aware.IProducerWrokerAware.ContextAware;
 
 /**
  * Use consistent hash algorithm to select a queue, as default.<br>
@@ -70,9 +71,7 @@ public class DefaultMQProducer implements IProducerWrokerAware {
 	public void send(
 			final EJokerQueueMessage message,
 			final String routingKey,
-			IVoidFunction successAction,
-			IVoidFunction1<String> faildAction,
-			IVoidFunction1<Exception> exceptionAction) {
+			ContextAware cxt) {
 //	public void send(final EJokerQueueMessage message, final String routingKey, final String messageId, final String version) {
 		Message rMessage = new Message(message.getTopic(), message.getTag(), routingKey, message.getCode(),
 				message.getBody(), true);
@@ -81,16 +80,16 @@ public class DefaultMQProducer implements IProducerWrokerAware {
 		try {
 			sendResult = producer.send(rMessage, this::selectQueue, null);
 		} catch (Exception e) {
-			exceptionAction.trigger(e);
+			cxt.triggerException(e);
 			throw new IOExceptionOnRuntime(new IOException(e));
 		}
 		if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())
 				&& !SendStatus.SLAVE_NOT_AVAILABLE.equals(sendResult.getSendStatus())) {
 				// rocketmq特有情况 如果没有slave可能会报出这个错，但严格来说又不算错。
-			faildAction.trigger(sendResult.toString());
+			cxt.triggerFaild(sendResult.toString());
 			throw new IOExceptionOnRuntime(new IOException(sendResult.toString()));
 		}
-		successAction.trigger();
+		cxt.triggerSuccess();
 	}
 	
 	@Override

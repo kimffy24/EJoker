@@ -1,14 +1,20 @@
 package pro.jk.ejoker.queue.skeleton.aware;
 
-import pro.jk.ejoker.common.system.functional.IVoidFunction;
-import pro.jk.ejoker.common.system.functional.IVoidFunction1;
-
 public interface IProducerWrokerAware {
 
 	public void start() throws Exception;
 
 	public void shutdown() throws Exception;
 	
-	public void send(final EJokerQueueMessage message, final String routingKey, IVoidFunction successAction, IVoidFunction1<String> faildAction, IVoidFunction1<Exception> exceptionAction);
+	public void send(final EJokerQueueMessage message, final String routingKey, ContextAware cxt);
 	
+	public static interface ContextAware {
+		
+		public void triggerSuccess();
+		
+		public void triggerFaild(String reason);
+		
+		public void triggerException(Exception e);
+		
+	}
 }
