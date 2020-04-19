@@ -39,19 +39,17 @@ public class MixedThreadPoolExecutor extends ThreadPoolExecutor {
 	@Override
 	protected void afterExecute(Runnable r, Throwable t) {
 		super.afterExecute(r, t);
-		CountDownLatchWrapper.countDown(((FutureTaskWrapper<?> )r).awaitHandle);
+		((FutureTaskWrapper<?> )r).release(); // 按照逻辑，这个锁在任务完成后会被解锁，预期内仅仅有这1次解锁的机会
 	}
 
 	@Override
 	protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
-		RunnableFuture<T> newTask = new FutureTaskWrapper<>(CountDownLatchWrapper.newCountDownLatch(), runnable, value);
-		return newTask;
+		return new FutureTaskWrapper<>(runnable, value);
 	}
 
 	@Override
 	protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-		RunnableFuture<T> newTask = new FutureTaskWrapper<>(CountDownLatchWrapper.newCountDownLatch(), callable);
-		return newTask;
+		return new FutureTaskWrapper<>(callable);
 	}
 	
 }

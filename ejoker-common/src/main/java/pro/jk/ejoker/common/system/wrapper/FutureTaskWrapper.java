@@ -4,6 +4,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.Lock;
 
 /**
  * 重寫兩個get方法讓他們能支持thread和quasar fiber的同步
@@ -14,16 +16,18 @@ import java.util.concurrent.TimeoutException;
  */
 public class FutureTaskWrapper<V> extends java.util.concurrent.FutureTask<V> {
 
-	public final Object awaitHandle;
+	private Object awaitHandle = CountDownLatchWrapper.newCountDownLatch();
 
-	public FutureTaskWrapper(Object awaitHandle, Callable<V> callable) {
+	public FutureTaskWrapper(Callable<V> callable) {
 		super(callable);
-		this.awaitHandle = awaitHandle;
 	}
 
-	public FutureTaskWrapper(Object awaitHandle, Runnable runnable, V result) {
+	public FutureTaskWrapper(Runnable runnable, V result) {
 		super(runnable, result);
-		this.awaitHandle = awaitHandle;
+	}
+	
+	public void release() {
+		CountDownLatchWrapper.countDown(awaitHandle);
 	}
 
 	@Override
@@ -35,9 +39,10 @@ public class FutureTaskWrapper<V> extends java.util.concurrent.FutureTask<V> {
 	@Override
 	public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
 		if (!CountDownLatchWrapper.await(awaitHandle, timeout, unit)) {
-			throw new TimeoutException();
+			if(!this.isDone())
+				throw new TimeoutException();
 		}
 		return super.get();
 	}
-
+	
 }

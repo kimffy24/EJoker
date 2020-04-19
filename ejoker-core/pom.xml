@@ -86,7 +86,7 @@
 				<executions>
 					<execution>
 						<id>instrument-classes</id>
-						<phase>compile</phase>
+						<!-- phase>compile</phase -->
 						<configuration>
 							<tasks>
 								<property name="ant_classpath"

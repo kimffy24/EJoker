@@ -73,6 +73,7 @@ public class EJoker {
 		SELF_PACKAGE_NAME = EjokerRootDefinationStore.SELF_PACKAGE_NAME;
 		
 		SystemAsyncHelper.setDefaultPoolSize(EJokerEnvironment.ASYNC_INTERNAL_EXECUTE_THREADPOOL_SIZE);
+		
 	}
 	
 	public static class EJokerSingletonFactory {
