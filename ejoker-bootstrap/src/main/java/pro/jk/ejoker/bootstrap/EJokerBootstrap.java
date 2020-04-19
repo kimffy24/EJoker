@@ -69,7 +69,14 @@ public class EJokerBootstrap {
 	protected final Map<String, Object> cTables2 = new ConcurrentHashMap<>();
 	
 	public EJokerBootstrap(String... packages) {
-		this(() -> EJoker.class, packages);
+		this(() -> {
+			// 通过环境变量选择启动的具体入口类
+			String flag = System.getProperty("pro.jk.ejoker.bootstrap.useQuasar");
+			if("1".equals(flag) || "true".equals(flag))
+				return pro.jk.ejoker_support.equasar.EJoker.class;
+			else
+				return EJoker.class;
+		}, packages);
 	}
 	
 	protected EJokerBootstrap(IFunction<Class<? extends EJoker>> eJokerTypeProvider, String... packages) {

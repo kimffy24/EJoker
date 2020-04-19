@@ -20,7 +20,7 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(SystemAsyncPool.class);
 	
-	private final static String threadNamePrefix = "EjokerInnerThread-";
+	private final static String threadNamePrefix = "ejoker-worker-";
 
 	private final ExecutorService defaultThreadPool;
 	
