@@ -1,4 +1,4 @@
-package pro.jk.ejoker_support.rocketmq;
+package pro.jk.ejoker_support.rocketmq.consumer.pull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,6 +16,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.PullResult;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -26,16 +27,13 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jk.ejoker.common.system.enhance.EachUtilx;
-import pro.jk.ejoker.common.system.enhance.StringUtilx;
+import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IFunction3;
+import pro.jk.ejoker.common.system.functional.IVoidFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.common.system.functional.IVoidFunction3;
-import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
-import pro.jk.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
-import pro.jk.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 
-public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.DefaultMQPullConsumer implements IConsumerWrokerAware {
+public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	
 	private final static Logger logger = LoggerFactory.getLogger(DefaultMQConsumer.class);
 
@@ -43,9 +41,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	 * use to match the case of decrease RocketMq's readQueueNum.
 	 */
 	private final static Pattern dgPattern = Pattern.compile("CODE:[\\s\\S\\t]*1[\\s\\S\\t]*queueId\\[\\d+\\] is illegal, topic:\\[[a-zA-Z0-9-_]+\\] topicConfig\\.readQueueNums:\\[\\d+\\] consumer:");
+
 	
-	
-	private final AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
+	private final static AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
 	
 	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 
@@ -55,19 +53,20 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 
 	private final Set<MessageQueue> matchQueue = new HashSet<>();
 	
-	private final AtomicInteger queueHash = new AtomicInteger(matchQueue.hashCode());
-	
 	private final Map<MessageQueue, ControlStruct> dashboards = new ConcurrentHashMap<>();
 
 	private String focusTopic = "";
 
-	private IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> messageProcessor = null;
+	private RocketMQRawMessageHandler messageProcessor = null;
 	
-	public Thread rebalanceMonitor = null;
-
-	public Thread processComsumedSequenceThread = null;
+	private Thread processComsumedSequenceThread = null;
 	
-	private IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = null;
+	private IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = (e, mq, d) -> logger.error(
+			"Some exception occur!!! [dashboard.offsetConsumedLocal: {}, dashboard.offsetFetchLocal: {}, mq: {}]",
+			d.offsetConsumedLocal.get(),
+			d.offsetFetchLocal.get(),
+			mq.toString(),
+			e);
 
 	private boolean flowControlFlag = false;
 	
@@ -99,20 +98,29 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		postInit();
 	}
 	
-	@Override
-	public void registerEJokerCallback(IVoidFunction2<EJokerQueueMessage, IEJokerQueueMessageContext> vf) {
+	public void registerEJokerCallback(RocketMQRawMessageHandler vf) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.messageProcessor = vf;
 	}
 
-	@Override
 	public void subscribe(String topic, String subExpression) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
+		if(null != this.focusTopic && !"".equals(this.focusTopic))
+			throw new RuntimeException("Only support ONE topic in this version!!!");
+		
+		// 我暂时不考虑tag的功能。
+		
+		AtomicBoolean isFirstRebalance = new AtomicBoolean(true);
+		registerMessageQueueListener(topic, (__, mqAll, mqDivided) -> {
+			// 当队列发生变化时
+			rebalace(mqDivided);
+			// 真的第一次re-balance
+			if(isFirstRebalance.compareAndSet(true, false))
+				onPasue.compareAndSet(true, false);
+		});
 		this.focusTopic = topic;
-
-		rebalanceMonitor.setName("rebalanceMonitor-topic-" + topic);
 	}
 
 	@Override
@@ -124,20 +132,8 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 		matchQueue.clear();
 		dashboards.clear();
-
-
-//		Set<MessageQueue> messageQueues = fetchSubscribeMessageQueues(focusTopic);
-//		for (final MessageQueue mq : messageQueues)
-//			createControlStruct(mq);
-//		
-//		onPasue.set(false);
-//		
-//		dashboards.forEach((mq, dashboard) -> {
-//			dashboard.workThread.start(); 
-//		});
-
+		
 		processComsumedSequenceThread.start();
-		rebalanceMonitor.start();
 		
 	}
 
@@ -152,7 +148,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				onPasue.compareAndSet(true, false);
 				
 				logger.debug("Waiting all comsumer Thread quit... [{}]", focusTopic);
-				EachUtilx.forEach(dashboards, (__, dashboard) -> {
+				dashboards.forEach((__, dashboard) -> {
 					while(dashboard.workThread.isAlive()) {
 						try {
 							TimeUnit.MILLISECONDS.sleep(50l);
@@ -166,7 +162,6 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		shutdownHook.start();
 	}
 
-	@Override
 	public void loopInterval() {
 		
 		if(!this.onRunning.get())
@@ -174,20 +169,34 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		if(this.onPasue.get())
 			return;
 		
-		Iterator<MessageQueue> iterator = matchQueue.iterator();
+		Set<MessageQueue> mqs = new HashSet<>();
+		Iterator<MessageQueue> iterator = matchQueue.iterator(); // matchQueue 不能保证在在循环期间不会更新
 		while(iterator.hasNext()) {
 			MessageQueue mq = iterator.next();
 			ControlStruct controlStruct = dashboards.get(mq);
-			long localOffsetConsumed = controlStruct.offsetConsumedLocal.get();
+			if(null == controlStruct) {
+				// 可能是并发创建监听，也可能是re-balance移除了
+				continue;
+			}
+			if(controlStruct.removedFlag.get()) {
+				// 明显是re-balance移除了
+				continue;
+			}
+			
+			removeOldOffset(controlStruct);
+			
 			if(!controlStruct.offsetDirty.compareAndSet(true, false)) {
 				// 避免当前节点对不消费的队列进行offset同步从而干扰到正常消费的任务
 				continue;
 			}
+			
 			boolean status = false;
 			try {
+				long localOffsetConsumed = controlStruct.offsetConsumedLocal.get();
 				updateConsumeOffset(mq, localOffsetConsumed);
-				logger.debug("Update comsumed offset to server. [{}, ConsumedLocal: {}]", mq.toString(), localOffsetConsumed);
+				logger.debug("Try to update comsumed offset to server. [queue: {}, ConsumedLocal: {}]", mq, localOffsetConsumed);
 				status = true;
+				mqs.add(mq);
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
 			} finally {
@@ -195,12 +204,12 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 					controlStruct.offsetDirty.compareAndSet(false, true);
 			}
 		}
-		getOffsetStore().persistAll(matchQueue);
+		// RocketMQ内部会为我们调度这个，不用自己来
+		// getOffsetStore().persistAll(mqs);
 		
 	}
 	
-	@Override
-	public boolean isAllReady() {
+	public boolean isBoostReady() {
 		return !onPasue.get();
 	}
 
@@ -218,126 +227,22 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 	}
 	
 	private void postInit() {
+		
 		processComsumedSequenceThread = new Thread(() -> {
-			while (null == dashboards) {
-				sleepmilliSecWrapper(1000l);
+			while (null == dashboards || dashboards.isEmpty()) {
+				sleepMilliSecWrapper(1000l);
 			}
 			while (onRunning.get()) {
-				EachUtilx.forEach(dashboards, (__, d) -> processComsumedSequence(d));
+				dashboards.forEach((__, d) -> processComsumedSequence(d));
 				// thread will be unPark while end of the call to method `tryMarkCompletion`
 				LockSupport.park();
 			}
 		}, "processComsumedSequenceThread-" + this.getConsumerGroup());
 		processComsumedSequenceThread.setDaemon(true);
 
-		// @Important the re-balance processing will panic if this thread is crash.
-		// @Important may be we can use java scheduler
-		rebalanceMonitor = new Thread(() -> {
-			Set<MessageQueue> fetchMessageQueuesInBalance = null;
-			int loop = 0;
-			do {
-				sleepmilliSecWrapper(1000l);
-				if(loop++%30 == 0)
-					logger.debug("consumer's state is waiting rebalance ... [consumer: {}@{}]", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
-				try {
-					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchSubscribeMessageQueues(focusTopic);
-				} catch (MQClientException e) {
-					logger.error("IOException occur while invoke DefaultMQConsumer.super.fetchSubscribeMessageQueues({})", focusTopic, e);
-					throw new RuntimeException(e);
-				}
-			} while(null == fetchMessageQueuesInBalance || fetchMessageQueuesInBalance.isEmpty());
-
-			MessageQueue firstMq = fetchMessageQueuesInBalance.iterator().next();
-			ControlStruct firstCs = createControlStruct(firstMq);
-			firstCs.workThread.start();
-			// 先注册1个消费线程到broker，onPause=true 这个状态会阻止这个线程消费的，
-			// 然后等待re-balance作用，re-balance生效后会 会更改onPause=false，消费者将开始工作
-
-			sleepmilliSecWrapper(1000l);
-			boolean isFirst = true;
-			
-			while (DefaultMQConsumer.this.onRunning.get()) {
-				
-				try {
-					fetchMessageQueuesInBalance = DefaultMQConsumer.super.fetchMessageQueuesInBalance(focusTopic);
-				} catch (MQClientException e) {
-					e.printStackTrace();
-				}
-				
-				if(isFirst) {
-					if(null == fetchMessageQueuesInBalance || 0 == fetchMessageQueuesInBalance.size()) {
-						logger.debug("consumer: {}@{}, state: waiting rebalance ...", DefaultMQConsumer.this.getConsumerGroup(), DefaultMQConsumer.this.getInstanceName());
-						sleepmilliSecWrapper(1000l);
-						continue;
-						// TODO 如果节点数远远多于队列数，是不是有部分一直没分配到的节点会一直load这个re-balance接口？？？
-						// 有没有一种又服务器反推的过程?
-					}
-					isFirst = false;
-				}
-
-				if (queueHash.get() != fetchMessageQueuesInBalance.hashCode()) {
-					onPasue.set(true);
-					int matchHashAfterReBalance = fetchMessageQueuesInBalance.hashCode();
-					for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
-						if (matchQueue.contains(rbmq)) {
-							// re-balance 选中 且本有的
-							ControlStruct current = dashboards.get(rbmq);
-							current.currentMatchHash.set(matchHashAfterReBalance);
-						} else {
-							// re-balance 选中 但本地没有的 (新增队列的情况)
-							ControlStruct current = createControlStruct(rbmq);
-							current.currentMatchHash.set(matchHashAfterReBalance);
-							current.workThread.start();
-						}
-					}
-					{
-						// 找出re-balance放弃的队列 并移除相关对象
-						Set<Entry<MessageQueue, ControlStruct>> entrySet = dashboards.entrySet();
-						Iterator<Entry<MessageQueue, ControlStruct>> iterator = entrySet.iterator();
-						while (iterator.hasNext()) {
-							Entry<MessageQueue, ControlStruct> currentEntry = iterator.next();
-							ControlStruct current = currentEntry.getValue();
-							if (current.currentMatchHash.get() != matchHashAfterReBalance) {
-								// 从matchQueue中移除
-								matchQueue.remove(currentEntry.getKey());
-								// 从dashboards中移除
-								iterator.remove();
-								// 设置对应的worker退出标识
-								current.removedFlag.set(true);
-							}
-						}
-					}
-					queueHash.set(fetchMessageQueuesInBalance.hashCode());
-					onPasue.set(false);
-					
-					{
-						if(logger.isDebugEnabled()) {
-							String queueAll = "";
-							for (MessageQueue rbmq : fetchMessageQueuesInBalance) {
-								queueAll += StringUtilx.fmt("<broker: {}, qId: {}>, ", rbmq.getBrokerName(), rbmq.getQueueId());
-							}
-							logger.debug("Topic rbalance finished. [topicName: {}, allocateQueue: {}]", focusTopic, queueAll);
-						}
-					}
-					
-				}
-				
-				sleepmilliSecWrapper(2000l);
-			}
-		});
-		rebalanceMonitor.setDaemon(true);
-		rebalanceMonitor.setPriority(Thread.MAX_PRIORITY);
-		
-		exHandler = (e, mq, d) -> logger.error(
-					"Some exception occur!!! [dashboard.offsetConsumedLocal: {}, dashboard.offsetFetchLocal: {}, mq: {}]",
-					d.offsetConsumedLocal.get(),
-					d.offsetFetchLocal.get(),
-					mq.toString(),
-					e);
-
 	}
 	
-	private ControlStruct createControlStruct(final MessageQueue mq) {
+	private ControlStruct getOrCreateControlStruct(final MessageQueue mq) {
 		
 		if(dashboards.containsKey(mq))
 			return dashboards.get(mq);
@@ -352,16 +257,78 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		}
 		
 		ControlStruct cs = new ControlStruct(
+				getConsumerGroup(),
 				mq,
 				consumedOffset,
 				maxOffset,
-				this::queueConsume
+				this::queueConsume,
+				this.onRunning::get,
+				exHandler
 		);
 
-		dashboards.put(mq, cs);
-		matchQueue.add(mq);
+		ControlStruct previous = dashboards.putIfAbsent(mq, cs);
+		if(null != previous)
+			return previous;
 		
 		return cs;
+		
+	}
+	
+	private void action4NewQueue(MessageQueue rbmq) {
+		// re-balance 选中 但本地没有的 (新增队列的情况)
+		ControlStruct current = getOrCreateControlStruct(rbmq);
+		current.start();
+		if(logger.isInfoEnabled())
+			logger.info("Queue rebalance success. [group: {}, instance: {}, queue: {}]", getConsumerGroup(), getInstanceName(), queueUniqueKey(rbmq));
+	}
+	
+	private void action4RemoveQueue(MessageQueue rbmq) {
+		// re-balance 选中 但本地没有的 (新增队列的情况)
+		ControlStruct current = dashboards.remove(rbmq);
+		if(null != current) {
+			current.removedFlag.set(true);
+			if(logger.isInfoEnabled())
+				logger.info("Queue is removed by rebalance. [group: {}, instance: {}, queue: {}]", getConsumerGroup(), getInstanceName(), queueUniqueKey(rbmq));
+		}
+		
+	}
+	
+	private synchronized void rebalace(Set<MessageQueue> mqDivided) {
+		
+		if(matchQueue.isEmpty()) {
+			// 意外？ 收缩到queue数比消费者少？
+			if(mqDivided.isEmpty())
+				return;
+			// 启动状态
+			matchQueue.addAll(mqDivided);
+
+			matchQueue.forEach(this::action4NewQueue);
+			return;
+		}
+		
+		Iterator<MessageQueue> it = matchQueue.iterator();
+		while(it.hasNext()) {
+			MessageQueue currentMq = it.next();
+			
+			if(mqDivided.contains(currentMq)) {
+				
+				// 本轮re-balance前后，此队列都分配到此消费实例上
+				// 无需处理
+				
+			} else {
+				
+				// 本轮re-balance被当前消费者实例放弃的
+				it.remove();
+				action4RemoveQueue(currentMq);
+				
+			}
+			
+		}
+		
+		mqDivided
+			.stream()
+			.filter(mq -> !matchQueue.contains(mq))
+			.forEach(this::action4NewQueue);
 		
 	}
 	
@@ -390,7 +357,7 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				Matcher matcher = dgPattern.matcher(errDesc);
 				if(matcher.find()) {
 					// RocketMq在收缩readQueueNum过程中，这个异常等到下一次re-balance就会被解决
-					sleepmilliSecWrapper(5000l);
+					sleepMilliSecWrapper(5000l);
 					return;
 				}
 			}
@@ -398,13 +365,9 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 			throw new RuntimeException(e);
 		}
 
-		if(onPasue.get()) {
-			// waiting for re-balance ...
-			sleepmilliSecWrapper(1000l);
-			return;
-		} else if (this.queueHash.get() != controlStruct.currentMatchHash.get()) {
+		if(controlStruct.removedFlag.get()) {
 			// Maybe discard on latest Processing of re-balance
-			sleepmilliSecWrapper(1000l);
+			sleepMilliSecWrapper(1000l);
 			return;
 		}
 		
@@ -420,15 +383,13 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), ++ frezon)) {
 							if(System.currentTimeMillis() % 30000l < 101l)
 								logger.warn("Flow control protected! [queue: {}, processing message amount: {}, protect round: {}]", mq.toString(), cAmount, frezon);
-							sleepmilliSecWrapper(100l);
+							sleepMilliSecWrapper(100l);
 						}
 						consumingAmount.getAndIncrement();
 					}
 					final long consumingOffset = currentOffset + i + 1;
 					MessageExt rmqMsg = messageExtList.get(i);
-					dispatchMessage(
-							new EJokerQueueMessage(rmqMsg.getTopic(), rmqMsg.getFlag(), rmqMsg.getBody(), rmqMsg.getTags()),
-							new EJokerQueueMessageContextImpl(mq, consumingOffset));
+					messageProcessor.handle(mq, consumingOffset, rmqMsg.getFlag(), rmqMsg.getBody(), rmqMsg.getTags(), () -> this.tryMarkCompletion(mq, consumingOffset));
 				}
 				controlStruct.offsetFetchLocal.getAndSet(pullResult.getNextBeginOffset());
 				controlStruct.offsetMax.getAndSet(pullResult.getMaxOffset());
@@ -445,15 +406,16 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 				//		另到maxOffset到达1947760，在这个非常大的offset差的时候，broker可能丢弃并跳过中间堆积的消息
 				//		导致消费者跟不上，而这个情况又不知道如何对付。
 				logger.warn("[state: OFFSET_ILLEGAL, queue: {}, offsetFetchLocal: {}, pullResult.getNextBeginOffset(): {}]", mq.toString(), currentOffset, pullResult.getNextBeginOffset());
-				sleepmilliSecWrapper(500l);
+				sleepMilliSecWrapper(500l);
 			default:
 				assert false;
 		}
 	}
 	
 	private void tryMarkCompletion(MessageQueue mq, long comsumedOffset) {
+		// 标记本地完成
 		ControlStruct controlStruct = dashboards.get(mq);
-		if(null == controlStruct) {
+		if(null == controlStruct || controlStruct.removedFlag.get()) {
 			// 有可能在re-balance过程中被移除掉了
 			return;
 		}
@@ -465,11 +427,30 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 	}
 	
+	private void removeOldOffset(ControlStruct cs) {
+		// 并发进行tryMarkCompletion的时候，有可能的会被标记一个已经过去的offset，导致内存泄漏。
+		long offsetConsumedLocal = cs.offsetConsumedLocal.get();
+		Iterator<Entry<Long, String>> iterator = cs.aheadCompletion.entrySet().iterator();
+		while(iterator.hasNext()) {
+			Entry<Long, String> current = iterator.next();
+			if(current.getKey() <= offsetConsumedLocal) {
+				iterator.remove();
+			}
+		}
+	}
+
+	/**
+	 * 更新把本地offset偏移，把 标记的、连续的、从当前offset+1为开始的 最大连续offset序列 的最后一个offset更新为 本地最新offset<br />
+	 * 例如 当前offset为 9<br />
+	 * 而标记本地完成的有 10 13 12 15 11 16<br />
+	 * 则从9+1(即10)开始的最大的连续序列为 10 11 12 13<br />
+	 * 而这个序列中的最后一个offset为13，把13更新为 本地最新offset<br />
+	 * 即，当前offset 由 9 更新为 13<br />
+	 */
 	private void processComsumedSequence(ControlStruct controlStruct) {
-		
 		Map<Long, String> aheadOffsetDict = controlStruct.aheadCompletion;
-		AtomicLong currentComsumedOffsetaAL = controlStruct.offsetConsumedLocal;
-		long currentComsumedOffsetL = currentComsumedOffsetaAL.get();
+		AtomicLong currentComsumedOffsetAl = controlStruct.offsetConsumedLocal;
+		long currentComsumedOffsetL = currentComsumedOffsetAl.get();
 		
 		if(/*null == aheadOffsetDict || */aheadOffsetDict.isEmpty()) {
 			return;
@@ -477,38 +458,37 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 		List<Long> beforeSequence = new ArrayList<>();
 		long nextIndex = currentComsumedOffsetL;
+		long latestIndex = nextIndex;
 		while(null != aheadOffsetDict.get(nextIndex += 1l)) {
-			beforeSequence.add(nextIndex);
+			beforeSequence.add(latestIndex = nextIndex);
 		}
-		nextIndex -= 1l;
 		if (!beforeSequence.isEmpty()) {
-			if(currentComsumedOffsetaAL.compareAndSet(currentComsumedOffsetL, nextIndex)) {
+			if(currentComsumedOffsetAl.compareAndSet(currentComsumedOffsetL, latestIndex)) { // cas
 				controlStruct.offsetDirty.set(true);
 				for(Long index : beforeSequence) {
 					aheadOffsetDict.remove(index);
-
-					if(DefaultMQConsumer.this.flowControlFlag) {
-						// 在处理消息数量步减
-						consumingAmount.decrementAndGet();
-					}
+				}
+				if(DefaultMQConsumer.this.flowControlFlag) {
+					// 扣除在处理消息数量
+					consumingAmount.accumulateAndGet(-beforeSequence.size(), (left, right) -> left + right);
 				}
 			}
 		}
 	}
 	
-	private void sleepmilliSecWrapper(long dist) {
+	private final static void sleepMilliSecWrapper(long dist) {
 		try {
 			TimeUnit.MILLISECONDS.sleep(dist);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
-	private void dispatchMessage(final EJokerQueueMessage queueMessage, final EJokerQueueMessageContextImpl context) {
-		messageProcessor.trigger(queueMessage, context);
+	public final static String queueUniqueKey(MessageQueue mq) {
+		return "mq[tp:" + mq.getTopic() + ",bn:" + mq.getBrokerName() + ",qi:" + mq.getQueueId() + "]jk";
 	}
 
-	public final class ControlStruct {
+	public final static class ControlStruct {
 		
 		private final MessageQueue mq;
 		
@@ -524,92 +504,68 @@ public class DefaultMQConsumer extends org.apache.rocketmq.client.consumer.Defau
 		
 		public final AtomicBoolean removedFlag;
 
-		public final AtomicInteger currentMatchHash = new AtomicInteger(0);
-		
 		public final IVoidFunction2<MessageQueue, ControlStruct> messageHandlingJob;
+		
+		public final IFunction<Boolean> isConsummerRunning;
+		
+		public final IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler;
 		
 		public final Thread workThread;
 		
-		public ControlStruct(MessageQueue mq, long initOffset, long maxOffsetCurrent, IVoidFunction2<MessageQueue, ControlStruct> messageHandlingJob) {
+		public ControlStruct(
+				String groupName,
+				MessageQueue mq,
+				long initOffset,
+				long maxOffsetCurrent,
+				IVoidFunction2<MessageQueue, ControlStruct> messageHandlingJob,
+				IFunction<Boolean> isConsummerRunning,
+				IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler
+				) {
 			this.mq = mq;
 			this.offsetConsumedLocal = new AtomicLong(initOffset);
 			this.offsetFetchLocal = new AtomicLong(initOffset);
 			this.messageHandlingJob = messageHandlingJob;
+			this.isConsummerRunning = isConsummerRunning;
+			this.exHandler = exHandler;
 			this.offsetDirty = new AtomicBoolean(false);
 			this.offsetMax = new AtomicLong(maxOffsetCurrent);
 			this.removedFlag = new AtomicBoolean(false);
 			
-			this.workThread = new Thread(ControlStruct.this::process,
-				StringUtilx.fmt("DashboardWorkThread-{}-{}", DefaultMQConsumer.this.getConsumerGroup(), dashboardWorkThreadCounter.getAndIncrement()));
+			this.workThread = new Thread(
+					this::process,
+					"RktMQWorker-" + mq.getTopic() + "-" + groupName + "-" + dashboardWorkThreadCounter.incrementAndGet());
 			this.workThread.setDaemon(true);
 
 		}
 		
 		private void process() {
-//			boolean isFirstProcess = true;
-			while (DefaultMQConsumer.this.onRunning.get()) {
+			while (isConsummerRunning.trigger()) {
 				
-				if(ControlStruct.this.removedFlag.get())
+				if(this.removedFlag.get())
 					return;
-
-//				if(!isFirstProcess) {
-//					if(0 == DefaultMQConsumer.this.queueHash.get()) {
-//						// waiting for re-balance...
-//						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
-//						continue;
-//					} else if (DefaultMQConsumer.this.queueHash.get() != ControlStruct.this.currentMatchHash.get()) {
-//						DefaultMQConsumer.this.sleepmilliSecWrapper(1000l);
-//						continue;
-//					}
-//				} else {
-//					isFirstProcess = false;
-//				}
-//				
-//				int waitingTimes = 0;
-//				while (onPasue.get()) {
-//					DefaultMQConsumer.this.sleepmilliSecWrapper(200l);
-//					
-//					if (0 == (++waitingTimes % 35))
-//						logger.debug("The consumer has been pause, waiting resume... ");
-//				}
-//				
-//				if (waitingTimes > 0) {
-//					logger.debug("The consumer has been resume... ");
-//					waitingTimes = 0;
-//					if (!DefaultMQConsumer.this.onRunning.get())
-//						return;
-//				}
 				
 				try {
-					ControlStruct.this.messageHandlingJob.trigger(ControlStruct.this.mq, ControlStruct.this);
+					this.messageHandlingJob.trigger(this.mq, this);
 				} catch (Exception ex) {
-					if(null != DefaultMQConsumer.this.exHandler)
-						DefaultMQConsumer.this.exHandler.trigger(ex, ControlStruct.this.mq, ControlStruct.this);
+					if(null != this.exHandler)
+						this.exHandler.trigger(ex, this.mq, this);
 					else
 						logger.error(ex.getMessage(), ex);
 					// 若拉取过程抛出异常，则暂缓一段时间
-					sleepmilliSecWrapper(1000l);
+					sleepMilliSecWrapper(1000l);
 				}
 			}
+		}
+		
+		private void start() {
+			this.workThread.start();
 		}
 
 	}
 	
-	private final class EJokerQueueMessageContextImpl implements IEJokerQueueMessageContext {
+	public static interface RocketMQRawMessageHandler {
 		
-		private final MessageQueue mq;
-		
-		private final long comsumedOffset;
-
-		public EJokerQueueMessageContextImpl(MessageQueue mq, long comsumedOffset) {
-			this.mq = mq;
-			this.comsumedOffset = comsumedOffset;
-		}
-		
-		@Override
-		public void onMessageHandled(EJokerQueueMessage queueMessage) {
-			DefaultMQConsumer.this.tryMarkCompletion(this.mq, this.comsumedOffset);
-		}
+		public void handle(MessageQueue mq, long comsumedOffset, int code, byte[] body, String tag, IVoidFunction onFinished);
 		
 	}
 	

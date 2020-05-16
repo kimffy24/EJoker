@@ -6,10 +6,12 @@ import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueConsist
 import pro.jk.ejoker.EJokerEnvironment;
 import pro.jk.ejoker.common.context.dev2.IEJokerSimpleContext;
 import pro.jk.ejoker.common.service.Scavenger;
+import pro.jk.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
+import pro.jk.ejoker_support.rocketmq.consumer.pull.DefaultMQConsumer;
 
 public class MQInstanceHelper {
 
-	public final static DefaultMQConsumer createDefaultMQConsumer(String groupName, String nameServ,
+	public final static IConsumerWrokerAware createDefaultMQConsumer(String groupName, String nameServ,
 			IEJokerSimpleContext eContext) {
 
 		Scavenger scavenger = eContext.get(Scavenger.class);
@@ -35,7 +37,7 @@ public class MQInstanceHelper {
 
 		scavenger.addFianllyJob(defaultMQConsumer::shutdown);
 
-		return defaultMQConsumer;
+		return DefaultMQConsumerEJokerBindder.getEJokerBundlePullConsumerDirectly(defaultMQConsumer);
 
 	}
 

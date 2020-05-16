@@ -206,7 +206,7 @@ public class DefaultMQConsumer implements IConsumerWrokerAware {
 //	}
 	
 	@Override
-	public boolean isAllReady() {
+	public boolean isBoostReady() {
 		return !onPasue.get();
 	}
 	
