@@ -8,16 +8,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.PullResult;
+import org.apache.rocketmq.client.consumer.PullStatus;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -29,9 +31,10 @@ import org.slf4j.LoggerFactory;
 
 import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IFunction3;
-import pro.jk.ejoker.common.system.functional.IVoidFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.common.system.functional.IVoidFunction3;
+import pro.jk.ejoker_support.rocketmq.consumer.RocketMQRawMessageHandler;
+import pro.jk.ejoker_support.rocketmq.consumer.RocketMQRawMessageHandler.RocketMQRawMessageHandlingContext;
 
 public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	
@@ -40,10 +43,7 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	/**
 	 * use to match the case of decrease RocketMq's readQueueNum.
 	 */
-	private final static Pattern dgPattern = Pattern.compile("CODE:[\\s\\S\\t]*1[\\s\\S\\t]*queueId\\[\\d+\\] is illegal, topic:\\[[a-zA-Z0-9-_]+\\] topicConfig\\.readQueueNums:\\[\\d+\\] consumer:");
-
-	
-	private final static AtomicInteger dashboardWorkThreadCounter = new AtomicInteger(0);
+	private final static Pattern DgPattern = Pattern.compile("CODE:[\\s\\S\\t]*1[\\s\\S\\t]*queueId\\[\\d+\\] is illegal, topic:\\[[a-zA-Z0-9-_]+\\] topicConfig\\.readQueueNums:\\[\\d+\\] consumer:");
 	
 	private final AtomicBoolean onRunning = new AtomicBoolean(false);
 
@@ -56,15 +56,15 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	private final Map<MessageQueue, ControlStruct> dashboards = new ConcurrentHashMap<>();
 
 	private String focusTopic = "";
+	
+	private String subExpression = null;
 
 	private RocketMQRawMessageHandler messageProcessor = null;
-	
-	private Thread processComsumedSequenceThread = null;
 	
 	private IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler = (e, mq, d) -> logger.error(
 			"Some exception occur!!! [dashboard.offsetConsumedLocal: {}, dashboard.offsetFetchLocal: {}, mq: {}]",
 			d.offsetConsumedLocal.get(),
-			d.offsetFetchLocal.get(),
+			d.offsetLastFetchLocal.get(),
 			mq.toString(),
 			e);
 
@@ -80,25 +80,21 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	
 	public DefaultMQConsumer() {
 		super();
-		postInit();
 	}
 
 	public DefaultMQConsumer(RPCHook rpcHook) {
 		super(rpcHook);
-		postInit();
 	}
 
 	public DefaultMQConsumer(String consumerGroup, RPCHook rpcHook) {
 		super(consumerGroup, rpcHook);
-		postInit();
 	}
 
 	public DefaultMQConsumer(String consumerGroup) {
 		super(consumerGroup);
-		postInit();
 	}
 	
-	public void registerEJokerCallback(RocketMQRawMessageHandler vf) {
+	public void registerMessageHandler(RocketMQRawMessageHandler vf) {
 		if(onRunning.get())
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		this.messageProcessor = vf;
@@ -121,6 +117,7 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 				onPasue.compareAndSet(true, false);
 		});
 		this.focusTopic = topic;
+		this.subExpression = subExpression;
 	}
 
 	@Override
@@ -132,8 +129,6 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		
 		matchQueue.clear();
 		dashboards.clear();
-		
-		processComsumedSequenceThread.start();
 		
 	}
 
@@ -162,17 +157,28 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		shutdownHook.start();
 	}
 
-	public void loopInterval() {
+	public void collectAndUpdateLocalOffset() {
 		
 		if(!this.onRunning.get())
 			return;
 		if(this.onPasue.get())
 			return;
 		
-		Set<MessageQueue> mqs = new HashSet<>();
+		// 收集 当前消费组实例通过上下文完成的消息 的 offset
+		processLocalComsumedSequence();
+		
 		Iterator<MessageQueue> iterator = matchQueue.iterator(); // matchQueue 不能保证在在循环期间不会更新
 		while(iterator.hasNext()) {
 			MessageQueue mq = iterator.next();
+			
+			{
+				try {
+					long brokerConsumedOffset = fetchConsumeOffset(mq, false);
+					logger.error("Broker offset: {}", brokerConsumedOffset);
+				} catch (MQClientException e) {
+					logger.error("{}", e.getMessage(), e);
+				}
+			}
 			ControlStruct controlStruct = dashboards.get(mq);
 			if(null == controlStruct) {
 				// 可能是并发创建监听，也可能是re-balance移除了
@@ -193,17 +199,24 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 			boolean status = false;
 			try {
 				long localOffsetConsumed = controlStruct.offsetConsumedLocal.get();
-				updateConsumeOffset(mq, localOffsetConsumed);
 				logger.debug("Try to update comsumed offset to server. [queue: {}, ConsumedLocal: {}]", mq, localOffsetConsumed);
+				// Update the current consumed offset to broker;
+				updateConsumeOffset(mq, localOffsetConsumed);
 				status = true;
-				mqs.add(mq);
 			} catch (MQClientException e) {
 				throw new RuntimeException(e);
 			} finally {
 				if(!status)
 					controlStruct.offsetDirty.compareAndSet(false, true);
 			}
+			
+			{
+				if(!controlStruct.removedFlag.get() && !controlStruct.workThread.isAlive()) {
+					logger.error("Emergency: Queue was dispatched to this inatance, but the Cunsumer worker thread is not alive!!! [queue: {}, group: {}]", controlStruct.mq, this.getConsumerGroup());
+				}
+			}
 		}
+		
 		// RocketMQ内部会为我们调度这个，不用自己来
 		// getOffsetStore().persistAll(mqs);
 		
@@ -211,6 +224,12 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	
 	public boolean isBoostReady() {
 		return !onPasue.get();
+	}
+	
+	public void enableAutoCommitOffset() {
+		
+		getInnerScheduler().scheduleAtFixedRate(this::collectAndUpdateLocalOffset, 2000, 2000, TimeUnit.MILLISECONDS);
+		
 	}
 
 	/**
@@ -226,20 +245,11 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		this.flowControlSwitch = sw;
 	}
 	
-	private void postInit() {
-		
-		processComsumedSequenceThread = new Thread(() -> {
-			while (null == dashboards || dashboards.isEmpty()) {
-				sleepMilliSecWrapper(1000l);
-			}
-			while (onRunning.get()) {
-				dashboards.forEach((__, d) -> processComsumedSequence(d));
-				// thread will be unPark while end of the call to method `tryMarkCompletion`
-				LockSupport.park();
-			}
-		}, "processComsumedSequenceThread-" + this.getConsumerGroup());
-		processComsumedSequenceThread.setDaemon(true);
-
+	private void processLocalComsumedSequence() {
+		if(onRunning.get() && !dashboards.isEmpty()) {
+			logger.debug("Processing local comsumed sequence. [consumerGroup: {}]", this.getConsumerGroup());
+			dashboards.forEach((__, d) -> processComsumedSequence(d));
+		}
 	}
 	
 	private ControlStruct getOrCreateControlStruct(final MessageQueue mq) {
@@ -247,11 +257,9 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		if(dashboards.containsKey(mq))
 			return dashboards.get(mq);
 
-		long maxOffset;
-		long consumedOffset;
+		long currentOffset;
 		try {
-			maxOffset = maxOffset(mq);
-			consumedOffset = fetchConsumeOffset(mq, false);
+			currentOffset = fetchConsumeOffset(mq, true);
 		} catch (MQClientException e3) {
 			throw new RuntimeException(e3);
 		}
@@ -259,8 +267,7 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		ControlStruct cs = new ControlStruct(
 				getConsumerGroup(),
 				mq,
-				consumedOffset,
-				maxOffset,
+				currentOffset,
 				this::queueConsume,
 				this.onRunning::get,
 				exHandler
@@ -334,12 +341,11 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	
 	private void queueConsume(final MessageQueue mq, final ControlStruct controlStruct) {
 
-		long currentOffset = controlStruct.offsetFetchLocal.get();
+		long localLastOffset = controlStruct.offsetLastFetchLocal.get();
 		
-		// TODO tag 置为 null，消费端让mqSelecter发挥作用，tag让其在生产端发挥作用吧
 		PullResult pullResult;
 		try {
-			pullResult = pullBlockIfNotFound(mq, null, currentOffset, 32);
+			pullResult = pullBlockIfNotFound(mq, subExpression, localLastOffset, 32);
 		} catch (MQClientException | RemotingException | MQBrokerException | InterruptedException e) {
 			if(!onRunning.get()) {
 				// close.
@@ -354,7 +360,7 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 				// 			解决办法: 等待下一次re-balance过程生效
 				
 				String errDesc = e.getMessage();
-				Matcher matcher = dgPattern.matcher(errDesc);
+				Matcher matcher = DgPattern.matcher(errDesc);
 				if(matcher.find()) {
 					// RocketMq在收缩readQueueNum过程中，这个异常等到下一次re-balance就会被解决
 					sleepMilliSecWrapper(5000l);
@@ -372,12 +378,14 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		}
 		
 
-		switch (pullResult.getPullStatus()) {
+		PullStatus pullStatusCurr = pullResult.getPullStatus();
+		switch (pullStatusCurr) {
 			case FOUND:
 				List<MessageExt> messageExtList = pullResult.getMsgFoundList();
 				for (int i = 0; i<messageExtList.size(); i++) {
 					if(DefaultMQConsumer.this.flowControlFlag) {
 						// 流控,
+						// 发生本地的流控，则阻塞本地的pull线程
 						int frezon = -1;
 						int cAmount = 0;
 						while(flowControlSwitch.trigger(mq, cAmount = consumingAmount.get(), ++ frezon)) {
@@ -387,15 +395,40 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 						}
 						consumingAmount.getAndIncrement();
 					}
-					final long consumingOffset = currentOffset + i + 1;
 					MessageExt rmqMsg = messageExtList.get(i);
-					messageProcessor.handle(mq, consumingOffset, rmqMsg.getFlag(), rmqMsg.getBody(), rmqMsg.getTags(), () -> this.tryMarkCompletion(mq, consumingOffset));
+					final long consumingOffset = rmqMsg.getQueueOffset() + 1;
+					while(consumingOffset > ++localLastOffset) {
+						// 被tag帅选器跳过的offset，直接标记为完成
+						this.tryMarkCompletion(mq, localLastOffset);
+					}
+					messageProcessor.handle(mq, consumingOffset, rmqMsg.getFlag(), rmqMsg.getBody(), rmqMsg.getTags(), new RocketMQRawMessageHandlingContext() {
+
+						@Override
+						public long getCurrentOffset() {
+							return consumingOffset;
+						}
+
+						@Override
+						public void onFinished() {
+							DefaultMQConsumer.this.tryMarkCompletion(mq, consumingOffset);
+						}
+						
+					});
 				}
-				controlStruct.offsetFetchLocal.getAndSet(pullResult.getNextBeginOffset());
-				controlStruct.offsetMax.getAndSet(pullResult.getMaxOffset());
-				break;
+				
 			case NO_MATCHED_MSG:
-				logger.debug("[state: NO_MATCHED_MSG, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
+
+				long currentLastFetchedOffset = pullResult.getNextBeginOffset();
+				while(currentLastFetchedOffset >= ++localLastOffset) {
+					// 被tag帅选器跳过的offset，直接标记为完成
+					this.tryMarkCompletion(mq, localLastOffset);
+				}
+				
+				controlStruct.offsetLastFetchLocal.set(currentLastFetchedOffset);
+				
+				if(PullStatus.NO_MATCHED_MSG.equals(pullStatusCurr))
+					logger.debug("[state: NO_MATCHED_MSG, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
+
 				break;
 			case NO_NEW_MSG:
 				logger.debug("[state: NO_NEW_MSG, topic: {}, queueId: {}]", mq.getTopic(), mq.getQueueId());
@@ -405,7 +438,7 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 				//		例如当期的queue的comsumedOffset=14325，而生产者持续堆积消息，
 				//		另到maxOffset到达1947760，在这个非常大的offset差的时候，broker可能丢弃并跳过中间堆积的消息
 				//		导致消费者跟不上，而这个情况又不知道如何对付。
-				logger.warn("[state: OFFSET_ILLEGAL, queue: {}, offsetFetchLocal: {}, pullResult.getNextBeginOffset(): {}]", mq.toString(), currentOffset, pullResult.getNextBeginOffset());
+				logger.warn("[state: OFFSET_ILLEGAL, queue: {}, offsetFetchLocal: {}, pullResult.getNextBeginOffset(): {}]", mq.toString(), localLastOffset, pullResult.getNextBeginOffset());
 				sleepMilliSecWrapper(500l);
 			default:
 				assert false;
@@ -422,8 +455,6 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		if(null != controlStruct.aheadCompletion.putIfAbsent(comsumedOffset, ""))
 			throw new RuntimeException();
 		logger.debug("Receive local completion. [queue: {}, offset {}]", mq, comsumedOffset);
-		
-		LockSupport.unpark(processComsumedSequenceThread);
 		
 	}
 	
@@ -457,13 +488,12 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		}
 		
 		List<Long> beforeSequence = new ArrayList<>();
-		long nextIndex = currentComsumedOffsetL;
-		long latestIndex = nextIndex;
-		while(null != aheadOffsetDict.get(nextIndex += 1l)) {
-			beforeSequence.add(latestIndex = nextIndex);
+		long currIndex = currentComsumedOffsetL;
+		while(null != aheadOffsetDict.get(1+currIndex)) {
+			beforeSequence.add(++currIndex);
 		}
 		if (!beforeSequence.isEmpty()) {
-			if(currentComsumedOffsetAl.compareAndSet(currentComsumedOffsetL, latestIndex)) { // cas
+			if(currentComsumedOffsetAl.compareAndSet(currentComsumedOffsetL, currIndex)) { // cas
 				controlStruct.offsetDirty.set(true);
 				for(Long index : beforeSequence) {
 					aheadOffsetDict.remove(index);
@@ -471,6 +501,10 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 				if(DefaultMQConsumer.this.flowControlFlag) {
 					// 扣除在处理消息数量
 					consumingAmount.accumulateAndGet(-beforeSequence.size(), (left, right) -> left + right);
+				}
+				if(logger.isInfoEnabled()) {
+					beforeSequence.sort((l1, l2) -> l1.compareTo(l2));
+					logger.info("Last matched sequence: {}", beforeSequence.toString());
 				}
 			}
 		}
@@ -487,7 +521,28 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	public final static String queueUniqueKey(MessageQueue mq) {
 		return "mq[tp:" + mq.getTopic() + ",bn:" + mq.getBrokerName() + ",qi:" + mq.getQueueId() + "]jk";
 	}
+	
+	private final static ScheduledExecutorService getInnerScheduler() {
 
+		// 这玩意是给定时同步本地offset用的，开发者总不能并发调用这个吧？
+		if(null == ScheduledExecutorService) {
+		    ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(r -> {
+	        	Thread t =  new Thread(r, "EJokerPullConsumerScheduledThread");
+	        	t.setDaemon(true);
+	        	return t;
+		    });
+		}
+	    
+	    return ScheduledExecutorService;
+	}
+
+	private final static AtomicInteger DashboardWorkThreadCounter = new AtomicInteger(0);
+	
+	/**
+	 * 处理内部定时任务
+	 */
+	private volatile static ScheduledExecutorService ScheduledExecutorService = null;
+	
 	public final static class ControlStruct {
 		
 		private final MessageQueue mq;
@@ -496,9 +551,7 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 		
 		public final AtomicLong offsetConsumedLocal;
 
-		public final AtomicLong offsetFetchLocal;
-		
-		public final AtomicLong offsetMax;
+		public final AtomicLong offsetLastFetchLocal;
 		
 		public final AtomicBoolean offsetDirty;
 		
@@ -516,24 +569,22 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 				String groupName,
 				MessageQueue mq,
 				long initOffset,
-				long maxOffsetCurrent,
 				IVoidFunction2<MessageQueue, ControlStruct> messageHandlingJob,
 				IFunction<Boolean> isConsummerRunning,
 				IVoidFunction3<Throwable, MessageQueue, ControlStruct> exHandler
 				) {
 			this.mq = mq;
 			this.offsetConsumedLocal = new AtomicLong(initOffset);
-			this.offsetFetchLocal = new AtomicLong(initOffset);
+			this.offsetLastFetchLocal = new AtomicLong(initOffset);
 			this.messageHandlingJob = messageHandlingJob;
 			this.isConsummerRunning = isConsummerRunning;
 			this.exHandler = exHandler;
 			this.offsetDirty = new AtomicBoolean(false);
-			this.offsetMax = new AtomicLong(maxOffsetCurrent);
 			this.removedFlag = new AtomicBoolean(false);
 			
 			this.workThread = new Thread(
 					this::process,
-					"RktMQWorker-" + mq.getTopic() + "-" + groupName + "-" + dashboardWorkThreadCounter.incrementAndGet());
+					"RocketMQConsumer-" + mq.getTopic() + "-" + groupName + "-" + DashboardWorkThreadCounter.incrementAndGet());
 			this.workThread.setDaemon(true);
 
 		}
@@ -561,12 +612,6 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 			this.workThread.start();
 		}
 
-	}
-	
-	public static interface RocketMQRawMessageHandler {
-		
-		public void handle(MessageQueue mq, long comsumedOffset, int code, byte[] body, String tag, IVoidFunction onFinished);
-		
 	}
 	
 }
