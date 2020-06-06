@@ -1,4 +1,4 @@
-package pro.jk.ejoker_support.rocketmq.consumer;
+package pro.jk.ejoker_support.mq.rocketmq.consumer;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 

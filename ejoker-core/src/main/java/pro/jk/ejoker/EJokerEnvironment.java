@@ -72,7 +72,7 @@ public final class EJokerEnvironment {
 
 	/**
 	 * 节点rpc侦听端口，用于接收命令或事件执行结果<br>
-	 * * 默认 65056<br>
+	 * * 默认 25432<br>
 	 * * 请注意防火墙是否会阻止通讯
 	 */
 	public final static int REPLY_PORT;
@@ -142,7 +142,7 @@ public final class EJokerEnvironment {
 				Long.valueOf(props.getProperty("IDLE_RELEASE_PERIOD", "5000"));
 
 		REPLY_PORT =
-				Integer.valueOf(props.getProperty("REPLY_PORT", "65056"));
+				Integer.valueOf(props.getProperty("REPLY_PORT", "25432"));
 		
 		MAX_BATCH_COMMANDS =
 				Integer.valueOf(props.getProperty("MAX_BATCH_COMMANDS", "16"));

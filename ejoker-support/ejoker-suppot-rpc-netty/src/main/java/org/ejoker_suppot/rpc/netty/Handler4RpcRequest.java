@@ -1,4 +1,4 @@
-package pro.jk.ejoker.common.service.rpc.netty;
+package org.ejoker_suppot.rpc.netty;
 
 import io.netty.channel.ChannelHandler.Sharable;
 import pro.jk.ejoker.common.system.functional.IVoidFunction1;

@@ -7,7 +7,7 @@ import pro.jk.ejoker.EJokerEnvironment;
 import pro.jk.ejoker.common.context.dev2.IEJokerSimpleContext;
 import pro.jk.ejoker.common.service.Scavenger;
 import pro.jk.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
-import pro.jk.ejoker_support.rocketmq.consumer.pull.DefaultMQConsumer;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.pull.DefaultMQConsumer;
 
 public class MQInstanceHelper {
 

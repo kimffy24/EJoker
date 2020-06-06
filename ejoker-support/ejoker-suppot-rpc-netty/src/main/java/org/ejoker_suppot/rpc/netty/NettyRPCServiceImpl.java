@@ -1,4 +1,4 @@
-package pro.jk.ejoker.common.service.rpc.netty;
+package org.ejoker_suppot.rpc.netty;
 
 import static pro.jk.ejoker.common.system.extension.LangUtil.await;
 
@@ -27,6 +27,7 @@ import pro.jk.ejoker.common.system.enhance.EachUtilx;
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jk.ejoker.common.system.extension.acrossSupport.RipenFuture;
 import pro.jk.ejoker.common.system.functional.IVoidFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction1;
 import pro.jk.ejoker.common.system.task.io.IOHelper;
@@ -39,6 +40,10 @@ public class NettyRPCServiceImpl implements IRPCService {
 
 	private final static long clientInactiveMilliseconds = 15000l;
 //	private final static long clientInactiveMilliseconds = Long.MAX_VALUE;
+	
+	final static Map<Integer, RPCTuple> portMap = new HashMap<>();
+	
+	final static Map<Integer, AtomicBoolean> serverPortOccupation = new HashMap<>();
 	
 	@Dependence
 	private Scavenger scavenger;
@@ -222,5 +227,21 @@ public class NettyRPCServiceImpl implements IRPCService {
 			portMap.remove(p);
 		});
 		closeHookTrigger.clear();
+	}
+
+	public static class RPCTuple {
+		
+		public final Thread ioThread;
+		
+		public final IVoidFunction1<String> handleAction;
+		
+		public final RipenFuture<Void> initialFuture;
+		
+		public RPCTuple(IVoidFunction1<String> handleAction, Thread ioThread) {
+			this.ioThread = ioThread;
+			this.handleAction = handleAction;
+			this.initialFuture = new RipenFuture<>();
+		}
+		
 	}
 }

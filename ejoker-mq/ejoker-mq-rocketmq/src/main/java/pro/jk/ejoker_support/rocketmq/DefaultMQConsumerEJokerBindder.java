@@ -7,8 +7,9 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jk.ejoker.queue.skeleton.aware.IConsumerWrokerAware;
 import pro.jk.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
-import pro.jk.ejoker_support.rocketmq.consumer.RocketMQRawMessageHandler;
-import pro.jk.ejoker_support.rocketmq.consumer.pull.DefaultMQConsumer;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.RocketMQRawMessageHandler;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.RocketMQRawMessageHandler.RocketMQRawMessageHandlingContext;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.pull.DefaultMQConsumer;
 
 /**
  * 为分离出与ejoker-core无关的pullConsumer，所以拆解了原来的DefaultMQConsumer

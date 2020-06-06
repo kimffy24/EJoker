@@ -13,12 +13,8 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction1;
  */
 public interface IRPCService {
 	
-	final static Map<Integer, RPCTuple> portMap = new HashMap<>();
-	
-	final static Map<Integer, AtomicBoolean> serverPortOccupation = new HashMap<>();
-	
 	default public void export(IVoidFunction1<String> action, int port) {
-		export(action, port, false);
+		export(action, port, true);
 	}
 	
 	public void export(IVoidFunction1<String> action, int port, boolean waitFinished);
@@ -26,20 +22,4 @@ public interface IRPCService {
 	public void remoteInvoke(String data, String host, int port);
 	
 	public void removeExport(int port);
-
-	public static class RPCTuple {
-		
-		public final Thread ioThread;
-		
-		public final IVoidFunction1<String> handleAction;
-		
-		public final RipenFuture<Void> initialFuture;
-		
-		public RPCTuple(IVoidFunction1<String> handleAction, Thread ioThread) {
-			this.ioThread = ioThread;
-			this.handleAction = handleAction;
-			this.initialFuture = new RipenFuture<>();
-		}
-		
-	}
 }

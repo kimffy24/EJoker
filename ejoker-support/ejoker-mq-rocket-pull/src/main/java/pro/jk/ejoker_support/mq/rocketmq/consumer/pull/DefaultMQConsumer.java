@@ -1,4 +1,31 @@
-package pro.jk.ejoker_support.rocketmq.consumer.pull;
+/**
+ * 
+MIT License
+
+Copyright (c) 2018 Jiefzz Lon (龙金飞)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+/**
+ * 发现bug希望到github https://github.com/kimffy24 给我提issue、pr
+ */
+package pro.jk.ejoker_support.mq.rocketmq.consumer.pull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,8 +60,8 @@ import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IFunction3;
 import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.common.system.functional.IVoidFunction3;
-import pro.jk.ejoker_support.rocketmq.consumer.RocketMQRawMessageHandler;
-import pro.jk.ejoker_support.rocketmq.consumer.RocketMQRawMessageHandler.RocketMQRawMessageHandlingContext;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.RocketMQRawMessageHandler;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.RocketMQRawMessageHandler.RocketMQRawMessageHandlingContext;
 
 public class DefaultMQConsumer extends DefaultMQPullConsumer {
 	
@@ -105,8 +132,6 @@ public class DefaultMQConsumer extends DefaultMQPullConsumer {
 			throw new RuntimeException("DefaultMQConsumer.onRunning should be false!!!");
 		if(null != this.focusTopic && !"".equals(this.focusTopic))
 			throw new RuntimeException("Only support ONE topic in this version!!!");
-		
-		// 我暂时不考虑tag的功能。
 		
 		AtomicBoolean isFirstRebalance = new AtomicBoolean(true);
 		registerMessageQueueListener(topic, (__, mqAll, mqDivided) -> {

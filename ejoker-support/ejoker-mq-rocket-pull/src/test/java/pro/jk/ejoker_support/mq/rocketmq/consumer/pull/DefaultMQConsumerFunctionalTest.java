@@ -1,4 +1,4 @@
-package pro.jk.ejoker_support.rocketmq.consumer.pull;
+package pro.jk.ejoker_support.mq.rocketmq.consumer.pull;
 
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.wrapper.DiscardWrapper;
+import pro.jk.ejoker_support.mq.rocketmq.consumer.pull.DefaultMQConsumer;
 
 public class DefaultMQConsumerFunctionalTest {
 	

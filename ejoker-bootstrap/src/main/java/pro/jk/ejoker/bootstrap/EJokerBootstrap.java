@@ -88,6 +88,9 @@ public class EJokerBootstrap {
 		
 		{
 			IEjokerContextDev2 eJokerFullContext = (IEjokerContextDev2 )eJokerContext;
+			// 扫描ejoker的默认的实现 : rpc
+			eJokerFullContext.scanPackage("org.ejoker_suppot.rpc.netty");
+			// 外部参数传入的包
 			EachUtilx.forEach(packages, eJokerFullContext::scanPackage);
 			eJokerFullContext.refresh();
 		}

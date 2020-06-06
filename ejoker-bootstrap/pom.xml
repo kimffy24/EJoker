@@ -16,6 +16,11 @@
 			<artifactId>ejoker-core</artifactId>
 			<version>2.1.0-snapshot</version>
 		</dependency>
+		<dependency>
+			<groupId>pro.jk</groupId>
+			<artifactId>ejoker-suppot-rpc-netty</artifactId>
+			<version>2.1.0-snapshot</version>
+		</dependency>
 	</dependencies>
 
 
