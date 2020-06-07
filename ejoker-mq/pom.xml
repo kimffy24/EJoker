@@ -13,7 +13,6 @@
 	<modules>
 		<module>ejoker-mq-javaqueue</module>
 		<module>ejoker-mq-rocketmq</module>
-		<module>ejoker-mq-ons</module>
 	</modules>
 	
 	<dependencies>

@@ -1,4 +1,4 @@
-package org.ejoker_suppot.rpc.netty;
+package pro.jk.ejoker_suppot.rpc.netty;
 
 import static pro.jk.ejoker.common.system.extension.LangUtil.await;
 

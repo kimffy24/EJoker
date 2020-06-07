@@ -26,12 +26,10 @@
 	
 伪异步方式由EJoker内部提供线程池，提交任务时检查当前线程是否为线程池中的线程，或者任务队列是否有排队任务，如果满足条件，则由提交者线程直接执行当前提交的任务。伪异步的代码实现其实很傻逼的
 
-获得`伪异步`版本
-	
-	mvn -Dmaven.test.skip=true clean compile package install
-
 Quasar协程为第三方java协程方案，中文资料不太懂，慎用。Quasar协程下写代码有一些细节需要注意 详细看`http://docs.paralleluniverse.co/quasar/#suspendable-libraries`。 Quasar下出的问题千奇百怪，日志输出犹如天书，目测是JVM底层知识缺乏的原因。
 
-获得`Quasar fiber`版本
+默认获得就是 `伪异步` 版本，测试的时候， `伪异步` 性能非常优秀。quasar纯粹为了做验证异步功能的，期望待到官家真出了异步，就换上他们的语法糖。
 
-	mvn -Dmaven.test.skip=true clean compile package install org.fortasoft:gradle-maven-plugin:1.0.8:invoke package install
+> > 需要看看怎么得到quasar版本的，可以看看demo 的配置
+> > https://github.com/kimffy24/EJoker_demo/blob/master/pom.xml
+> > 这里，当变量useQuasar=1时，会启动对应的ant任务，不作细说

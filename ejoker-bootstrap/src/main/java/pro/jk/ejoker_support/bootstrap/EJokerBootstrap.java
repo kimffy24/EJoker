@@ -1,4 +1,4 @@
-package pro.jk.ejoker.bootstrap;
+package pro.jk.ejoker_support.bootstrap;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -89,7 +89,7 @@ public class EJokerBootstrap {
 		{
 			IEjokerContextDev2 eJokerFullContext = (IEjokerContextDev2 )eJokerContext;
 			// 扫描ejoker的默认的实现 : rpc
-			eJokerFullContext.scanPackage("org.ejoker_suppot.rpc.netty");
+			eJokerFullContext.scanPackage("pro.jk.ejoker_suppot.rpc.netty");
 			// 外部参数传入的包
 			EachUtilx.forEach(packages, eJokerFullContext::scanPackage);
 			eJokerFullContext.refresh();
