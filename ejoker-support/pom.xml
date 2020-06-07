@@ -3,23 +3,27 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<parent>
 		<groupId>pro.jk</groupId>
 		<artifactId>ejoker</artifactId>
 		<version>2.2.0-rc</version>
 	</parent>
-	<artifactId>ejoker-mq</artifactId>
+
+	<artifactId>ejoker-support</artifactId>
 	<packaging>pom</packaging>
+	<name>ejoker-support</name>
 	<modules>
-		<module>ejoker-mq-javaqueue</module>
-		<module>ejoker-mq-rocketmq</module>
+		<module>ejoker-support-rpc-netty</module>
+		<module>ejoker-support-bootstrap</module>
+		<module>ejoker-support-mq-rocket-pull</module>
 	</modules>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<dependencies>
-		<dependency>
-			<groupId>pro.jk</groupId>
-			<artifactId>ejoker-core</artifactId>
-			<version>2.2.0-rc</version>
-		</dependency>
+	
 	</dependencies>
 </project>

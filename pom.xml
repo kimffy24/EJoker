@@ -3,55 +3,58 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<groupId>pro.jk</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>2.1.0-snapshot</version>
+	<version>2.2.0-rc</version>
 	<packaging>pom</packaging>
-
 	<name>ejoker</name>
-    <description>EJoker is a CQRS + EventSourcing framwork</description>
+
+	<!-- same information in all module : start -->
+	<description>EJoker is a CQRS + EventSourcing framwork</description>
 	<url>https://github.com/kimffy24/EJoker</url>
-	
+
+	<scm>
+		<connection>scm:git:https://github.com/kimffy24/EJoker.git</connection>
+		<url>https://github.com/kimffy24/EJoker</url>
+		<developerConnection>scm:git:https://github.com/kimffy24/EJoker.git</developerConnection>
+	</scm>
+
+	<licenses>
+		<license>
+			<name>MIT License</name>
+            <url>https://choosealicense.com/licenses/mit/</url>
+            <distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>JiefzzLon</name>
+			<email>jiefzz@aliyun.com</email>
+			<organization>x</organization>
+			<organizationUrl>https://www.cnblogs.com/jiefzz/</organizationUrl>
+		</developer>
+	</developers>
+	<!-- same information in all module : end -->
+
 	<modules>
 		<module>ejoker-common</module>
 		<module>ejoker-core</module>
+		<module>ejoker-support</module>
 		<module>ejoker-mq</module>
-		<module>ejoker-bootstrap</module>
 	</modules>
-	
-    <developers>
-        <developer>
-            <name>JiefzzLon</name>
-            <email>jiefzz@aliyun.com</email>
-            <organization>x</organization>
-            <organizationUrl>http://www.example.com</organizationUrl>
-        </developer>
-    </developers>
-    
-    <scm>
-        <connection>scm:git:https://github.com/kimffy24/EJoker.git</connection>
-        <url>https://github.com/kimffy24/EJoker</url>
-        <developerConnection>scm:git:https://github.com/kimffy24/EJoker.git</developerConnection>
-    </scm>
-    
-    <licenses>
-        <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-	
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-		
+
 		<version.plugin.maven-compiler-plugin>3.8.1</version.plugin.maven-compiler-plugin>
-		
+
 		<version.jdk>1.8</version.jdk>
 		<version.junit.jupiter>5.5.2</version.junit.jupiter>
 		<version.slf4j>1.7.25</version.slf4j>
-		
+
 		<version.smartjson>2.3</version.smartjson>
 		<version.netty.all>4.1.42.Final</version.netty.all>
 		<version.quasar>0.7.10</version.quasar>
@@ -81,13 +84,6 @@
 			<version>${version.smartjson}</version>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-all</artifactId>
-			<version>${version.netty.all}</version>
-		</dependency>
-
 	</dependencies>
 
 
@@ -105,4 +101,5 @@
 
 		</plugins>
 	</build>
+	
 </project>

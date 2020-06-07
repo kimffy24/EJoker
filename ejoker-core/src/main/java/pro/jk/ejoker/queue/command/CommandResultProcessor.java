@@ -74,7 +74,7 @@ public class CommandResultProcessor implements IWorkerService {
 	}
 
 	public String getBindingAddress() {
-		if(65056 - EJokerEnvironment.REPLY_PORT == 0)
+		if(25432 - EJokerEnvironment.REPLY_PORT == 0)
 			return clientNodeIPAddressProvider.getClientNodeIPAddress();
 		return clientNodeIPAddressProvider.getClientNodeIPAddress() + ":" + EJokerEnvironment.REPLY_PORT;
 	}

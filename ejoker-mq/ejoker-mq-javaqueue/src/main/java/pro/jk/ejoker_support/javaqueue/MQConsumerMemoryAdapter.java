@@ -79,7 +79,7 @@ public class MQConsumerMemoryAdapter implements ICQProvider, IConsumerWrokerAwar
 	}
 
 	@Override
-	public boolean isAllReady() {
+	public boolean isBoostReady() {
 		return readyFlag.get();
 	}
 

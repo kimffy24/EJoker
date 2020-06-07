@@ -24,7 +24,7 @@
 	IDLE_RELEASE_PERIOD = 5000
 			
 	# 消息回复的监听端口
-	REPLY_PORT = 65056
+	REPLY_PORT = 25432
 	
 	# 最大单次批处理命令数
 	MAX_BATCH_COMMANDS = 32

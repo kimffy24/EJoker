@@ -41,8 +41,20 @@ public class SendReplyService {
 	}
 	
 	private void sendReplyInternal(String replyAddress, ReplyMessage rm) {
+		String host;
+		int port;
+		{
+			String[] split = replyAddress.split(":");
+			host = split[0];
+			if(split.length == 2)
+				port = Integer.valueOf(split[1]);
+			else
+				// 不应该返回配置中的值，应该返回不受配置影响的固定值
+				// return EJokerEnvironment.REPLY_PORT;
+				port = 25432;
+		}
 		String convert = jsonConverter.convert(rm);
-		rpcService.remoteInvoke(convert, getHost(replyAddress), getPort(replyAddress));
+		rpcService.remoteInvoke(convert, host, port);
 	}
 
 	/**
@@ -58,21 +70,6 @@ public class SendReplyService {
 		
 		public DomainEventHandledMessage d = null;
 		
-	}
-	
-	private static String getHost(String replyAddress) {
-		String[] split = replyAddress.split(":");
-		return split[0];
-	}
-
-	private static int getPort(String replyAddress) {
-		String[] split = replyAddress.split(":");
-		if(split.length == 2)
-			return Integer.valueOf(split[1]);
-		
-		// 不应该返回配置中的值，应该返回不受配置影响的固定值
-		// return EJokerEnvironment.REPLY_PORT;
-		return 65056;
 	}
 	
 }

@@ -5,17 +5,28 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>pro.jk</groupId>
-		<artifactId>ejoker-mq</artifactId>
+		<artifactId>ejoker-support</artifactId>
 		<version>2.2.0-rc</version>
 	</parent>
-	<artifactId>ejoker-mq-javaqueue</artifactId>
-	<description>Use java queue as the message middleware</description>
+	<artifactId>ejoker-support-bootstrap</artifactId>
 
 	<dependencies>
+		<dependency>
+			<groupId>pro.jk</groupId>
+			<artifactId>ejoker-core</artifactId>
+			<version>2.2.0-rc</version>
+		</dependency>
+		<dependency>
+			<groupId>pro.jk</groupId>
+			<artifactId>ejoker-support-rpc-netty</artifactId>
+			<version>2.2.0-rc</version>
+		</dependency>
 	</dependencies>
+
 
 	<build>
 		<plugins>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -28,5 +39,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

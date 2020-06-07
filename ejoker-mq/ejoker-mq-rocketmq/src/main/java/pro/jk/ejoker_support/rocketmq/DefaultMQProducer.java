@@ -20,14 +20,11 @@ import org.slf4j.LoggerFactory;
 import pro.jk.ejoker.common.algorithm.ConsistentHashShard;
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
 import pro.jk.ejoker.common.system.extension.AsyncWrapperException;
-import pro.jk.ejoker.common.system.functional.IVoidFunction;
-import pro.jk.ejoker.common.system.functional.IVoidFunction1;
 import pro.jk.ejoker.common.system.task.io.IOExceptionOnRuntime;
 import pro.jk.ejoker.common.system.wrapper.CountDownLatchWrapper;
 import pro.jk.ejoker.common.system.wrapper.DiscardWrapper;
 import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jk.ejoker.queue.skeleton.aware.IProducerWrokerAware;
-import pro.jk.ejoker.queue.skeleton.aware.IProducerWrokerAware.ContextAware;
 
 /**
  * Use consistent hash algorithm to select a queue, as default.<br>

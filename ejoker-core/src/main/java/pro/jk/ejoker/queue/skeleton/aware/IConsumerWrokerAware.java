@@ -14,5 +14,6 @@ public interface IConsumerWrokerAware {
 	
 	public void loopInterval();
 	
-	public boolean isAllReady();
+	public boolean isBoostReady();
+	
 }
