@@ -6,7 +6,7 @@
 
 	<groupId>pro.jk</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>2.2.0-rc</version>
+	<version>2.2.1-snapshot</version>
 	<packaging>pom</packaging>
 	<name>ejoker</name>
 
