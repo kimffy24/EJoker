@@ -10,7 +10,7 @@
 		<artifactId>ejoker-support</artifactId>
 		<version>2.2.0-rc</version>
 	</parent>
-	<artifactId>ejoker-mq-rocket-pull</artifactId>
+	<artifactId>ejoker-support-mq-rocket-pull</artifactId>
 	
 	<!-- same information in all module : start -->
 	<description>EJoker is a CQRS + EventSourcing framwork</description>
@@ -45,6 +45,13 @@
 	</properties>
 	
 	<dependencies>
+
+		<dependency>
+			<groupId>pro.jk</groupId>
+			<artifactId>ejoker-common</artifactId>
+			<version>2.2.0-rc</version>
+		</dependency>
+		
 		<!-- https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-client -->
 		<dependency>
 			<groupId>org.apache.rocketmq</groupId>

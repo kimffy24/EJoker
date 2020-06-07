@@ -14,7 +14,7 @@
 		<module>ejoker-mq-javaqueue</module>
 		<module>ejoker-mq-rocketmq</module>
 	</modules>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>pro.jk</groupId>

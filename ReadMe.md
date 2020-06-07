@@ -28,7 +28,7 @@
 
 Quasar协程为第三方java协程方案，中文资料不太懂，慎用。Quasar协程下写代码有一些细节需要注意 详细看`http://docs.paralleluniverse.co/quasar/#suspendable-libraries`。 Quasar下出的问题千奇百怪，日志输出犹如天书，目测是JVM底层知识缺乏的原因。
 
-默认获得就是 `伪异步` 版本，测试的时候， `伪异步` 性能非常优秀。quasar纯粹为了做验证异步功能的，期望待到官家真出了异步，就换上他们的语法糖。
+默认获得就是 `伪异步` 版本，测试的时候， `伪异步` 性能非常优秀。lsquasar纯粹为了做验证异步功能的，期望待到官家真出了异步，就换上他们的语法糖。
 
 > > 需要看看怎么得到quasar版本的，可以看看demo 的配置
 > > https://github.com/kimffy24/EJoker_demo/blob/master/pom.xml

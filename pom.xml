@@ -41,9 +41,8 @@
 	<modules>
 		<module>ejoker-common</module>
 		<module>ejoker-core</module>
-		<module>ejoker-mq</module>
-		<module>ejoker-bootstrap</module>
 		<module>ejoker-support</module>
+		<module>ejoker-mq</module>
 	</modules>
 
 	<properties>

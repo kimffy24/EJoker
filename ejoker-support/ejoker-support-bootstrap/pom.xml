@@ -8,7 +8,7 @@
 		<artifactId>ejoker-support</artifactId>
 		<version>2.2.0-rc</version>
 	</parent>
-	<artifactId>ejoker-bootstrap</artifactId>
+	<artifactId>ejoker-support-bootstrap</artifactId>
 
 	<dependencies>
 		<dependency>
@@ -18,7 +18,7 @@
 		</dependency>
 		<dependency>
 			<groupId>pro.jk</groupId>
-			<artifactId>ejoker-suppot-rpc-netty</artifactId>
+			<artifactId>ejoker-support-rpc-netty</artifactId>
 			<version>2.2.0-rc</version>
 		</dependency>
 	</dependencies>
