@@ -22,6 +22,7 @@ import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
+import pro.jk.ejoker.common.system.extension.LangUtil;
 import pro.jk.ejoker.common.system.task.io.IOExceptionOnRuntime;
 import pro.jk.ejoker.common.system.wrapper.CountDownLatchWrapper;
 
@@ -112,7 +113,8 @@ public class NettySimpleClient {
 		if (socketChannel == null) {
 			throw new RuntimeException("Not avaliable!!!");
 		}
-		socketChannel.writeAndFlush(msg);
+		ChannelFuture cf = socketChannel.writeAndFlush(msg);
+		LangUtil.await(cf);
 		lastInvokeTime = System.currentTimeMillis();
 	}
 
