@@ -195,32 +195,7 @@
 							<detectBuildFailures>false</detectBuildFailures>
 						</configuration>
 					</plugin>
-
-
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-scm-plugin</artifactId>
-						<version>1.10.0</version>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-release-plugin</artifactId>
-						<version>2.5.3</version>
-						<configuration>
-							<tagNameFormat>v{project.version}</tagNameFormat>
-							<pushChanges>true</pushChanges>
-							<useReleaseProfile>false</useReleaseProfile>
-							<autoVersionSubmodules>true</autoVersionSubmodules>
-							<useReleaseProfile>false</useReleaseProfile>
-						</configuration>
-						<dependencies>
-							<dependency>
-								<groupId>org.apache.maven.plugins</groupId>
-								<artifactId>maven-scm-plugin</artifactId>
-								<version>1.10.0</version>
-							</dependency>
-						</dependencies>
-					</plugin>
+					
 				</plugins>
 			</build>
 			<distributionManagement>
