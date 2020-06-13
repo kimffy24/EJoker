@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker</artifactId>
-		<version>2.2.2-SNAPSHOT</version>
+		<version>2.2.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>ejoker-core</artifactId>
 	<packaging>jar</packaging>
@@ -16,7 +14,7 @@
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
 			<artifactId>ejoker-common</artifactId>
-			<version>2.2.2-SNAPSHOT</version>
+			<version>2.2.3-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -89,28 +87,17 @@
 						<!-- phase>compile</phase -->
 						<configuration>
 							<tasks>
-								<property name="ant_classpath"
-									refid="maven.dependency.classpath" />
-								<taskdef name="scanSuspendables"
-									classname="co.paralleluniverse.fibers.instrument.SuspendablesScanner"
-									classpath="${ant_classpath}" />
-								<scanSuspendables auto="true" append="true"
-									supersFile="${project.build.directory}/classes/META-INF/suspendable-supers"
-									suspendablesFile="${project.build.directory}/classes/META-INF/suspendables">
-									<fileset dir="${project.build.directory}/classes/"
-										includes="**/*.class" />
-									<fileset dir="${basedir}/../ejoker-common/target/classes/"
-										includes="**/*.class" />
+								<property name="ant_classpath" refid="maven.dependency.classpath" />
+								<taskdef name="scanSuspendables" classname="co.paralleluniverse.fibers.instrument.SuspendablesScanner" classpath="${ant_classpath}" />
+								<scanSuspendables auto="true" append="true" supersFile="${project.build.directory}/classes/META-INF/suspendable-supers" suspendablesFile="${project.build.directory}/classes/META-INF/suspendables">
+									<fileset dir="${project.build.directory}/classes/" includes="**/*.class" />
+									<fileset dir="${basedir}/../ejoker-common/target/classes/" includes="**/*.class" />
 								</scanSuspendables>
 								<!-- uncomment it to make AOT instrument work -->
-								<!-- <taskdef name="instrumentationTask"
-									classname="co.paralleluniverse.fibers.instrument.InstrumentationTask"
-									classpath="${ant_classpath}" />
+								<!-- <taskdef name="instrumentationTask" classname="co.paralleluniverse.fibers.instrument.InstrumentationTask" classpath="${ant_classpath}" />
 								<delete file="${basedir}/../ejoker-common/target/classes/co" />
-								<instrumentationTask verbose="true"
-									check="true" debug="true">
-									<fileset dir="${project.build.directory}/classes/"
-										includes="**/*.class" />
+								<instrumentationTask verbose="true" check="true" debug="true">
+									<fileset dir="${project.build.directory}/classes/" includes="**/*.class" />
 								</instrumentationTask> -->
 							</tasks>
 						</configuration>

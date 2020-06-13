@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker</artifactId>
-		<version>2.2.2-SNAPSHOT</version>
+		<version>2.2.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>ejoker-common</artifactId>
 
@@ -19,7 +17,8 @@
 		<url>https://github.com/kimffy24/EJoker</url>
 		<connection>scm:git:git@github.com:kimffy24/EJoker.git</connection>
 		<developerConnection>scm:git:git@github.com:kimffy24/EJoker.git</developerConnection>
-	</scm>
+	  <tag>HEAD</tag>
+  </scm>
 
 	<licenses>
 		<license>
