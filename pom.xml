@@ -198,21 +198,6 @@
 							<nexusUrl>https://oss.sonatype.org</nexusUrl>
 							<autoReleaseAfterClose>true</autoReleaseAfterClose>
 							<sslAllowAll>true</sslAllowAll>
-							<stagingProgressPauseDurationSeconds>20</stagingProgressPauseDurationSeconds>
-							<stagingProgressTimeoutMinutes>30</stagingProgressTimeoutMinutes>
-							<detectBuildFailures>false</detectBuildFailures>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.8</version>
-						<extensions>true</extensions>
-						<configuration>
-							<serverId>sonatype_oss</serverId>
-							<nexusUrl>https://oss.sonatype.org</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-							<sslAllowAll>true</sslAllowAll>
 							<detectBuildFailures>false</detectBuildFailures>
 						</configuration>
 					</plugin>
