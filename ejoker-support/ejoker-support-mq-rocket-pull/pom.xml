@@ -17,9 +17,9 @@
 	<url>https://github.com/kimffy24/EJoker</url>
 
 	<scm>
-		<connection>scm:git:https://github.com/kimffy24/EJoker.git</connection>
 		<url>https://github.com/kimffy24/EJoker</url>
-		<developerConnection>scm:git:https://github.com/kimffy24/EJoker.git</developerConnection>
+		<connection>scm:git:git@github.com:kimffy24/EJoker.git</connection>
+		<developerConnection>scm:git:git@github.com:kimffy24/EJoker.git</developerConnection>
 	</scm>
 
 	<licenses>

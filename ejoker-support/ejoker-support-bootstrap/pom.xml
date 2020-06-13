@@ -10,6 +10,34 @@
 	</parent>
 	<artifactId>ejoker-support-bootstrap</artifactId>
 
+	<!-- same information in all module : start -->
+	<description>EJoker is a CQRS + EventSourcing framwork</description>
+	<url>https://github.com/kimffy24/EJoker</url>
+
+	<scm>
+		<url>https://github.com/kimffy24/EJoker</url>
+		<connection>scm:git:git@github.com:kimffy24/EJoker.git</connection>
+		<developerConnection>scm:git:git@github.com:kimffy24/EJoker.git</developerConnection>
+	</scm>
+
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>https://choosealicense.com/licenses/mit/</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>JiefzzLon</name>
+			<email>jiefzz@aliyun.com</email>
+			<organization>x</organization>
+			<organizationUrl>https://www.cnblogs.com/jiefzz/</organizationUrl>
+		</developer>
+	</developers>
+	<!-- same information in all module : end -->
+
 	<dependencies>
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
