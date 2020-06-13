@@ -196,7 +196,7 @@
 						<configuration>
 							<serverId>sonatype_oss</serverId>
 							<nexusUrl>https://oss.sonatype.org</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+							<autoReleaseAfterClose>false</autoReleaseAfterClose>
 							<sslAllowAll>true</sslAllowAll>
 							<detectBuildFailures>false</detectBuildFailures>
 						</configuration>
