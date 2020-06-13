@@ -208,8 +208,9 @@
 						<artifactId>maven-release-plugin</artifactId>
 						<version>2.5.3</version>
 						<configuration>
+							<tagNameFormat>v{project.version}</tagNameFormat>
+							<pushChanges>true</pushChanges>
 							<useReleaseProfile>false</useReleaseProfile>
-							<pushChanges>false</pushChanges>
 							<autoVersionSubmodules>true</autoVersionSubmodules>
 							<useReleaseProfile>false</useReleaseProfile>
 						</configuration>
