@@ -150,3 +150,7 @@ mvn versions:set -DnewVersion="${VERSION_NEW}"
 for i in `git ls-files|grep pom.xml` ; do
    git add $i
 done
+
+echo "Your can push tag to origin by using:"
+echo "    git push origin \"v${VERSION_TAG}\""
+echo

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 	
 	public ContainerKVP getTreeStructure(Object target) {
 		
-		Queue<IVoidFunction> queue = new LinkedBlockingQueue<>();
+		Queue<IVoidFunction> queue = new ConcurrentLinkedQueue<>();
 		
 		Class<?> targetClazz = target.getClass();
 		if(SerializableCheckerUtil.hasSublevel(targetClazz)) {
