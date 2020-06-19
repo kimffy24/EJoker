@@ -163,7 +163,7 @@ public class StringHelperTest {
 		}
 	}
 
-	@Test
+//	@Test
 	public void TimeUseTest() {
 		
 		int loopAmount = 10000000;

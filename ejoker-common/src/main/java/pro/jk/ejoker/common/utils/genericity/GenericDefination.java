@@ -325,4 +325,28 @@ public final class GenericDefination {
 			return null;
 		return new HashMap<>(interfaceDeliveryMapper);
 	}
+
+	@Override
+	public int hashCode() {
+		return definationSignature.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GenericDefination other = (GenericDefination) obj;
+		if (definationSignature == null) {
+			if (other.definationSignature != null)
+				return false;
+		} else if (!definationSignature.equals(other.definationSignature))
+			return false;
+		return true;
+	}
+	
+	
 }

@@ -201,14 +201,15 @@ public class GenericDefinedType extends GenericDefinationEssential {
 					tmpTypeName += "[]";
 			} else if(regionTye instanceof ParameterizedType) {
 				StringBuilder sb = new StringBuilder();
-				sb.append(rawClazz.getName());
-				sb.append('<');
+//				sb.append(rawClazz.getName());
+//				sb.append('<');
 				for(GenericDefinedType pt : deliveryTypeMetasTable) {
-					sb.append(pt.typeName);
 					sb.append(GenericTypeUtil.SEPARATOR);
+					sb.append(pt.typeName);
 				}
 				sb.append('>');
-				tmpTypeName = sb.toString().replaceFirst(GenericTypeUtil.SEPARATOR+">$", ">");
+//				tmpTypeName = sb.toString().replaceFirst(GenericTypeUtil.SEPARATOR+">$", ">");
+				tmpTypeName = rawClazz.getName() + "<" + sb.toString().substring(2);
 			} else if(regionTye instanceof GenericArrayType) {
 				tmpTypeName = componentTypeMeta.typeName + "[]";
 			} else if(regionTye instanceof WildcardType) {

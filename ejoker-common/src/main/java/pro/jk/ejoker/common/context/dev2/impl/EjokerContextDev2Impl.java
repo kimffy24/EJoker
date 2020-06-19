@@ -36,6 +36,7 @@ import pro.jk.ejoker.common.system.helper.AcquireHelper;
 import pro.jk.ejoker.common.utils.genericity.GenericDefinedField;
 import pro.jk.ejoker.common.utils.genericity.GenericExpression;
 import pro.jk.ejoker.common.utils.genericity.GenericExpressionFactory;
+import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 import pro.jk.ejoker.common.utils.genericity.XTypeTable;
 
 public class EjokerContextDev2Impl implements IEjokerContextDev2 {
@@ -131,6 +132,21 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 
 	@SuppressWarnings("unchecked")
 	@Override
+	public <T> T get(TypeRefer<T> typeRef) {
+
+		AcquireHelper.waitAcquire(onService, true, 50, count -> {
+			logger.warn("Context is not on service!!! [currentLoop: {}]", count);
+		});
+		
+		Type type = typeRef.getType();
+		
+		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(type);
+		
+		return (T )getWithExpression(genericExpress);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
 	public <T> T get(Class<T> clazz, Type... types) {
 
 		AcquireHelper.waitAcquire(onService, true, 50, count -> {
@@ -139,6 +155,11 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz, types);
 		
+		return (T )getWithExpression(genericExpress);
+	}
+	
+	private Object getWithExpression(GenericExpression genericExpress) {
+
 		Object dependence = null;
 		
 		String instanceTypeName = genericExpress.expressSignature;
@@ -162,7 +183,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			throw new ContextRuntimeException(
 					StringUtilx.fmt("No implementations or extensions found!!! [fetchType: {}]", instanceTypeName));
 		
-		return (T )dependence;
+		return dependence;
 	}
 
 	@Override
@@ -458,7 +479,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				{
 					// 对新创建的EService对象注入依赖
 					final Object passInstance = dependence;
-					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpress(eServiceClazz, genericDefinedField.genericDefinedType.deliveryTypeMetasTable);
+					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpressDirectly(eServiceClazz, genericDefinedField.genericDefinedType.deliveryTypeMetasTable);
 					fieldTypeExpression.forEachFieldExpressionsDeeply(
 							(subFieldName, subGenericDefinedField) -> injectDependence(
 									subFieldName,

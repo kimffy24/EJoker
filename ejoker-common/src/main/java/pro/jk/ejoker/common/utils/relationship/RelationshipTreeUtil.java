@@ -208,7 +208,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			/// 普通对象类型
 			ContainerKVP createNode = eval.createKeyValueSet();
 			node = createNode;
-			GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(definedClazz,
+			GenericExpression genericExpress = GenericExpressionFactory.getGenericExpressDirectly(definedClazz,
 					targetDefinedTypeMeta.deliveryTypeMetasTable);
 			genericExpress.forEachFieldExpressionsDeeply(
 					(fieldName, genericDefinedField) -> join(() -> {

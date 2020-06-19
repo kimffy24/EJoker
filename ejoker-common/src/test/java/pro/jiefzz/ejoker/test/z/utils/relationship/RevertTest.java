@@ -80,19 +80,19 @@ public class RevertTest {
 	}
 
 	
-	@Test
-	public void test3() {
-		Map<Object, Object> dMap = new HashMap<>();
-
-		dMap.put("c1", 97);
-		dMap.put("b1", "true");
-		SData3 sd3 = rt.revert(dMap, SData3.class);
-		
-
-		SData4 sd4 = rt.revert(dMap, SData4.class);
-		
-		// 通过调试器观察取值
-		
-		System.err.println("ok");
-	}
+//	@Test
+//	public void test3() {
+//		Map<Object, Object> dMap = new HashMap<>();
+//
+//		dMap.put("c1", 97);
+//		dMap.put("b1", "true");
+//		SData3 sd3 = rt.revert(dMap, SData3.class);
+//		
+//
+//		SData4 sd4 = rt.revert(dMap, SData4.class);
+//		
+//		// 通过调试器观察取值
+//		
+//		System.err.println("ok");
+//	}
 }

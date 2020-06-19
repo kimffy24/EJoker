@@ -12,14 +12,14 @@ public class GenericDefinationManagement {
 	/**
 	 * Represents a default GenericDefination, it is also the GenericDefination of Object.class
 	 */
-	public final static GenericDefination defaultGenericDefination = new GenericDefination(null, Object.class);
+	public final static GenericDefination DefaultGenericDefination = new GenericDefination(null, Object.class);
 
 	private final Map<Class<?>, GenericDefination> definationStore= new ConcurrentHashMap<>();
 	
 	public final GenericDefination getOrCreateDefination(Class<?> prototype) {
 		return MapUtilx.getOrAdd(definationStore, prototype, k -> {
 			return (Object.class.equals(prototype))
-					? defaultGenericDefination
+					? DefaultGenericDefination
 							: new GenericDefination(GenericDefinationManagement.this, prototype);
 		});
 //		GenericDefination currentDefination;
@@ -32,7 +32,7 @@ public class GenericDefinationManagement {
 	}
 	
 	public GenericDefinationManagement() {
-		definationStore.put(Object.class, defaultGenericDefination);
+		definationStore.put(Object.class, DefaultGenericDefination);
 	}
 	
 	

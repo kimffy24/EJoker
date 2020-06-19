@@ -192,7 +192,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							"(# lose in foreach)"));
 				}
 			}
-			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
+			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpressDirectly(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
 		}
 		effector.trigger(() -> revertedResult);
 	}
