@@ -3,6 +3,7 @@ package pro.jiefzz.ejoker.common.utils.genericity;
 import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pro.jiefzz.ejoker.common.utils.genericity.element.DemoA;
@@ -15,7 +16,12 @@ import pro.jk.ejoker.common.utils.genericity.GenericExpression;
  * @author kimffy
  *
  */
-public class TypeReferTest2 {
+public class TypeRefer2Test {
+
+	@BeforeEach
+	public void everyBefore() {
+		System.out.println("==================== ");
+	}
 
 	@Test
 	public void testDGenericTypejj() {

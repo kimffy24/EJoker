@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pro.jk.ejoker.common.context.ContextRuntimeException;
@@ -13,6 +14,11 @@ import pro.jk.ejoker.common.context.dev2.impl.EjokerContextDev2Impl;
 import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
 public class ZConflictNoSpeculateTest {
+
+	@BeforeEach
+	public void everyBefore() {
+		System.out.println("==================== ");
+	}
 
 	
 	private final static EjokerContextDev2Impl ejokerContextDev2Impl;

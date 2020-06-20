@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.test.ins;
+package pro.jiefzz.ejoker.a.ins;
 
 public class ClassD<U> {
 

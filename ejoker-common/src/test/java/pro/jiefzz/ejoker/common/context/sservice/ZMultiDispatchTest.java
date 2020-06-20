@@ -2,12 +2,18 @@ package pro.jiefzz.ejoker.common.context.sservice;
 
 import java.util.Date;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pro.jk.ejoker.common.context.dev2.impl.EjokerContextDev2Impl;
 import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
 public class ZMultiDispatchTest {
+
+	@BeforeEach
+	public void everyBefore() {
+		System.out.println("==================== ");
+	}
 
 	
 	private final static EjokerContextDev2Impl ejokerContextDev2Impl;

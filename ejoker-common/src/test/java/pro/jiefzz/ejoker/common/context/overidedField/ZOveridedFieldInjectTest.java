@@ -1,11 +1,17 @@
 package pro.jiefzz.ejoker.common.context.overidedField;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pro.jk.ejoker.common.context.dev2.impl.EjokerContextDev2Impl;
 
 public class ZOveridedFieldInjectTest {
+
+	@BeforeEach
+	public void everyBefore() {
+		System.out.println("==================== ");
+	}
 	
 	private final static Service2Child s;
 	static {

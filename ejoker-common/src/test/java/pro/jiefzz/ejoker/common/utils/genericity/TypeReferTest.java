@@ -2,17 +2,21 @@ package pro.jiefzz.ejoker.common.utils.genericity;
 
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import pro.jiefzz.ejoker.common.utils.genericity.element.DemoA;
 import pro.jk.ejoker.common.utils.genericity.GenericExpression;
 import pro.jk.ejoker.common.utils.genericity.GenericExpressionFactory;
 import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
 public class TypeReferTest {
+
+	@BeforeEach
+	public void everyBefore() {
+		System.out.println("==================== ");
+	}
 
 	@Test
 	public void testARawType() {

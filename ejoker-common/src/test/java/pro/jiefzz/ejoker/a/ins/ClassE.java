@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.test.ins;
+package pro.jiefzz.ejoker.a.ins;
 
 import java.util.List;
 import java.util.Map;

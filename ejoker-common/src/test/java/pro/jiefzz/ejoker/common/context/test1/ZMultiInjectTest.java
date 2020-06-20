@@ -1,6 +1,7 @@
 package pro.jiefzz.ejoker.common.context.test1;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pro.jiefzz.ejoker.common.context.test1.demo.TestService;
@@ -8,6 +9,11 @@ import pro.jk.ejoker.common.context.dev2.impl.EjokerContextDev2Impl;
 import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
 public class ZMultiInjectTest {
+
+	@BeforeEach
+	public void everyBefore() {
+		System.out.println("==================== ");
+	}
 	
 	private final static EjokerContextDev2Impl ejokerContextDev2Impl;
 	

@@ -1,4 +1,4 @@
-package pro.jiefzz.ejoker.test.z.utils.relationship;
+package pro.jiefzz.ejoker.common.utils.relationship;
 
 public class SData2 {
 
