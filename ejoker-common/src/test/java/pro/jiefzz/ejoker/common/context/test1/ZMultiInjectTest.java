@@ -1,16 +1,13 @@
-package pro.jiefzz.ejoker.common.context;
+package pro.jiefzz.ejoker.common.context.test1;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import pro.jiefzz.ejoker.common.context.test1.IService;
-import pro.jiefzz.ejoker.common.context.test1.Service1;
-import pro.jiefzz.ejoker.common.context.test1.Service2;
 import pro.jiefzz.ejoker.common.context.test1.demo.TestService;
 import pro.jk.ejoker.common.context.dev2.impl.EjokerContextDev2Impl;
 import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
-public class MultiInjectTest {
+public class ZMultiInjectTest {
 	
 	private final static EjokerContextDev2Impl ejokerContextDev2Impl;
 	

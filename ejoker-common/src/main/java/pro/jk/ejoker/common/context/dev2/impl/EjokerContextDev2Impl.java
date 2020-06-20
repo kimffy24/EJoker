@@ -3,7 +3,6 @@ package pro.jk.ejoker.common.context.dev2.impl;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -12,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,6 +43,8 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	
 	private final static Logger logger = LoggerFactory.getLogger(EjokerContextDev2Impl.class);
 	
+	private final static Class<?> ConflictTypeRecord = Object.class;
+	
 	private final EjokerRootDefinationStore defaultRootDefinationStore = new EjokerRootDefinationStore();
 	
 	/**
@@ -51,12 +53,18 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	private final Map<Class<?>, Object> markLoad = new HashMap<>();
 	
 	/**
-	 * 严格映射记录<br>
-	 * * 基类/接口 -> eService类<br>
-	 * * 要么左值和右值都没有泛型<br>
-	 * * 要么左值和右值具有相同的泛型数量<br>
+	 * 严格映射记录<br />
+	 * * 基类/接口 -&gt; eService类<br />
+	 * * 要么左值和右值都没有泛型<br />
+	 * * 要么左值和右值具有相同的泛型数量<br />
 	 */
 	private final Map<Class<?>, Class<?>> superMapperRecord = new HashMap<>();
+	
+	/**
+	 * 是对superMapperRecord的反转关系。<br />
+	 * eService类 -&gt; 基类/接口的集合<br />
+	 */
+	private final Map<Class<?>, Set<Class<?>>> childMapperRecord = new HashMap<>();
 	
 	/**
 	 * 冲突记录<br>
@@ -72,7 +80,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	/**
 	 * 对象容器(有泛型的)
 	 */
-	private final Map<String, Object> instanceGenericTypeMap = new HashMap<>();
+	private final Map<String, Object> instanceGenericTypeMap = new ConcurrentHashMap<>();
 	
 	/**
 	 * 推演模式
@@ -95,21 +103,11 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	 */
 	private final Set<String> instanceCandidateDisable = new HashSet<>();
 	
-	Map<Integer, Queue<IVoidFunction>> initTasks = new TreeMap<>(new Comparator<Integer>() {
-		@Override
-		public int compare(Integer o1, Integer o2) {
-			return o1.intValue() - o2.intValue();
-		}});
+	Map<Integer, Queue<IVoidFunction>> initTasks = new TreeMap<>((o1, o2) -> o1.compareTo(o2));
 	
-	Map<Integer, Queue<IVoidFunction>> destroyTasks = new TreeMap<>(new Comparator<Integer>() {
-		@Override
-		public int compare(Integer o1, Integer o2) {
-			return o1.intValue() - o2.intValue();
-		}});
+	Map<Integer, Queue<IVoidFunction>> destroyTasks = new TreeMap<>((o1, o2) -> o1.compareTo(o2));
 	
 	private final AtomicBoolean onService = new AtomicBoolean(false);
-	
-	private final static Object defaultInstance = new Object();
 	
 	public EjokerContextDev2Impl() {
 
@@ -127,7 +125,9 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			logger.warn("Context is not on service!!! [currentLoop: {}]", count);
 		});
 		
-		return (T )instanceMap.get(clazz.getName());
+		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz);
+		
+		return (T )getWithExpression(genericExpress);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -156,34 +156,6 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(clazz, types);
 		
 		return (T )getWithExpression(genericExpress);
-	}
-	
-	private Object getWithExpression(GenericExpression genericExpress) {
-
-		Object dependence = null;
-		
-		String instanceTypeName = genericExpress.expressSignature;
-		
-		Class<?> eServiceClazz = superMapperRecord.get(genericExpress.getDeclarePrototype());
-		
-		if(instanceMap.containsKey(instanceTypeName)) {
-			/// upper无泛型 eService无泛型
-			dependence = instanceMap.get(instanceTypeName);
-		} else if(null != eServiceClazz) {
-			/// upper泛型 eService泛型
-			/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
-			dependence = instanceGenericTypeMap.getOrDefault(instanceTypeName, defaultInstance);
-		} else if(speculateMode && !instanceCandidateDisable.contains(instanceTypeName)) {
-			/// upper泛型 eService无泛型
-			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
-			dependence = instanceMap.get(eServiceClazz.getName());
-		} 
-		
-		if(null == dependence)
-			throw new ContextRuntimeException(
-					StringUtilx.fmt("No implementations or extensions found!!! [fetchType: {}]", instanceTypeName));
-		
-		return dependence;
 	}
 
 	@Override
@@ -312,6 +284,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 					{
 						/// 为推演模式准备数据
 						if (speculateMode) {
+							// 这里是把不带泛型签名的原类型名（全限定的） 放入 instanceCandidateDisable
 							instanceCandidateDisable.add(target.genericDefination.genericPrototypeClazz.getName());
 							current.forEachImplementationsExpressionsDeeply(interfaceExpression -> {
 								instanceCandidateDisable.add(interfaceExpression.genericDefination.genericPrototypeClazz.getName());
@@ -390,8 +363,13 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 			}
 		});
 
-		EachUtilx.forEach(instanceCandidateFaildMap, (expressionSignature, nonce) -> {
-			instanceCandidateGenericTypeMap.remove(expressionSignature);
+		EachUtilx.forEach(instanceCandidateFaildMap, (expressionSignature, __) -> {
+			instanceCandidateGenericTypeMap.put(expressionSignature, ConflictTypeRecord);
+		});
+		
+		superMapperRecord.forEach((s, c) -> {
+			Set<Class<?>> superSet = MapUtilx.getOrAdd(childMapperRecord, c, () -> new HashSet<>());
+			superSet.add(s);
 		});
 		
 	}
@@ -421,7 +399,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				return;
 			Object instance;
 			if(null == (instance = instanceMap.get(eServiceClazz.getName()))) {
-				instance = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(this::enqueueInitMethod);
+				instance = EJokerInstanceBuilder.doCreate(eServiceClazz, this::enqueueInitMethod);
 				if(null != instanceMap.putIfAbsent(eServiceClazz.getName(), instance)) {
 					instance = instanceMap.get(eServiceClazz.getName());
 				}
@@ -454,6 +432,82 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		});
 	}
 	
+	private Object getWithExpression(GenericExpression genericExpress) {
+
+		Object dependence = null;
+		
+		String instanceTypeName = genericExpress.expressSignature;
+		
+		Class<?> eServiceClazz = superMapperRecord.get(genericExpress.getDeclarePrototype());
+		
+		if(!genericExpress.genericDefination.hasGenericDeclare/*instanceMap.containsKey(instanceTypeName)*/) {
+			/// upper无泛型 eService无泛型
+			dependence = instanceMap.get(instanceTypeName);
+		} else if(speculateMode && instanceCandidateGenericTypeMap.containsKey(instanceTypeName)) {
+			/// upper泛型 eService无泛型
+			if(!instanceCandidateFaildMap.containsKey(instanceTypeName)) {
+				// 这个条件做单独判断，如果冲突导致不满足，视为失败
+				eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
+				if(null != eServiceClazz)
+					dependence = instanceMap.get(eServiceClazz.getName());
+			} else {
+				logger.warn("Conflict EService!!! [requiredType: {}]", instanceTypeName);
+			}
+		}  else if(null != eServiceClazz && !instanceCandidateDisable.contains(instanceTypeName)) {
+			/// upper泛型 eService泛型
+			/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
+			dependence = instanceGenericTypeMap.get(instanceTypeName);
+			if(null == dependence) {
+				dependence = EJokerInstanceBuilder.doCreate(
+						eServiceClazz,
+						null
+						);
+				Object previous = instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence);
+				if(null != previous) {
+					dependence = previous;
+				} else {
+					enqueueInitMethod(dependence);
+					
+					final Object passInstance = dependence;
+					
+					String signatureSuffix = instanceTypeName.substring(instanceTypeName.indexOf('<'));
+					Set<Class<?>> set = childMapperRecord.get(eServiceClazz);
+					if(null != set && !set.isEmpty())
+						for(Class<?> s : set) {
+							Object pPrevious = instanceGenericTypeMap.putIfAbsent(s.getName()+signatureSuffix, passInstance);
+							if(null != pPrevious && passInstance != pPrevious) {
+								throw new ContextRuntimeException(
+										StringUtilx.fmt("Wrong instance mapping relationship!!! [fetchType: {}]", instanceTypeName));
+							}
+						}
+					
+					// 对新创建的EService对象注入依赖
+					EachUtilx.forEach(
+							defaultRootDefinationStore.getEDependenceRecord(eServiceClazz),
+							(fieldName, genericDefinedField) -> injectDependence(
+									fieldName,
+									genericDefinedField,
+									d -> setField(genericDefinedField.field, passInstance, d)
+								)
+					);
+					
+					// 对新创建的eService类执行标记的初始方法
+					completeInstanceInitMethod();
+					
+				}
+				
+			}
+			
+			
+		}
+		
+		if(null == dependence)
+			throw new ContextRuntimeException(
+					StringUtilx.fmt("No implementations or extensions found!!! [fetchType: {}]", instanceTypeName));
+		
+		return dependence;
+	}
+	
 	private void injectDependence(String fieldName, GenericDefinedField genericDefinedField, IVoidFunction1<Object> effector) {
 		
 		if(!genericDefinedField.field.isAnnotationPresent(Dependence.class)) {
@@ -465,20 +519,54 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		
 		Class<?> eServiceClazz = superMapperRecord.get(genericDefinedField.genericDefinedType.rawClazz);
 		
-		if(instanceMap.containsKey(instanceTypeName)) {
+		if(instanceMap.containsKey(instanceTypeName)) { // 在preparePreviouslyLoad()调用之后，没有泛型的eService都会被全部创建并注册
 			/// upper无泛型 eService无泛型
 			dependence = instanceMap.get(instanceTypeName);
+		} else if(speculateMode && instanceCandidateGenericTypeMap.containsKey(instanceTypeName)) {
+			/// upper泛型 eService无泛型
+			if(!instanceCandidateFaildMap.containsKey(instanceTypeName)) {
+				// 这个条件做单独判断，如果冲突导致不满足，视为失败
+				eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
+				if(null != eServiceClazz)
+					dependence = instanceMap.get(eServiceClazz.getName());
+			} else {
+				logger.warn("Conflict EService!!! [requiredType: {}]", instanceTypeName);
+			}
+//			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
+//			if(null == eServiceClazz) {
+//				throw new ContextRuntimeException(StringUtilx.fmt("Cound not found EService!!! [superType: {}]", instanceTypeName));
+//			}
+//			dependence = instanceMap.get(eServiceClazz.getName());
+			
 		} else if(null != eServiceClazz) {
 			/// upper泛型 eService泛型
 			/// 条件表达的意思是 不存在instanceMap但是却存在于上下级映射集合中
-			if(defaultInstance.equals(dependence = instanceGenericTypeMap.getOrDefault(instanceTypeName, defaultInstance))) {
-				instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = (new EJokerInstanceBuilder(eServiceClazz)).doCreate(
-						this::enqueueInitMethod
+			dependence = instanceGenericTypeMap.get(instanceTypeName);
+			if(null == dependence) {
+				Object pervious = instanceGenericTypeMap.putIfAbsent(instanceTypeName, dependence = EJokerInstanceBuilder.doCreate(
+						eServiceClazz,
+						null
 						));
 				
-				{
-					// 对新创建的EService对象注入依赖
+				if(null != pervious) {
+					dependence = pervious;
+				} else {
+					enqueueInitMethod(dependence);
+
 					final Object passInstance = dependence;
+					
+					String signatureSuffix = instanceTypeName.substring(instanceTypeName.indexOf('<'));
+					Set<Class<?>> set = childMapperRecord.get(eServiceClazz);
+					if(null != set && !set.isEmpty())
+						for(Class<?> s : set) {
+							Object pPrevious = instanceGenericTypeMap.putIfAbsent(s.getName()+signatureSuffix, passInstance);
+							if(null != pPrevious && passInstance != pPrevious) {
+								throw new ContextRuntimeException(
+										StringUtilx.fmt("Wrong instance mapping relationship!!! [fetchType: {}]", instanceTypeName));
+							}
+						}
+					
+					// 对新创建的EService对象注入依赖
 					GenericExpression fieldTypeExpression = GenericExpressionFactory.getGenericExpressDirectly(eServiceClazz, genericDefinedField.genericDefinedType.deliveryTypeMetasTable);
 					fieldTypeExpression.forEachFieldExpressionsDeeply(
 							(subFieldName, subGenericDefinedField) -> injectDependence(
@@ -490,15 +578,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 				}
 				
 			};
-		} else if(speculateMode && !instanceCandidateDisable.contains(instanceTypeName)) {
-			/// upper泛型 eService无泛型
-			eServiceClazz = instanceCandidateGenericTypeMap.get(instanceTypeName);
-			if(null == eServiceClazz) {
-				throw new ContextRuntimeException(StringUtilx.fmt("Cound not found EService!!! [superType: {}]", instanceTypeName));
-			}
-			dependence = instanceMap.get(eServiceClazz.getName());
-			
-		} 
+		}
 		
 		if(null == dependence)
 			throw new ContextRuntimeException(String.format(
@@ -544,9 +624,11 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		Set<Entry<Integer, Queue<IVoidFunction>>> entrySet = initTasks.entrySet();
 		for(Entry<Integer, Queue<IVoidFunction>> entry : entrySet) {
 			Queue<IVoidFunction> initTask = entry.getValue();
-			while(null != initTask.peek())
-				initTask.poll().trigger();
+			IVoidFunction vf;
+			while(null != (vf = initTask.poll()))
+				vf.trigger();
 		}
+		initTasks.clear();
 	}
 
 }

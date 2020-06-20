@@ -7,17 +7,11 @@ import pro.jk.ejoker.common.context.ContextRuntimeException;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.functional.IVoidFunction1;
 
-public class EJokerInstanceBuilder {
+public final class EJokerInstanceBuilder {
 	
 	private final static Logger logger = LoggerFactory.getLogger(EJokerInstanceBuilder.class);
 
-	private final Class<?> clazz;
-	
-	public EJokerInstanceBuilder(Class<?> clazz) {
-		this.clazz = clazz;
-	}
-	
-	public Object doCreate(IVoidFunction1<Object> afterEffector) {
+	public static Object doCreate(Class<?> clazz, IVoidFunction1<Object> afterEffector) {
 		Object newInstance;
 		try {
 			newInstance = clazz.newInstance();
@@ -26,8 +20,8 @@ public class EJokerInstanceBuilder {
 			logger.error(errInfo, ex);
 			throw new ContextRuntimeException(errInfo, ex);
 		}
-		afterEffector.trigger(newInstance);
+		if(null != afterEffector)
+			afterEffector.trigger(newInstance);
 		return newInstance;
 	}
-
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
+import pro.jk.ejoker.common.system.enhance.StringUtilx;
 
 public final class GenericExpressionFactory {
 
@@ -60,8 +61,11 @@ public final class GenericExpressionFactory {
 				if(middleStatementGenericExpression.isComplete())
 					return middleStatementGenericExpression;
 				else {
-					String errInfo = String.format("Unmatch amount of parameterized type!!! target=%s   parameteriedSignature=%s", clazz.getName(), "");
-					throw new RuntimeException(errInfo);
+					throw new RuntimeException(
+							StringUtilx.fmt(
+									"Unmatch amount of parameterized type!!! [target:{}, parameteriedSignature: {}",
+									clazz.getName(),
+									null)) ;
 				}
 			}
 			
