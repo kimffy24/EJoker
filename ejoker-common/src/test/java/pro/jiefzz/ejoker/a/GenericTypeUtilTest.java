@@ -27,7 +27,8 @@ class GenericTypeUtilTest {
 		System.out.println("==================== ");
 	}
 	
-	@Disabled
+//	@Disabled
+	@Test
 	@DisplayName("GenericTypeUtil.emptyParametersBook")
 	public void testStaticProperties() {
 		

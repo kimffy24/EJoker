@@ -29,6 +29,9 @@ public class TypeReferTest {
 		
 	}
 
+	/**
+	 * 测试 通过 TypeRefer 得到Type  去构造GenericExpression 与 原始类型按泛型结构构造的GenericExpression事相同的。<br />
+	 */
 	@Test
 	public void testBGenericType() {
 		
@@ -44,6 +47,9 @@ public class TypeReferTest {
 	}
 
 
+	/**
+	 * @see #testBGenericType()
+	 */
 	@Test
 	public void testCGenericTypeDirectory() {
 		
