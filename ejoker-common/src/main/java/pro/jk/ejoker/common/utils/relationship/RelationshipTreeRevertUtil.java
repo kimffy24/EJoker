@@ -4,6 +4,7 @@ import static pro.jk.ejoker.common.utils.relationship.RelationshipTreeUtil.check
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -142,18 +143,23 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 					throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
 			}
 			if (Collection.class.isAssignableFrom(definedClazz)) {
+				ContainerVP vp;
 				if(List.class.isAssignableFrom(definedClazz)) {
+					vp = (ContainerVP )serializedValue;
 					revertedResult = new LinkedList();
-				} else {
+				} else if (serializedValue instanceof Set){
+					vp = ((ContainerVP )new ArrayList<>((Set<?> )serializedValue));
 					revertedResult = new HashSet();
+				} else {
+					throw new RuntimeException(String.format("Unsupport container type!!! [type: {}]", serializedValue.getClass().getName()));
 				}
-				int size = disassemblyEval.getVPSize((ContainerVP )serializedValue);
+				int size = disassemblyEval.getVPSize(vp);
 				for(int i=0; i<size; i++) {
 					final int idx = i;
 					join(
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
-									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
+									disassemblyEval.getValue(vp, idx),
 									result -> ((Collection )revertedResult).add(result.trigger()),
 									subTaskQueue
 								),

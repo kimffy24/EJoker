@@ -1,9 +1,15 @@
 package pro.jiefzz.ejoker.common.utils.relationship;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.management.ImmutableDescriptor;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,15 +111,57 @@ public class StandRevertTest {
 	
 	@Test
 	public void test3() {
-		Map<String, Object> dMap = new HashMap<>();
+		Exception exception = assertThrows(
+				RuntimeException.class, 
+				() -> {
+					Map<String, Object> dMap = new HashMap<>();
 
-		dMap.put("c1", 97);
-		dMap.put("b1", "true");
+					dMap.put("c1", 97);
+					dMap.put("b1", "true");
+					
+					SData3 sd3 = rt.revert(dMap, SData3.class);
+					SData4 sd4 = rt.revert(dMap, SData4.class);
+				});
 		
-		SData3 sd3 = rt.revert(dMap, SData3.class);
-		SData4 sd4 = rt.revert(dMap, SData4.class);
+		Assertions.assertTrue(exception.getMessage().startsWith("Type convert faild!!!"));
 		
 		// 通过调试器观察取值
+		
+		System.err.println("ok");
+	}
+	
+	@Test
+	public void test4() {
+		
+		Set<String> set = new HashSet<>();
+		set.add("龙");
+		set.add("飞");
+		
+		Map<String, Object> dMap = new HashMap<>();
+
+		dMap.put("set", set);
+		
+		SData5 sd5 = rt.revert(dMap, SData5.class);
+
+		System.err.println(sd5);		
+		
+		System.err.println("ok");
+	}
+	
+	@Test
+	public void test5() {
+		
+		List<String> list = new ArrayList<>();
+		list.add("龙");
+		list.add("飞");
+		
+		Map<String, Object> dMap = new HashMap<>();
+
+		dMap.put("list", list);
+		
+		SData6 sd5 = rt.revert(dMap, SData6.class);
+
+		System.err.println(sd5);		
 		
 		System.err.println("ok");
 	}
