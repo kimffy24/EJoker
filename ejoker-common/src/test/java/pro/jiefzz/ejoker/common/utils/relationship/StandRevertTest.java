@@ -1,6 +1,6 @@
 package pro.jiefzz.ejoker.common.utils.relationship;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,50 +9,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.ImmutableDescriptor;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import pro.jk.ejoker.common.utils.relationship.IRelationshipTreeDisassemblers;
-import pro.jk.ejoker.common.utils.relationship.RelationshipTreeRevertUtil;
+import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
-public class StandRevertTest {
+public class StandRevertTest extends StandRelationRoot {
 
 	@BeforeEach
 	public void everyBefore() {
 		System.out.println("==================== ");
 	}
 	
-	private RelationshipTreeRevertUtil<Map<String, Object>, List<Object>> rt = new RelationshipTreeRevertUtil<>(new IRelationshipTreeDisassemblers<Map<String, Object>, List<Object>>() {
-
-		@Override
-		public boolean hasKey(Map<String, Object> source, Object key) {
-			return source.containsKey(key);
-		}
-
-		@Override
-		public Object getValue(Map<String, Object> source, Object key) {
-			return source.get(key);
-		}
-
-		@Override
-		public Object getValue(List<Object> source, int index) {
-			return source.get(index);
-		}
-
-		@Override
-		public int getVPSize(List<Object> source) {
-			return source.size();
-		}
-
-		@Override
-		public Set<String> getKeySet(Map<String, Object> source) {
-			return source.keySet();
-		}
-	});
-
 	@Test
 	public void test1() {
 		
@@ -65,10 +34,10 @@ public class StandRevertTest {
 		dMap.put("b1", Byte.MAX_VALUE);
 		dMap.put("i1", Integer.MAX_VALUE - 1);
 		
-		SData1 sd1 = rt.revert(dMap, SData1.class);
+		SData1 sd1 = ru.revert(dMap, SData1.class);
 		
 
-		SData2 sd2 = rt.revert(dMap, SData2.class);
+		SData2 sd2 = ru.revert(dMap, SData2.class);
 		
 		// 通过调试器观察取值
 		
@@ -96,8 +65,8 @@ public class StandRevertTest {
 		dMap.put("c1", 'a');
 		dMap.put("b1", true);
 		
-		SData3 sd3 = rt.revert(dMap, SData3.class);
-		SData4 sd4 = rt.revert(dMap, SData4.class);
+		SData3 sd3 = ru.revert(dMap, SData3.class);
+		SData4 sd4 = ru.revert(dMap, SData4.class);
 
 		Assertions.assertEquals('a', sd3.getC1());
 		Assertions.assertEquals(true, sd3.isB1());
@@ -119,8 +88,8 @@ public class StandRevertTest {
 					dMap.put("c1", 97);
 					dMap.put("b1", "true");
 					
-					SData3 sd3 = rt.revert(dMap, SData3.class);
-					SData4 sd4 = rt.revert(dMap, SData4.class);
+					SData3 sd3 = ru.revert(dMap, SData3.class);
+					SData4 sd4 = ru.revert(dMap, SData4.class);
 				});
 		
 		Assertions.assertTrue(exception.getMessage().startsWith("Type convert faild!!!"));
@@ -141,7 +110,7 @@ public class StandRevertTest {
 
 		dMap.put("set", set);
 		
-		SData5 sd5 = rt.revert(dMap, SData5.class);
+		SData5 sd5 = ru.revert(dMap, SData5.class);
 
 		System.err.println(sd5);		
 		
@@ -159,10 +128,129 @@ public class StandRevertTest {
 
 		dMap.put("list", list);
 		
-		SData6 sd5 = rt.revert(dMap, SData6.class);
+		SData6 sd5 = ru.revert(dMap, SData6.class);
 
 		System.err.println(sd5);		
 		
 		System.err.println("ok");
 	}
+	
+	@Test
+	public void test6() {
+
+		Map<String, Object> dMap = new HashMap<>();
+		dMap.put("success", true);
+		dMap.put("msg", "OK");
+		
+		dMap.put("object", "nihao");
+		
+		SData7<String> sd7 = ru.revert(dMap, new TypeRefer<SData7<String>>() {});
+
+		System.err.println(sd7);		
+		
+		System.err.println("ok");
+		
+	}
+	
+	@Test
+	public void test7_0() {
+
+		Map<String, Object> dMapT = new HashMap<>();
+		dMapT.put("success", true);
+		dMapT.put("msg", "OK");
+
+		List<String> list = new ArrayList<>();
+		list.add("龙");
+		list.add("飞");
+		
+		Map<String, Object> dMap = new HashMap<>();
+		dMap.put("list", list);
+
+		List<String> listx = new ArrayList<>();
+		listx.add("局势");
+		listx.add("所迫");
+		dMap.put("listx", listx);
+		
+		dMapT.put("object", dMap);
+		
+		SData7<SData6> sd7 = ru.revert(dMapT, new TypeRefer<SData7<SData6>>() {});
+
+		System.err.println(sd7);		
+		
+		System.err.println("ok");
+		
+	}
+	
+	@Test
+	public void test7_1() {
+
+		Map<String, Object> dMapT = new HashMap<>();
+		dMapT.put("success", true);
+		dMapT.put("msg", "OK");
+
+		List<String> list = new ArrayList<>();
+		list.add("龙");
+		list.add("飞");
+		
+		Map<String, Object> dMap = new HashMap<>();
+		dMap.put("list", list);
+
+		List<String> listx = new ArrayList<>();
+		listx.add("局势");
+		listx.add("所迫");
+		dMap.put("listx", listx);
+		
+		dMapT.put("object", dMap);
+		
+		SData7<Map<String, List<String>>> sd7 = ru.revert(dMapT, new TypeRefer<SData7<Map<String, List<String>>>>() {});
+
+		System.err.println(sd7);		
+		
+		System.err.println("ok");
+		
+	}
+	
+	@Test
+	public void test7_2() {
+
+		Map<String, Object> dMapT = new HashMap<>();
+		dMapT.put("success", true);
+		dMapT.put("msg", "OK");
+		Map<String, Object> dMap = new HashMap<>();
+		dMapT.put("object", dMap);
+
+
+		List<Object> l = new ArrayList<>();
+		dMap.put("p", l);
+		
+		{
+			Map<String, Object> d1 = new HashMap<>();
+			l.add(d1);
+			d1.put("s1", 9420);
+			
+			Map<String, Object> d2 = new HashMap<>();
+			l.add(d2);
+			d2.put("i1", 9527);
+		}
+
+		List<Object> list = new ArrayList<>();
+		dMap.put("m", list);
+		
+		{
+			Map<String, Object> d1 = new HashMap<>();
+			list.add(d1);
+			d1.put("d1", 3.12);
+			d1.put("l1", 3141592654784556233l);
+			
+			Map<String, Object> d2 = new HashMap<>();
+			list.add(d2);
+			d2.put("b1", 0x97);
+			d2.put("f1", 520.1314);
+		}
+		
+		System.err.println(ru.revert(dMapT, new TypeRefer<SData7<Map<String, List<SData2>>>>() {}));		
+		System.err.println("ok");
+		
+	}
+		
 }

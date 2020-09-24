@@ -1,6 +1,8 @@
 package pro.jk.ejoker.common.utils.relationship;
 
-public interface IRelationshipTreeAssemblers<KVP, VP> {
+import java.util.Set;
+
+public interface IRelationshipScalpel<KVP, VP> {
 	
 	/**
 	 * 创建一个键值集容器
@@ -41,5 +43,43 @@ public interface IRelationshipTreeAssemblers<KVP, VP> {
 	 * @throws Exception
 	 */
 	public void addToKeyValueSet(KVP keyValueSet, Object child, String key);
+
+	/**
+	 * 从键值集合容器中取出一个某个键对应的值
+	 * @param targetNode
+	 * @param key
+	 * @return
+	 */
+	public Object getFromKeyValeSet(KVP targetNode, Object key);
+
+	/**
+	 * 有这个key不？
+	 * @param source
+	 * @param key
+	 * @return
+	 */
+	public boolean hasKey(KVP source, Object key);
+
+	/**
+	 * 从VP中获取对应下标、位置的值
+	 * @param source
+	 * @param key
+	 * @return
+	 */
+	public Object getValue(VP source, int index);
+
+	/**
+	 * 获取VP的长度。
+	 * @param source
+	 * @return
+	 */
+	public int getVPSize(VP source);
+	
+	/**
+	 * 获取健值集的健集
+	 * @param source
+	 * @return
+	 */
+	public Set getKeySet(KVP source);
 	
 }

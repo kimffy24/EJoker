@@ -9,43 +9,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import pro.jk.ejoker.common.utils.relationship.IRelationshipTreeAssemblers;
+import pro.jk.ejoker.common.utils.genericity.TypeRefer;
+import pro.jk.ejoker.common.utils.relationship.ObjRef;
 import pro.jk.ejoker.common.utils.relationship.RelationshipTreeUtil;
 
-public class StandConverterTest {
+public class StandConverterTest extends StandRelationRoot {
 
 	@BeforeEach
 	public void everyBefore() {
 		System.out.println("==================== ");
 	}
-	
-	private RelationshipTreeUtil<Map<String, Object>, List<Object>> tr = new RelationshipTreeUtil<>(new IRelationshipTreeAssemblers<Map<String, Object>, List<Object>>() {
-
-		@Override
-		public Map<String, Object> createKeyValueSet() {
-			return new HashMap<>();
-		}
-
-		@Override
-		public List<Object> createValueSet() {
-			return new LinkedList<>();
-		}
-
-		@Override
-		public boolean isHas(Map<String, Object> targetNode, Object key) {
-			return targetNode.containsKey(key);
-		}
-
-		@Override
-		public void addToValueSet(List<Object> valueSet, Object child) {
-			// TODO Auto-generated method stub
-			valueSet.add(child);
-		}
-
-		@Override
-		public void addToKeyValueSet(Map<String, Object> keyValueSet, Object child, String key) {
-			keyValueSet.put(key, child);
-		}});
 
 	@Test
 	public void test1() {
@@ -59,7 +32,7 @@ public class StandConverterTest {
 		dMap.put("b1", Byte.MAX_VALUE);
 		dMap.put("i1", Integer.MAX_VALUE - 1);
 		
-		Map<String, Object> treeStructure = tr.getTreeStructure(new SData1(4.5, 4.7f, 5l, Byte.MAX_VALUE, Integer.MAX_VALUE - 1, (short )7));
+		Map<String, Object> treeStructure = cu.getTreeStructure(new SData1(4.5, 4.7f, 5l, Byte.MAX_VALUE, Integer.MAX_VALUE - 1, (short )7));
 		
 		Assertions.assertEquals(dMap.hashCode(), treeStructure.hashCode());
 		
@@ -100,4 +73,17 @@ public class StandConverterTest {
 //		
 //		System.err.println("ok");
 //	}
+	
+	@Test
+	public void test4() {
+		
+		Map<String, SData1> dMap = new HashMap<>();
+		
+		dMap.put("nihao", new SData1(4.5, 4.7f, 5l, Byte.MAX_VALUE, Integer.MAX_VALUE - 1, (short )7));
+		dMap.put("niubi", new SData1(3.14, 520.1314f, 618l, Byte.MIN_VALUE, Integer.MIN_VALUE + 1, (short )7749));
+		
+		System.err.println(cu.getTreeStructure(dMap, new TypeRefer<Map<String, SData1>>(){}));
+		
+		System.err.println("ok");
+	}
 }

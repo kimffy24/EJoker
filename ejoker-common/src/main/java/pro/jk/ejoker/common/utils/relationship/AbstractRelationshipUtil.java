@@ -1,12 +1,22 @@
 package pro.jk.ejoker.common.utils.relationship;
 
-public abstract class AbstractRelationshipUtil {
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
+import pro.jk.ejoker.common.context.annotation.persistent.PersistentIgnore;
+import pro.jk.ejoker.common.system.helper.Ensure;
+
+public abstract class AbstractRelationshipUtil<KVP, VP> {
 
 //	protected ThreadLocal<Queue<IVoidFunction>> taskQueueBox = ThreadLocal.withInitial(LinkedBlockingQueue::new);
+	
+	protected final IRelationshipScalpel<KVP, VP> eval;
 
 	protected final SpecialTypeCodecStore<?> specialTypeCodecStore;
 	
-	protected AbstractRelationshipUtil(SpecialTypeCodecStore<?> specialTypeCodecStore) {
+	protected AbstractRelationshipUtil(IRelationshipScalpel<KVP, VP> eval, SpecialTypeCodecStore<?> specialTypeCodecStore) {
+		Ensure.notNull(eval, this.getClass().getSimpleName()+ ".eval");
+		this.eval = eval;
 		this.specialTypeCodecStore = specialTypeCodecStore;
 	}
 	
@@ -31,5 +41,13 @@ public abstract class AbstractRelationshipUtil {
 		
 		return specialTypeCodecStore.getCodec(fieldType);
 	}
-	
+
+	public static boolean checkIgnoreField(Field field) {
+		int modifiers = field.getModifiers();
+		return (
+				field.isAnnotationPresent(PersistentIgnore.class)
+				|| Modifier.isStatic(modifiers)
+				|| Modifier.isFinal(modifiers)
+		);
+	}
 }

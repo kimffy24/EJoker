@@ -47,6 +47,11 @@ public class SData1 {
 
 	public short getS1() {
 		return s1;
+	}
+
+	@Override
+	public String toString() {
+		return "SData1 [d1=" + d1 + ", f1=" + f1 + ", l1=" + l1 + ", b1=" + b1 + ", i1=" + i1 + ", s1=" + s1 + "]";
 	};
 	
 }
