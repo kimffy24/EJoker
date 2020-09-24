@@ -137,7 +137,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 			currentExpression.forEachFieldExpressions((fieldName, genericDefinedField) -> {
 				Field field = genericDefinedField.field;
 				if ( field.isAnnotationPresent(Dependence.class) ) {
-					reflectDependenceGenericDefinedFieldStore.put(fieldName, genericDefinedField);
+					reflectDependenceGenericDefinedFieldStore.putIfAbsent(fieldName, genericDefinedField);
 				}
 			});
 			

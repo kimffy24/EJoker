@@ -1,9 +1,10 @@
 package pro.jk.ejoker.common.utils.relationship;
 
-import static pro.jk.ejoker.common.utils.relationship.RelationshipTreeUtil.checkIgnoreField;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,11 +22,11 @@ import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction1;
-import pro.jk.ejoker.common.system.helper.Ensure;
 import pro.jk.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jk.ejoker.common.utils.genericity.GenericDefinedType;
 import pro.jk.ejoker.common.utils.genericity.GenericExpression;
 import pro.jk.ejoker.common.utils.genericity.GenericExpressionFactory;
+import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
 /**
  * 对象关系二维化工具类
@@ -35,28 +36,45 @@ import pro.jk.ejoker.common.utils.genericity.GenericExpressionFactory;
  * @param <ContainerKVP>
  * @param <ContainerVP>
  */
-public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends AbstractRelationshipUtil{
+public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends AbstractRelationshipUtil<ContainerKVP, ContainerVP>{
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeRevertUtil.class);
-
-	private final IRelationshipTreeDisassemblers<ContainerKVP, ContainerVP> disassemblyEval;
 	
-	public RelationshipTreeRevertUtil(IRelationshipTreeDisassemblers<ContainerKVP, ContainerVP> disassemblyEval,
+	public RelationshipTreeRevertUtil(IRelationshipScalpel<ContainerKVP, ContainerVP> disassemblyEval,
 			SpecialTypeCodecStore<?> specialTypeCodecStore) {
-		super(specialTypeCodecStore);
-		this.disassemblyEval = disassemblyEval;
-		Ensure.notNull(disassemblyEval, "RelationshipTreeRevertUtil.disassemblyEval");
+		super(disassemblyEval, specialTypeCodecStore);
 	}
 	
-	public RelationshipTreeRevertUtil(IRelationshipTreeDisassemblers<ContainerKVP, ContainerVP> disassemblyEval) {
+	public RelationshipTreeRevertUtil(IRelationshipScalpel<ContainerKVP, ContainerVP> disassemblyEval) {
 		this(disassemblyEval, null);
+	}
+
+	public <T> T revert(Object kvDataSet, TypeRefer<T> typeRef) {
+
+		Type type = typeRef.getType();
+		if(type instanceof ParameterizedType) {
+			Class<?> topRawType = (Class<?> )((ParameterizedType )type).getRawType();
+			if(SerializableCheckerUtil.hasSublevel(topRawType)) {
+				GenericExpression ge = GenericExpressionFactory.getGenericExpress(ObjRef.class, type);
+				ContainerKVP wrap = eval.createKeyValueSet();
+				eval.addToKeyValueSet(wrap, kvDataSet, "target");
+				ObjRef<T> res = (ObjRef<T> )revert(wrap, ge);
+				return res.getTarget();
+			}
+		}
+		
+		return revert((ContainerKVP )kvDataSet, GenericExpressionFactory.getGenericExpress(typeRef.getType()));
 	}
 	
 	public <T> T revert(ContainerKVP kvDataSet, Class<T> clazz) {
+		return revert(kvDataSet, GenericExpressionFactory.getGenericExpress(clazz));
+	}
+
+	
+	public <T> T revert(ContainerKVP kvDataSet, GenericExpression genericExpress) {
 
 		Queue<IVoidFunction> queue = new ConcurrentLinkedQueue<>();
-//		Queue<IVoidFunction> queue = taskQueueBox.get();
-		T revertValue = (T )revertInternal(kvDataSet, GenericExpressionFactory.getGenericExpress(clazz), queue);
+		T revertValue = (T )revertInternal(kvDataSet, genericExpress, queue);
 
 		IVoidFunction task;
 		while(null != (task = queue.poll())) {
@@ -73,12 +91,12 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				(fieldName, genericDefinedField) -> { 
 						if(
 								checkIgnoreField(genericDefinedField.field)
-								|| !disassemblyEval.hasKey(kvDataSet, fieldName)) {
+								|| !eval.hasKey(kvDataSet, fieldName)) {
 							return;
 						}
 						disassemblyStructure(
 							genericDefinedField.genericDefinedType,
-							disassemblyEval.getValue(kvDataSet, fieldName),
+							eval.getFromKeyValeSet(kvDataSet, fieldName),
 							result -> setField(genericDefinedField.field, instance, result.trigger()),
 							subTaskQueue
 						);
@@ -107,7 +125,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				revertedResult = revertPrivateTypeArray((ContainerVP )serializedValue, definedClazz);
 			} else {
 				// common
-				int size = disassemblyEval.getVPSize((ContainerVP )serializedValue);
+				int size = eval.getVPSize((ContainerVP )serializedValue);
 				Object[] newArray = (Object[] )Array.newInstance(definedClazz, size);
 				revertedResult = newArray;
 				for(int i=0; i<size; i++) {
@@ -115,7 +133,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 					join(
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.componentTypeMeta,
-									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
+									eval.getValue((ContainerVP )serializedValue, idx),
 									result -> newArray[idx] = result.trigger(),
 									subTaskQueue
 									),
@@ -142,18 +160,23 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 					throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
 			}
 			if (Collection.class.isAssignableFrom(definedClazz)) {
+				ContainerVP vp;
 				if(List.class.isAssignableFrom(definedClazz)) {
+					vp = (ContainerVP )serializedValue;
 					revertedResult = new LinkedList();
-				} else {
+				} else if (serializedValue instanceof Set){
+					vp = ((ContainerVP )new ArrayList<>((Set<?> )serializedValue));
 					revertedResult = new HashSet();
+				} else {
+					throw new RuntimeException(String.format("Unsupport container type!!! [type: {}]", serializedValue.getClass().getName()));
 				}
-				int size = disassemblyEval.getVPSize((ContainerVP )serializedValue);
+				int size = eval.getVPSize(vp);
 				for(int i=0; i<size; i++) {
 					final int idx = i;
 					join(
 							() -> disassemblyStructure(
 									targetDefinedTypeMeta.deliveryTypeMetasTable[0],
-									disassemblyEval.getValue((ContainerVP )serializedValue, idx),
+									eval.getValue(vp, idx),
 									result -> ((Collection )revertedResult).add(result.trigger()),
 									subTaskQueue
 								),
@@ -165,12 +188,12 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 				/// 按照RelationshipTreeUtil的转化 map的key一定是string类型的。
 				revertedResult = new HashMap();
 				GenericDefinedType valueTypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
-				Set keySet = disassemblyEval.getKeySet((ContainerKVP )serializedValue);
+				Set keySet = eval.getKeySet((ContainerKVP )serializedValue);
 				for(Object key:keySet) {
 					join(
 							() -> disassemblyStructure(
 									valueTypeMeta,
-									disassemblyEval.getValue((ContainerKVP )serializedValue, (String )key),
+									eval.getFromKeyValeSet((ContainerKVP )serializedValue, (String )key),
 									result -> ((Map )revertedResult).put((String )key, result.trigger()),
 									subTaskQueue
 								),
@@ -192,7 +215,7 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 							"(# lose in foreach)"));
 				}
 			}
-			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpress(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
+			revertedResult = revertInternal((ContainerKVP )serializedValue, GenericExpressionFactory.getGenericExpressDirectly(definedClazz, targetDefinedTypeMeta.deliveryTypeMetasTable), subTaskQueue);
 		}
 		effector.trigger(() -> revertedResult);
 	}
@@ -286,59 +309,59 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 		Object result;
 		if (int.class == componentType) {
 			// integer
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			int[] rArray = (int[] )Array.newInstance(int.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (int )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (int )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (long.class == componentType) {
 			// long
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			long[] rArray = (long[] )Array.newInstance(long.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (long )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (long )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (short.class == componentType) {
 			// short
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			short[] rArray = (short[] )Array.newInstance(short.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (short )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (short )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (double.class == componentType) {
 			// double
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			double[] rArray = (double[] )Array.newInstance(double.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (double )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (double )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (float.class == componentType) {
 			// float
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			float[] rArray = (float[] )Array.newInstance(float.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (float )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (float )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (char.class == componentType) {
 			// char
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			char[] rArray = (char[] )Array.newInstance(char.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (char )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (char )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (byte.class == componentType) {
 			// char
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			byte[] rArray = (byte[] )Array.newInstance(byte.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (byte )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (byte )eval.getValue(vpNode, i);
 			result = rArray;
 		} else if (boolean.class == componentType) {
 			// boolean
-			int size = disassemblyEval.getVPSize(vpNode);
+			int size = eval.getVPSize(vpNode);
 			boolean[] rArray = (boolean[] )Array.newInstance(boolean.class, size);
 			for(int i=0; i<size; i++)
-				rArray[i] = (boolean )disassemblyEval.getValue(vpNode, i);
+				rArray[i] = (boolean )eval.getValue(vpNode, i);
 			result = rArray;
 		} else {
 			// this should never happen!!!

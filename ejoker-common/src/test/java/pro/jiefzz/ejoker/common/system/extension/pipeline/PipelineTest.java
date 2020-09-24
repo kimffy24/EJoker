@@ -22,7 +22,7 @@ import pro.jk.ejoker.common.system.extension.pipeline.PipelineHook;
 
 public class PipelineTest {
 
-//	@Test
+	@Test
 	public void testSample() {
 
 		Runnable p = new Pipeline<>(() -> {
@@ -55,7 +55,7 @@ public class PipelineTest {
 		serviceResult.forEach((k, v) -> System.err.println(v));
 	}
 
-//	@Test
+	@Test
 	public void testSample2() {
 
 		Runnable p = new Pipeline<>(this::fetchFromApi)

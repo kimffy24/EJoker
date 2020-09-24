@@ -59,7 +59,7 @@ public class GenericExpression {
 
 	private final Map<String, GenericDefinedField> fieldExpressions;
 	
-	protected GenericExpression(GenericDefination meta) {
+	GenericExpression(GenericDefination meta) {
 		this(meta, null);
 	}
 	
@@ -69,7 +69,7 @@ public class GenericExpression {
 	 * @param genericDefination
 	 * @param lowerGenericExpression
 	 */
-	protected GenericExpression(GenericDefination genericDefination, GenericExpression lowerGenericExpression) {
+	GenericExpression(GenericDefination genericDefination, GenericExpression lowerGenericExpression) {
 		int genericDeclareAmount = genericDefination.getGenericDeclareAmount();
 		int interfacesAmount = genericDefination.getInterfacesAmount();
 		boolean isInterface = genericDefination.isInterface;
@@ -203,13 +203,17 @@ public class GenericExpression {
 		
 	}
 	
+	GenericExpression(GenericExpression target, final GenericDefinedType... definedTypeMetas) {
+		this(target, null, definedTypeMetas);
+	}
+	
 	/**
 	 * 填入泛型目标 并 自动步进的 复制构造方法
 	 * @param target 需要复制的目标
 	 * @param lowerGenericExpression 下级表达 （ 或是继承类的表达 或是 接口扩展的表达 ）
 	 * @param definedTypeMetas 泛型实例化列表
 	 */
-	protected GenericExpression(GenericExpression target, GenericExpression lowerGenericExpression, final GenericDefinedType... definedTypeMetas) {
+	GenericExpression(GenericExpression target, GenericExpression lowerGenericExpression, final GenericDefinedType... definedTypeMetas) {
 		int genericTypeAmount = target.genericDefination.getGenericDeclareAmount();
 		if(genericTypeAmount > 0) {
 			if(null == definedTypeMetas || genericTypeAmount != definedTypeMetas.length) {
@@ -246,9 +250,6 @@ public class GenericExpression {
 		
 		if(null != target.parent) {
 			GenericExpression upperGe = target.parent;
-//			GenericDefinedTypeMeta[] deliveryClassesTable = getDCT(
-//					() -> genericDefination.getDeliveryTypeMetasTableCopy(),
-//					() -> genericDefination.getDeliveryMapperCopy());
 			GenericDefinedType[] deliveryClassesTable = getDCT(
 					genericDefination::getDeliveryTypeMetasTableCopy,
 					genericDefination::getDeliveryMapperCopy);
@@ -459,4 +460,32 @@ public class GenericExpression {
 		return prototype.getName();
 	}
 
+
+	@Override
+	public int hashCode() {
+		return expressSignature.hashCode();
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GenericExpression other = (GenericExpression) obj;
+		if (expressSignature == null) {
+			if (other.expressSignature != null)
+				return false;
+		} else if (!expressSignature.equals(other.expressSignature))
+			return false;
+		return true;
+	}
+
+	public String getExpressSignature() {
+		return expressSignature;
+	}
+	
 }

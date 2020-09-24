@@ -1,17 +1,16 @@
 package pro.jk.ejoker.common.utils.relationship;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pro.jk.ejoker.common.context.annotation.persistent.PersistentIgnore;
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.functional.IFunction;
@@ -23,6 +22,7 @@ import pro.jk.ejoker.common.utils.SerializableCheckerUtil;
 import pro.jk.ejoker.common.utils.genericity.GenericDefinedType;
 import pro.jk.ejoker.common.utils.genericity.GenericExpression;
 import pro.jk.ejoker.common.utils.genericity.GenericExpressionFactory;
+import pro.jk.ejoker.common.utils.genericity.TypeRefer;
 
 /**
  * 对象关系二维化工具类
@@ -32,26 +32,35 @@ import pro.jk.ejoker.common.utils.genericity.GenericExpressionFactory;
  * @param <ContainerKVP>
  * @param <ContainerVP>
  */
-public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRelationshipUtil{
+public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRelationshipUtil<ContainerKVP, ContainerVP> {
 
 	private final static Logger logger = LoggerFactory.getLogger(RelationshipTreeUtil.class);
 
-	private final IRelationshipTreeAssemblers<ContainerKVP, ContainerVP> eval;
-	
-	public RelationshipTreeUtil(IRelationshipTreeAssemblers<ContainerKVP, ContainerVP> eval,
+	public RelationshipTreeUtil(IRelationshipScalpel<ContainerKVP, ContainerVP> eval,
 			SpecialTypeCodecStore<?> specialTypeCodecStore) {
-		super(specialTypeCodecStore);
-		this.eval = eval;
+		super(eval, specialTypeCodecStore);
 		Ensure.notNull(eval, "RelationshipTreeUtil.eval");
 	}
-	public RelationshipTreeUtil(IRelationshipTreeAssemblers<ContainerKVP, ContainerVP> eval) {
+	public RelationshipTreeUtil(IRelationshipScalpel<ContainerKVP, ContainerVP> eval) {
 		this(eval, null);
+	}
+
+	public <T> Object getTreeStructure(Object target, TypeRefer<T> typeRef) {
+
+		Type type = typeRef.getType();
+		if(type instanceof ParameterizedType) {
+			Class<?> topRawType = (Class<?> )((ParameterizedType )type).getRawType();
+			if(SerializableCheckerUtil.hasSublevel(topRawType)) {
+				GenericExpression ge = GenericExpressionFactory.getGenericExpress(ObjRef.class, type);
+				ContainerKVP wrapKVP = getTreeStructure(ObjRef.of(target), ge);
+				return eval.getFromKeyValeSet(wrapKVP, "target");
+			}
+		}
+		
+		return getTreeStructure(target, GenericExpressionFactory.getGenericExpress(typeRef.getType()));
 	}
 	
 	public ContainerKVP getTreeStructure(Object target) {
-		
-		Queue<IVoidFunction> queue = new LinkedBlockingQueue<>();
-		
 		Class<?> targetClazz = target.getClass();
 		if(SerializableCheckerUtil.hasSublevel(targetClazz)) {
 			throw new RuntimeException("Unsupport getTreeStructure() action on java collection util!!!");
@@ -62,6 +71,12 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		};
 		
 		GenericExpression targetExpression = GenericExpressionFactory.getGenericExpress(targetClazz);
+		return getTreeStructure(target, targetExpression);
+	}
+
+	public ContainerKVP getTreeStructure(Object target, GenericExpression targetExpression) {
+		Queue<IVoidFunction> queue = new ConcurrentLinkedQueue<>();
+		
 		ContainerKVP createNode = eval.createKeyValueSet();
 		targetExpression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> join(() -> {
@@ -207,7 +222,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			/// 普通对象类型
 			ContainerKVP createNode = eval.createKeyValueSet();
 			node = createNode;
-			GenericExpression genericExpress = GenericExpressionFactory.getGenericExpress(definedClazz,
+			GenericExpression genericExpress = GenericExpressionFactory.getGenericExpressDirectly(definedClazz,
 					targetDefinedTypeMeta.deliveryTypeMetasTable);
 			genericExpress.forEachFieldExpressionsDeeply(
 					(fieldName, genericDefinedField) -> join(() -> {
@@ -296,12 +311,4 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		}
 	}
 	
-	public static boolean checkIgnoreField(Field field) {
-		int modifiers = field.getModifiers();
-		return (
-				field.isAnnotationPresent(PersistentIgnore.class)
-				|| Modifier.isStatic(modifiers)
-				|| Modifier.isFinal(modifiers)
-		);
-	}
 }

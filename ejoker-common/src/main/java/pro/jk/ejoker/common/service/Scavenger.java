@@ -18,6 +18,7 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction;
 public class Scavenger {
 	
 	private final static Logger logger = LoggerFactory.getLogger(Scavenger.class);
+	private final static AtomicInteger ScavengerCounter = new AtomicInteger(0);
 
 	private List<IVoidFunction> waitingCleanJobs = new ArrayList<>();
 	
@@ -46,8 +47,7 @@ public class Scavenger {
 			}
 			logger.debug("In the end of Invoking Scavenger.cleanUp(). [execute: {}, faild: {}]", totalJob, amountOfJob.get());
 			System.gc();
-		}, "Scavenger-0");
-		cleanUpThread.setDaemon(true);
+		}, "Scavenger-" + ScavengerCounter.getAndIncrement());
 		cleanUpThread.start();
 	}
 

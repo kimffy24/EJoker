@@ -1,35 +1,28 @@
 package pro.jk.ejoker.common.utils.genericity;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
+import pro.jk.ejoker.common.system.enhance.StringUtilx;
 
 public final class GenericExpressionFactory {
 
-	private final static GenericDefinationManagement gdManager = new GenericDefinationManagement();
+	private final static GenericDefinationManagement GDManager = new GenericDefinationManagement();
 	
-	private final static Map<String, GenericExpression> expressionStore = new ConcurrentHashMap<>();
+	private final static Map<String, GenericExpression> ExpressionStore = new ConcurrentHashMap<>();
 	
-	public final static GenericExpression defaultExpression = new GenericExpression(gdManager.getOrCreateDefination(Object.class));
-
-	public final static GenericExpression getGenericExpress(Class<?> prototype, Type... types) {
+	public static GenericExpression getMiddleStatementGenericExpression(Class<?> prototype) {
 		
-		if(null == types || 0 == types.length)
-			throw new RuntimeException();
+		String expressionSignature = GenericExpression.getExpressionSignature(prototype);
 		
-		GenericDefinedType[] gdtms = new GenericDefinedType[types.length];
-		for(int i=0; i<types.length; i++)
-			gdtms[i] = new GenericDefinedType(types[i], null/*GenericDefination.defaultGenericDefination*/);
-		return getGenericExpress(prototype, gdtms);
+		return MapUtilx.getOrAdd(ExpressionStore, expressionSignature, k -> new GenericExpression(GDManager.getOrCreateDefination(prototype)));
 		
 	}
 
-	public final static GenericExpression getGenericExpress(Class<?> prototype, GenericDefinedType... genericDefinedTypeMetas) {
-		
-		if(null == genericDefinedTypeMetas || 0 == genericDefinedTypeMetas.length)
-			return getGenericExpress(prototype);
+	public static GenericExpression getGenericExpressDirectly(Class<?> prototype, GenericDefinedType... genericDefinedTypeMetas) {
 		
 		GenericExpression middleStatementGenericExpression = getMiddleStatementGenericExpression(prototype);
 		String parameteriedSignature = GenericExpression.getExpressionSignature(prototype, genericDefinedTypeMetas);
@@ -41,36 +34,66 @@ public final class GenericExpressionFactory {
 				throw new RuntimeException(errInfo);
 			}
 		} else {
-			return MapUtilx.getOrAdd(expressionStore, parameteriedSignature, s -> new GenericExpression(middleStatementGenericExpression, null, genericDefinedTypeMetas));
-//			GenericExpression fullStatementGenericExpressp;
-//			while(defaultExpression.equals(fullStatementGenericExpressp = expressionStore.getOrDefault(parameteriedSignature, defaultExpression))) {
-//				expressionStore.putIfAbsent(parameteriedSignature, new GenericExpression(middleStatementGenericExpression, null, genericDefinedTypeMetas));
-//			}
-//			return fullStatementGenericExpressp;
+			return MapUtilx.getOrAdd(ExpressionStore, parameteriedSignature, s -> new GenericExpression(middleStatementGenericExpression, genericDefinedTypeMetas));
 		}
 		
-	}
-	
-	public final static GenericExpression getGenericExpress(Class<?> prototype) {
-		GenericExpression middleStatementGenericExpression = getMiddleStatementGenericExpression(prototype);
-		if(middleStatementGenericExpression.isComplete())
-			return middleStatementGenericExpression;
-		else {
-			String errInfo = String.format("Unmatch amount of parameterized type!!! target=%s   parameteriedSignature=%s", prototype.getName(), "");
-			throw new RuntimeException(errInfo);
-		}
 	}
 
-	public final static GenericExpression getMiddleStatementGenericExpression(Class<?> prototype) {
+	public static GenericExpression getGenericExpress(Type prototype, Type... types) {
 		
-		String expressionSignature = GenericExpression.getExpressionSignature(prototype);
+		// 根据官方文档介绍，java Type类型下有4主要的 类/接口
+		//
+		//		Type
+		//		├── Class
+		//		├── ParameterizedType
+		//		├── GenericArrayType
+		//		└── TypeVariable
+		//
+		// 后两个暂时不作考虑
 		
-		return MapUtilx.getOrAdd(expressionStore, expressionSignature, k -> new GenericExpression(gdManager.getOrCreateDefination(prototype)));
-//		GenericExpression genericExpression;
-//		if(defaultExpression.equals(genericExpression = expressionStore.getOrDefault(expressionSignature, defaultExpression))) {
-//			expressionStore.putIfAbsent(expressionSignature, genericExpression = new GenericExpression(gdManager.getOrCreateDefination(prototype)));
-//		}
-//		
-//		return genericExpression;
+		if(prototype instanceof Class) {
+			
+			Class<?> clazz = (Class<?> )prototype;
+//			return getGenericExpress(clazz);
+
+			if(null == types || 0 == types.length) {
+				GenericExpression middleStatementGenericExpression = getMiddleStatementGenericExpression(clazz);
+				if(middleStatementGenericExpression.isComplete())
+					return middleStatementGenericExpression;
+				else {
+					throw new RuntimeException(
+							StringUtilx.fmt(
+									"Unmatch amount of parameterized type!!! [target:{}, parameteriedSignature: {}",
+									clazz.getName(),
+									null)) ;
+				}
+			}
+			
+			GenericDefinedType[] gdtms = new GenericDefinedType[types.length];
+			GenericDefination gd = GDManager.getOrCreateDefination(clazz);
+			for(int i=0; i<types.length; i++)
+				gdtms[i] = new GenericDefinedType(types[i], gd);
+			return getGenericExpressDirectly(clazz, gdtms);
+			
+		} else if(prototype instanceof ParameterizedType) {
+			
+			ParameterizedType pt = (ParameterizedType )prototype;
+			Class<?> clazz = (Class<?> )pt.getRawType();
+			types = pt.getActualTypeArguments();
+			
+			GenericDefinedType[] gdtms = new GenericDefinedType[types.length];
+			GenericDefination gd = GDManager.getOrCreateDefination(clazz);
+			for(int i=0; i<types.length; i++)
+				gdtms[i] = new GenericDefinedType(types[i], gd);
+			return getGenericExpressDirectly(clazz, gdtms);
+			
+		}
+		
+		return null;
 	}
+
+	public static GenericExpression getGenericExpress(TypeRefer<?> typeRef) {
+		return getGenericExpress(typeRef.getType());
+	}
+	
 }
