@@ -146,6 +146,7 @@ if [ $RES -ne 0 ] ; then
 fi
 
 cd ../..
+exit 0
 mvn versions:set -DnewVersion="${VERSION_NEW}"
 for i in `git ls-files|grep pom.xml` ; do
    git add $i
