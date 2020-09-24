@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker-support</artifactId>
-		<version>2.2.4-SNAPSHOT</version>
+		<version>3.0.0</version>
 	</parent>
 	<artifactId>ejoker-support-rpc-netty</artifactId>
 	<name>ejoker-support-rpc-netty</name>
@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
 			<artifactId>ejoker-common</artifactId>
-			<version>2.2.4-SNAPSHOT</version>
+			<version>3.0.0</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
