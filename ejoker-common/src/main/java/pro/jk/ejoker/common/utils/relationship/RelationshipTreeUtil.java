@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
@@ -170,7 +171,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			if (target instanceof Collection) {
 				ContainerVP createValueSet = eval.createValueSet();
 				node = createValueSet;
-				EachUtilx.forEach((List )target, item ->
+				IVoidFunction1<Object> handle = item ->
 					join( () ->
 						assemblyStructure(
 								targetDefinedTypeMeta.deliveryTypeMetasTable[0],
@@ -180,8 +181,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 								subTaskQueue
 						),
 						subTaskQueue
-					)
-				);
+					);
+				if(target instanceof List)
+					EachUtilx.forEach((List )target, handle);
+				else
+					EachUtilx.forEach((Set )target, handle);
 			} else if (target instanceof Map) {
 				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
 				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))

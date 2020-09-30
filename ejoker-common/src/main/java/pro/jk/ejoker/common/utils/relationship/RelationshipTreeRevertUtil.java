@@ -160,15 +160,15 @@ public class RelationshipTreeRevertUtil<ContainerKVP, ContainerVP> extends Abstr
 					throw new RuntimeException("Unsupport revert type java.util.Queue!!!");
 			}
 			if (Collection.class.isAssignableFrom(definedClazz)) {
-				ContainerVP vp;
+				ContainerVP vp = (serializedValue instanceof Set)
+						? ((ContainerVP )new ArrayList<>((Set<?> )serializedValue))
+								: (ContainerVP )serializedValue;
 				if(List.class.isAssignableFrom(definedClazz)) {
-					vp = (ContainerVP )serializedValue;
 					revertedResult = new LinkedList();
-				} else if (serializedValue instanceof Set){
-					vp = ((ContainerVP )new ArrayList<>((Set<?> )serializedValue));
+				} else if(Set.class.isAssignableFrom(definedClazz)) {
 					revertedResult = new HashSet();
 				} else {
-					throw new RuntimeException(String.format("Unsupport container type!!! [type: {}]", serializedValue.getClass().getName()));
+					throw new RuntimeException(StringUtilx.fmt("Unsupport container type!!! [type: {}]", serializedValue.getClass().getName()));
 				}
 				int size = eval.getVPSize(vp);
 				for(int i=0; i<size; i++) {

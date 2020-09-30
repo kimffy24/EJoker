@@ -2,6 +2,7 @@ package pro.jiefzz.ejoker.common.utils.relationship.pro;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -111,6 +112,12 @@ public class ExpressionTest3 {
 	public void test3_4() {
 		TypeRefer<CBZ<List<Favior>[]>> typeRefer = new TypeRefer<CBZ<List<Favior>[]>>() {};
 		CBZ<List<Favior>[]> revert = pro.revert(tStr, typeRefer);
+		System.err.println(revert.markType(typeRefer));
+	}
+	@Test
+	public void test3_5() {
+		TypeRefer<CBZ<List<Set<Favior>>>> typeRefer = new TypeRefer<CBZ<List<Set<Favior>>>>() {};
+		CBZ<List<Set<Favior>>> revert = pro.revert(tStr, typeRefer);
 		System.err.println(revert.markType(typeRefer));
 	}
 	
