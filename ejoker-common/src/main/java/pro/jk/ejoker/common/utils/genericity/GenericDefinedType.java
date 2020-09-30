@@ -402,4 +402,9 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			return currentTypeMeta.rawClazz;
 		}
 	}
+
+	@Override
+	public String toString() {
+		return typeName;
+	}
 }
