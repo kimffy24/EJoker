@@ -29,7 +29,7 @@ public class PipelineTest {
 			return new Date();
 		}).add(d -> {
 			return "Today is " + d.toString();
-		}).add(s -> {
+		}).end(s -> {
 			System.err.println(s);
 		});
 
@@ -60,7 +60,7 @@ public class PipelineTest {
 
 		Runnable p = new Pipeline<>(this::fetchFromApi)
 				.add(this::doCalculateOrStatistics)
-				.add(this::doEffect);
+				.end(this::doEffect);
 
 		p.run();
 
@@ -106,7 +106,7 @@ public class PipelineTest {
 			fixedThreadPool.execute(new Pipeline<>(this::fetchFromDB)
 					.add(this::filter, i, 3)
 					.add(this::doSth)
-					.add(s -> { s.forEach(System.err::println); })
+					.end(s -> { s.forEach(System.err::println); })
 					);
 		
 		fixedThreadPool.shutdown();
@@ -146,7 +146,7 @@ public class PipelineTest {
 			new Pipeline<>(this::fixName, k)
 					.add(this::buildGoods, v, ai)
 					.add(this::decorate, (new Date()).toString(), System.getenv("HOME"), System.currentTimeMillis(), Math.PI, (System.currentTimeMillis() % 2 == 0))
-					.add(s -> { System.err.println(s); })
+					.end(s -> { System.err.println(s); })
 					.run()
 					;
 		});
@@ -177,7 +177,7 @@ public class PipelineTest {
 					.addPipelineHook(new PipelineHook((cxt, ex, args) -> { System.err.println(StringUtilx.fmt("{} [{}]", ex.getMessage(), getCxtInfo(args)));ex.printStackTrace(); cxt.setPreventThrow();/**/}))
 					.add(this::buildGoods, e.getValue(), ai)
 					.add(this::decorate, (new Date()).toString(), System.getenv("HOME"), System.currentTimeMillis(), Math.PI, (System.currentTimeMillis() % 2 == 0))
-					.add(s -> { System.err.println(s); }));
+					.end(s -> { System.err.println(s); }));
 		});
 
 		TimeUnit.SECONDS.sleep(3l);
