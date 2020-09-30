@@ -1,5 +1,7 @@
 package pro.jk.ejoker.common.utils.genericity;
 
+import static java.lang.reflect.Array.newInstance;
+
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -16,7 +18,7 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.common.utils.GenericTypeUtil;
 
 /**
- * Represents a full type declared strcut. <br /><br />
+ * Represents a full type declared structure. <br /><br />
  * 
  * 用于描述定义的完全类型的数据结构
  * @author kimffy
@@ -126,9 +128,16 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			isArray = true;
 			GenericArrayType gat = (GenericArrayType )regionTye;
 			Type genericComponentType = gat.getGenericComponentType();
-			
 
 			componentTypeMeta = new GenericDefinedType(genericComponentType, referMeta, level + 1);
+			
+			if(genericComponentType instanceof TypeVariable<?>) {
+				rawClazz = null;
+				hasGenericDeclare = false;
+				deliveryTypeMetasTable = new GenericDefinedType[] {componentTypeMeta};
+				tmpHasMaterialized = false;
+			} else {
+			
 			{
 				// !!! check the component type is WildcardType !!!
 				if(componentTypeMeta.isWildcardType) {
@@ -142,6 +151,7 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			for(int i = 0; i<componentTypeMeta.deliveryTypeMetasTable.length; i++) {
 				GenericDefinedType passingTypeMeta = componentTypeMeta.deliveryTypeMetasTable[i];
 				tmpHasMaterialized &= passingTypeMeta.allHasMaterialized;
+			}
 			}
 		} else if(regionTye instanceof WildcardType) {
 			hasGenericDeclare = false;
@@ -193,12 +203,17 @@ public class GenericDefinedType extends GenericDefinationEssential {
 		
 		allHasMaterialized = tmpHasMaterialized;
 
-		String tmpTypeName;
-		{
+		
+		typeName = generateTypeName();
+	}
+	
+		private String generateTypeName() {
+			String tmpTypeName;
+			Type regionTye = this.originTye;
 			if (Class.class.equals(regionTye.getClass())) {
 				tmpTypeName = regionTye.getTypeName();
-				if(isArray)
-					tmpTypeName += "[]";
+//				if(isArray)
+//					tmpTypeName += "[]";
 			} else if(regionTye instanceof ParameterizedType) {
 				StringBuilder sb = new StringBuilder();
 //				sb.append(rawClazz.getName());
@@ -232,10 +247,8 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			} else {
 				throw new RuntimeException("Do you ensure that this statement will happen???");
 			}
+			return tmpTypeName;
 		}
-		
-		typeName = tmpTypeName;
-	}
 	
 	public GenericDefinedType(Type regionTye, GenericDefination referMeta) {
 		this(regionTye, referMeta, 0);
@@ -251,10 +264,12 @@ public class GenericDefinedType extends GenericDefinationEssential {
 		level = targetGenericDefinedTypeMeta.level;
 		hasGenericDeclare = targetGenericDefinedTypeMeta.hasGenericDeclare;
 		isArray = targetGenericDefinedTypeMeta.isArray;
-		rawClazz = targetGenericDefinedTypeMeta.rawClazz;
 		isWildcardType = targetGenericDefinedTypeMeta.isWildcardType;
 		final AtomicInteger unmaterializedCounter = new AtomicInteger(0);
 		
+		if(originTye instanceof TypeVariable<?>)
+			unmaterializedCounter.incrementAndGet();
+
 		// TODO 此控制块没得到测试
 		if(null != targetGenericDefinedTypeMeta.componentTypeMeta) {
 			
@@ -268,9 +283,15 @@ public class GenericDefinedType extends GenericDefinationEssential {
 				currentTypeMeta = new GenericDefinedType(genericExpressionExportTuple.declarationTypeMeta, materializedMapper);
 			}
 			componentTypeMeta = currentTypeMeta;
-			
+			if(currentTypeMeta.allHasMaterialized) {
+				rawClazz = getArrayComponent(currentTypeMeta);
+			} else {
+				rawClazz = null;
+				unmaterializedCounter.incrementAndGet();
+			}
 		} else {
 			componentTypeMeta = null;
+			rawClazz = targetGenericDefinedTypeMeta.rawClazz;
 		}
 		
 		if(null != targetGenericDefinedTypeMeta.deliveryTypeMetasTable) {
@@ -318,35 +339,38 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			boundsLower = null;
 		}
 
-		String tmpTypeName;
-		if(isWildcardType) {
-			/// this statement is satisfy for WildcardType.
-			if(null != boundsLower && null != boundsUpper)
-				throw new RuntimeException("Do you ensure that the upper bounds and lower bounds will be exist in the same time???");
-			
-			{
-				StringBuilder sb = new StringBuilder();
-				sb.append('?');
-				if( null != boundsLower && 0 < boundsLower.length) {
-					sb.append(" super ");
-					sb.append(boundsLower[0].typeName);
-				} else if( null != boundsUpper && 0 < boundsUpper.length) {
-					// eliminate the case  <? extends java.lang.Object>
-					if(!Object.class.getName().equals(boundsUpper[0].typeName)) {
-						sb.append(" extends ");
-						sb.append(boundsUpper[0].typeName);
-					}
-				}
-				tmpTypeName = sb.toString();
-			}
-		} else if (null == rawClazz) {
-			/// this statement is satisfy for TypeVariable.
-			tmpTypeName = targetGenericDefinedTypeMeta.typeName;
-		} else {
-			tmpTypeName = GenericExpression.getExpressionSignature(targetGenericDefinedTypeMeta.rawClazz, deliveryTypeMetasTable);
-		}
-		
-		typeName = tmpTypeName + (isArray?"[]":"");
+//		String tmpTypeName;
+//		if(isWildcardType) {
+//			/// this statement is satisfy for WildcardType.
+//			if(null != boundsLower && null != boundsUpper)
+//				throw new RuntimeException("Do you ensure that the upper bounds and lower bounds will be exist in the same time???");
+//			
+//			{
+//				StringBuilder sb = new StringBuilder();
+//				sb.append('?');
+//				if( null != boundsLower && 0 < boundsLower.length) {
+//					sb.append(" super ");
+//					sb.append(boundsLower[0].typeName);
+//				} else if( null != boundsUpper && 0 < boundsUpper.length) {
+//					// eliminate the case  <? extends java.lang.Object>
+//					if(!Object.class.getName().equals(boundsUpper[0].typeName)) {
+//						sb.append(" extends ");
+//						sb.append(boundsUpper[0].typeName);
+//					}
+//				}
+//				tmpTypeName = sb.toString();
+//			}
+//		} else if(this.isArray) {
+//			
+//		} else if (null == rawClazz) {
+//			/// this statement is satisfy for TypeVariable.
+//			tmpTypeName = targetGenericDefinedTypeMeta.typeName;
+//		} else {
+//			tmpTypeName = GenericExpression.getExpressionSignature(targetGenericDefinedTypeMeta.rawClazz, deliveryTypeMetasTable);
+//		}
+//		
+//		typeName = tmpTypeName + (isArray?"[]":"");
+		typeName = generateTypeName();
 		allHasMaterialized = 0 == unmaterializedCounter.get() ? true : false;
 	}
 	
@@ -366,6 +390,16 @@ public class GenericDefinedType extends GenericDefinationEssential {
 				currentTypeMeta = new GenericDefinedType(genericExpressionExportTuple.declarationTypeMeta, materializedMapper);
 			}
 			effector.trigger(i, currentTypeMeta);
+		}
+	}
+	
+	private static Class<?> getArrayComponent(GenericDefinedType currentTypeMeta) {
+		if(currentTypeMeta.isArray) {
+			Class<?> childArrayComponentClazz = getArrayComponent(currentTypeMeta.componentTypeMeta);
+			Object arrayInstance = newInstance(childArrayComponentClazz, 0);
+			return arrayInstance.getClass();
+		} else {
+			return currentTypeMeta.rawClazz;
 		}
 	}
 }

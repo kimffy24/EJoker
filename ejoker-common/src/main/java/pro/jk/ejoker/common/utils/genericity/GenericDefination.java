@@ -58,7 +58,7 @@ public final class GenericDefination {
 
 			for(int i = 0; i<typeParameters.length; i++) {
 				TypeVariable<?> typeVar = typeParameters[i];
-				exportGenericDeclares[i] = new GenericDeclaration(this, i, typeVar.getName());
+				exportGenericDeclares[i] = new GenericDeclaration(this, i, typeVar);
 			}
 			
 		} else {

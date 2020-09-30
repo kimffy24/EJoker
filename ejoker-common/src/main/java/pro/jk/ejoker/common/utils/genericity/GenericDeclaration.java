@@ -1,5 +1,7 @@
 package pro.jk.ejoker.common.utils.genericity;
 
+import java.lang.reflect.TypeVariable;
+
 /**
  * 
  * Represents a meta object for Generic Class. <br />
@@ -16,11 +18,14 @@ public class GenericDeclaration extends GenericDefinationEssential {
 	public final int index;
 	
 	public final String name;
+	
+	public final TypeVariable<?> typeVar;
 
-	public GenericDeclaration(GenericDefination ref, int index, String name) {
+	public GenericDeclaration(GenericDefination ref, int index, TypeVariable<?> typeVar) {
 		super(ref);
 		this.index = index;
-		this.name = name;
+		this.typeVar = typeVar;
+		this.name = typeVar.getName();
 	}
 	
 	public boolean isSameGenericDefination(GenericDefination ref) {
