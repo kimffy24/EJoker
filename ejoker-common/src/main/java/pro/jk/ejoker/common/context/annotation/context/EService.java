@@ -17,6 +17,6 @@ import pro.jk.ejoker.common.context.annotation.EJokerAnnotation;
 @EJokerAnnotation
 public @interface EService {
 
-	public ESType type() default ESType.NORMAL;
+	public String type() default ESType.NORMAL;
 	
 }

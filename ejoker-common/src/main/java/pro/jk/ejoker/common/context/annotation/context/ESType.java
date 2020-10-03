@@ -1,11 +1,11 @@
 package pro.jk.ejoker.common.context.annotation.context;
 
-public enum ESType {
+public final class ESType {
 
 	/**
 	 * 一个普通的EJoker内部的Service对象，默认值
 	 */
-	NORMAL,
+	public final static String NORMAL = "NORMAL";
 	
 	/**
 	 * 
@@ -14,7 +14,7 @@ public enum ESType {
 	 * 
 	 * 框架会扫描当前对象中的所有handle/handleAsync方法
 	 */
-	COMMAND_HANDLER,
+	public final static String COMMAND_HANDLER = "COMMAND_HANDLER";
 	
 	/**
 	 * Tell the configureObject or contextObject to scan its handler method<br />
@@ -22,8 +22,6 @@ public enum ESType {
 	 * 
 	 * 框架会扫描当前对象中的所有handle/handleAsync方法
 	 */
-	MESSAGE_HANDLER,
-	
-	;
+	public final static String MESSAGE_HANDLER = "COMMAND_HANDLER";
 	
 }
