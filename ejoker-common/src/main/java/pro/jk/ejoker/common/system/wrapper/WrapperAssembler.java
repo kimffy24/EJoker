@@ -20,7 +20,7 @@ public final class WrapperAssembler {
 	/* Base Area */
 	
 	public static interface OnceChecker {
-		public boolean hasBeesSet();
+		public boolean hasBeenSet();
 	}
 	
 	
@@ -40,7 +40,7 @@ public final class WrapperAssembler {
 			IVoidFunction1<Object> vf4,
 			IFunction1<Long, Object> vf5
 			) {
-		if (cdlCxt.hasBeesSet())
+		if (cdlCxt.hasBeenSet())
 			throw new RuntimeException("CountDownLatchWrapper has been set before!!!");
 		
 		cdlCxt.apply2newCDL(vf);
@@ -106,7 +106,7 @@ public final class WrapperAssembler {
 
 	public final static void setLockProvider(
 			IFunction<Lock> lockCreator) {
-		if (lockCxt.hasBeesSet())
+		if (lockCxt.hasBeenSet())
 			throw new RuntimeException("LockWrapper has been set before!!!");
 		
 		lockCxt.apply2lockCreator(lockCreator);
@@ -128,7 +128,7 @@ public final class WrapperAssembler {
 
 	public final static void setRWLockProvider(
 			IFunction<ReadWriteLock> rwLockCreator) {
-		if (rwLockCxt.hasBeesSet())
+		if (rwLockCxt.hasBeenSet())
 			throw new RuntimeException("RWLockWrapper has been set before!!!");
 		
 		rwLockCxt.apply2rwLockCreator(rwLockCreator);
@@ -161,7 +161,7 @@ public final class WrapperAssembler {
 			IFunction1<Boolean, Object> action_isAlive,
 			IFunction1<String, Object> action_getName,
 			IFunction1<Long, Object> action_getId) {
-		if (mittenCxt.hasBeesSet())
+		if (mittenCxt.hasBeenSet())
 			throw new RuntimeException("MittenWrapper has been set before!!!");
 		
 		mittenCxt.apply2getCurrent(action_getCurrent);
@@ -206,7 +206,7 @@ public final class WrapperAssembler {
 
 	public final static void setASyncEntranceProvider(
 			IFunction1<IAsyncEntrance, AbstractNormalWorkerGroupService> f) {
-		if (asyncEntranceProviderCxt.hasBeesSet())
+		if (asyncEntranceProviderCxt.hasBeenSet())
 			throw new RuntimeException("AsyncEntrance has been set before!!!");
 		
 		asyncEntranceProviderCxt.apply2asyncEntranceProvider(f);

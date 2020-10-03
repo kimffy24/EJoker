@@ -1,8 +1,6 @@
 package pro.jiefzz.ejoker.common.utils.relationship;
 
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
@@ -10,8 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import pro.jk.ejoker.common.utils.genericity.TypeRefer;
-import pro.jk.ejoker.common.utils.relationship.ObjRef;
-import pro.jk.ejoker.common.utils.relationship.RelationshipTreeUtil;
 
 public class StandConverterTest extends StandRelationRoot {
 

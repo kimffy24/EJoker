@@ -52,7 +52,7 @@ public abstract class AbstractNormalWorkerGroupService {
 	static {
 		WrapperAssembler.setASyncEntranceProviderContext(new AsyncEntranceProviderContext() {
 			@Override
-			public boolean hasBeesSet() {
+			public boolean hasBeenSet() {
 				return !hasRedefined.compareAndSet(false, true);
 			}
 			@Override

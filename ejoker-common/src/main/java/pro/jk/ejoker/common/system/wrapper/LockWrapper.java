@@ -22,7 +22,7 @@ public final class LockWrapper {
 		
 		WrapperAssembler.setLockProviderContext(new LockProviderContext() {
 			@Override
-			public boolean hasBeesSet() {
+			public boolean hasBeenSet() {
 				return !hasRedefined.compareAndSet(false, true);
 			}
 			@Override
