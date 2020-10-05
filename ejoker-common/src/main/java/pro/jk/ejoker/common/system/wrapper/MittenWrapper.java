@@ -100,7 +100,7 @@ public final class MittenWrapper {
 		
 		WrapperAssembler.setMittenProviderContext(new MittenProviderContext() {
 			@Override
-			public boolean hasBeenSet() {
+			public boolean tryMarkHasBeenSet() {
 				return !hasRedefined.compareAndSet(false, true);
 			}
 			@Override

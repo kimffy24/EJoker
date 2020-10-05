@@ -22,7 +22,7 @@ public final class RWLockWrapper {
 		
 		WrapperAssembler.setRWLockProviderContext(new RWLockProviderContext() {
 			@Override
-			public boolean hasBeenSet() {
+			public boolean tryMarkHasBeenSet() {
 				return !hasRedefined.compareAndSet(false, true);
 			}
 			@Override

@@ -86,7 +86,7 @@ public class CountDownLatchWrapper {
 		
 		WrapperAssembler.setCountDownLatchProviderContext(new CountDownLatchProviderContext() {
 			@Override
-			public boolean hasBeenSet() {
+			public boolean tryMarkHasBeenSet() {
 				return !hasRedefined.compareAndSet(false, true);
 			}
 			@Override
