@@ -235,7 +235,7 @@ public class GenericDefinedType extends GenericDefinationEssential {
 				if ( null != boundsLower && 0 < boundsLower.length) {
 					tmpTypeName += " super " + boundsLower[0].typeName;
 				} else if ( null != boundsUpper && 0 < boundsUpper.length) {
-					if(!Class.class.getName().contentEquals(boundsUpper[0].typeName))
+					if(!Object.class.getName().contentEquals(boundsUpper[0].typeName))
 						tmpTypeName += " extends " + boundsUpper[0].typeName;
 				}
 			} else if(regionTye instanceof TypeVariable<?>) {
