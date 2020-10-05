@@ -22,6 +22,6 @@ public final class ESType {
 	 * 
 	 * 框架会扫描当前对象中的所有handle/handleAsync方法
 	 */
-	public final static String MESSAGE_HANDLER = "COMMAND_HANDLER";
+	public final static String MESSAGE_HANDLER = "MESSAGE_HANDLER";
 	
 }
