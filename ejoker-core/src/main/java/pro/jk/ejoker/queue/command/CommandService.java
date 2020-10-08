@@ -20,6 +20,7 @@ import pro.jk.ejoker.infrastructure.ITypeNameProvider;
 import pro.jk.ejoker.queue.ITopicProvider;
 import pro.jk.ejoker.queue.QueueMessageTypeCode;
 import pro.jk.ejoker.queue.SendQueueMessageService;
+import pro.jk.ejoker.queue.SendQueueMessageService.SendServiceContext;
 import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jk.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 
@@ -86,12 +87,7 @@ public class CommandService implements ICommandService, IWorkerService {
 	public Future<Void> sendAsync(final ICommand command) {
 		return sendQueueMessageService.sendMessageAsync(
 				producer,
-				"command",
-				command.getClass().getSimpleName(),
-				buildCommandMessage(command),
-				command.getAggregateRootId(),
-				command.getId(),
-				command.getItems());
+				buildCommandMessage(command));
 	}
 
 	/**
@@ -110,12 +106,7 @@ public class CommandService implements ICommandService, IWorkerService {
 			await(systemAsyncHelper.submit(() -> {
 				return await(sendQueueMessageService.sendMessageAsync(
 						producer,
-						"command",
-						command.getClass().getSimpleName(),
-						buildCommandMessage(command, true),
-						command.getAggregateRootId(),
-						command.getId(),
-						command.getItems()));
+						buildCommandMessage(command, true)));
 			}));
 		} catch (Exception e) {
 			commandResultProcessor.processFailedSendingCommand(command);
@@ -126,21 +117,29 @@ public class CommandService implements ICommandService, IWorkerService {
 		
 	}
 
-	private EJokerQueueMessage buildCommandMessage(ICommand command){
+	private SendServiceContext buildCommandMessage(ICommand command){
 		return buildCommandMessage(command, false);
 	}
 
-	private EJokerQueueMessage buildCommandMessage(ICommand command, boolean needReply){
+	private SendServiceContext buildCommandMessage(ICommand command, boolean needReply){
 		Ensure.notNull(command.getAggregateRootId(), "aggregateRootId");
         String commandData = jsonConverter.convert(command);
         String topic = commandTopicProvider.getTopic(command);
         String replyAddress = needReply && (null!=commandResultProcessor) ? commandResultProcessor.getBindingAddress() : null;
         String messageData = jsonConverter.convert(new CommandMessage(commandData, replyAddress));
         String tag = typeNameProvider.getTypeName(command.getClass());
-        return new EJokerQueueMessage(
-            topic,
-            QueueMessageTypeCode.CommandMessage.ordinal(),
-            messageData.getBytes(Charset.forName("UTF-8")),
-            tag);
+
+		return new SendServiceContext(
+				"command",
+				command.getClass().getSimpleName(),
+				new EJokerQueueMessage(
+		            topic,
+		            QueueMessageTypeCode.CommandMessage.ordinal(),
+		            messageData.getBytes(Charset.forName("UTF-8")),
+		            tag),
+				messageData,
+				command.getAggregateRootId(),
+				command.getId(),
+				command.getItems());
 	}
 }

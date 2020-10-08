@@ -1,6 +1,8 @@
 package pro.jk.ejoker.eventing.qeventing.impl;
 
 import static pro.jk.ejoker.common.system.extension.LangUtil.await;
+import static pro.jk.ejoker.common.system.enhance.StringUtilx.fmt;
+import static pro.jk.ejoker.common.system.enhance.StringUtilx.isNullOrWhiteSpace;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -17,7 +19,6 @@ import pro.jk.ejoker.common.context.annotation.context.EService;
 import pro.jk.ejoker.common.service.IScheduleService;
 import pro.jk.ejoker.common.service.Scavenger;
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
-import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.exceptions.ArgumentException;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.common.system.task.io.IOHelper;
@@ -60,36 +61,54 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 	private long timeoutMillis = EJokerEnvironment.MAILBOX_IDLE_TIMEOUT;
 	
 	private long cleanInactivalMillis = EJokerEnvironment.IDLE_RELEASE_PERIOD;
+
+	@Override
+	public String processerName() {
+		return processorName;
+	}
 	
 	@EInitialize
 	private void init() {
 
 		scheduleService.startTask(
-				StringUtilx.fmt("{}@{}#cleanInactiveMailbox{}", this.getClass().getName(), this.hashCode()),
+				fmt("{}@{}#cleanInactiveMailbox", this.getClass().getName(), this.hashCode()),
 				this::cleanInactiveMailbox,
 				cleanInactivalMillis,
 				cleanInactivalMillis);
+
+		scheduleService.startTask(
+				fmt("{}@{}#repairContinuationAfterRebalance", this.getClass().getName(), this.hashCode()),
+				this::repairContinuationAfterRebalance,
+				2000l,
+				2000l);
 		
 	}
 	
 	@Override
 	public void process(ProcessingEvent processingMessage) {
 		String aggregateRootId = processingMessage.getMessage().getAggregateRootId();
-		if(StringUtilx.isNullOrWhiteSpace(aggregateRootId)) {
+		String aggregateRootTypeName = processingMessage.getMessage().getAggregateRootTypeName();
+		if(isNullOrWhiteSpace(aggregateRootId)) {
 			throw new ArgumentException("aggregateRootId of domain event stream cannot be null or empty, domainEventStreamId: " + processingMessage.getMessage().getId());
 		}
 		
 		ProcessingEventMailBox mailBox;
-		EnqueueMessageResult enqueueResult = null;
 		
 		do {
 			mailBox = MapUtilx.getOrAdd(mailboxDict, aggregateRootId, () -> {
 				long v = getAggregateRootLatestHandledEventVersion(processingMessage.getMessage().getAggregateRootTypeName(), aggregateRootId);
-				return new ProcessingEventMailBox(aggregateRootId, v+1, this::dispatchProcessingMessageAsync, systemAsyncHelper);
+				return new ProcessingEventMailBox(aggregateRootTypeName, aggregateRootId, v+1, this::dispatchProcessingMessageAsync, systemAsyncHelper);
 			});
 			if(mailBox.tryUse()) {
 				try {
-					enqueueResult = mailBox.enqueueMessage(processingMessage);
+					EnqueueMessageResult enqueueResult = mailBox.enqueueMessage(processingMessage);
+					switch (enqueueResult) {
+					case Ignored:
+						processingMessage.getProcessContext().notifyEventProcessed();
+						break;
+					default:
+						break;
+				}
 					break;
 				} finally {
 					mailBox.releaseUse();
@@ -98,17 +117,33 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
         		// ... 不入队，纯自旋 ...
 			}
 		} while (true);
-		
-		if(null != enqueueResult) {
-			switch (enqueueResult) {
-				case Ignored:
-					processingMessage.getProcessContext().notifyEventProcessed();
-					break;
-				default:
-					break;
-			}
-		}
 	}
+    
+    private void getAggregateRootLatestPublishedEventVersion(ProcessingEventMailBox processingEventMailBox)
+    {
+    	ioHelper.tryAsyncAction2(
+    			"GetAggregateRootLatestPublishedEventVersion",
+    			() -> publishedVersionStore.getPublishedVersionAsync(processerName(), processingEventMailBox.AggregateRootTypeName, processingEventMailBox.AggregateRootId),
+		        result -> processingEventMailBox.tryResetNextExpectingEventVersion(result + 1),
+		        () -> fmt("publishedVersionStore.getPublishedVersionAsync has unknown exception!!! [aggregateRootTypeName: {}, aggregateRootId: {}]",
+		        		processingEventMailBox.AggregateRootTypeName,
+		        		processingEventMailBox.AggregateRootId),
+		        e -> {},
+		        true);
+    }
+    
+    /**
+     * 检查那些有前一个消息在别处被处理了，单后一个版本没落到同一个节点上的情况
+     */
+    private void repairContinuationAfterRebalance() {
+    	mailboxDict
+    		.values()
+    		.stream()
+    		.filter(m -> !m.isRunning())
+    		.filter(m -> m.getTotalUnHandledMessageCount() > 1)
+    		.forEach(this::getAggregateRootLatestPublishedEventVersion)
+    		;
+    }
 	
 	private void dispatchProcessingMessageAsync(ProcessingEvent processingMessage) {
 		
@@ -117,7 +152,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				"DispatchProcessingMessageAsync",
 				() -> dispatcher.dispatchMessagesAsync(message.getEvents()),
 				() -> updatePublishedVersionAsync(processingMessage),
-				() -> StringUtilx.fmt(
+				() -> fmt(
 						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
 						message.getId(),
 						message.getClass().getName(),
@@ -151,7 +186,7 @@ public class DefaultProcessingEventProcessor implements IProcessingEventProcesso
 				() -> publishedVersionStore.updatePublishedVersionAsync(processorName,
 						message.getAggregateRootTypeName(), message.getAggregateRootId(), message.getVersion()),
 				() -> processingMessage.finish(),
-				() -> StringUtilx.fmt(
+				() -> fmt(
 						"[messageId: {}, messageType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
 						message.getId(),
 						message.getClass().getName(),

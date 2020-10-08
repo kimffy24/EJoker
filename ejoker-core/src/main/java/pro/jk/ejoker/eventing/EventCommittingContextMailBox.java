@@ -19,6 +19,7 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction1;
 import pro.jk.ejoker.common.system.helper.Ensure;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.common.system.wrapper.DiscardWrapper;
+import pro.jk.ejoker.eventing.eventingException.DuplicateEventStreamException;
 
 public class EventCommittingContextMailBox {
 
@@ -75,31 +76,21 @@ public class EventCommittingContextMailBox {
 	}
 
 	public void enqueueMessage(EventCommittingContext message) {
-		Map<String, Byte> eventDict = MapUtilx.getOrAdd(aggregateDictDict, message.getEventStream().getAggregateRootId(), () -> new ConcurrentHashMap<>());
+		DomainEventStream eventStream = message.getEventStream();
+		Map<String, Byte> eventDict = MapUtilx.getOrAdd(aggregateDictDict, eventStream.getAggregateRootId(), () -> new ConcurrentHashMap<>());
 		// 添加成功，则...
-		if(null == eventDict.putIfAbsent(message.getEventStream().getId(), (byte )1)) {
+		if(null == eventDict.putIfAbsent(eventStream.getId(), (byte )1)) {
 			message.setMailBox(this);
 			messageQueue.offer(message);
-			if(logger.isDebugEnabled()) {
-				String eIds = "";
-				Iterator<IDomainEvent<?>> iterator = message.getEventStream().getEvents().iterator();
-				while(iterator.hasNext()) {
-					eIds += "|" + iterator.next().getId();
-				}
-				eIds = eIds.substring(1);
-				logger.debug(
-						"{} enqueued new message. [mailboxNumber: {}, aggregateRootId: {}, commandId: {}, eventVersion: {}, eventStreamId: {}, eventIds: {}]",
-						this.getClass().getSimpleName(),
-						number,
-						message.getAggregateRoot().getUniqueId(),
-						message.getProcessingCommand().getMessage().getId(),
-						message.getEventStream().getVersion(),
-						message.getEventStream().getId(),
-						eIds
-						);
-			}
+			logger.debug(
+					"{} enqueued new message. [mailboxNumber: {}, message: {}]",
+					this.getClass().getSimpleName(),
+					number,
+					eventStream);
 			lastActiveTime = System.currentTimeMillis();
 			tryRun();
+		} else {
+			throw new DuplicateEventStreamException(eventStream);
 		}
 	}
 

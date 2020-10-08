@@ -38,10 +38,12 @@ public class ApplicationMessageConsumer extends AbstractEJokerQueueConsumer {
 	@Override
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		
+		String applicationMessageString = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
+		logger.debug("Received application message. [queueMessage: {}, body: {}]", queueMessage, applicationMessageString);
+		
         Class<? extends IApplicationMessage> applicationMessageType = (Class<? extends IApplicationMessage> )typeNameProvider.getType(queueMessage.getTag());
-        IApplicationMessage message = jsonSerializer.revert(new String(queueMessage.getBody(), Charset.forName("UTF-8")), applicationMessageType);
+        IApplicationMessage message = jsonSerializer.revert(applicationMessageString, applicationMessageType);
 
-        logger.debug("EJoker application message received. [messageId: {}, messageType: {}]", message.getId(), applicationMessageType.getSimpleName());
         systemAsyncHelper.submit(() -> {
         	await(messageDispatcher.dispatchMessageAsync(message));
         	context.onMessageHandled(queueMessage);

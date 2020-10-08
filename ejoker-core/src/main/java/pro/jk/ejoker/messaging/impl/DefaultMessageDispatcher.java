@@ -8,10 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
+import pro.jk.ejoker.common.context.annotation.context.EInitialize;
 import pro.jk.ejoker.common.context.annotation.context.EService;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jk.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
+import pro.jk.ejoker.common.system.functional.IFunction;
+import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.common.system.task.io.IOHelper;
 import pro.jk.ejoker.common.system.wrapper.CountDownLatchWrapper;
@@ -33,6 +36,19 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 	
 	@Dependence
 	private MessageHandlerPool messageHandlerPool;
+	
+	private IVoidFunction2<IFunction<Future<Void>>, String> multiMsgIoHandle = null;
+	
+	@EInitialize
+	private void eInit() {
+		multiMsgIoHandle = (mainAction, cxtInfo) -> systemAsyncHelper.submit(() -> ioHelper.tryAsyncAction2(
+				"HandleMultiMessageAsync",
+				mainAction::trigger,
+				() -> {},
+				() -> cxtInfo,
+				true)
+			);
+	}
 	
 	@Override
 	public Future<Void> dispatchMessageAsync(IMessage message) {
@@ -86,7 +102,7 @@ public class DefaultMessageDispatcher implements IMessageDispatcher {
 
 			// 适配多个message的handler
 			// ...
-			messageHandlerPool.processMultiMessages(msgArray);
+			messageHandlerPool.processMultiMessages(multiMsgIoHandle, msgArray);
 			
 		});
 		

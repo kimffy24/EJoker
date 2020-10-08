@@ -38,7 +38,6 @@ import pro.jk.ejoker.queue.skeleton.aware.IEJokerQueueMessageContext;
 @EService
 public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
-	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(CommandConsumer.class);
 
 	@Dependence
@@ -66,8 +65,10 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 	public void handle(EJokerQueueMessage queueMessage, IEJokerQueueMessageContext context) {
 		// Here QueueMessage is a carrier of Command
 		// separate it from QueueMessage；
-		HashMap<String, String> commandItems = new HashMap<>();
 		String messageBody = new String(queueMessage.getBody(), Charset.forName("UTF-8"));
+		logger.debug("Received command queue message. [queueMessage: {}, body: {}]", queueMessage, messageBody);
+		
+		HashMap<String, String> commandItems = new HashMap<>();
 		CommandMessage commandMessage = jsonSerializer.revert(messageBody, CommandMessage.class);
 		Class<? extends ICommand> commandType = (Class<? extends ICommand>) typeNameProvider.getType(queueMessage.getTag());
 		ICommand command = jsonSerializer.revert(commandMessage.commandData, commandType);

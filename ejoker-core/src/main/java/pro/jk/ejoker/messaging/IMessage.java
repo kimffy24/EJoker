@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface IMessage {
 
-    public void setId(String id);
+	public void setId(String id);
     public String getId();
     
     public long getTimestamp();

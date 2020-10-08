@@ -23,9 +23,6 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	private final SystemAsyncHelper systemAsyncHelper;
 	
 	private final IVoidFunction1<ProcessingEvent> handler;
-
-	
-	private String aggregateRootId;
 	
 	private final Map<Long, ProcessingEvent> arrivedMessageDict;
 	
@@ -34,6 +31,10 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	private AtomicBoolean onRunning = new AtomicBoolean(false);
 
 	private long lastActiveTime = System.currentTimeMillis();
+
+	public final String AggregateRootId;
+	
+	public final String AggregateRootTypeName;
 
 	public long getLastActiveTime() {
 		return lastActiveTime;
@@ -49,7 +50,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	
 	public long getTotalUnHandledMessageCount() {
 		long nextExpecting = nextExpectingEventVersion;
-		return arrivedMessageDict.entrySet().parallelStream().mapToInt(e -> (nextExpecting <= e.getValue().getMessage().getVersion())?1:0).sum();
+		return arrivedMessageDict.values().stream().mapToInt(e -> (nextExpecting <= e.getMessage().getVersion())?1:0).sum();
 	}
 	
 	public boolean hasRemindMessage() {
@@ -60,14 +61,15 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 		return arrivedMessageDict.containsKey(nextExpectingEventVersion);
 	}
 	
-	public ProcessingEventMailBox(String aggregateRootId, long nextExpectingEventVersion,
+	public ProcessingEventMailBox(String aggregateRootTypeName, String aggregateRootId, long nextExpectingEventVersion,
 			IVoidFunction1<ProcessingEvent> handleMessageAction, SystemAsyncHelper systemAsyncHelper) {
 		
 		Ensure.notNull(systemAsyncHelper, "systemAsyncHelper");
 		this.systemAsyncHelper = systemAsyncHelper;
 		this.handler = handleMessageAction;
 
-		this.aggregateRootId = aggregateRootId;
+		this.AggregateRootTypeName = aggregateRootTypeName;
+		this.AggregateRootId = aggregateRootId;
 		this.arrivedMessageDict = new ConcurrentHashMap<>();
 		this.nextExpectingEventVersion = nextExpectingEventVersion;
 	}
@@ -135,7 +137,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	 */
 	public void tryRun() {
 		if(onRunning.compareAndSet(false, true)) {
-			logger.debug("{} start run. [aggregateRootId: {}]", this.getClass().getSimpleName(), aggregateRootId);
+			logger.debug("{} start run. [aggregateRootId: {}]", this.getClass().getSimpleName(), AggregateRootId);
 			systemAsyncHelper.submit(this::processMessage, false);
 		}
 	}
@@ -146,7 +148,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 	public void finishRun() {
 		lastActiveTime = System.currentTimeMillis();
 		logger.debug("{} finish run. [mailboxNumber: {}]",
-				this.getClass().getSimpleName(), aggregateRootId);
+				this.getClass().getSimpleName(), AggregateRootId);
 		onRunning.compareAndSet(true, false);
 		if (isContinuable()) {
 			tryRun();
@@ -170,7 +172,7 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 				// handler调用最后会执行finishRun()方法
 			} catch (RuntimeException ex) {
 				logger.error("{} run has unknown exception. [aggregateRootId: {}]",
-						this.getClass().getSimpleName(), aggregateRootId, ex);
+						this.getClass().getSimpleName(), AggregateRootId, ex);
 				DiscardWrapper.sleepInterruptable(1l);
 				finishRun();
 			}
@@ -179,4 +181,19 @@ public class ProcessingEventMailBox extends EasyCleanMailbox {
 		}
 	}
 	
+	public void tryResetNextExpectingEventVersion(long nextExpectingEventVersion) {
+		if(onRunning.compareAndSet(false, true)) {
+			logger.debug("{} reset new expecting event version. [aggregateRootId: {}, newVersion: {}, currentVersion: {}]",
+					this.getClass().getSimpleName(),
+					AggregateRootId,
+					nextExpectingEventVersion,
+					this.nextExpectingEventVersion
+					);
+			this.nextExpectingEventVersion = nextExpectingEventVersion;
+			onRunning.compareAndSet(true, false);
+			if (isContinuable()) {
+				tryRun();
+			}
+		}
+	}
 }

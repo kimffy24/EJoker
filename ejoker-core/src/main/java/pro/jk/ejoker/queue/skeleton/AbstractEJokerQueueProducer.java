@@ -7,6 +7,7 @@ import pro.jk.ejoker.common.service.IWorkerService;
 import pro.jk.ejoker.messaging.IMessage;
 import pro.jk.ejoker.messaging.IMessagePublisher;
 import pro.jk.ejoker.queue.SendQueueMessageService;
+import pro.jk.ejoker.queue.SendQueueMessageService.SendServiceContext;
 import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jk.ejoker.queue.skeleton.aware.IProducerWrokerAware;
 
@@ -48,14 +49,17 @@ public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> imp
 
 	@Override
 	public Future<Void> publishAsync(TMessage message) {
+//		return sendQueueMessageService.sendMessageAsync(
+//				producer,
+//				this.getMessageType(message),
+//				this.getMessageClassDesc(message),
+//				this.createEQueueMessage(message),
+//				this.getRoutingKey(message),
+//				message.getId(),
+//				message.getItems());
 		return sendQueueMessageService.sendMessageAsync(
 				producer,
-				this.getMessageType(message),
-				this.getMessageClassDesc(message),
-				this.createEQueueMessage(message),
-				this.getRoutingKey(message),
-				message.getId(),
-				message.getItems());
+				this.createEQueueMessage(message));
 	}
 	
 	@Override
@@ -67,7 +71,7 @@ public abstract class AbstractEJokerQueueProducer<TMessage extends IMessage> imp
 	
 	abstract protected String getRoutingKey(TMessage message);
 	
-	abstract protected EJokerQueueMessage createEQueueMessage(TMessage message);
+	abstract protected SendServiceContext createEQueueMessage(TMessage message);
 	
 	protected String getMessageClassDesc(TMessage message) {
 		return message.getClass().getSimpleName();

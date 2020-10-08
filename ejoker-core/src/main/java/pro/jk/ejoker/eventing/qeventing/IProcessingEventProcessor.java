@@ -4,5 +4,5 @@ public interface IProcessingEventProcessor {
 
 	void process(ProcessingEvent processingEvent);
 	
-	
+	String processerName();
 }

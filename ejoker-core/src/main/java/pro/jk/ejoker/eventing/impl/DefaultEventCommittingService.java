@@ -145,7 +145,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 					EventCommittingContextMailBox eventMailBox = committingContexts.get(0).getMailBox();
 					
 					if(null == appendResult) {
-						logger.error("Batch persist events success, but the persist result is null, the current event committing mailbox should be pending. [mailboxNumber: {}]",
+						logger.error("BatchPersistAggregateEvents result is null, the current event committing mailbox should be pending. [mailboxNumber: {}]",
 								eventMailBox.getNumber());
 						return;
 					}
@@ -163,44 +163,59 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 				        EachUtilx.forEach(successIds, aggregateRootId -> {
 							List<EventCommittingContext> committingContextList = groupCommittedContextDict.get(aggregateRootId);
 							if(null != committingContextList && !committingContextList.isEmpty()) {
+								if (logger.isDebugEnabled()) {
+									logger.debug(
+											"BatchPersistAggregateEvents succeed. [mailboxNumber: {}, aggregateRootId: {}, events: {}]",
+											eventMailBox.getNumber(),
+		                                    aggregateRootId,
+		                                    committingContextList
+		                                    	.stream()
+		                                    	.map(EventCommittingContext::getEventStream)
+		                                    	.map(DomainEventStream::toString)
+		                                    	.reduce((x, y) -> x + ", " + y)
+		                                    	.get()
+		                                    );
+								}
 								for(EventCommittingContext ecc : committingContextList) {
 				        			publishDomainEventAsync(ecc.getProcessingCommand(), ecc.getEventStream());
 				        		}
-								if (logger.isDebugEnabled()) {
-									logger.debug("Batch persist events success. [mailboxNumber: {}, aggregateRootId: {}]",
-	                                    eventMailBox.getNumber(),
-	                                    aggregateRootId);
-	                            }
 							}
 						});
 						
 					}
 					
-					if(null != appendResult.getDuplicateCommandAggregateRootIdList() && !appendResult.getDuplicateCommandAggregateRootIdList().isEmpty()) {
+					Map<String, List<String>> duplicateCommandAggregateRootIdList = appendResult.getDuplicateCommandAggregateRootIdList();
 		                //针对持久化出现重复的命令ID，则重新发布这些命令对应的领域事件到Q端
-						EachUtilx.forEach(appendResult.getDuplicateCommandAggregateRootIdList(), (aggregateRootId, duplicateCommandIdList) -> {
+						EachUtilx.forEach(duplicateCommandAggregateRootIdList, (aggregateRootId, duplicateCommandIdList) -> {
 							List<EventCommittingContext> contextList = groupCommittedContextDict.get(aggregateRootId);
 							if(null == contextList || contextList.isEmpty()) return;
-							EventCommittingContext eventCommittingContextDuplicated = contextList.get(0);
+							EventCommittingContext committingContext = contextList.get(0);
 							
-							logger.warn("Batch persist events has duplicate commandIds. [mailboxNumber: {}, aggregateRootId: {}, commandIds: {}]",
+							logger.warn("BatchPersistAggregateEvents has duplicate commandIds. [mailboxNumber: {}, aggregateRootId: {}, commandIds: {}]",
 	                                eventMailBox.getNumber(), aggregateRootId, duplicateCommandIdList);
-							
-							await(resetCommandMailBoxConsumingSequence(eventCommittingContextDuplicated, eventCommittingContextDuplicated.getProcessingCommand().getSequence(), duplicateCommandIdList));
-							tryToRepublishEventAsync(eventCommittingContextDuplicated);
+
+							if(1l == committingContext.getEventStream().getVersion()) {
+								await(handleFirstEventDuplicationAsync(committingContext));
+							} else {
+								await(resetCommandMailBoxConsumingSequence(committingContext, committingContext.getProcessingCommand().getSequence(), duplicateCommandIdList));
+							}
 						});
-						
-					}
 					
-					if(null != appendResult.getDuplicateEventAggregateRootIdList() && !appendResult.getDuplicateEventAggregateRootIdList().isEmpty()) {
+					Set<String> duplicateAggrIdList = appendResult.getDuplicateEventAggregateRootIdList();
+					if(null != duplicateAggrIdList && !duplicateAggrIdList.isEmpty()) {
 		                //针对持久化出现版本冲突的聚合根，则自动处理每个聚合根的冲突
-						Set<String> duplicateAggrIdList = appendResult.getDuplicateEventAggregateRootIdList();
 						for(String aggregateRootId : duplicateAggrIdList) {
-							Optional<EventCommittingContext> committingContextOp = committingContexts.stream().filter(x -> aggregateRootId.equals(x.getEventStream().getAggregateRootId())).findFirst();
+							Optional<EventCommittingContext> committingContextOp = committingContexts
+									.stream()
+									.filter(x -> aggregateRootId.equals(x.getEventStream().getAggregateRootId()))
+									.findFirst();
 							if(committingContextOp.isPresent()) {
 								EventCommittingContext eventCommittingContext = committingContextOp.get();
-								logger.warn("Batch persist events has version confliction. [mailboxNumber: {}, aggregateRootId: {}, conflictVersion: {}]",
-										eventMailBox.getNumber(), aggregateRootId, eventCommittingContext.getEventStream().getVersion()
+								logger.warn(
+										"BatchPersistAggregateEvents has version confliction. [mailboxNumber: {}, aggregateRootId: {}, conflictVersion: {}]",
+										eventMailBox.getNumber(),
+										aggregateRootId,
+										eventCommittingContext.getEventStream().getVersion()
 										);
 
 								if(1l == eventCommittingContext.getEventStream().getVersion()) {
@@ -298,7 +313,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
                         //出现这种情况，我们就无法再做后续处理了，这种错误理论上不会出现，除非eventStore的Add接口和Get接口出现读写不一致的情况；
                         //框架会记录错误日志，让开发者排查具体是什么问题。
                     	String errorMessage = StringUtilx.fmt(
-                    			"Command should be exist in the event store, but we cannot find it from the event store, this should not be happen, and we cannot continue again!!! [commandType: {}, commandId: {}, aggregateRootId: {}]",
+                    			"Command should be exist in the event store, but we cannot find it from the event store, this should not be happen, and we just complete the command!!! [commandType: {}, commandId: {}, aggregateRootId: {}]",
 	                            command.getClass().getName(),
 	                            command.getId(),
 	                            command.getAggregateRootId());
@@ -352,8 +367,8 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 									firstEventStream.getAggregateRootId(),
 									firstEventStream.getAggregateRootTypeName());
 
-							resetCommandMailBoxConsumingSequence(context,
-									context.getProcessingCommand().getSequence() + 1).thenAcceptAsync(t -> {
+							resetCommandMailBoxConsumingSequence(context, context.getProcessingCommand().getSequence() + 1)
+									.thenAcceptAsync(t -> {
 										CommandResult commandResult = new CommandResult(CommandStatus.Failed, commandId,
 												eventStream.getAggregateRootId(), "Duplicate aggregate creation.",
 												String.class.getName());
@@ -363,7 +378,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
     					}
     				} else {
     					
-						logger.error("Duplicate aggregate creation, but we cannot find the existing eventstream from eventstore, this should not be happen, and we cannot continue again!!! [commandId: {}, aggregateRootId: {}, aggregateRootTypeName: {}]",
+						logger.error("Duplicate aggregate creation, but we cannot find the existing eventstream from eventstore, this should not be happen, and we just complete the command!!! [commandId: {}, aggregateRootId: {}, aggregateRootTypeName: {}]",
     	                        eventStream.getCommandId(),
     	                        eventStream.getAggregateRootId(),
     	                        eventStream.getAggregateRootTypeName());

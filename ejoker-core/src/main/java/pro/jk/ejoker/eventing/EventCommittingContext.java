@@ -1,13 +1,10 @@
 package pro.jk.ejoker.eventing;
 
 import pro.jk.ejoker.commanding.ProcessingCommand;
-import pro.jk.ejoker.domain.IAggregateRoot;
 
 public class EventCommittingContext {
 	
 	private EventCommittingContextMailBox  mailBox;
-	
-	private IAggregateRoot aggregateRoot;
 	
 	private DomainEventStream eventStream;
 	
@@ -21,10 +18,6 @@ public class EventCommittingContext {
 		this.mailBox = mailbox;
 	}
 	
-	public IAggregateRoot getAggregateRoot() {
-		return aggregateRoot;
-	}
-
 	public DomainEventStream getEventStream() {
 		return eventStream;
 	}
@@ -33,8 +26,7 @@ public class EventCommittingContext {
 		return processingCommand;
 	}
 
-	public EventCommittingContext(IAggregateRoot aggregateRoot, DomainEventStream eventSteam, ProcessingCommand processingCommand) {
-		this.aggregateRoot = aggregateRoot;
+	public EventCommittingContext(DomainEventStream eventSteam, ProcessingCommand processingCommand) {
 		this.eventStream = eventSteam;
 		this.processingCommand = processingCommand;
 	}

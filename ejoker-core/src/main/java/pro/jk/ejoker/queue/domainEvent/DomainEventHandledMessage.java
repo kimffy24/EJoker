@@ -1,13 +1,6 @@
 package pro.jk.ejoker.queue.domainEvent;
 
-import java.io.Serializable;
-
-import pro.jk.ejoker.common.context.annotation.persistent.PersistentIgnore;
-
-public class DomainEventHandledMessage implements Serializable {
-
-	@PersistentIgnore
-	private static final long serialVersionUID = -2006858053308658411L;
+public class DomainEventHandledMessage {
 
 	private String commandId;
 	

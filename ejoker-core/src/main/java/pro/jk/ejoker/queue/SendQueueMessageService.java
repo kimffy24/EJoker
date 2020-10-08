@@ -34,23 +34,26 @@ public class SendQueueMessageService {
 	@Dependence
 	private Scavenger scavenger;
 	
+//	public Future<Void> sendMessageAsync(
+//			IProducerWrokerAware producer,
+//			String messageType,
+//			String messageClass,
+//			EJokerQueueMessage message,
+//			String routingKey,
+//			String messageId,
+//			Map<String, String> messageExtensionItems)
+//	{
+//
 	public Future<Void> sendMessageAsync(
 			IProducerWrokerAware producer,
-			String messageType,
-			String messageClass,
-			EJokerQueueMessage message,
-			String routingKey,
-			String messageId,
-			Map<String, String> messageExtensionItems)
+			SendServiceContext cxt)
 	{
 		
-		SendServiceContext cxt = new SendServiceContext(messageType, messageClass, message, routingKey, messageId, messageExtensionItems);
-
 		if (EJokerEnvironment.ASYNC_EJOKER_MESSAGE_SEND) {
 
 			return threadPoolExecutor.submit(() -> {
 				try {
-					producer.send(message, routingKey, cxt);
+					producer.send(cxt.message, cxt.routingKey, cxt);
 					return null;
 				} catch (Exception e) {
 					throw new IOExceptionOnRuntime(e instanceof IOException ? (IOException )e : new IOException(e));
@@ -60,7 +63,7 @@ public class SendQueueMessageService {
 		} else {
 
 			// use eJoker inner executor service
-			return systemAsyncHelper.submit(() -> producer.send(message, routingKey, cxt));
+			return systemAsyncHelper.submit(() -> producer.send(cxt.message, cxt.routingKey, cxt));
 			
 		}
 
@@ -115,24 +118,27 @@ public class SendQueueMessageService {
 
 	public final static class SendServiceContext implements IProducerWrokerAware.ContextAware {
 
-		private final String messageType;
+		public final String messageType;
 		
-		private final String messageClass;
+		public final String messageClass;
 		
-		private final EJokerQueueMessage message;
+		public final EJokerQueueMessage message;
 		
-		private final String routingKey;
+		public final String bodyString;
 		
-		private final String messageId;
+		public final String routingKey;
 		
-		private final Map<String, String> messageExtensionItems;
+		public final String messageId;
+		
+		public final Map<String, String> messageExtensionItems;
 
-		public SendServiceContext(String messageType, String messageClass, EJokerQueueMessage message,
+		public SendServiceContext(String messageType, String messageClass, EJokerQueueMessage message, String bodyString,
 				String routingKey, String messageId, Map<String, String> messageExtensionItems) {
 			super();
 			this.messageType = messageType;
 			this.messageClass = messageClass;
 			this.message = message;
+			this.bodyString = bodyString;
 			this.routingKey = routingKey;
 			this.messageId = messageId;
 			this.messageExtensionItems = messageExtensionItems;
@@ -142,9 +148,10 @@ public class SendQueueMessageService {
 		public void triggerSuccess() {
 
 			logger.debug(
-					"EJoker message send suceess. [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
+					"EJoker message send suceess. [topType: {}, message: {}, messageBody: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
 					messageType,
 					message,
+					bodyString,
 					"ok",
 					routingKey,
 					messageClass,
@@ -158,9 +165,10 @@ public class SendQueueMessageService {
 		public void triggerFaild(String reason) {
 			
 			logger.error(
-					"EJoker message send failed! [topType: {}, message: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
+					"EJoker message send failed! [topType: {}, message: {}, messageBody: {}, sendResult: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
 					messageType,
 					message,
+					bodyString,
 					reason,
 					routingKey,
 					messageClass,
@@ -174,9 +182,10 @@ public class SendQueueMessageService {
 		public void triggerException(Exception e) {
 			
 			logger.error(
-					"EJoker message send failed!!! [topType: {}, message: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
+					"EJoker message send failed!!! [topType: {}, message: {}, messageBody: {}, routingKey: {}, messageType: {}, messageId: {}, messageExtensionItems: {}]",
 					messageType,
 					message,
+					bodyString,
 					routingKey,
 					messageClass,
 					messageId,

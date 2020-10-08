@@ -223,7 +223,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 		);
         //将事件流提交到EventStore
 		// TODO event提交从这里开始(可以作为调试点)
-		eventCommittingService.commitDomainEventAsync(new EventCommittingContext(dirtyAggregateRoot, eventStream, processingCommand));
+		eventCommittingService.commitDomainEventAsync(new EventCommittingContext(eventStream, processingCommand));
 		
 	}
 	
