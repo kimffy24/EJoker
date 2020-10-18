@@ -146,7 +146,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		return ripenFuture;
 	}
 
-	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, Collection<DomainEventStream> eventStreams) {
+	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, List<DomainEventStream> eventStreams) {
 		if (null == eventStreams || eventStreams.isEmpty())
 			return null;
 

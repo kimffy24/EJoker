@@ -1,6 +1,6 @@
 package pro.jk.ejoker.domain;
 
-import java.util.Collection;
+import java.util.List;
 
 import pro.jk.ejoker.eventing.DomainEventStream;
 import pro.jk.ejoker.eventing.IDomainEvent;
@@ -11,10 +11,10 @@ public interface IAggregateRoot {
 	
 	public long getVersion();
 	
-	public Collection<IDomainEvent<?>> getChanges();
+	public List<IDomainEvent<?>> getChanges();
     
 	public void acceptChanges();
 	
-	public void replayEvents(Collection<DomainEventStream> eventStreams);
+	public void replayEvents(List<DomainEventStream> eventStreams);
 
 }

@@ -87,7 +87,6 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 			// 这里有个由String类型Id转换为实际泛型类型的id的逻辑。
 			// this.id = domainEvent.getAggregateRootStringId();
 			IDHelper.setAggregateRootId(this, domainEvent.getAggregateRootStringId());
-			
 		}
 		
 		AggregateRootHandlerPool.invokeInternalHandler(this, domainEvent);
@@ -98,7 +97,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 		if(null == uncommittedEvents) {
 			uncommittedEvents = new ArrayList<>();
 		}
-		
+
 
 		if(!uncommittedEvents.isEmpty()) {
 			Class<?> eType = domainEvent.getClass();
@@ -106,9 +105,9 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 				if(eType.equals(x.getClass())) {
 					throw new InvalidOperationException(
 						StringUtilx.fmt(
-							"Cannot apply duplicated domain event!!! [domainEventType: {}, aggregateRootType: {}, aggregateRootTd: {}",
+							"Cannot apply duplicated domain event!!! [domainEventType: {}, aggregateRootType: {}, aggregateRootId: {}",
 							eType.getName(),
-							AbstractAggregateRoot.this.getClass().getName(),
+							getClass().getName(),
 							id
 					));
 				}
@@ -156,7 +155,7 @@ public abstract class AbstractAggregateRoot<TAggregateRootId> implements IAggreg
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void replayEvents(Collection<DomainEventStream> eventStreams) {
+	public void replayEvents(List<DomainEventStream> eventStreams) {
 		if(null == eventStreams || eventStreams.isEmpty())
 			return;
 		
