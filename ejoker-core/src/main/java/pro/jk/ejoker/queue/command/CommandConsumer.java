@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.domain.IAggregateRoot;
 import pro.jk.ejoker.domain.IAggregateStorage;
 import pro.jk.ejoker.domain.IRepository;
+import pro.jk.ejoker.domain.domainException.AggregateRootReferenceChangedException;
 import pro.jk.ejoker.infrastructure.ITypeNameProvider;
 import pro.jk.ejoker.messaging.IApplicationMessage;
 import pro.jk.ejoker.queue.SendReplyService;
@@ -93,7 +95,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
 		private String result;
 
-		private final Map<String, IAggregateRoot> trackingAggregateRootDict = new HashMap<>();
+		private final Map<String, AggreagateTrackingTuple> trackingAggregateRootDict = new HashMap<>();
 
 		private final EJokerQueueMessage message;
 
@@ -127,7 +129,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 			if (aggregateRoot == null)
 				throw new ArgumentNullException("aggregateRoot");
 			String uniqueId = aggregateRoot.getUniqueId();
-			if (null != trackingAggregateRootDict.putIfAbsent(uniqueId, aggregateRoot))
+			if (null != trackingAggregateRootDict.putIfAbsent(uniqueId, AggreagateTrackingTuple.of(aggregateRoot)))
 				throw new AggregateRootAlreadyExistException(uniqueId, aggregateRoot.getClass());
 		}
 
@@ -151,7 +153,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 
 		@Override
 		public Collection<IAggregateRoot> getTrackedAggregateRoots() {
-			return trackingAggregateRootDict.values();
+			return trackingAggregateRootDict.values().stream().map(u -> u.aggr).collect(Collectors.toList());
 		}
 
 		@Override
@@ -159,6 +161,15 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 			trackingAggregateRootDict.clear();
 			result = null;
 			applicationMessage = null;
+		}
+
+		@Override
+		public void ensureTrackedAggregateNotPolluted() {
+			trackingAggregateRootDict.values().forEach(t -> {
+				if(t.aggr.getVersion() != t.version) {
+					throw new AggregateRootReferenceChangedException(t.aggr);
+				}
+			});
 		}
 
 		@Override
@@ -189,11 +200,13 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 			// }
 
 			String aggregateRootId = id.toString();
-			IAggregateRoot aggregateRoot = null;
 
+			AggreagateTrackingTuple u;
 			// try get aggregate root from the last execute context.
-			if (null != (aggregateRoot = trackingAggregateRootDict.get(aggregateRootId)))
-				return (T) aggregateRoot;
+			if (null != (u = trackingAggregateRootDict.get(aggregateRootId)))
+				return (T) u.aggr;
+			
+			IAggregateRoot aggregateRoot = null;
 
 			if (tryFromCache)
 				// TODO @await
@@ -202,13 +215,28 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 				// TODO @await
 				aggregateRoot = await(aggregateRootStorage.getAsync((Class<IAggregateRoot>) clazz, aggregateRootId));
 			if (aggregateRoot != null) {
-				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), aggregateRoot);
+				trackingAggregateRootDict.put(aggregateRoot.getUniqueId(), AggreagateTrackingTuple.of(aggregateRoot));
 				return (T) aggregateRoot;
 			}
 			
 			return null;
 		}
 
+	}
+	
+	public final static class AggreagateTrackingTuple {
+		public final IAggregateRoot aggr;
+		public final long version;
+		public AggreagateTrackingTuple(IAggregateRoot aggr, long version) {
+			this.aggr = aggr;
+			this.version = version;
+		}
+		public static AggreagateTrackingTuple of(IAggregateRoot aggr, long version) {
+			return new AggreagateTrackingTuple(aggr, version);
+		}
+		public static AggreagateTrackingTuple of(IAggregateRoot aggr) {
+			return of(aggr, aggr.getVersion());
+		}
 	}
 
 }

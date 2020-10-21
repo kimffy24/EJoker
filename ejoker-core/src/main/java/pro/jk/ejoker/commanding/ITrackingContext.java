@@ -9,5 +9,7 @@ public interface ITrackingContext {
 	public Collection<IAggregateRoot> getTrackedAggregateRoots();
 	
 	public void clear();
+	
+	public void ensureTrackedAggregateNotPolluted();
     
 }

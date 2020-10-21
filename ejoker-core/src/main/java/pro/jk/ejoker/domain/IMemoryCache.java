@@ -24,13 +24,20 @@ public interface IMemoryCache {
 //         * @param aggregateRootId
 //         */
 //        public SystemFutureWrapper<Void> refreshAggregateFromEventStoreAsync(String aggregateRootTypeName, String aggregateRootId);
+//        
+//        /**
+//         * Update the given aggregate root's memory cache.
+//         * @param aggregateRoot
+//         * @return
+//         */
+//        public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot);
         
         /**
-         * Update the given aggregate root's memory cache.
+         * Accept the given aggregate root's changes.
          * @param aggregateRoot
          * @return
          */
-        public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot);
+        public Future<Void> acceptAggregateRootChanges(IAggregateRoot aggregateRoot);
         
         /**
          * 
