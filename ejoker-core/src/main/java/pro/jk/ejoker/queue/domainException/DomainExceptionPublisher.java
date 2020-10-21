@@ -10,6 +10,7 @@ import pro.jk.ejoker.domain.domainException.IDomainException;
 import pro.jk.ejoker.infrastructure.ITypeNameProvider;
 import pro.jk.ejoker.queue.ITopicProvider;
 import pro.jk.ejoker.queue.QueueMessageTypeCode;
+import pro.jk.ejoker.queue.SendQueueMessageService.SendServiceContext;
 import pro.jk.ejoker.queue.skeleton.AbstractEJokerQueueProducer;
 import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 import pro.jk.ejoker.utils.domainExceptionHelper.DomainExceptionCodecHelper;
@@ -27,7 +28,7 @@ public class DomainExceptionPublisher extends AbstractEJokerQueueProducer<IDomai
 	private ITypeNameProvider typeNameProvider;
 
 	@Override
-	protected EJokerQueueMessage createEQueueMessage(IDomainException exception) {
+	protected SendServiceContext createEQueueMessage(IDomainException exception) {
 		String topic = messageTopicProvider.getTopic(exception);
 		final Map<String, String> serializableInfo = DomainExceptionCodecHelper.serialize(exception, false);
 		DomainExceptionMessage pMsg = new DomainExceptionMessage();
@@ -38,8 +39,18 @@ public class DomainExceptionPublisher extends AbstractEJokerQueueProducer<IDomai
 			pMsg.setItems(exception.getItems());
 		}
 		String data = jsonConverter.convert(pMsg);
-		return new EJokerQueueMessage(topic, QueueMessageTypeCode.ExceptionMessage.ordinal(),
-				data.getBytes(Charset.forName("UTF-8")), typeNameProvider.getTypeName(exception.getClass()));
+
+		return new SendServiceContext(this.getMessageType(exception),
+				this.getMessageClassDesc(exception),
+				new EJokerQueueMessage(
+						topic,
+						QueueMessageTypeCode.ExceptionMessage.ordinal(),
+						data.getBytes(Charset.forName("UTF-8")),
+						typeNameProvider.getTypeName(exception.getClass())),
+				data,
+				this.getRoutingKey(exception),
+				exception.getId(),
+				exception.getItems());
 	}
 
 	@Override

@@ -90,7 +90,7 @@ public class Pipeline<R> implements Runnable {
 		return add(r -> { return nextTaskx.trigger(r, arg1, arg2, arg3, arg4, arg5); });
 	}
 
-	public Runnable add(IVoidFunction1<R> nextTask) {
+	public Runnable end(IVoidFunction1<R> nextTask) {
 		if (null == next && null == end) {
 			EndPipeline<R> e = new EndPipeline<>(nextTask);
 			this.end = e;
@@ -99,24 +99,24 @@ public class Pipeline<R> implements Runnable {
 		throw new RuntimeException("Unsupport multi pipeline!!!");
 	}
 	
-	public <T1> Runnable add(IVoidFunction2<R, T1> nextTaskx, T1 arg1) {
-		return add(r -> { nextTaskx.trigger(r, arg1); });
+	public <T1> Runnable end(IVoidFunction2<R, T1> nextTaskx, T1 arg1) {
+		return end(r -> { nextTaskx.trigger(r, arg1); });
 	}
 	
-	public <T1, T2> Runnable add(IVoidFunction3<R, T1, T2> nextTaskx, T1 arg1, T2 arg2) {
-		return add(r -> { nextTaskx.trigger(r, arg1, arg2); });
+	public <T1, T2> Runnable end(IVoidFunction3<R, T1, T2> nextTaskx, T1 arg1, T2 arg2) {
+		return end(r -> { nextTaskx.trigger(r, arg1, arg2); });
 	}
 	
-	public <T1, T2, T3> Runnable add(IVoidFunction4<R, T1, T2, T3> nextTaskx, T1 arg1, T2 arg2, T3 arg3) {
-		return add(r -> { nextTaskx.trigger(r, arg1, arg2, arg3); });
+	public <T1, T2, T3> Runnable end(IVoidFunction4<R, T1, T2, T3> nextTaskx, T1 arg1, T2 arg2, T3 arg3) {
+		return end(r -> { nextTaskx.trigger(r, arg1, arg2, arg3); });
 	}
 
-	public <T1, T2, T3, T4> Runnable add(IVoidFunction5<R, T1, T2, T3, T4> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-		return add(r -> { nextTaskx.trigger(r, arg1, arg2, arg3, arg4); });
+	public <T1, T2, T3, T4> Runnable end(IVoidFunction5<R, T1, T2, T3, T4> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+		return end(r -> { nextTaskx.trigger(r, arg1, arg2, arg3, arg4); });
 	}
 
-	public <T1, T2, T3, T4, T5> Runnable add(IVoidFunction6<R, T1, T2, T3, T4, T5> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
-		return add(r -> { nextTaskx.trigger(r, arg1, arg2, arg3, arg4, arg5); });
+	public <T1, T2, T3, T4, T5> Runnable end(IVoidFunction6<R, T1, T2, T3, T4, T5> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
+		return end(r -> { nextTaskx.trigger(r, arg1, arg2, arg3, arg4, arg5); });
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -259,7 +259,7 @@ public class Pipeline<R> implements Runnable {
 			});
 		}
 
-		public Runnable add(IVoidFunction1<P> nextTaskx) {
+		public Runnable end(IVoidFunction1<P> nextTaskx) {
 			if (null == next && null == end) {
 				EndPipeline<P> e = new EndPipeline<>(r -> { argCxt[0] = r; nextTaskx.trigger(r); });
 				this.end = e;
@@ -268,23 +268,23 @@ public class Pipeline<R> implements Runnable {
 			throw new RuntimeException("Unsupport multi pipeline!!!");
 		}
 		
-		public <T1> Runnable add(IVoidFunction2<P, T1> nextTaskx, T1 arg1) {
-			return add(r -> {
+		public <T1> Runnable end(IVoidFunction2<P, T1> nextTaskx, T1 arg1) {
+			return end(r -> {
 				argCxt[1] = arg1;
 				nextTaskx.trigger(r, arg1);
 			});
 		}
 		
-		public <T1, T2> Runnable add(IVoidFunction3<P, T1, T2> nextTaskx, T1 arg1, T2 arg2) {
-			return add(r -> {
+		public <T1, T2> Runnable end(IVoidFunction3<P, T1, T2> nextTaskx, T1 arg1, T2 arg2) {
+			return end(r -> {
 				argCxt[1] = arg1;
 				argCxt[2] = arg2;
 				nextTaskx.trigger(r, arg1, arg2);
 			});
 		}
 		
-		public <T1, T2, T3> Runnable add(IVoidFunction4<P, T1, T2, T3> nextTaskx, T1 arg1, T2 arg2, T3 arg3) {
-			return add(r -> {
+		public <T1, T2, T3> Runnable end(IVoidFunction4<P, T1, T2, T3> nextTaskx, T1 arg1, T2 arg2, T3 arg3) {
+			return end(r -> {
 				argCxt[1] = arg1;
 				argCxt[2] = arg2;
 				argCxt[3] = arg3;
@@ -292,8 +292,8 @@ public class Pipeline<R> implements Runnable {
 			});
 		}
 
-		public <T1, T2, T3, T4> Runnable add(IVoidFunction5<P, T1, T2, T3, T4> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-			return add(r -> {
+		public <T1, T2, T3, T4> Runnable end(IVoidFunction5<P, T1, T2, T3, T4> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+			return end(r -> {
 				argCxt[1] = arg1;
 				argCxt[2] = arg2;
 				argCxt[3] = arg3;
@@ -302,8 +302,8 @@ public class Pipeline<R> implements Runnable {
 			});
 		}
 
-		public <T1, T2, T3, T4, T5> Runnable add(IVoidFunction6<P, T1, T2, T3, T4, T5> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
-			return add(r -> {
+		public <T1, T2, T3, T4, T5> Runnable end(IVoidFunction6<P, T1, T2, T3, T4, T5> nextTaskx, T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) {
+			return end(r -> {
 				argCxt[1] = arg1;
 				argCxt[2] = arg2;
 				argCxt[3] = arg3;

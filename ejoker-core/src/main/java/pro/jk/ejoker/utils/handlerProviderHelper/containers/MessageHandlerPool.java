@@ -1,11 +1,12 @@
 package pro.jk.ejoker.utils.handlerProviderHelper.containers;
 
+import static pro.jk.ejoker.common.system.enhance.StringUtilx.fmt;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +24,10 @@ import co.paralleluniverse.fibers.Suspendable;
 import pro.jk.ejoker.common.context.dev2.IEjokerContextDev2;
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
-import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IFunction1;
+import pro.jk.ejoker.common.system.functional.IVoidFunction2;
 import pro.jk.ejoker.infrastructure.impl.AbstractMessageHandler;
 import pro.jk.ejoker.messaging.IMessage;
 import pro.jk.ejoker.messaging.IMessageHandler;
@@ -87,10 +88,10 @@ public class MessageHandlerPool {
 					if(!PARAMETER_TYPE_CONTRAINT.isAssignableFrom(pClazz) || PARAMETER_TYPE_CONTRAINT.equals(pClazz)) {
 						pOk = false;
 					}
-					pList += pClazz.getSimpleName();
 					pList += ", ";
+					pList += pClazz.getSimpleName();
 				}
-				pList = pList.substring(0, pList.lastIndexOf(','));
+				pList = pList.substring(2);
 				if(!pOk)
 					throw new RuntimeException(String.format("Parameter signature of %s#%s(%s) is not accept!!!", actuallyHandlerName, method.getName(), pList));
 				
@@ -111,7 +112,7 @@ public class MessageHandlerPool {
 						}
 					}
 					if(!isOK) {
-						String errorDesc = String.format("The method which Proxy will point to should return Future<Void> !!! [currentMethod: {}#{}]", actuallyHandlerName, HANDLER_METHOD_NAME);
+						String errorDesc = fmt("The method which Proxy will point to should return Future<Void> !!! [currentMethod: {}#{}]", actuallyHandlerName, HANDLER_METHOD_NAME);
 						logger.error(errorDesc);
 						throw new RuntimeException(errorDesc);
 					}
@@ -175,7 +176,7 @@ public class MessageHandlerPool {
 	 * 
 	 * @param messages
 	 */
-	public final void processMultiMessages(IMessage... messages) {
+	public final void processMultiMessages(IVoidFunction2<IFunction<Future<Void>>, String> ioHandle, IMessage... messages) {
 
 		String orderlyPs;
 		IMessage[] orderlyMsgs;
@@ -204,10 +205,17 @@ public class MessageHandlerPool {
 			
 			for(MessageHandlerReflectionTuple reflectionTuple : l) {
 				IMessage[] invokeList = contructPTable(b, reflectionTuple.asciiOrder, orderlyMsgs);
-				reflectionTuple.handleAsync(invokeList);
+				ioHandle.trigger(() -> reflectionTuple.handleAsync(invokeList), reflectionTuple.identification);
 			}
 			
 		});
+		
+		
+	}
+	
+	public final void processMultiMessages(IMessage... messages) {
+		// 兼容不提供ioHelper能力的情况，直接执行。
+		processMultiMessages((mainAction, cxtInfo) -> mainAction.trigger(), messages);
 	}
 
 	/**
@@ -239,15 +247,14 @@ public class MessageHandlerPool {
 			
 			Map<Long, List<Class<?>>> bitGraph = new HashMap<>(); 
 			int bitAll = (1 << pAmount) - 1;
-			bitGraph.put(new Long(bitAll), Arrays.asList(typeList));
 			
-			// eg. pAmount = 3 那么 x -> { 1 ,2 ,3 ,4, 5, 6 }
-			//     x 对应的二进制取值为 { 001, 010, 011, 100, 101, 110 }
-			//     集合有序且元素固定的情况下 1 即为选中， 0则未选中， 这样正好取出除空集(000)和全集(111)外的所有子集
-			// 这段循环里采用倒叙 即 { 6, 5, 4, 3, 2, 1 } ，这样比正序节省很多中间变量和控制代码
-			// 如果初始条件中把-1去掉，即 111 也考虑进来，那么全集也会被计算到子集中
+			// eg. pAmount = 3 把messages按ascii顺序给定编号，对应位置的数字为 1 即为选中， 0则未选中，
+			// 排除空集(000)外，二进制表示的子集有
+			//  { 001, 010, 011, 100, 101, 110, 111 }
+			// 那么对应的十进制取值有 { 1 ,2 ,3 ,4, 5, 6, 7 }
+			// 这段循环里采用倒叙 即 { 7, 6, 5, 4, 3, 2, 1 } ，这样比正序节省很多中间变量和控制代码
 			// 如果循环判断中x>0改为x>=0，即 000 也考虑进来，那么空集也会被计算到子集中
-			for(int x=bitAll-1; x>0; x--) {
+			for(int x=bitAll; x>0; x--) {
 				List<Class<?>> subSet = new ArrayList<>(); // @important 必须使用有序表!
 				int index = 1;
 				int px = 0;
@@ -350,7 +357,7 @@ public class MessageHandlerPool {
 		public MessageHandlerReflectionTuple(Method handleReflectionMethod, String pList, List<Integer> asciiOrder, IFunction<IEjokerContextDev2> ejokerProvider) {
 			this.handleReflectionMethod = handleReflectionMethod;
 			this.handlerClass = (Class<? extends IMessageHandler> )handleReflectionMethod.getDeclaringClass();
-			identification = StringUtilx.fmt("Proxy::{}#{}({})",
+			identification = fmt("Proxy::{}#{}({})",
 					handlerClass.getSimpleName(),
 					MessageHandlerPool.HANDLER_METHOD_NAME,
 					pList);

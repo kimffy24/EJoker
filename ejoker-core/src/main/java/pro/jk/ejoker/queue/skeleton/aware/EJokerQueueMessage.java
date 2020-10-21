@@ -1,12 +1,8 @@
 package pro.jk.ejoker.queue.skeleton.aware;
 
-import java.io.Serializable;
-
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 
-public class EJokerQueueMessage implements Serializable {
-
-	private static final long serialVersionUID = 8472364779319333477L;
+public class EJokerQueueMessage {
 
 	public String topic;
 	public int code;

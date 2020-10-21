@@ -198,13 +198,6 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 			republishCommandEvents(processingCommand);
 			return;
 		}
-		
-        //接受聚合根的最新修改
-        dirtyAggregateRoot.acceptChanges();
-
-        //刷新聚合根的内存缓存
-        // TODO @await
-        await(memoryCache.updateAggregateRootCache(dirtyAggregateRoot));
 
         //构造出一个事件流对象
         String result = processingCommand.getCommandExecuteContext().getResult();
@@ -221,9 +214,12 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 				changeEvents,
 				command.getItems()
 		);
+		
+		await(memoryCache.acceptAggregateRootChanges(dirtyAggregateRoot));
+		
         //将事件流提交到EventStore
 		// TODO event提交从这里开始(可以作为调试点)
-		eventCommittingService.commitDomainEventAsync(new EventCommittingContext(dirtyAggregateRoot, eventStream, processingCommand));
+		eventCommittingService.commitDomainEventAsync(new EventCommittingContext(eventStream, processingCommand));
 		
 	}
 	

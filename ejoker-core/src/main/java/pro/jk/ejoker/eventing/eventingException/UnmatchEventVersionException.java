@@ -1,4 +1,4 @@
-package pro.jk.ejoker.eventing;
+package pro.jk.ejoker.eventing.eventingException;
 
 public class UnmatchEventVersionException extends RuntimeException {
 

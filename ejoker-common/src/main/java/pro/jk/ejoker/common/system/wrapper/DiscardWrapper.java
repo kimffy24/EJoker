@@ -61,7 +61,7 @@ public class DiscardWrapper {
 		
 		WrapperAssembler.setDiscardProviderContext(new DiscardProviderContext() {
 			@Override
-			public boolean hasBeesSet() {
+			public boolean tryMarkHasBeenSet() {
 				return !hasRedefined.compareAndSet(false, true);
 			}
 			@Override

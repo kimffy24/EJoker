@@ -12,7 +12,7 @@ public final class RegistMessageHandlerHelper {
 
 		if(clazz.isAnnotationPresent(EService.class)) {
 			EService esa = clazz.getAnnotation(EService.class);
-			ESType type = esa.type();
+			String type = esa.type();
 			if(ESType.MESSAGE_HANDLER.equals(type))
 				handlerPool.regist((Class<? extends IMessageHandler> )clazz, () -> ejokerContext);
 		}

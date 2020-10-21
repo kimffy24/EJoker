@@ -28,6 +28,7 @@ import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.domain.IAggregateRoot;
 import pro.jk.ejoker.domain.IAggregateStorage;
 import pro.jk.ejoker.domain.IMemoryCache;
+import pro.jk.ejoker.domain.domainException.AggregateRootReferenceChangedException;
 import pro.jk.ejoker.infrastructure.ITypeNameProvider;
 
 @EService
@@ -74,9 +75,52 @@ public class DefaultMemoryCache implements IMemoryCache {
 	}
 
 	@Override
-	public Future<Void> updateAggregateRootCache(IAggregateRoot aggregateRoot) {
-		resetAggregateRootCache(aggregateRoot);
-		return EJokerFutureUtil.completeFuture();
+	public Future<Void> acceptAggregateRootChanges(IAggregateRoot aggregateRoot) {
+
+		return systemAsyncHelper.submit(() -> {
+			// Enode在这个位置使用了 初始-存在 的分支处理，但是java没有这个api
+			AtomicBoolean isInitCache = new AtomicBoolean(false);
+			do {
+				AggregateCacheInfo existing = MapUtilx.getOrAdd(aggregateRootInfoDict, aggregateRoot.getUniqueId(),
+						() -> {
+							isInitCache.set(true);
+							aggregateRoot.acceptChanges();
+							if(logger.isDebugEnabled())
+								logger.debug("Aggregate root in-memory cache init. [aggregateRootType: {}, aggregateRootId: {}, aggregateRootVersion: {}]",
+									typeNameProvider.getTypeName(aggregateRoot.getClass()), aggregateRoot.getUniqueId(), aggregateRoot.getVersion());
+							return new AggregateCacheInfo(aggregateRoot);
+						});
+				if(!isInitCache.get()) {
+					if(aggregateRoot.getVersion() > 1 && existing.aggregateRoot != aggregateRoot) {
+						throw new AggregateRootReferenceChangedException(aggregateRoot);
+					}
+					if(existing.tryUse()) {
+						try {
+							long aggregateRootOldVersion = aggregateRoot.getVersion();
+							aggregateRoot.acceptChanges();
+							existing.lastUpdateTime = System.currentTimeMillis();
+							logger.debug("Aggregate root in-memory cache changed. "
+									+ "[aggregateRootType: {}, aggregateRootId: {}, aggregateRootNewVersion: {}, aggregateRootOldVersion: {}]",
+									aggregateRoot.getClass().getSimpleName(),
+									aggregateRoot.getUniqueId(),
+									aggregateRoot.getVersion(),
+									aggregateRootOldVersion
+									);
+						} finally {
+							existing.releaseUse();
+						}
+						// 已在MemoryStore中并执行 acceptChanges() 调用成功
+						break;
+					} else {
+						// 已在MemoryStore中，但抢占失败，重入再试
+						continue;
+					}
+				} else {
+					// 新增到MemoryStore，此情况直接退出循环
+					break;
+				}
+			} while(true);
+		});
 	}
 
 	@Override

@@ -1,12 +1,14 @@
 package pro.jk.ejoker.eventing;
 
+import static pro.jk.ejoker.common.system.enhance.StringUtilx.fmt;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
-import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.exceptions.ArgumentException;
+import pro.jk.ejoker.eventing.eventingException.UnmatchEventVersionException;
 import pro.jk.ejoker.messaging.AbstractMessage;
 
 public class DomainEventStream extends AbstractMessage {
@@ -46,7 +48,7 @@ public class DomainEventStream extends AbstractMessage {
         for (IDomainEvent<?> evnt : this.events) {
         	if(!aggregateRootId.equals(evnt.getAggregateRootId())) {
         		// 这真是丑陋的java
-        		throw new RuntimeException(StringUtilx.fmt(
+        		throw new RuntimeException(fmt(
         				"Invalid domain event, aggregateRootId is not match!!! [expectedAggregateRootId: {}, currentAggregateRootId: {}, aggregateRootTypeName: {}]",
         				this.aggregateRootId.toString(),
         				evnt.getAggregateRootId().toString(),
@@ -58,7 +60,7 @@ public class DomainEventStream extends AbstractMessage {
         		// 序号为1以后的事件则做确认版本相等操作
         		this.version = evnt.getVersion();
         	} else if (evnt.getVersion() != getVersion()) {
-                throw new UnmatchEventVersionException(StringUtilx.fmt(
+                throw new UnmatchEventVersionException(fmt(
                 		"Invalid domain event, version is not match!!! [expectedVersion: {}, currentVersion: {}, aggregateRootTypeName: {}, aggregateRootId: {}]",
                 		this.version,
                 		evnt.getVersion(),
@@ -72,6 +74,8 @@ public class DomainEventStream extends AbstractMessage {
             evnt.setTimestamp(timestamp);
             evnt.mergeItems(this.getItems());
         }
+        
+		this.setId(aggregateRootId + "_" + this.version);
     }
 	
 	public DomainEventStream(String commandId, String aggregateRootId, String aggregateRootTypeName, long timestamp, Collection<IDomainEvent<?>> events) {
@@ -126,7 +130,7 @@ public class DomainEventStream extends AbstractMessage {
         	itemS = itemSB.toString();
         }
         
-        return StringUtilx.fmt("\\{id={}, commandId={}, aggregateRootTypeName={}, aggregateRootId={}, version={}, timestamp={}, events={}, items={}\\}",
+        return fmt("\\{id={}, commandId={}, aggregateRootTypeName={}, aggregateRootId={}, version={}, timestamp={}, events={}, items={}\\}",
         		this.getId(),
         		commandId,
         		aggregateRootTypeName,

@@ -31,7 +31,12 @@ public final class StringUtilx {
 	}
 	
 	/**
-	 * 实现类似 slf4j 的占位填充功能。用以替换 String.format
+	 * 实现类似 slf4j 的占位填充功能。用以替换 String.format <br />
+	 * <br />
+	 * <br />
+	 * ** 模板信息会被保存下来，生命周期跟整个进程相同，所以模板尽可能在编译期能够确定，<br />
+	 * ** 如果是动态模板，可能会导致导致memory lack
+	 * 
 	 * @param template
 	 * @param args
 	 * @return

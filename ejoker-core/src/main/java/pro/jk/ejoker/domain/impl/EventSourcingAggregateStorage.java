@@ -13,7 +13,9 @@ import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.exceptions.ArgumentNullException;
+import pro.jk.ejoker.common.system.extension.acrossSupport.RipenFuture;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
+import pro.jk.ejoker.common.system.task.io.IOHelper;
 import pro.jk.ejoker.domain.IAggregateRoot;
 import pro.jk.ejoker.domain.IAggregateRootFactory;
 import pro.jk.ejoker.domain.IAggregateSnapshotter;
@@ -50,6 +52,9 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	@Dependence
 	private ITypeNameProvider typeNameProvider;
 	
+	@Dependence
+	private IOHelper ioHelper;
+	
 	@Override
 	public Future<IAggregateRoot> getAsync(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
 		return systemAsyncHelper.submit(() -> get(aggregateRootType, aggregateRootId));
@@ -68,7 +73,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		
 		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRootType);
 
-		List<DomainEventStream> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion));
+		List<DomainEventStream> taskResult = await(tryQueryAggregateEventsAsync(aggregateRootType, aggregateRootTypeName, aggregateRootId, minVersion, maxVersion));
 		if(null == taskResult || taskResult.isEmpty())
 			return null;
 
@@ -80,7 +85,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 	private IAggregateRoot tryGetFromSnapshot(String aggregateRootId, Class<IAggregateRoot> aggregateRootType) {
 		
 		// TODO @await
-		IAggregateRoot aggregateRoot = await(aggregateSnapshotter.restoreFromSnapshotAsync(aggregateRootType, aggregateRootId));
+		IAggregateRoot aggregateRoot = await(tryRestoreFromSnapshotAsync(aggregateRootType, aggregateRootId));
 		
 		if(null == aggregateRoot)
 			return null;
@@ -97,7 +102,7 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
 		String aggregateRootTypeName = typeNameProvider.getTypeName(aggregateRootType);
 
 		// TODO @await
-		List<DomainEventStream> taskResult = await(eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, aggregateRoot.getVersion()+1, maxVersion));
+		List<DomainEventStream> taskResult = await(tryQueryAggregateEventsAsync(aggregateRootType, aggregateRootTypeName, aggregateRootId, aggregateRoot.getVersion()+1, maxVersion));
 		
 		if(null == taskResult || taskResult.isEmpty())
 			return null;
@@ -106,8 +111,42 @@ public class EventSourcingAggregateStorage implements IAggregateStorage {
         return aggregateRoot;
         
 	}
+	
+	private Future<IAggregateRoot> tryRestoreFromSnapshotAsync(Class<IAggregateRoot> aggregateRootType, String aggregateRootId) {
+		RipenFuture<IAggregateRoot> ripenFuture = new RipenFuture<>();
+		ioHelper.tryAsyncAction2(
+				"TryRestoreFromSnapshotAsync",
+				() -> aggregateSnapshotter.restoreFromSnapshotAsync(aggregateRootType, aggregateRootId),
+				ripenFuture::trySetResult,
+				() -> StringUtilx.fmt(
+						"aggregateSnapshotter.tryRestoreFromSnapshotAsync has unknown exception!!! [aggregateRootType: {}, aggregateRootId: {}]",
+						aggregateRootType.getName(),
+						aggregateRootId),
+				true);
+		return ripenFuture;
+	}
+	
+	private Future<List<DomainEventStream>> tryQueryAggregateEventsAsync(
+			Class<IAggregateRoot> aggregateRootType,
+			String aggregateRootTypeName,
+			String aggregateRootId,
+			long minVersion,
+			long maxVersion
+			) {
+		RipenFuture<List<DomainEventStream>> ripenFuture = new RipenFuture<>();
+		ioHelper.tryAsyncAction2(
+				"TryQueryAggregateEventsAsync",
+				() -> eventStore.queryAggregateEventsAsync(aggregateRootId, aggregateRootTypeName, minVersion, maxVersion),
+				ripenFuture::trySetResult,
+				() -> StringUtilx.fmt(
+						"eventStore.queryAggregateEventsAsync has unknown exception!!! [aggregateRootType: {}, aggregateRootId: {}]",
+						aggregateRootType.getName(),
+						aggregateRootId),
+				true);
+		return ripenFuture;
+	}
 
-	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, Collection<DomainEventStream> eventStreams) {
+	private IAggregateRoot rebuildAggregateRoot(Class<IAggregateRoot> aggregateRootType, List<DomainEventStream> eventStreams) {
 		if (null == eventStreams || eventStreams.isEmpty())
 			return null;
 

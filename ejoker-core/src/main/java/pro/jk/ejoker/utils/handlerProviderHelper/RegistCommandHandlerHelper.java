@@ -12,7 +12,7 @@ public final class RegistCommandHandlerHelper {
 
 		if(clazz.isAnnotationPresent(EService.class)) {
 			EService esa = clazz.getAnnotation(EService.class);
-			ESType type = esa.type();
+			String type = esa.type();
 			if(ESType.COMMAND_HANDLER.equals(type))
 				commandAsyncHandlerPool.regist((Class<? extends AbstractCommandHandler> )clazz, () -> ejokerContext);
 		}

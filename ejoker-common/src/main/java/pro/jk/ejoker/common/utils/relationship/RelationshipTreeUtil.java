@@ -1,18 +1,20 @@
 package pro.jk.ejoker.common.utils.relationship;
 
+import static pro.jk.ejoker.common.system.enhance.StringUtilx.fmt;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
-import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction1;
@@ -57,7 +59,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			}
 		}
 		
-		return getTreeStructure(target, GenericExpressionFactory.getGenericExpress(typeRef.getType()));
+		return getTreeStructure(target, GenericExpressionFactory.getGenericExpress(type));
 	}
 	
 	public ContainerKVP getTreeStructure(Object target) {
@@ -77,6 +79,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 	public ContainerKVP getTreeStructure(Object target, GenericExpression targetExpression) {
 		Queue<IVoidFunction> queue = new ConcurrentLinkedQueue<>();
 		
+		String key = target.getClass().getSimpleName();
 		ContainerKVP createNode = eval.createKeyValueSet();
 		targetExpression.forEachFieldExpressionsDeeply(
 				(fieldName, genericDefinedField) -> join(() -> {
@@ -88,14 +91,14 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 					try {
 						fieldValue = genericDefinedField.field.get(target);
 					} catch (IllegalArgumentException|IllegalAccessException e) {
-						logger.error("Cannot access field!!!", e);
+						logger.error("Cannot access field!!! [target: {}]", key + "." + fieldName, e);
 						throw new RuntimeException(e);
 					}
 					assemblyStructure(
 							genericDefinedField.genericDefinedType,
 							fieldValue,
 							(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
-							() -> fieldName,
+							() -> key + "." + fieldName,
 							queue
 					);
 					
@@ -120,7 +123,7 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		final String key = keyAccesser.trigger();
 		
 		if(!targetDefinedTypeMeta.hasGenericDeclare && GenericTypeUtil.ensureClassIsGenericType(valueClazz)) {
-				throw new RuntimeException("Unmatch genericity signature!!!");
+				throw new RuntimeException(fmt("Unmatch genericity signature!!! [target: {}]", key));
 		}
 		
 		Object node;
@@ -135,51 +138,6 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		} else if (definedClazz.isEnum()) {
 			// 枚举类型
 			node = ((Enum<?> )target).name();
-		} else if (SerializableCheckerUtil.hasSublevel(definedClazz)) {
-			// Java集合类型
-			if (target instanceof Queue) {
-				if(!target.getClass().getSimpleName().endsWith("List"))
-					throw new RuntimeException("Unsupport convert type java.util.Queue!!!");
-			}
-			if (target instanceof Collection) {
-				ContainerVP createValueSet = eval.createValueSet();
-				node = createValueSet;
-				EachUtilx.forEach((List )target, item ->
-					join( () ->
-						assemblyStructure(
-								targetDefinedTypeMeta.deliveryTypeMetasTable[0],
-								item,
-								(result) -> eval.addToValueSet(createValueSet, result),
-								() -> key + "(#foreach in list)",
-								subTaskQueue
-						),
-						subTaskQueue
-					)
-				);
-			} else if (target instanceof Map) {
-				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
-				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
-					throw new RuntimeException(
-							StringUtilx.fmt(
-									"We just support java base data type on the key while opera in serializing map!!! [map.keyType: {}, field: {}#{}]",
-									pass1TypeMeta.rawClazz.getSimpleName(),
-									targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
-									key));
-				
-				GenericDefinedType pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
-				ContainerKVP createNode = eval.createKeyValueSet();
-				node = createNode;
-				EachUtilx.forEach((Map )target, (k, v) -> {
-						join(() -> assemblyStructure(
-								pass2TypeMeta,
-								v,
-								(result) -> eval.addToKeyValueSet(createNode, result, k.toString()),
-								() -> k.toString(),
-								subTaskQueue),
-							subTaskQueue);
-					}
-				);
-			}
 		} else if (targetDefinedTypeMeta.isArray) {
 			// 数组类型
 			ContainerVP createValueSet = eval.createValueSet();
@@ -190,14 +148,13 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 			} else {
 				Object[] objArray = (Object[])target;
 				for(int i=0; i<objArray.length; i++) {
-					Object item = objArray[i];
 					int index = i;
 					join( () -> 
 						assemblyStructure(
 								targetDefinedTypeMeta.componentTypeMeta,
 								objArray[index],
 								(result) -> eval.addToValueSet(createValueSet, result),
-								() -> key + index,
+								() -> key + "[" + index + "]",
 								subTaskQueue
 						),
 						subTaskQueue
@@ -205,18 +162,66 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 				};
 			}
 			
+		} else if (SerializableCheckerUtil.hasSublevel(definedClazz)) {
+			// Java集合类型
+			if (target instanceof Queue) {
+				if(!target.getClass().getSimpleName().endsWith("List"))
+					throw new RuntimeException(fmt("Unsupport convert type java.util.Queue!!! [target: {}]", key));
+			}
+			if (target instanceof Collection) {
+				ContainerVP createValueSet = eval.createValueSet();
+				node = createValueSet;
+				IVoidFunction1<Object> handle = item ->
+					join( () ->
+						assemblyStructure(
+								targetDefinedTypeMeta.deliveryTypeMetasTable[0],
+								item,
+								(result) -> eval.addToValueSet(createValueSet, result),
+								() -> key + "(#foreach in list)",
+								subTaskQueue
+						),
+						subTaskQueue
+					);
+				if(target instanceof List)
+					EachUtilx.forEach((List )target, handle);
+				else
+					EachUtilx.forEach((Set )target, handle);
+			} else if (target instanceof Map) {
+				GenericDefinedType pass1TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[0];
+				if(!SerializableCheckerUtil.isDirectSerializableType(pass1TypeMeta.rawClazz))
+					throw new RuntimeException(fmt(
+							"We just support java base data type on the key while opera in serializing map!!! [target: {}, map.keyType: {}]",
+							key,
+							pass1TypeMeta.rawClazz.getSimpleName()));
+				
+				GenericDefinedType pass2TypeMeta = targetDefinedTypeMeta.deliveryTypeMetasTable[1];
+				ContainerKVP createNode = eval.createKeyValueSet();
+				node = createNode;
+				EachUtilx.forEach((Map )target, (k, v) -> {
+						join(() -> assemblyStructure(
+								pass2TypeMeta,
+								v,
+								(result) -> eval.addToKeyValueSet(createNode, result, k.toString()),
+								() -> key + "[" + k.toString() + "]",
+								subTaskQueue),
+							subTaskQueue);
+					}
+				);
+			}
 		} else {
 			{
 				/// 不支持部分数据类型。
 				if (UnsupportTypes.isUnsupportType(valueClazz)) {
-					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on %s#%s", valueClazz.getName(),
+					throw new RuntimeException(fmt("Unsupport type!!![target: {}, valuePrototype: {}, actually: {}]",
+							key,
 							targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
-							key));
+							valueClazz.getName()));
 				}
 				if (UnsupportTypes.isUnsupportType(definedClazz)) {
-					throw new RuntimeException(String.format("Unsupport type %s, unexcepted on %s#%s", definedClazz.getName(),
+					throw new RuntimeException(fmt("Unsupport type!!![target: {}, prototype: {}, actually: {}]",
+							key,
 							targetDefinedTypeMeta.getGenericDefination().genericPrototypeClazz.getName(),
-							key));
+							definedClazz.getName()));
 				}
 			}
 			/// 普通对象类型
@@ -234,14 +239,14 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 						try {
 							fieldValue = genericDefinedField.field.get(target);
 						} catch (IllegalArgumentException|IllegalAccessException e) {
-							logger.error("Cannot access field!!!", e);
+							logger.error("Cannot access field!!! [target: {}]", key, e);
 							throw new RuntimeException(e);
 						}
 						assemblyStructure(
 								genericDefinedField.genericDefinedType,
 								fieldValue,
 								(result) -> eval.addToKeyValueSet(createNode, result, fieldName),
-								() -> fieldName,
+								() -> key + "." + fieldName,
 								subTaskQueue
 						);
 						
