@@ -6,6 +6,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
@@ -52,7 +53,7 @@ public final class GenericDefination {
 		
 		TypeVariable<?>[] typeParameters = genericPrototype.getTypeParameters();
 		if(typeParameters.length != 0) {
-			hasGenericDeclare = true;;
+			hasGenericDeclare = true;
 			exportGenericDeclares = new GenericDeclaration[typeParameters.length];
 			deliveryMapper = new HashMap<>();
 
@@ -181,7 +182,7 @@ public final class GenericDefination {
 			if(null == declaredFields) {
 				fieldDefinations = null;
 			} else {
-				fieldDefinations = new HashMap<>();
+				fieldDefinations = new LinkedHashMap<>();
 				for(Field field : declaredFields) {
 					if(Modifier.isFinal(field.getModifiers()))
 						continue;

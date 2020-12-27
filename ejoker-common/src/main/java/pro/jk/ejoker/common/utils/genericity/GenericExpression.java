@@ -184,7 +184,7 @@ public class GenericExpression {
 			if(genericDefination.isInterface) {
 				fieldExpressions = null;
 			} else {
-				fieldExpressions = new HashMap<>();
+				fieldExpressions = new LinkedHashMap<>();
 				genericDefination.forEachFieldDefinations((fieldName, genericDefinedField) -> {
 					GenericDefinedField newGenericDefinedField;
 					if(genericDefinedField.isGenericVariable) {
