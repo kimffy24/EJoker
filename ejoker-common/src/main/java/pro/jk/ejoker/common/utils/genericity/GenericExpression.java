@@ -2,6 +2,7 @@ package pro.jk.ejoker.common.utils.genericity;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -277,7 +278,7 @@ public class GenericExpression {
 			if(genericDefination.isInterface) {
 				fieldExpressions = null;
 			} else {
-				fieldExpressions = new HashMap<>();
+				fieldExpressions = new LinkedHashMap<>();
 				EachUtilx.forEach(target.fieldExpressions, (fieldName, genericDefinedField) -> {
 					GenericDefinedType currentGenericDefinedTypeMeta;
 					if(genericDefinedField.isGenericVariable) {
