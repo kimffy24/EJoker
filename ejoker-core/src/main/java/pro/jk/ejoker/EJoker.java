@@ -50,7 +50,7 @@ public class EJoker {
 		((EjokerContextDev2Impl )context).shallowRegister(messageHandlerPool);
 		
 		// regist scanner hook
-		context.registeScannerHook(clazz -> {
+		((EjokerContextDev2Impl )context).getEJokerRootDefinationStore().registeScannerHook(clazz -> {
 				RegistCommandHandlerHelper.checkAndRegistCommandAsyncHandler(clazz, commandAsyncHandlerPool, context);
 				RegistMessageHandlerHelper.checkAndRegistMessageHandler(clazz, messageHandlerPool, context);
 				RegistDomainEventHandlerHelper.checkAndRegistDomainEventHandler(clazz);
@@ -64,7 +64,7 @@ public class EJoker {
 					DomainExceptionCodecHelper.getReflectFields((Class<IDomainException> )clazz);
 		});
 		
-		context.scanPackage(SELF_PACKAGE_NAME);
+		((EjokerContextDev2Impl )context).getEJokerRootDefinationStore().scanPackage(SELF_PACKAGE_NAME);
 		
 	}
 	

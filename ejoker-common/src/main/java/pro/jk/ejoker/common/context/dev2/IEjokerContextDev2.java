@@ -2,7 +2,7 @@ package pro.jk.ejoker.common.context.dev2;
 
 import pro.jk.ejoker.common.system.functional.IVoidFunction;
 
-public interface IEjokerContextDev2 extends IEJokerSimpleContext, IEJokerClazzScanner {
+public interface IEjokerContextDev2 extends IEJokerSimpleContext/*, IEJokerClazzScanner*/ {
 
 	public void refresh();
 	

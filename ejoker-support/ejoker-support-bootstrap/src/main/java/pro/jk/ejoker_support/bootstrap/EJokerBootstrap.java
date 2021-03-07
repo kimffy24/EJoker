@@ -16,6 +16,7 @@ import pro.jk.ejoker.EJoker.EJokerSingletonFactory;
 import pro.jk.ejoker.commanding.ICommand;
 import pro.jk.ejoker.common.context.dev2.IEJokerSimpleContext;
 import pro.jk.ejoker.common.context.dev2.IEjokerContextDev2;
+import pro.jk.ejoker.common.context.dev2.impl.EjokerContextDev2Impl;
 import pro.jk.ejoker.common.service.Scavenger;
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
 import pro.jk.ejoker.common.system.functional.IFunction;
@@ -89,9 +90,9 @@ public class EJokerBootstrap {
 		{
 			IEjokerContextDev2 eJokerFullContext = (IEjokerContextDev2 )eJokerContext;
 			// 扫描ejoker的默认的实现 : rpc
-			eJokerFullContext.scanPackage("pro.jk.ejoker_suppot.rpc.netty");
+			((EjokerContextDev2Impl )eJokerFullContext).getEJokerRootDefinationStore().scanPackage("pro.jk.ejoker_suppot.rpc.netty");
 			// 外部参数传入的包
-			EachUtilx.forEach(packages, eJokerFullContext::scanPackage);
+			EachUtilx.forEach(packages, ((EjokerContextDev2Impl )eJokerFullContext).getEJokerRootDefinationStore()::scanPackage);
 			eJokerFullContext.refresh();
 		}
 	}

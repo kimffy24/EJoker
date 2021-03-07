@@ -16,7 +16,7 @@ public class ZOveridedFieldInjectTest {
 	private final static Service2Child s;
 	static {
 		EjokerContextDev2Impl ejokerContextDev2Impl = new EjokerContextDev2Impl();
-		ejokerContextDev2Impl.scanPackage("pro.jiefzz.ejoker.common.context.overidedField");
+		ejokerContextDev2Impl.getEJokerRootDefinationStore().scanPackage("pro.jiefzz.ejoker.common.context.overidedField");
 		ejokerContextDev2Impl.refresh();
 		s = ejokerContextDev2Impl.get(Service2Child.class);
 	}

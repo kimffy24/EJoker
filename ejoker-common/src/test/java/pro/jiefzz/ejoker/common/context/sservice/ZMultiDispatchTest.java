@@ -22,7 +22,7 @@ public class ZMultiDispatchTest {
 		
 		ejokerContextDev2Impl = new EjokerContextDev2Impl();
 		
-		ejokerContextDev2Impl.scanPackage("pro.jiefzz.ejoker.common.context.sservice");
+		ejokerContextDev2Impl.getEJokerRootDefinationStore().scanPackage("pro.jiefzz.ejoker.common.context.sservice");
 		ejokerContextDev2Impl.refresh();
 		
 		

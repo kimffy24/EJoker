@@ -22,7 +22,7 @@ public class ZMultiInjectTest {
 	static {
 		ejokerContextDev2Impl = new EjokerContextDev2Impl();
 		
-		ejokerContextDev2Impl.scanPackage("pro.jiefzz.ejoker.common.context.test1");
+		ejokerContextDev2Impl.getEJokerRootDefinationStore().scanPackage("pro.jiefzz.ejoker.common.context.test1");
 		ejokerContextDev2Impl.refresh();
 		
 		

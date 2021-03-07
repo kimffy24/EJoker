@@ -38,7 +38,7 @@ public class ZConflictNoSpeculateTest {
 			
 		}
 		
-		ejokerContextDev2Impl.scanPackage("pro.jiefzz.ejoker.common.context.conflictService");
+		ejokerContextDev2Impl.getEJokerRootDefinationStore().scanPackage("pro.jiefzz.ejoker.common.context.conflictService");
 		ejokerContextDev2Impl.refresh();
 		
 		

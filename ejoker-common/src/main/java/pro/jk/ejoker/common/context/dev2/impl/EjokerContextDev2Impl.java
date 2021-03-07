@@ -168,14 +168,8 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 		instanceMap.put(instanceTypeName, instance);
 	}
 
-	@Override
-	public void scanPackage(String javaPackage) {
-		defaultRootDefinationStore.scanPackage(javaPackage);
-	}
-
-	@Override
-	public void registeScannerHook(IEjokerClazzScannerHook hook) {
-		defaultRootDefinationStore.registeScannerHook(hook);
+	public EjokerRootDefinationStore getEJokerRootDefinationStore() {
+		return defaultRootDefinationStore;
 	}
 
 	@Override
