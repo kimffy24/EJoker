@@ -179,7 +179,7 @@ public class EjokerContextDev2Impl implements IEjokerContextDev2 {
 	}
 
 	@Override
-	public void refresh() {
+	synchronized public void refresh() {
 		
 		if(onService.get()) {
 			throw new RuntimeException("EJoker has been refresh() once!!!");
