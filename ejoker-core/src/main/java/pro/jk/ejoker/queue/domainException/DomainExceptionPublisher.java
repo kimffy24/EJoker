@@ -5,7 +5,7 @@ import java.util.Map;
 
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.domain.domainException.IDomainException;
 import pro.jk.ejoker.infrastructure.ITypeNameProvider;
 import pro.jk.ejoker.queue.ITopicProvider;
@@ -22,7 +22,7 @@ public class DomainExceptionPublisher extends AbstractEJokerQueueProducer<IDomai
 	private ITopicProvider<IDomainException> messageTopicProvider;
 	
 	@Dependence
-	private IJSONConverter jsonConverter;
+	private IJSONStringConverterPro jsonConverter;
 	
 	@Dependence
 	private ITypeNameProvider typeNameProvider;

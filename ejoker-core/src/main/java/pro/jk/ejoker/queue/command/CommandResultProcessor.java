@@ -14,7 +14,7 @@ import pro.jk.ejoker.commanding.CommandStatus;
 import pro.jk.ejoker.commanding.ICommand;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.service.IWorkerService;
 import pro.jk.ejoker.common.service.rpc.IClientNodeIPAddressProvider;
 import pro.jk.ejoker.common.service.rpc.IRPCService;
@@ -35,7 +35,7 @@ public class CommandResultProcessor implements IWorkerService {
 	private IClientNodeIPAddressProvider clientNodeIPAddressProvider;
 
 	@Dependence
-	private IJSONConverter jsonConverter;
+	private IJSONStringConverterPro jsonConverter;
 	
 	private final Map<String, CommandTaskCompletionSource> commandTaskMap = new ConcurrentHashMap<>();
 

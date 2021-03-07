@@ -11,7 +11,7 @@ import pro.jk.ejoker.commanding.ICommand;
 import pro.jk.ejoker.commanding.ICommandService;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.service.IWorkerService;
 import pro.jk.ejoker.common.system.extension.acrossSupport.RipenFuture;
 import pro.jk.ejoker.common.system.helper.Ensure;
@@ -41,7 +41,7 @@ public class CommandService implements ICommandService, IWorkerService {
 	private SendQueueMessageService sendQueueMessageService;
 	
 	@Dependence
-	private IJSONConverter jsonConverter;
+	private IJSONStringConverterPro jsonConverter;
 	
 	@Dependence
 	private ITopicProvider<ICommand> commandTopicProvider;

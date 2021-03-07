@@ -5,7 +5,7 @@ import java.lang.reflect.Type;
 
 public abstract class TypeRefer<T> {
 
-	private final Type type;
+	protected Type type;
 
 	public TypeRefer() {
 		Type genericSuperclass = getClass().getGenericSuperclass();
@@ -20,5 +20,4 @@ public abstract class TypeRefer<T> {
 	public Type getType() {
 		return type;
 	}
-
 }

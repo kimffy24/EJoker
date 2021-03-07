@@ -24,7 +24,7 @@ import pro.jk.ejoker.commanding.ProcessingCommandMailbox;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EInitialize;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
@@ -50,7 +50,7 @@ public class DefaultEventCommittingService implements IEventCommittingService {
 	private final int eventMailboxCount = EJokerEnvironment.EVENT_MAILBOX_ACTOR_COUNT;
 	
 	@Dependence
-	private IJSONConverter jsonSerializer;
+	private IJSONStringConverterPro jsonSerializer;
 	
 	@Dependence
 	private IMemoryCache memoryCache;

@@ -24,6 +24,12 @@ public class JSONStringConverterProUseJsonSmartImpl implements IJSONStringConver
 	private RelationshipTreeRevertUtil<JSONObject, JSONArray> ru = JSONSmartCuRuProvider.getInstance().revertRelationshipTreeUitl;
 
 	@Override
+	public String convert(Object object) {
+		JSONObject treeStructure = cu.getTreeStructure(object);
+		return null == treeStructure ? "" : treeStructure.toJSONString();
+	}
+
+	@Override
 	public <T> String convert(Object object, TypeRefer<T> tr) {
 		if(null == object)
 			return "";
@@ -43,12 +49,6 @@ public class JSONStringConverterProUseJsonSmartImpl implements IJSONStringConver
 			throw new RuntimeException("revert JsonObject failed!!!", e);
 		}
 		return ru.revert(parseStrict, tr);
-	}
-
-	@Override
-	public String convert(Object object) {
-		JSONObject treeStructure = cu.getTreeStructure(object);
-		return null == treeStructure ? "" : treeStructure.toJSONString();
 	}
 
 }

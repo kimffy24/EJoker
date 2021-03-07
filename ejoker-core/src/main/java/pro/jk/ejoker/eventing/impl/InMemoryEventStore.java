@@ -10,7 +10,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.enhance.EachUtilx;
 import pro.jk.ejoker.common.system.enhance.MapUtilx;
 import pro.jk.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
@@ -33,7 +33,7 @@ public class InMemoryEventStore implements IEventStore {
 	private Map<String, AggregateInfo> mStorage = new ConcurrentHashMap<>();
 
 	@Dependence
-	private IJSONConverter jsonConverter;
+	private IJSONStringConverterPro jsonConverter;
 	
 	@Dependence
 	private IEventSerializer eventSerializer;

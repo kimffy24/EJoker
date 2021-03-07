@@ -21,7 +21,7 @@ import pro.jk.ejoker.commanding.ICommandProcessor;
 import pro.jk.ejoker.commanding.ProcessingCommand;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.exceptions.ArgumentNullException;
 import pro.jk.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
 import pro.jk.ejoker.common.system.extension.acrossSupport.RipenFuture;
@@ -46,7 +46,7 @@ public class CommandConsumer extends AbstractEJokerQueueConsumer {
 	private SendReplyService sendReplyService;
 
 	@Dependence
-	private IJSONConverter jsonSerializer;
+	private IJSONStringConverterPro jsonSerializer;
 
 	@Dependence
 	private ICommandProcessor processor;

@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.domain.domainException.IDomainException;
 import pro.jk.ejoker.infrastructure.ITypeNameProvider;
@@ -25,7 +25,7 @@ public class DomainExceptionConsumer extends AbstractEJokerQueueConsumer {
 	private final static Logger logger = LoggerFactory.getLogger(DomainExceptionConsumer.class);
 
 	@Dependence
-	private IJSONConverter jsonSerializer;
+	private IJSONStringConverterPro jsonSerializer;
 	
 	@Dependence
 	private IMessageDispatcher messageDispatcher;

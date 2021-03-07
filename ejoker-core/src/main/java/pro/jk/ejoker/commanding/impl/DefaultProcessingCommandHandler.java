@@ -19,7 +19,7 @@ import pro.jk.ejoker.commanding.IProcessingCommandHandler;
 import pro.jk.ejoker.commanding.ProcessingCommand;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.common.system.extension.AsyncWrapperException;
 import pro.jk.ejoker.common.system.extension.acrossSupport.EJokerFutureUtil;
@@ -44,7 +44,7 @@ public class DefaultProcessingCommandHandler implements IProcessingCommandHandle
 	private final static Logger logger = LoggerFactory.getLogger(DefaultProcessingCommandHandler.class);
 
 	@Dependence
-	private IJSONConverter jsonSerializer;
+	private IJSONStringConverterPro jsonSerializer;
 
 	@Dependence
 	private IEventStore eventStore;

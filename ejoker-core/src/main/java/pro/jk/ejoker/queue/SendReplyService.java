@@ -5,7 +5,7 @@ import java.util.concurrent.Future;
 import pro.jk.ejoker.commanding.CommandResult;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.service.rpc.IRPCService;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.queue.domainEvent.DomainEventHandledMessage;
@@ -17,7 +17,7 @@ public class SendReplyService {
 	private IRPCService rpcService;
 
 	@Dependence
-	private IJSONConverter jsonConverter;
+	private IJSONStringConverterPro jsonConverter;
 
 	@Dependence
 	private SystemAsyncHelper systemAsyncHelper;

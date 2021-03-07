@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import pro.jk.ejoker.commanding.CommandReturnType;
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.enhance.StringUtilx;
 import pro.jk.ejoker.eventing.DomainEventStreamMessage;
 import pro.jk.ejoker.eventing.IEventSerializer;
@@ -29,7 +29,7 @@ public class DomainEventConsumer extends AbstractEJokerQueueConsumer {
 	private SendReplyService sendReplyService;
 	
 	@Dependence
-	private IJSONConverter jsonSerializer;
+	private IJSONStringConverterPro jsonSerializer;
 	
 	@Dependence
 	private IEventSerializer eventSerializer;

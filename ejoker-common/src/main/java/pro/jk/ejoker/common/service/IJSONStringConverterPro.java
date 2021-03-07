@@ -18,4 +18,12 @@ public interface IJSONStringConverterPro {
 	
 	public <T> T revert(String json, TypeRefer<T> tr);
 	
+	@SuppressWarnings("unchecked")
+	default public <T> T revert(String json, Class<?> clazz) {
+		TypeRefer<?> trMock = new TypeRefer<Object>(){{
+					this.type = clazz;
+				}};
+		return revert(json, (TypeRefer<T> )trMock);
+	}
+	
 }

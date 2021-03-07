@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.common.system.task.context.SystemAsyncHelper;
 import pro.jk.ejoker.infrastructure.ITypeNameProvider;
 import pro.jk.ejoker.messaging.IApplicationMessage;
@@ -24,7 +24,7 @@ public class ApplicationMessageConsumer extends AbstractEJokerQueueConsumer {
 	private final static Logger logger = LoggerFactory.getLogger(ApplicationMessageConsumer.class);
 
 	@Dependence
-	private IJSONConverter jsonSerializer;
+	private IJSONStringConverterPro jsonSerializer;
 
 	@Dependence
 	private IMessageDispatcher messageDispatcher;

@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 import pro.jk.ejoker.common.context.annotation.context.Dependence;
 import pro.jk.ejoker.common.context.annotation.context.EService;
-import pro.jk.ejoker.common.service.IJSONConverter;
+import pro.jk.ejoker.common.service.IJSONStringConverterPro;
 import pro.jk.ejoker.eventing.DomainEventStreamMessage;
 import pro.jk.ejoker.eventing.IDomainEvent;
 import pro.jk.ejoker.eventing.IEventSerializer;
@@ -19,7 +19,7 @@ import pro.jk.ejoker.queue.skeleton.aware.EJokerQueueMessage;
 public class DomainEventPublisher extends AbstractEJokerQueueProducer<DomainEventStreamMessage> {
 
 	@Dependence
-	private IJSONConverter jsonConverter;
+	private IJSONStringConverterPro jsonConverter;
 
 	@Dependence
 	private ITopicProvider<IDomainEvent<?>> eventTopicProvider;
