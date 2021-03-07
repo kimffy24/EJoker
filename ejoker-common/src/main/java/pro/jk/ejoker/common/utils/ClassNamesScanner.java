@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import pro.jk.ejoker.common.context.ContextRuntimeException;
+import pro.jk.ejoker.common.system.enhance.StringUtilx;
+
 /**
  * 提供类名扫描的工具
  * @author JiefzzLon
@@ -77,12 +80,12 @@ public class ClassNamesScanner {
 							classes.add(name.substring(0, name.length()-6).replace('/', '.'));
 						}
 					} catch (IOException e) {
-						e.printStackTrace();
+						throw new ContextRuntimeException(StringUtilx.fmt("Load class faild!!! [resource: {}]", url), e);
 					}
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new ContextRuntimeException(StringUtilx.fmt("Load package faild!!! [package: {}]", packageDirName), e);
 		}
 
 		return classes;
