@@ -53,12 +53,14 @@ public class JSONSmartCuRuProvider {
 
 					@Override
 					public String encode(Character target) {
-						return "" + (int )target.charValue();
+						return String.valueOf(target);
 					}
 
 					@Override
 					public Character decode(String source) {
-						return (char )Integer.parseInt(source);
+						if(null == source || source.isEmpty())
+							return (char )0;
+						return source.charAt(0);
 					}
 					
 				})
@@ -66,12 +68,14 @@ public class JSONSmartCuRuProvider {
 
 					@Override
 					public String encode(Character target) {
-						return "" + (int )target.charValue();
+						return String.valueOf(target);
 					}
 
 					@Override
 					public Character decode(String source) {
-						return (char )Integer.parseInt(source);
+						if(null == source || source.isEmpty())
+							return null;
+						return source.charAt(0);
 					}
 					
 				})

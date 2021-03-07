@@ -25,6 +25,13 @@ public class SerializableCheckerUtil {
 	public static boolean isDirectSerializableType(Class<?> clazz) {
 		return (clazz.isPrimitive() || acceptTypeSet.contains(clazz)) ? true : false;
 	}
+	
+	public static boolean isPrimitiveTypeEqual(Class<?> type1, Class<?> type2) {
+		Class<?> mirrorType = primitiveTypeMap.get(type1);
+		if(null == mirrorType)
+			return false;
+		return mirrorType.equals(type2);
+	}
 
 	/**
 	 * 判断对象的类型是否是可直接序列化类型

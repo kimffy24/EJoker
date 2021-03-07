@@ -128,16 +128,11 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		
 		Object node;
 		if (null != (node = processWithUserSpecialCodec(target, definedClazz))) {
-//			if (!ParameterizedTypeUtil.isDirectSerializableType(node.getClass())) {
-//				String errmsg = String.format("Get an unexpect type from userSpecialCodec!!! targetClass: %s, resultClass: %s, occur on: %s", definedClazz.getName(), node.getClass().getName(), key);
-//				throw new RuntimeException(errmsg);
-//			}
-		} else if (SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
-			// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
-			node = target;
-		} else if (definedClazz.isEnum()) {
-			// 枚举类型
-			node = ((Enum<?> )target).name();
+			if (!SerializableCheckerUtil.isDirectSerializableType(node.getClass())) {
+				String errmsg = fmt("Get an unexpect type from userSpecialCodec!!! targetClass: {}, resultClass: {}, occur on: {}",
+						definedClazz.getName(), node.getClass().getName(), key);
+				throw new RuntimeException(errmsg);
+			}
 		} else if (targetDefinedTypeMeta.isArray) {
 			// 数组类型
 			ContainerVP createValueSet = eval.createValueSet();
@@ -208,6 +203,12 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 					}
 				);
 			}
+		} else if (SerializableCheckerUtil.isDirectSerializableType(definedClazz)) {
+			// 属性定义为基础类型 或 属性定义为泛型但是值是基础类型
+			node = target;
+		} else if (definedClazz.isEnum()) {
+			// 枚举类型
+			node = ((Enum<?> )target).name();
 		} else {
 			{
 				/// 不支持部分数据类型。

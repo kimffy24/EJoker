@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 
 import pro.jk.ejoker.common.context.annotation.persistent.PersistentIgnore;
 import pro.jk.ejoker.common.system.helper.Ensure;
+import pro.jk.ejoker.common.utils.SerializableCheckerUtil;
 
 public abstract class AbstractRelationshipUtil<KVP, VP> {
 
@@ -29,7 +30,7 @@ public abstract class AbstractRelationshipUtil<KVP, VP> {
 			return null;
 		
 		/// 完全类型对等
-		if(fieldType.equals(value.getClass()))
+		if(fieldType.equals(value.getClass()) || SerializableCheckerUtil.isPrimitiveTypeEqual(fieldType, value.getClass()))
 			return fieldTypeCodec.encode(value);
 		
 		return null;
