@@ -351,13 +351,20 @@ public class GenericExpression {
 			vf.trigger(ge);
 	}
 	
+	/**
+	 * 应该用BFS，而不是DFS
+	 * @param vf
+	 */
 	public void forEachImplementationsExpressionsDeeply(IVoidFunction1<GenericExpression> vf) {
 		if(null == implementationsExpressions || 0 == implementationsExpressions.length)
 			return;
 		for(GenericExpression ge : implementationsExpressions) {
 			vf.trigger(ge);
+		}
+		for(GenericExpression ge : implementationsExpressions) {
 			ge.forEachImplementationsExpressionsDeeply(vf);
 		}
+		
 	}
 	
 	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
@@ -366,6 +373,10 @@ public class GenericExpression {
 		EachUtilx.forEach(fieldExpressions, vf);
 	}
 	
+	/**
+	 * 应该用BFS，而不是DFS
+	 * @param vf
+	 */
 	public void forEachFieldExpressionsDeeply(IVoidFunction2<String, GenericDefinedField> vf) {
 		Set<String> hasProcessedField = new HashSet<>();
 		GenericExpression currentExpression = this;
