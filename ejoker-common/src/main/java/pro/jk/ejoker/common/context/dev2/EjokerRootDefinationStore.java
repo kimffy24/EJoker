@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 	 */
 	private final Set<Class<?>> hasBeenAnalyzeClass = new HashSet<>();
 
-	private Map<Class<? extends IEjokerClazzScannerHook>, IEjokerClazzScannerHook> hookMap = new HashMap<>();
+	private Map<Class<? extends IEjokerClazzScannerHook>, IEjokerClazzScannerHook> hookMap = new LinkedHashMap<>();
 	
 //	/**
 //	 * 放入扫描过的包得路径的字符串
@@ -122,10 +123,10 @@ public class EjokerRootDefinationStore implements IEJokerClazzScanner{
 		
 		// 同名方法在在不同的对象中的反射Method是不一样的，用方法名作唯一控制会更好
 		// 分析会从子类到父类方向延伸，如果子类中出现过此方法，则会被跳过
-		Map<String, Method> reflectInitializeMethodStore = new HashMap<>();
+		Map<String, Method> reflectInitializeMethodStore = new LinkedHashMap<>();
 		// 同名属性在在不同的对象中的反射Field是不一样的，用属性名作唯一控制会更好
 		// 分析会从子类到父类方向延伸，如果子类中出现过此方法，则会被跳过
-		Map<String, GenericDefinedField> reflectDependenceGenericDefinedFieldStore = new HashMap<>();
+		Map<String, GenericDefinedField> reflectDependenceGenericDefinedFieldStore = new LinkedHashMap<>();
 		
 		for(
 				GenericExpression currentExpression = middleExpression;
