@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker</artifactId>
-		<version>3.0.1-SNAPSHOT</version>
+		<version>3.0.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>ejoker-mq</artifactId>
 	<packaging>pom</packaging>
@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
 			<artifactId>ejoker-core</artifactId>
-			<version>3.0.1-SNAPSHOT</version>
+			<version>3.0.2-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>
