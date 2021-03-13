@@ -1,8 +1,14 @@
 package pro.jk.ejoker.common.system.enhance;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.OptionalDouble;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import pro.jk.ejoker.common.system.helper.Ensure;
 
 public final class StringUtilx {
 
@@ -34,9 +40,6 @@ public final class StringUtilx {
 	 * 实现类似 slf4j 的占位填充功能。用以替换 String.format <br />
 	 * <br />
 	 * <br />
-	 * ** 模板信息会被保存下来，生命周期跟整个进程相同，所以模板尽可能在编译期能够确定，<br />
-	 * ** 如果是动态模板，可能会导致导致memory lack
-	 * 
 	 * @param template
 	 * @param args
 	 * @return
@@ -106,7 +109,7 @@ public final class StringUtilx {
 	private final static Object[] emptyArgs = new Object[] {null};
 	
 	private final static MarkTuple analyzeOccupation(String template) {
-		return MapUtilx.getOrAdd(CacheMarks, template, () -> {
+		MarkTuple analyzeOccupation = MapUtilx.getOrAdd(CacheMarks, template, () -> {
 			char[] chars = template.toCharArray();
 			char latestSymbol = (char )0;
 			int[] marks = new int[appendSize];
@@ -146,9 +149,11 @@ public final class StringUtilx {
 					escapes[k] = -1;
 				return new MarkTuple(marks, escapes);
 			}
-			
+			clean();
 			return new MarkTuple(marks);
 		});
+		analyzeOccupation.counter.incrementAndGet();
+		return analyzeOccupation;
 	}
 	
 	private final static int[] generalNewMarks(int[] prevous, int appendSize) {
@@ -156,8 +161,12 @@ public final class StringUtilx {
 		System.arraycopy(prevous, 0, marksNew, 0, prevous.length);
 		return marksNew;
 	}
+
+	private final static AtomicInteger ExecCounter = new AtomicInteger(0);
 	
 	private final static class MarkTuple {
+		
+		private AtomicInteger counter = new AtomicInteger(0);
 		
 		private int[] marks;
 		
@@ -172,5 +181,39 @@ public final class StringUtilx {
 			this.marks = marks;
 			this.escapes = null;
 		}
+	}
+	
+	private final static void clean() {
+		int hit = ExecCounter.incrementAndGet();
+		if(hit % CleanInterval == 0) {
+			OptionalDouble average = CacheMarks.values().parallelStream().mapToInt(v -> v.counter.get()).average();
+			if(average.isPresent()) {
+				double avg = average.getAsDouble();
+				double fate = avg >= 5 ? CleanThresholdTab[4] : CleanThresholdTab[(int )avg];
+				double limit = avg * fate;
+				Iterator<Entry<String, MarkTuple>> iterator = CacheMarks.entrySet().iterator();
+				while(iterator.hasNext()) {
+					Entry<String, MarkTuple> current = iterator.next();
+					AtomicInteger c = current.getValue().counter;
+					if(c.get() <= limit)
+						iterator.remove();
+					else
+						c.set(0);
+				}
+			}
+		}
+	}
+	
+	private final static int CleanInterval;
+	
+	private final static double[] CleanThresholdTab = {4, 3, 2, 1.05, 0,98};
+	
+	static {
+		String property = System.getProperty("ejoker.fmt.clean.interval", "");
+		if(isNullOrWhiteSpace(property)) {
+			property = System.getenv("EJOKER_FMT_CLEAN_INTERVAL");
+		}
+		CleanInterval = (isNullOrWhiteSpace(property)) ? 256 : Integer.parseInt(property);
+		Ensure.positive(CleanInterval, "CleanInterval");
 	}
 }
