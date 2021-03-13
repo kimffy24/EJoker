@@ -2,7 +2,6 @@ package pro.jk.ejoker.common.system.helper;
 
 import pro.jk.ejoker.common.system.exceptions.ArgumentException;
 import pro.jk.ejoker.common.system.exceptions.ArgumentNullException;
-import pro.jk.ejoker.common.system.exceptions.ArgumentNullOrEmptyException;
 import pro.jk.ejoker.common.system.exceptions.ArgumentOutOfRangeException;
 
 /**
@@ -29,7 +28,7 @@ public class Ensure {
 	 */
 	public static void notNullOrEmpty(String argument, String argumentName)  {
 		if (argument == null || "".equals(argument))
-			throw new ArgumentNullOrEmptyException(argumentName);
+			throw new ArgumentException(argumentName);
 	}
 
 	/**
