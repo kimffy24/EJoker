@@ -195,10 +195,11 @@ public final class StringUtilx {
 				while(iterator.hasNext()) {
 					Entry<String, MarkTuple> current = iterator.next();
 					AtomicInteger c = current.getValue().counter;
-					if(c.get() <= limit)
+					int tHit = c.get();
+					if(tHit <= limit)
 						iterator.remove();
 					else
-						c.set(0);
+						c.set(tHit/2);
 				}
 			}
 		}
