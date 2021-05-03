@@ -69,7 +69,7 @@ public final class GenericDefination {
 		}
 		
 
-		if(isInterface || Object.class.equals(genericPrototype) || Object.class.equals(genericPrototype.getSuperclass()))
+		if(isInterface || Object.class.equals(genericPrototype.getSuperclass()) || Object.class.equals(genericPrototype))
 			superDefination = null;
 		else
 			superDefination = gdManager.getOrCreateDefination(genericPrototype.getSuperclass());
