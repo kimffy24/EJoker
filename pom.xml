@@ -6,7 +6,7 @@
 
 	<groupId>com.github.kimffy24</groupId>
 	<artifactId>ejoker</artifactId>
-	<version>3.0.2-SNAPSHOT</version>
+	<version>3.0.3</version>
 	<packaging>pom</packaging>
 	<name>ejoker</name>
 

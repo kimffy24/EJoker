@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker</artifactId>
-		<version>3.0.2-SNAPSHOT</version>
+		<version>3.0.3</version>
 	</parent>
 	<artifactId>ejoker-core</artifactId>
 	<packaging>jar</packaging>
@@ -16,7 +16,7 @@
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
 			<artifactId>ejoker-common</artifactId>
-			<version>3.0.2-SNAPSHOT</version>
+			<version>3.0.3</version>
 		</dependency>
 
 		<dependency>
