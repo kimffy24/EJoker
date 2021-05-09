@@ -53,59 +53,12 @@ fi
 
 VERSION_CURR=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-VERSION_TAG=
-VERSION_DEPLOY=
-
-if [[ $VERSION_CURR =~ "-SNAPSHOT"$ ]] ; then
-    
-    array=(${VERSION_CURR//-SNAPSHOT/ })
-    VERSION_TAG=${array[0]}
-
-    read -p "enter release version (default: ${VERSION_TAG}):" VERSION_TAGZ
-    if [ "z" != "z${VERSION_TAGZ}" ] ; then
-        VERSION_TAG=${VERSION_TAGZ}
-    fi
-
-else
-
-    read -p "enter release version (default: ${VERSION_CURR}):" VERSION_TAG
-    if [ "z" == "z${VERSION_TAG}" ] ; then
-        VERSION_TAG=${VERSION_CURR}
-    fi
-
-fi
-VERSION_NEW=
-
-typeset v_I=0
-declare -a vs
-array2=(${VERSION_TAG//'.'/ })
-for i in ${array2[@]} ; do
-    vs[$v_I]=$i
-    ((v_I++))
-done
-((v_I--))
-NN=${vs[$v_I]}
-isint $NN
-RES=$?
-if [ $RES -gt 0 ] ; then
-    ((NN++))
-    vs[$v_I]=$NN
-    VERSION_NEW=$(join_by '.' ${vs[*]})
-    VERSION_NEW="${VERSION_NEW}-SNAPSHOT"
-    read -p "Your can specify a new version (default: ${VERSION_NEW}): " VERSION_NEWZ
-    if [ "z" != "z${VERSION_NEWZ}" ] ; then
-        VERSION_NEW=${VERSION_NEWZ}
-    fi
-else
-    read -p "!!! Your must specify a new version: " VERSION_NEW
+read -p "enter release version (default: ${VERSION_CURR}):" VERSION_TAG
+if [ "z" == "z${VERSION_TAG}" ] ; then
+    VERSION_TAG=${VERSION_CURR}
 fi
 
-if [ "z" == "z${VERSION_NEW}" ] ; then
-    echo -n "Cannot detect a new develop version!!!"
-    exit 1
-fi
-
-
+VERSION_NEW=${VERSION_TAG}
 VERSION_DEPLOY="${VERSION_TAG}"
 VERSION_TAG="${TAG_PERFIX}${VERSION_TAG}"
 
@@ -113,19 +66,23 @@ echo "------"
 echo "Fetch current version in pom.xml: ${VERSION_CURR}"
 echo "Detect release version: ${VERSION_DEPLOY}"
 echo "Detect new tag name: ${VERSION_TAG}"
-echo "Detect new version after deploy: ${VERSION_NEW}"
 echo "------"
+
+if [ "z${VERSION_CURR}" != "${VERSION_NEW}" ] ; then
+    echo "!!! we will change version in your maven project, do you accept this action?"
+    read -p "Input any key to continue or CRTL + c to break this script... " XYZ
+    mvn versions:set -DnewVersion="${VERSION_NEW}"
+fi
+
 read -p "Check info and input anything to continue OR ctrl+c to interupt this script ... : " XYZ
 #exit 0
 
-#mvn versions:set -DnewVersion="${VERSION_DEPLOY}"
-#for i in `git ls-files|grep pom.xml` ; do
-#    git add $i
-#done
+# 打上tag
 git tag -m "Auto tag by script." "${VERSION_TAG}"
-
 #git push origin "v${VERSION_TAG}"
 
+# 清理本地安装
+rm -fr ~/.m2/repository/com/github/kimffy24/ejoker*
 
 rm -fr "$WR/target/checkout"
 mkdir -p "$WR/target/checkout"
@@ -136,9 +93,9 @@ cp -a ../../.git ./
 ## 还原所有文件
 git checkout -- .
 git checkout "${VERSION_TAG}"
-mvn versions:set -DnewVersion="${VERSION_DEPLOY}"
 
-mvn clean deploy -P release
+echo "mvn clean compile package deploy -P release"
+#mvn clean compile package deploy -P release
 RES=$?
 if [ $RES -ne 0 ] ; then
     echo "Something wrong!!!"
@@ -146,12 +103,8 @@ if [ $RES -ne 0 ] ; then
 fi
 
 cd ../..
-exit 0
-mvn versions:set -DnewVersion="${VERSION_NEW}"
-for i in `git ls-files|grep pom.xml` ; do
-   git add $i
-done
+
 
 echo "Your can push tag to origin by using:"
-echo "    git push origin \"v${VERSION_TAG}\""
+echo "    git push origin \"${VERSION_TAG}\""
 echo
