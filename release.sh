@@ -95,7 +95,7 @@ git checkout -- .
 git checkout "${VERSION_TAG}"
 
 echo "mvn clean compile package deploy -P release"
-#mvn clean compile package deploy -P release
+mvn clean compile package deploy -P release
 RES=$?
 if [ $RES -ne 0 ] ; then
     echo "Something wrong!!!"
