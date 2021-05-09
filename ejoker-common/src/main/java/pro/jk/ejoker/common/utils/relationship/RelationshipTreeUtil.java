@@ -128,11 +128,13 @@ public class RelationshipTreeUtil<ContainerKVP, ContainerVP> extends AbstractRel
 		
 		Object node;
 		if (null != (node = processWithUserSpecialCodec(target, definedClazz))) {
-			if (!SerializableCheckerUtil.isDirectSerializableType(node.getClass())) {
-				String errmsg = fmt("Get an unexpect type from userSpecialCodec!!! targetClass: {}, resultClass: {}, occur on: {}",
-						definedClazz.getName(), node.getClass().getName(), key);
-				throw new RuntimeException(errmsg);
-			}
+			// 用户使用自定义方法后，可能得到结果不在我们限定的序列化类型中。
+			// 没关系，这个主要是使用方的职责，我们不做干预。
+//			if (!SerializableCheckerUtil.isDirectSerializableType(node.getClass())) {
+//				String errmsg = fmt("Get an unexpect type from userSpecialCodec!!! targetClass: {}, resultClass: {}, occur on: {}",
+//						definedClazz.getName(), node.getClass().getName(), key);
+//				throw new RuntimeException(errmsg);
+//			}
 		} else if (targetDefinedTypeMeta.isArray) {
 			// 数组类型
 			ContainerVP createValueSet = eval.createValueSet();
