@@ -207,7 +207,7 @@ public final class StringUtilx {
 	
 	private final static int CleanInterval;
 	
-	private final static double[] CleanThresholdTab = {4, 3, 2, 1.05, 0,98};
+	private final static double[] CleanThresholdTab = {4, 3, 2, 1.05, 0.95};
 	
 	static {
 		String property = System.getenv("EJOKER_FMT_CLEAN_INTERVAL");
