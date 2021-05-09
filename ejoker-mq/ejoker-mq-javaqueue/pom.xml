@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker-mq</artifactId>
-		<version>3.0.3</version>
+		<version>3.0.4</version>
 	</parent>
 	<artifactId>ejoker-mq-javaqueue</artifactId>
 	<description>Use java queue as the message middleware</description>

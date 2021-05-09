@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>com.github.kimffy24</groupId>
 		<artifactId>ejoker-support</artifactId>
-		<version>3.0.3</version>
+		<version>3.0.4</version>
 	</parent>
 	<artifactId>ejoker-support-bootstrap</artifactId>
 
@@ -14,12 +14,12 @@
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
 			<artifactId>ejoker-core</artifactId>
-			<version>3.0.3</version>
+			<version>3.0.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.kimffy24</groupId>
 			<artifactId>ejoker-support-rpc-netty</artifactId>
-			<version>3.0.3</version>
+			<version>3.0.4</version>
 		</dependency>
 	</dependencies>
 

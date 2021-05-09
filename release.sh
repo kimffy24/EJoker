@@ -72,6 +72,20 @@ if [ "z${VERSION_CURR}" != "${VERSION_NEW}" ] ; then
     echo "!!! we will change version in your maven project, do you accept this action?"
     read -p "Input any key to continue or CRTL + c to break this script... " XYZ
     mvn versions:set -DnewVersion="${VERSION_NEW}"
+
+    git add ejoker-common/pom.xml
+    git add ejoker-core/pom.xml
+	git add ejoker-mq/ejoker-mq-javaqueue/pom.xml
+	git add ejoker-mq/ejoker-mq-rocketmq/pom.xml
+	git add ejoker-mq/pom.xml
+	git add ejoker-support/ejoker-support-bootstrap/pom.xml
+	git add ejoker-support/ejoker-support-mq-rocket-pull/pom.xml
+	git add ejoker-support/ejoker-support-rpc-netty/pom.xml
+	git add ejoker-support/pom.xml
+	git add pom.xml
+
+    git commit -m "[#16] 发布脚本自动递进"
+
 fi
 
 read -p "Check info and input anything to continue OR ctrl+c to interupt this script ... : " XYZ
