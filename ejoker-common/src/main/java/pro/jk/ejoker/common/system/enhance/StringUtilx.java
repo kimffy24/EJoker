@@ -189,7 +189,7 @@ public final class StringUtilx {
 			OptionalDouble average = CacheMarks.values().parallelStream().mapToInt(v -> v.counter.get()).average();
 			if(average.isPresent()) {
 				double avg = average.getAsDouble();
-				double fate = avg >= 5 ? CleanThresholdTab[4] : CleanThresholdTab[(int )avg];
+				double fate = avg >= 5 ? CleanThresholdTab[5] : CleanThresholdTab[(int )avg];
 				double limit = avg * fate;
 				Iterator<Entry<String, MarkTuple>> iterator = CacheMarks.entrySet().iterator();
 				while(iterator.hasNext()) {
@@ -207,7 +207,8 @@ public final class StringUtilx {
 	
 	private final static int CleanInterval;
 	
-	private final static double[] CleanThresholdTab = {4, 3, 2, 1.05, 0.95};
+	// 0号元素是用不上的，但是需要占位；
+	private final static double[] CleanThresholdTab = {1, 4, 3, 2, 1.05, 0.95};
 	
 	static {
 		String property = System.getenv("EJOKER_FMT_CLEAN_INTERVAL");
