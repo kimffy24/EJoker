@@ -210,9 +210,9 @@ public final class StringUtilx {
 	private final static double[] CleanThresholdTab = {4, 3, 2, 1.05, 0,98};
 	
 	static {
-		String property = System.getProperty("ejoker.fmt.clean.interval", "");
+		String property = System.getenv("EJOKER_FMT_CLEAN_INTERVAL");
 		if(isNullOrWhiteSpace(property)) {
-			property = System.getenv("EJOKER_FMT_CLEAN_INTERVAL");
+			property = System.getProperty("ejoker.fmt.clean.interval", "");
 		}
 		CleanInterval = (isNullOrWhiteSpace(property)) ? 256 : Integer.parseInt(property);
 		Ensure.positive(CleanInterval, "CleanInterval");
