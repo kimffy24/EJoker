@@ -24,7 +24,7 @@ import pro.jk.ejoker.common.utils.GenericTypeUtil;
  * @author kimffy
  *
  */
-public class GenericDefinedType extends GenericDefinationEssential {
+public class GenericDefinedType extends GenericDefinitionElement {
 	
 	private final static Logger logger = LoggerFactory.getLogger(GenericDefinedType.class);
 	
@@ -59,7 +59,7 @@ public class GenericDefinedType extends GenericDefinationEssential {
 	
 	public final GenericDefinedType componentTypeMeta;
 
-	public GenericDefinedType(Type regionTye, GenericDefination referMeta, int level) {
+	public GenericDefinedType(Type regionTye, GenericDefinition referMeta, int level) {
 		super(referMeta);
 		this.originTye = regionTye;
 		this.level = level;
@@ -250,7 +250,7 @@ public class GenericDefinedType extends GenericDefinationEssential {
 			return tmpTypeName;
 		}
 	
-	public GenericDefinedType(Type regionTye, GenericDefination referMeta) {
+	public GenericDefinedType(Type regionTye, GenericDefinition referMeta) {
 		this(regionTye, referMeta, 0);
 	}
 

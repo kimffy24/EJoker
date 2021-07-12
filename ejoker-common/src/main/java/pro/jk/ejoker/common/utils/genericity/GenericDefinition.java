@@ -19,7 +19,7 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction2;
  * @author jiefzz
  *
  */
-public final class GenericDefination {
+public final class GenericDefinition {
 
 	private final String definationSignature;
 	
@@ -29,15 +29,15 @@ public final class GenericDefination {
 	
 	public final boolean hasGenericDeclare;
 	
-	private final GenericDeclaration[] exportGenericDeclares;
+	private final GenericSymbol[] exportGenericDeclares;
 	
-	private final GenericDefination superDefination;
+	private final GenericDefinition superDefination;
 	
 	private final Map<String, String> deliveryMapper;
 	
 	private final GenericDefinedType[] deliveryTypeMetasTable;
 	
-	private final Map<Class<?>, GenericDefination> interfaceDefinations;
+	private final Map<Class<?>, GenericDefinition> interfaceDefinations;
 	
 	private final Map<Class<?>, Map<String, String>> interfaceDeliveryMappers;
 	
@@ -45,7 +45,7 @@ public final class GenericDefination {
 	
 	private final Map<String, GenericDefinedField> fieldDefinations;
 
-	public GenericDefination(GenericDefinationManagement gdManager, Class<?> genericPrototype) {
+	public GenericDefinition(GenericDefinitionManagement gdManager, Class<?> genericPrototype) {
 		super();
 		this.genericPrototypeClazz = genericPrototype;
 		this.isInterface = genericPrototype.isInterface();
@@ -54,12 +54,12 @@ public final class GenericDefination {
 		TypeVariable<?>[] typeParameters = genericPrototype.getTypeParameters();
 		if(typeParameters.length != 0) {
 			hasGenericDeclare = true;
-			exportGenericDeclares = new GenericDeclaration[typeParameters.length];
+			exportGenericDeclares = new GenericSymbol[typeParameters.length];
 			deliveryMapper = new HashMap<>();
 
 			for(int i = 0; i<typeParameters.length; i++) {
 				TypeVariable<?> typeVar = typeParameters[i];
-				exportGenericDeclares[i] = new GenericDeclaration(this, i, typeVar);
+				exportGenericDeclares[i] = new GenericSymbol(this, i, typeVar);
 			}
 			
 		} else {
@@ -103,7 +103,7 @@ public final class GenericDefination {
 			
 			if(null != superDefination.exportGenericDeclares && 0 != superDefination.exportGenericDeclares.length) {
 				for(int i=0; i<superDefination.exportGenericDeclares.length; i++) {
-					GenericDeclaration declareTuple = superDefination.exportGenericDeclares[i];
+					GenericSymbol declareTuple = superDefination.exportGenericDeclares[i];
 					Type typeArgument = actualTypeArguments[i];
 	
 					if(typeArgument instanceof TypeVariable<?>) {
@@ -135,11 +135,11 @@ public final class GenericDefination {
 				Map<String, String> ifaceDeliveryMapper = new HashMap<>();
 				
 				Class<?> iface = (Class<?> )interfacePt.getRawType();
-				GenericDeclaration[] eGD = interfaceDefinations.get(iface).exportGenericDeclares;
+				GenericSymbol[] eGD = interfaceDefinations.get(iface).exportGenericDeclares;
 				if(null != interfaceDefinations.get(iface).exportGenericDeclares
 						&& 0 != interfaceDefinations.get(iface).exportGenericDeclares.length)
 					for(int i = 0; i<eGD.length; i++) {
-						GenericDeclaration declareTuple = eGD[i];
+						GenericSymbol declareTuple = eGD[i];
 						Type typeArgument = actualTypeArguments[i];
 	
 						if(typeArgument instanceof TypeVariable<?>) {
@@ -233,16 +233,16 @@ public final class GenericDefination {
 //		System.out.println(obj);
 //	}
 	
-	public void forEachGenericDeclares(IVoidFunction1<GenericDeclaration> vf) {
+	public void forEachGenericDeclares(IVoidFunction1<GenericSymbol> vf) {
 		if(!hasGenericDeclare)
 			return;
 		if(null == exportGenericDeclares || 0 == exportGenericDeclares.length)
 			return;
-		for(GenericDeclaration gd : exportGenericDeclares)
+		for(GenericSymbol gd : exportGenericDeclares)
 			vf.trigger(gd);
 	}
 	
-	public void forEachGenericDeclares(IVoidFunction2<GenericDeclaration, Integer> vf) {
+	public void forEachGenericDeclares(IVoidFunction2<GenericSymbol, Integer> vf) {
 		if(!hasGenericDeclare)
 			return;
 		if(null == exportGenericDeclares || 0 == exportGenericDeclares.length)
@@ -252,7 +252,7 @@ public final class GenericDefination {
 		}
 	}
 	
-	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefination> vf) {
+	public void forEachInterfaceDefinations(IVoidFunction2<Class<?>, GenericDefinition> vf) {
 		if(null == interfaceDefinations || interfaceDefinations.isEmpty())
 			return;
 		EachUtilx.forEach(interfaceDefinations, vf);
@@ -284,11 +284,11 @@ public final class GenericDefination {
 		return hasGenericDeclare;
 	}
 
-	public GenericDefination getSuperDefination() {
+	public GenericDefinition getSuperDefination() {
 		return superDefination;
 	}
 
-	public Map<Class<?>, GenericDefination> getInterfaceDefinations() {
+	public Map<Class<?>, GenericDefinition> getInterfaceDefinations() {
 		return interfaceDefinations;
 	}
 
@@ -340,7 +340,7 @@ public final class GenericDefination {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		GenericDefination other = (GenericDefination) obj;
+		GenericDefinition other = (GenericDefinition) obj;
 		if (definationSignature == null) {
 			if (other.definationSignature != null)
 				return false;

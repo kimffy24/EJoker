@@ -10,7 +10,7 @@ import pro.jk.ejoker.common.system.enhance.StringUtilx;
 
 public final class GenericExpressionFactory {
 
-	private final static GenericDefinationManagement GDManager = new GenericDefinationManagement();
+	private final static GenericDefinitionManagement GDManager = new GenericDefinitionManagement();
 	
 	private final static Map<String, GenericExpression> ExpressionStore = new ConcurrentHashMap<>();
 	
@@ -70,7 +70,7 @@ public final class GenericExpressionFactory {
 			}
 			
 			GenericDefinedType[] gdtms = new GenericDefinedType[types.length];
-			GenericDefination gd = GDManager.getOrCreateDefination(clazz);
+			GenericDefinition gd = GDManager.getOrCreateDefination(clazz);
 			for(int i=0; i<types.length; i++)
 				gdtms[i] = new GenericDefinedType(types[i], gd);
 			return getGenericExpressDirectly(clazz, gdtms);
@@ -82,7 +82,7 @@ public final class GenericExpressionFactory {
 			types = pt.getActualTypeArguments();
 			
 			GenericDefinedType[] gdtms = new GenericDefinedType[types.length];
-			GenericDefination gd = GDManager.getOrCreateDefination(clazz);
+			GenericDefinition gd = GDManager.getOrCreateDefination(clazz);
 			for(int i=0; i<types.length; i++)
 				gdtms[i] = new GenericDefinedType(types[i], gd);
 			return getGenericExpressDirectly(clazz, gdtms);

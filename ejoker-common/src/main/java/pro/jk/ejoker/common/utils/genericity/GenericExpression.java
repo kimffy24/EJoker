@@ -25,7 +25,7 @@ public class GenericExpression {
 	/**
 	 * 表达的元泛型数据
 	 */
-	public final GenericDefination genericDefination;
+	public final GenericDefinition genericDefination;
 	
 	/**
 	 * 导出表<br>
@@ -60,7 +60,7 @@ public class GenericExpression {
 
 	private final Map<String, GenericDefinedField> fieldExpressions;
 	
-	GenericExpression(GenericDefination meta) {
+	GenericExpression(GenericDefinition meta) {
 		this(meta, null);
 	}
 	
@@ -70,7 +70,7 @@ public class GenericExpression {
 	 * @param genericDefination
 	 * @param lowerGenericExpression
 	 */
-	GenericExpression(GenericDefination genericDefination, GenericExpression lowerGenericExpression) {
+	GenericExpression(GenericDefinition genericDefination, GenericExpression lowerGenericExpression) {
 		int genericDeclareAmount = genericDefination.getGenericDeclareAmount();
 		int interfacesAmount = genericDefination.getInterfacesAmount();
 		boolean isInterface = genericDefination.isInterface;
@@ -92,7 +92,7 @@ public class GenericExpression {
 
 		/// 获取下级表达
 		if(null != lowerGenericExpression ) {
-			GenericDefination lowerGe = lowerGenericExpression.genericDefination;
+			GenericDefinition lowerGe = lowerGenericExpression.genericDefination;
 			
 			/// 获取下级表达传递到此的dct以及dm
 			GenericDefinedType[] targetDct = isInterface ?
@@ -167,7 +167,7 @@ public class GenericExpression {
 			this.expressSignature = sb.toString();
 		}
 		
-		GenericDefination superDefination;
+		GenericDefinition superDefination;
 		if(null != (superDefination  = genericDefination.getSuperDefination())) {
 			this.parent = new GenericExpression(superDefination, this);
 		} else {

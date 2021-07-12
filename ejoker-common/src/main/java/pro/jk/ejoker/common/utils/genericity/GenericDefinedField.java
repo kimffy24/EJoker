@@ -15,7 +15,7 @@ import java.lang.reflect.TypeVariable;
  * @author kimffy
  *
  */
-public class GenericDefinedField extends GenericDefinationEssential {
+public class GenericDefinedField extends GenericDefinitionElement {
 
 	/**
 	 * 属性名
@@ -48,7 +48,7 @@ public class GenericDefinedField extends GenericDefinationEssential {
 	 */
 	public final GenericDefinedType genericDefinedType;
 
-	public GenericDefinedField(GenericDefination genericDefination, Field field) {
+	public GenericDefinedField(GenericDefinition genericDefination, Field field) {
 		super(genericDefination);
 		
 		if (genericDefination.isInterface)
