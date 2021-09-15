@@ -1,5 +1,6 @@
 package pro.jk.ejoker.common.utils.genericity;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -370,7 +371,7 @@ public class GenericExpression {
 	public void forEachFieldExpressions(IVoidFunction2<String, GenericDefinedField> vf) {
 		if(null == fieldExpressions || fieldExpressions.isEmpty())
 			return;
-		EachUtilx.forEach(fieldExpressions, vf);
+		EachUtilx.loop(fieldExpressions, vf);
 	}
 	
 	/**
@@ -500,4 +501,18 @@ public class GenericExpression {
 		return expressSignature;
 	}
 	
+	/**
+	 * 获取符号的实际类型 <br />
+	 * type未必能转java class，使用侧需要注意
+	 * @param symbolName
+	 * @return
+	 */
+	public Type typeOf(String symbolName) {
+		GenericExpressionExportTuple genericExpressionExportTuple =
+				this.materializedMapper.get(symbolName);
+		if(null != genericExpressionExportTuple) {
+			return genericExpressionExportTuple.declarationTypeMeta.originTye;
+		}
+		return null;
+	}
 }
