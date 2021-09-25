@@ -91,7 +91,13 @@ public class ClassNamesScanner {
 		return classes;
 	}
 
-	private static List<String> scanPackagesClass(String packageName, String packagePath){
+	/**
+	 * 递归地获取指定包下的类
+	 * @param packageName java包名
+	 * @param packagePath 包的物理路径
+	 * @return
+	 */
+	public static List<String> scanPackagesClass(String packageName, String packagePath){
 		File dir = new File(packagePath);
 		if (!dir.exists() || !dir.isDirectory()) return null;
 		List<String> classes = new ArrayList<String>();
@@ -112,9 +118,9 @@ public class ClassNamesScanner {
 				// 跳过匿名类
 				if (fileName.contains("$")) continue;
 				// 去掉 .class 这6个结尾的字符
-				classes.add(packageName+"."+fileName.substring(0, fileName.length() - 6));
+				classes.add((StringUtilx.isSenseful(packageName) ? packageName+"." : "") + fileName.substring(0, fileName.length() - 6));
 			} else {
-				classes.addAll(scanPackagesClass(packageName + "." + file.getName(),file.getAbsolutePath()));
+				classes.addAll(scanPackagesClass((StringUtilx.isSenseful(packageName) ? packageName+"." : "") + file.getName(),file.getAbsolutePath()));
 			}
 		}
 		return classes;
