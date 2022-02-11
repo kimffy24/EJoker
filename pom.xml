@@ -56,7 +56,7 @@
 		<version.junit.jupiter>5.5.2</version.junit.jupiter>
 		<version.slf4j>1.7.25</version.slf4j>
 
-		<version.smartjson>2.3</version.smartjson>
+		<version.smartjson>2.4.5</version.smartjson>
 		<version.netty.all>4.1.42.Final</version.netty.all>
 		<version.quasar>0.7.10</version.quasar>
 	</properties>
