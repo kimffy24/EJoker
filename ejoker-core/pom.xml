@@ -22,7 +22,6 @@
 		<dependency>
 			<groupId>co.paralleluniverse</groupId>
 			<artifactId>quasar-core</artifactId>
-			<version>${version.quasar}</version>
 			<classifier>jdk8</classifier>
 		</dependency>
 
@@ -30,6 +29,7 @@
 
 	<build>
 		<plugins>
+			<!--
 			<plugin>
 				<groupId>org.eclipse.m2e</groupId>
 				<artifactId>lifecycle-mapping</artifactId>
@@ -54,7 +54,7 @@
 					</lifecycleMappingMetadata>
 				</configuration>
 			</plugin>
-
+			 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>

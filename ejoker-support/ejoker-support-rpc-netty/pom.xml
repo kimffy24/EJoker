@@ -29,7 +29,6 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
-			<version>${version.netty.all}</version>
 		</dependency>
 		
 	</dependencies>

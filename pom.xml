@@ -55,37 +55,68 @@
 		<version.jdk>1.8</version.jdk>
 		<version.junit.jupiter>5.5.2</version.junit.jupiter>
 		<version.slf4j>1.7.25</version.slf4j>
+		<version.slf4j_log4j>2.17.1</version.slf4j_log4j>
 
-		<version.smartjson>2.4.5</version.smartjson>
+		<version.smartjson>2.4.7</version.smartjson>
 		<version.netty.all>4.1.42.Final</version.netty.all>
 		<version.quasar>0.7.10</version.quasar>
 	</properties>
 
 	<dependencies>
-
-		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>${version.junit.jupiter}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<!-- 日志组件 -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${version.slf4j}</version>
-		</dependency>
-
-		<!-- 号称最快的json包 -->
-		<dependency>
-			<groupId>net.minidev</groupId>
-			<artifactId>json-smart</artifactId>
-			<version>${version.smartjson}</version>
-		</dependency>
-
 	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-engine</artifactId>
+				<version>${version.junit.jupiter}</version>
+				<scope>test</scope>
+			</dependency>
+
+			<!-- 日志组件 -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${version.slf4j}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-slf4j-impl</artifactId>
+				<version>${version.slf4j_log4j}</version>
+			</dependency>
+
+			<!-- 号称最快的json包 -->
+			<dependency>
+				<groupId>net.minidev</groupId>
+				<artifactId>json-smart</artifactId>
+				<version>${version.smartjson}</version>
+			</dependency>
+
+
+			<!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-all</artifactId>
+				<version>${version.netty.all}</version>
+			</dependency>
+			<!-- https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-client -->
+			<dependency>
+				<groupId>org.apache.rocketmq</groupId>
+				<artifactId>rocketmq-client</artifactId>
+				<version>4.4.0</version>
+			</dependency>
+
+
+			<dependency>
+				<groupId>co.paralleluniverse</groupId>
+				<artifactId>quasar-core</artifactId>
+				<classifier>jdk8</classifier>
+				<version>${version.quasar}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 
 	<build>
