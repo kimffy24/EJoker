@@ -3,6 +3,8 @@ package pro.jk.ejoker.common.system.task.context;
 import java.util.concurrent.Future;
 
 import pro.jk.ejoker.common.context.annotation.context.EService;
+import pro.jk.ejoker.common.system.component.ControlTable;
+import pro.jk.ejoker.common.system.constant.ConfigKeyPrimary;
 import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.functional.IVoidFunction;
 
@@ -15,9 +17,8 @@ import pro.jk.ejoker.common.system.functional.IVoidFunction;
  */
 @EService
 public class SystemAsyncHelper extends AbstractNormalWorkerGroupService {
-	
-	// 默认 取线程数的两倍 + 1 作为线程池大小
-	private static int defaultPoolSize = Runtime.getRuntime().availableProcessors() * 2 + 1;
+
+	private static int defaultPoolSize = ControlTable.detectAsInteger(ConfigKeyPrimary.EJOKER_ASYNC_EXECUTOR_POOL_SIZE);
 	
 	public static void setDefaultPoolSize(int poolSize) {
 		defaultPoolSize = poolSize;

@@ -8,7 +8,8 @@ import java.util.OptionalDouble;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import pro.jk.ejoker.common.system.helper.Ensure;
+import pro.jk.ejoker.common.system.component.ControlTable;
+import pro.jk.ejoker.common.system.constant.ConfigKeyPrimary;
 
 public final class StringUtilx {
 
@@ -211,11 +212,7 @@ public final class StringUtilx {
 	private final static double[] CleanThresholdTab = {1, 4, 3, 2, 1.05, 0.95};
 	
 	static {
-		String property = System.getenv("EJOKER_FMT_CLEAN_INTERVAL");
-		if(isNullOrWhiteSpace(property)) {
-			property = System.getProperty("ejoker.fmt.clean.interval", "");
-		}
-		CleanInterval = (isNullOrWhiteSpace(property)) ? 256 : Integer.parseInt(property);
-		Ensure.positive(CleanInterval, "CleanInterval");
+		CleanInterval = ControlTable.detectAsInteger(
+				ConfigKeyPrimary.EJOKER_FMT_CLEAN_INTERVAL);
 	}
 }

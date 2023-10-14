@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pro.jk.ejoker.common.system.component.ControlTable;
+import pro.jk.ejoker.common.system.constant.ConfigKeyPrimary;
 import pro.jk.ejoker.common.system.extension.acrossSupport.RipenFuture;
 import pro.jk.ejoker.common.system.functional.IFunction;
 import pro.jk.ejoker.common.system.task.IAsyncEntrance;
@@ -20,7 +22,8 @@ public class SystemAsyncPool implements IAsyncEntrance {
 	@SuppressWarnings("unused")
 	private final static Logger logger = LoggerFactory.getLogger(SystemAsyncPool.class);
 	
-	private final static String threadNamePrefix = "ejoker-worker-";
+	private final static String threadNamePrefix = ControlTable.getConfigValue(
+			ConfigKeyPrimary.EJOKER_ASYNC_EXECUTOR_NAME_PREFIX);
 
 	private final ExecutorService defaultThreadPool;
 	

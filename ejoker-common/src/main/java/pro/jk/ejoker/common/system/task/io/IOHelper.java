@@ -621,8 +621,7 @@ public class IOHelper {
 		 * ioHelper执行上下文，此上下文是为了减少栈深度设计的<br /><br />
 		 * 执行上下文不是线程安全的，<br />
 		 * 也就是我们不应该在ioHelper类之外多次执行taskContinueAction方法<br /><br />
-		 * 
-		 * @param ioHelper 当前执行的io任务的ioHelper对象
+		 *
 		 * @param actionName io任务的名字
 		 * @param mainAction io任务的入口
 		 * @param loopAction io任务失败后的循环过程(mainAction失败时的，会根据retry相关参数执行)
